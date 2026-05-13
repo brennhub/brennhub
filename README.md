@@ -58,6 +58,19 @@ Skipping either step breaks routing:
 }
 ```
 
+### UI principle: don't show "AI" to the user
+
+Never expose the word "AI" in tool UI — labels, headings, descriptions, or
+button text. AI is an implementation detail, not a user-facing value.
+
+Name the surface after what it produces, in whatever language fits the tool:
+- `종합 분석` (email-diag)
+- `결과 요약`
+- `Summary`, `Explanation`, `Verdict`
+
+Same goes for footer copy and tooltips — describe the output ("자연어 요약",
+"plain-language explanation"), not the mechanism.
+
 ## Project layout
 
 ```

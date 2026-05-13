@@ -136,7 +136,7 @@ export default function EmailDiagPage() {
         {result?.analysis && (
           <Card className="mt-8">
             <CardHeader>
-              <CardTitle className="text-lg">AI 진단</CardTitle>
+              <CardTitle className="text-lg">종합 분석</CardTitle>
               <CardDescription>
                 MX / SPF / DMARC / PTR 결과를 종합한 해설
               </CardDescription>
@@ -176,7 +176,7 @@ export default function EmailDiagPage() {
 
         {result && (
           <p className="mt-6 text-xs text-zinc-500 dark:text-zinc-400">
-            v0 — DNS 원시 결과만 표시합니다. AI 해석은 Phase 2에서 추가됩니다.
+            DNS 원시 결과와 자연어 요약을 함께 보여줍니다.
           </p>
         )}
       </main>
