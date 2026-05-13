@@ -147,8 +147,27 @@ export async function POST(req: Request) {
         headers: {
           Accept: "application/json",
           "User-Agent": "brennhub-ssl-check/1.0",
+          // hint upstream / intermediate caches not to serve stale
+          "Cache-Control": "no-cache",
         },
         signal: AbortSignal.timeout(20_000),
+        // bypass Workers' built-in fetch cache. Without this, the
+        // first request's response can be served back on subsequent
+        // calls from the same isolate.
+        cache: "no-store",
+      });
+      // Per-request meta — logged on every call so we can compare
+      // first-call vs later-call shapes and decide whether the
+      // "first request only" failure is upstream rate limiting or
+      // a runtime cache HIT.
+      console.log("[ssl-check] crt.sh response meta", {
+        domain,
+        status: res.status,
+        cfCacheStatus: res.headers.get("cf-cache-status"),
+        cfRay: res.headers.get("cf-ray"),
+        age: res.headers.get("age"),
+        contentType: res.headers.get("content-type"),
+        contentLength: res.headers.get("content-length"),
       });
       const text = await res.text();
       if (!res.ok) {
