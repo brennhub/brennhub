@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(npx shadcn@latest init -d)",
+      "PowerShell(npm i @anthropic-ai/sdk)",
+      "PowerShell(npx tsc --noEmit)",
+      "PowerShell(git init -b main)",
+      "PowerShell(git add .)"
+    ]
+  }
+}
