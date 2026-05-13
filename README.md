@@ -25,24 +25,38 @@ Visit `http://localhost:3000`.
 
 ### Adding a new tool
 
-1. **Register it.** Add a single entry to [lib/tools-registry.ts](lib/tools-registry.ts):
+The `[slug]` route only prerenders entries whose `status === "coming-soon"`. A `"live"` tool must have its own page at `app/tools/<slug>/page.tsx` — registry and route are two independent halves, and shipping a tool means flipping **both**.
 
-   ```ts
-   {
-     id: "snip",
-     name: "Snip",
-     description: "Turn long things into short things.",
-     slug: "snip",
-     status: "coming-soon",       // or "live"
-     createdAt: "2026-05-12",
-   }
-   ```
+**New placeholder (announce only):**
 
-   The hub page picks it up automatically.
+- [ ] Add entry to [lib/tools-registry.ts](lib/tools-registry.ts) with `status: "coming-soon"`.
+- [ ] Done. `/tools/<slug>` now serves the generic "Coming soon" placeholder.
 
-2. **Build it.** Replace the dynamic placeholder by creating a dedicated route at `app/tools/<slug>/page.tsx`. The dynamic `[slug]` route renders a "Coming soon" placeholder until a real page exists at the same slug — Next.js prefers static routes over dynamic ones, so just dropping in `app/tools/snip/page.tsx` takes over.
+**Ship live (or convert a placeholder):**
 
-3. **Flip the status.** Change `status` to `"live"` in the registry when shipping.
+- [ ] Create `app/tools/<slug>/page.tsx` (the real UI).
+- [ ] Set `status: "live"` in the registry.
+- [ ] Run `npm run build` and confirm the build output lists `/tools/<slug>` as its own row, **not** as a sub-entry under `/tools/[slug]`.
+
+Skipping either step breaks routing:
+
+| State                                     | Result                                                                                  |
+| ----------------------------------------- | --------------------------------------------------------------------------------------- |
+| Page exists, status still `"coming-soon"` | Build-time collision: `[slug]` and the static page both emit `/tools/<slug>` → 404 in prod. |
+| Status `"live"`, no page                  | Hub links to a non-existent route → 404.                                                |
+
+**Registry entry shape:**
+
+```ts
+{
+  id: "snip",
+  name: "Snip",
+  description: "Turn long things into short things.",
+  slug: "snip",
+  status: "coming-soon",       // or "live"
+  createdAt: "2026-05-12",
+}
+```
 
 ## Project layout
 
