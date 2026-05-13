@@ -103,12 +103,12 @@ export type Messages = {
 export const messages: Record<Locale, Messages> = {
   ko: {
     hub: {
-      title: "brennhub",
+      title: "BrennHub",
       subtitle: "indie tools by brenn — small, sharp, opinionated.",
       empty: "도구 준비 중. 공장이 예열 중입니다.",
     },
     toolCommon: {
-      back: "← brennhub",
+      back: "← BrennHub",
       comingSoon: "준비 중.",
       live: "사용 가능",
       soon: "준비 중",
@@ -217,12 +217,12 @@ export const messages: Record<Locale, Messages> = {
   },
   en: {
     hub: {
-      title: "brennhub",
+      title: "BrennHub",
       subtitle: "indie tools by brenn — small, sharp, opinionated.",
       empty: "No tools yet. The factory is warming up.",
     },
     toolCommon: {
-      back: "← brennhub",
+      back: "← BrennHub",
       comingSoon: "Coming soon.",
       live: "live",
       soon: "soon",

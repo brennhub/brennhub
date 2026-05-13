@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "brennhub — indie tools by brenn",
+  title: "BrennHub — indie tools by brenn",
   description: "A factory of small, sharp, opinionated tools.",
 };
 
