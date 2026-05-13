@@ -14,4 +14,10 @@ export const tools: Tool[] = [
     status: "live",
     createdAt: "2026-05-12",
   },
+  {
+    id: "cron-trans",
+    slug: "cron-trans",
+    status: "live",
+    createdAt: "2026-05-12",
+  },
 ];

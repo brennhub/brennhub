@@ -37,6 +37,30 @@ export type Messages = {
     showRaw: string;
     footer: string;
   };
+  cronTrans: {
+    title: string;
+    description: string;
+    modeCronToNatural: string;
+    modeNaturalToCron: string;
+    modeToggleHint: string;
+    inputLabelCron: string;
+    inputLabelNatural: string;
+    inputPlaceholderCron: string;
+    inputPlaceholderNatural: string;
+    submit: string;
+    submitting: string;
+    resultCronLabel: string;
+    resultExplanationLabel: string;
+    nextRunsLabel: string;
+    invalidCronInput: string;
+    aiCouldNotConvert: string;
+    networkError: string;
+    missingInput: string;
+    requestFailed: string;
+    invalidJson: string;
+    copy: string;
+    copied: string;
+  };
   tools: Record<string, { name: string; description: string }>;
 };
 
@@ -78,10 +102,39 @@ export const messages: Record<Locale, Messages> = {
       showRaw: "원시 응답 보기",
       footer: "DNS 원시 결과와 자연어 요약을 함께 보여줍니다.",
     },
+    cronTrans: {
+      title: "Cron 변환기",
+      description: "cron 식과 자연어를 양방향 변환합니다.",
+      modeCronToNatural: "Cron → 자연어",
+      modeNaturalToCron: "자연어 → Cron",
+      modeToggleHint: "변환 방향",
+      inputLabelCron: "Cron 식",
+      inputLabelNatural: "자연어 설명",
+      inputPlaceholderCron: "0 9 * * 1-5",
+      inputPlaceholderNatural: "매일 새벽 3시",
+      submit: "변환하기",
+      submitting: "변환 중…",
+      resultCronLabel: "Cron 식",
+      resultExplanationLabel: "설명",
+      nextRunsLabel: "다음 실행",
+      invalidCronInput: "유효하지 않은 cron 식입니다.",
+      aiCouldNotConvert:
+        "주어진 설명을 cron으로 변환할 수 없습니다. 더 구체적으로 작성해보세요.",
+      networkError: "네트워크 오류",
+      missingInput: "입력값을 채워주세요.",
+      requestFailed: "변환 요청에 실패했습니다.",
+      invalidJson: "요청 본문이 올바른 JSON이 아닙니다.",
+      copy: "복사",
+      copied: "복사됨",
+    },
     tools: {
       "email-diag": {
         name: "이메일 발송 진단기",
         description: "도메인의 SPF/DMARC/MX 설정을 진단합니다",
+      },
+      "cron-trans": {
+        name: "Cron 변환기",
+        description: "cron 식과 자연어를 양방향 변환합니다",
       },
     },
   },
@@ -125,10 +178,39 @@ export const messages: Record<Locale, Messages> = {
       showRaw: "Show raw response",
       footer: "Raw DNS records, plus a plain-language summary.",
     },
+    cronTrans: {
+      title: "Cron Converter",
+      description: "Convert between cron expressions and plain English.",
+      modeCronToNatural: "Cron → English",
+      modeNaturalToCron: "English → Cron",
+      modeToggleHint: "Direction",
+      inputLabelCron: "Cron expression",
+      inputLabelNatural: "Description",
+      inputPlaceholderCron: "0 9 * * 1-5",
+      inputPlaceholderNatural: "every weekday at 9am",
+      submit: "Convert",
+      submitting: "Converting…",
+      resultCronLabel: "Cron expression",
+      resultExplanationLabel: "Explanation",
+      nextRunsLabel: "Next runs",
+      invalidCronInput: "Not a valid cron expression.",
+      aiCouldNotConvert:
+        "Couldn't convert that into cron. Try something more specific.",
+      networkError: "Network error",
+      missingInput: "Please enter something to convert.",
+      requestFailed: "The conversion failed.",
+      invalidJson: "Request body isn't valid JSON.",
+      copy: "Copy",
+      copied: "Copied",
+    },
     tools: {
       "email-diag": {
         name: "Email Sender Diagnostics",
         description: "Inspect a domain's SPF, DMARC, and MX setup",
+      },
+      "cron-trans": {
+        name: "Cron Converter",
+        description: "Convert between cron expressions and plain English",
       },
     },
   },
