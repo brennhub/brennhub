@@ -28,6 +28,7 @@ type DiagResult = {
   spf: LookupResult;
   dmarc: LookupResult;
   ptr: LookupResult;
+  analysis: string | null;
 };
 
 export default function EmailDiagPage() {
@@ -52,7 +53,9 @@ export default function EmailDiagPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ domain: d }),
       });
-      const json = await res.json();
+      const json = (await res.json()) as Partial<DiagResult> & {
+        error?: string;
+      };
       if (!res.ok) {
         setError(json.error ?? "진단 요청에 실패했습니다.");
       } else {
@@ -128,6 +131,22 @@ export default function EmailDiagPage() {
               </Card>
             ))}
           </div>
+        )}
+
+        {result?.analysis && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="text-lg">AI 진단</CardTitle>
+              <CardDescription>
+                MX / SPF / DMARC / PTR 결과를 종합한 해설
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800 dark:text-zinc-200">
+                {result.analysis}
+              </p>
+            </CardContent>
+          </Card>
         )}
 
         {result && (

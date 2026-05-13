@@ -19,6 +19,12 @@
   ],
   "images": {
     "binding": "IMAGES"
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "vars": {
+    "AI_PROVIDER": "workers-ai"
   }
   // "r2_buckets": [
   //   {
