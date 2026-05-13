@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { tools } from "@/lib/tools-registry";
 
 export function generateStaticParams() {
-  return tools.map((tool) => ({ slug: tool.slug }));
+  return tools
+    .filter((t) => t.status === "coming-soon")
+    .map((tool) => ({ slug: tool.slug }));
 }
 
 export default async function ToolPage({
