@@ -25,6 +25,10 @@
   },
   "vars": {
     "AI_PROVIDER": "workers-ai"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
   }
   // "r2_buckets": [
   //   {

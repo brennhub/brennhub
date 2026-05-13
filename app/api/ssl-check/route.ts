@@ -59,6 +59,49 @@ function toIsoUtc(raw: string): string {
   return new Date(parseUtc(raw)).toISOString();
 }
 
+function parseCrtShResponse(text: string): CrtShEntry[] | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  // HTML error pages (404, 502, etc.) — never JSON
+  if (trimmed.startsWith("<")) return null;
+
+  // (a) Standard JSON array — the documented happy path
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) return parsed as CrtShEntry[];
+  } catch {
+    // fall through
+  }
+
+  // (b) NDJSON — one JSON object per line
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines.length > 0) {
+    const ndjson: CrtShEntry[] = [];
+    let allValid = true;
+    for (const line of lines) {
+      try {
+        const obj = JSON.parse(line);
+        if (obj && typeof obj === "object") ndjson.push(obj as CrtShEntry);
+      } catch {
+        allValid = false;
+        break;
+      }
+    }
+    if (allValid && ndjson.length > 0) return ndjson;
+  }
+
+  // (c) Concatenated objects ({...}{...}{...}) — best effort
+  try {
+    const wrapped = `[${text.replace(/}\s*{/g, "},{")}]`;
+    const parsed = JSON.parse(wrapped);
+    if (Array.isArray(parsed)) return parsed as CrtShEntry[];
+  } catch {
+    // give up
+  }
+
+  return null;
+}
+
 function buildUserPrompt(domain: string, cert: Certificate): string {
   return [
     `Domain: ${domain}`,
@@ -94,41 +137,61 @@ export async function POST(req: Request) {
       return Response.json({ error: t.invalidDomain }, { status: 400 });
     }
 
-    const url = `https://crt.sh/?q=${encodeURIComponent(domain)}&exclude=expired&output=json`;
+    // Note: `&exclude=expired` was dropped here — crt.sh consistently
+    // returns HTML 404 for that query on popular domains. We filter
+    // expired entries client-side instead.
+    const url = `https://crt.sh/?q=${encodeURIComponent(domain)}&output=json`;
     let entries: CrtShEntry[] = [];
-    let rawText: string | null = null;
     try {
       const res = await fetch(url, {
         headers: {
           Accept: "application/json",
           "User-Agent": "brennhub-ssl-check/1.0",
         },
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(20_000),
       });
+      const text = await res.text();
       if (!res.ok) {
+        console.error("[ssl-check] crt.sh non-2xx", {
+          domain,
+          status: res.status,
+          contentType: res.headers.get("content-type"),
+          bodyLength: text.length,
+          bodyPreview: text.slice(0, 300),
+        });
         const failed: CheckResponse = {
           certificate: null,
-          raw: { status: res.status },
+          raw: { status: res.status, snippet: text.slice(0, 200) },
           analysis: null,
           error: t.fetchFailed,
         };
         return Response.json(failed);
       }
-      rawText = await res.text();
-      try {
-        const parsed = JSON.parse(rawText);
-        if (Array.isArray(parsed)) entries = parsed as CrtShEntry[];
-      } catch {
+      const parsed = parseCrtShResponse(text);
+      if (!parsed) {
+        console.error("[ssl-check] crt.sh response unparseable", {
+          domain,
+          status: res.status,
+          contentType: res.headers.get("content-type"),
+          bodyLength: text.length,
+          bodyPreview: text.slice(0, 300),
+        });
         const failed: CheckResponse = {
           certificate: null,
-          raw: { snippet: rawText.slice(0, 200) },
+          raw: { snippet: text.slice(0, 200) },
           analysis: null,
           error: t.fetchFailed,
         };
         return Response.json(failed);
       }
+      entries = parsed;
     } catch (e) {
-      console.error("[ssl-check] crt.sh fetch failed:", e);
+      const err = e as Error;
+      console.error("[ssl-check] crt.sh fetch threw", {
+        domain,
+        name: err?.name,
+        message: err?.message,
+      });
       const failed: CheckResponse = {
         certificate: null,
         raw: null,
@@ -151,7 +214,11 @@ export async function POST(req: Request) {
     const sorted = [...entries].sort(
       (a, b) => parseUtc(b.not_before ?? "") - parseUtc(a.not_before ?? ""),
     );
-    const latest = sorted[0];
+    const now = Date.now();
+    const stillValid = sorted.find(
+      (e) => e.not_after && parseUtc(e.not_after) > now,
+    );
+    const latest = stillValid ?? sorted[0];
     if (!latest.not_before || !latest.not_after) {
       const failed: CheckResponse = {
         certificate: null,
