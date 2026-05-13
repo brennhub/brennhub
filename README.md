@@ -146,3 +146,5 @@ components/ui/          # shadcn components
 ## Environment
 
 Secrets live in `.env.local` (gitignored). See `.env.example` for required keys.
+
+See [BACKLOG.md](./BACKLOG.md) for deferred ideas.
