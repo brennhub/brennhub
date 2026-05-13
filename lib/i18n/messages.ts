@@ -60,6 +60,8 @@ export type Messages = {
     invalidJson: string;
     copy: string;
     copied: string;
+    timezoneLabel: string;
+    timezoneNote: string;
   };
   tools: Record<string, { name: string; description: string }>;
 };
@@ -126,6 +128,9 @@ export const messages: Record<Locale, Messages> = {
       invalidJson: "요청 본문이 올바른 JSON이 아닙니다.",
       copy: "복사",
       copied: "복사됨",
+      timezoneLabel: "시간대",
+      timezoneNote:
+        "cron 표현식은 시간대가 없습니다. 실제 실행 시각은 스케줄러에 따라 다릅니다 (GitHub Actions / Vercel은 UTC, Linux crontab은 시스템 로컬 시간).",
     },
     tools: {
       "email-diag": {
@@ -202,6 +207,9 @@ export const messages: Record<Locale, Messages> = {
       invalidJson: "Request body isn't valid JSON.",
       copy: "Copy",
       copied: "Copied",
+      timezoneLabel: "Timezone",
+      timezoneNote:
+        "Cron expressions are timezone-agnostic. Actual execution time depends on your scheduler (GitHub Actions / Vercel use UTC, Linux crontab uses system local time).",
     },
     tools: {
       "email-diag": {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,39 @@ import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 type Mode = "cron-to-natural" | "natural-to-cron";
+
+const COMMON_TIMEZONES = [
+  "UTC",
+  "Asia/Seoul",
+  "Asia/Tokyo",
+  "America/New_York",
+  "America/Los_Angeles",
+  "Europe/London",
+  "Europe/Paris",
+] as const;
+
+function formatRun(iso: string, locale: "ko" | "en", tz: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat(
+      locale === "ko" ? "ko-KR" : "en-US",
+      {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+        timeZone: tz,
+        timeZoneName: "short",
+      },
+    ).formatToParts(new Date(iso));
+    const get = (t: Intl.DateTimeFormatPartTypes) =>
+      parts.find((p) => p.type === t)?.value ?? "";
+    return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")} (${get("timeZoneName")})`;
+  } catch {
+    return iso;
+  }
+}
 
 type TransResult = {
   cron: string | null;
@@ -256,31 +289,55 @@ function ExplanationCard({ text }: { text: string }) {
 function NextRunsCard({ runs }: { runs: string[] }) {
   const tc = useMessages().cronTrans;
   const { locale } = useLocale();
-  const dtLocale = locale === "ko" ? "ko-KR" : "en-US";
+
+  const [timezones, setTimezones] = useState<readonly string[]>(
+    COMMON_TIMEZONES,
+  );
+  const [tz, setTz] = useState<string>("UTC");
+
+  useEffect(() => {
+    const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (userTz) {
+      setTz(userTz);
+      if (!(COMMON_TIMEZONES as readonly string[]).includes(userTz)) {
+        setTimezones([userTz, ...COMMON_TIMEZONES]);
+      }
+    }
+  }, []);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">{tc.nextRunsLabel}</CardTitle>
-        <CardDescription>
-          {Intl.DateTimeFormat().resolvedOptions().timeZone}
-        </CardDescription>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-lg">{tc.nextRunsLabel}</CardTitle>
+          <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <span className="sr-only sm:not-sr-only">{tc.timezoneLabel}</span>
+            <select
+              aria-label={tc.timezoneLabel}
+              value={tz}
+              onChange={(e) => setTz(e.target.value)}
+              className="min-w-44 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
+            >
+              {timezones.map((z) => (
+                <option key={z} value={z}>
+                  {z}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </CardHeader>
       <CardContent>
         <ul className="space-y-1 text-sm text-zinc-700 dark:text-zinc-300">
           {runs.map((iso) => (
             <li key={iso} className="font-mono">
-              {new Date(iso).toLocaleString(dtLocale, {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                weekday: "short",
-              })}
+              {formatRun(iso, locale, tz)}
             </li>
           ))}
         </ul>
+        <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
+          {tc.timezoneNote}
+        </p>
       </CardContent>
     </Card>
   );
