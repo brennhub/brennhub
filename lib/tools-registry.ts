@@ -20,10 +20,4 @@ export const tools: Tool[] = [
     status: "live",
     createdAt: "2026-05-12",
   },
-  {
-    id: "ssl-check",
-    slug: "ssl-check",
-    status: "live",
-    createdAt: "2026-05-12",
-  },
 ];

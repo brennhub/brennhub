@@ -155,4 +155,10 @@ components/ui/          # shadcn components
 
 Secrets live in `.env.local` (gitignored). See `.env.example` for required keys.
 
+## Archived experiments
+
+도구를 만들었다가 retire한 기록. Build-in-public, 그래서 정직하게 남깁니다.
+
+- **ssl-check** (2026-05): CT 로그(crt.sh) 상류 신뢰성 문제(잦은 502, 느린 응답)와 차별점 부족(ssllabs, openssl, 브라우저 등 대안 많음)으로 retire. CertSpotter 마이그레이션은 비용 대비 이득 부족으로 미실행.
+
 See [BACKLOG.md](./BACKLOG.md) for deferred ideas.
