@@ -19,6 +19,14 @@ npm run dev
 
 Visit `http://localhost:3000`.
 
+## Development
+
+여러 머신(개인/회사 랩탑 등)을 오가며 작업하는 환경을 가정합니다.
+
+- **Line endings**: `.gitattributes`로 LF 통일. Windows 전용 스크립트(`.cmd`, `.bat`, `.ps1`)만 CRLF 유지.
+- **프로젝트 위치**: OneDrive 동기화 폴더(`Documents`, `Desktop` 등) 안에는 두지 마세요. `node_modules`가 sync 큐를 막고, 경로가 길어지면 일부 Node 도구가 깨지고, 두 머신이 같은 파일을 동시에 건드리면 충돌이 납니다.
+- **권장 레이아웃**: `C:\dev\<repo>` 같은 단일 dev 루트 사용. 머신 간 동기화는 git remote로만.
+
 ## Factory mode
 
 `brennhub` is built as a factory: a hub page lists every tool, each tool lives at `/tools/<slug>`, and the whole catalog is driven by a single registry. Add a tool by editing one file and creating one page — no routing config, no menu plumbing.

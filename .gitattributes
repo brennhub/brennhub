@@ -1,0 +1,28 @@
+# Normalize all text files to LF on commit, check out LF on every platform.
+* text=auto eol=lf
+
+# Windows-only scripts must keep CRLF (cmd.exe / PowerShell choke on LF).
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+*.ps1  text eol=crlf
+
+# Lockfiles — pin to LF explicitly so auto-detection never flips them.
+package-lock.json text eol=lf
+yarn.lock         text eol=lf
+pnpm-lock.yaml    text eol=lf
+
+# Binary assets — no EOL conversion, no diff noise.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.avif  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+*.otf   binary
+*.pdf   binary
+*.zip   binary
