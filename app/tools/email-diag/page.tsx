@@ -17,7 +17,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 const DOMAIN_RE =
   /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 
-type LookupResult = { found: boolean; value: unknown; raw: string };
+type LookupResult = {
+  found: boolean;
+  value: unknown;
+  raw: string;
+  error?: string;
+};
 type DiagResult = {
   mx: LookupResult;
   spf: LookupResult;
@@ -169,27 +174,52 @@ function ResultCard({
   subtitle: string;
   result: LookupResult;
 }) {
+  const status: "ok" | "missing" | "error" = result.error
+    ? "error"
+    : result.found
+      ? "ok"
+      : "missing";
+  const badge =
+    status === "ok"
+      ? {
+          text: "확인됨",
+          cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+        }
+      : status === "missing"
+        ? {
+            text: "없음",
+            cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+          }
+        : {
+            text: "오류",
+            cls: "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+          };
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{title}</CardTitle>
           <span
-            className={
-              result.found
-                ? "rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                : "rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-            }
+            className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.cls}`}
           >
-            {result.found ? "확인됨" : "없음"}
+            {badge.text}
           </span>
         </div>
         <CardDescription>{subtitle}</CardDescription>
       </CardHeader>
       <CardContent>
-        <pre className="max-h-48 overflow-auto rounded-md bg-zinc-100 p-3 font-mono text-xs whitespace-pre-wrap break-all text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
-          {result.found ? JSON.stringify(result.value, null, 2) : "결과 없음"}
-        </pre>
+        {status === "error" ? (
+          <p className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+            {result.error}
+          </p>
+        ) : (
+          <pre className="max-h-48 overflow-auto rounded-md bg-zinc-100 p-3 font-mono text-xs whitespace-pre-wrap break-all text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+            {status === "ok"
+              ? JSON.stringify(result.value, null, 2)
+              : "결과 없음"}
+          </pre>
+        )}
         <details className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
           <summary className="cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200">
             원시 응답 보기
