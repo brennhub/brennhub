@@ -71,6 +71,66 @@ Name the surface after what it produces, in whatever language fits the tool:
 Same goes for footer copy and tooltips — describe the output ("자연어 요약",
 "plain-language explanation"), not the mechanism.
 
+## Adding a new language
+
+i18n lives in [lib/i18n/](lib/i18n). Adding a new language touches **exactly
+three places**; everything else is type-driven so TypeScript will flag any
+location you forget.
+
+1. **[lib/i18n/types.ts](lib/i18n/types.ts)** — append the locale code to the
+   `LOCALES` array. `Locale` is derived from this array, so the union widens
+   automatically.
+
+2. **[lib/i18n/types.ts](lib/i18n/types.ts)** (same file) — add the locale's
+   own-script display name to `LOCALE_NAMES`. This drives the toggle button
+   label *and* the AI prompt directive ("Respond ONLY in ${LOCALE_NAMES[locale]}").
+
+3. **[lib/i18n/messages.ts](lib/i18n/messages.ts)** — add a complete entry
+   for the new locale to the `messages` record. The `Messages` type forces
+   you to fill in every field, including each tool's `name` / `description`.
+
+That's it. The toggle picks up the new option (`LOCALES.map`), every page
+already routes display strings through `useMessages()`, and the email-diag
+prompt re-points to the new language without code changes.
+
+### Example: adding Japanese
+
+```ts
+// lib/i18n/types.ts
+export const LOCALES = ["ko", "en", "ja"] as const;   // (1)
+
+export const LOCALE_NAMES: Record<Locale, string> = {
+  ko: "한국어",
+  en: "English",
+  ja: "日本語",                                          // (2)
+};
+```
+
+```ts
+// lib/i18n/messages.ts
+export const messages: Record<Locale, Messages> = {
+  ko: { /* ... */ },
+  en: { /* ... */ },
+  ja: {                                                  // (3)
+    hub: { title: "brennhub", subtitle: "...", empty: "..." },
+    toolCommon: { /* ... */ },
+    emailDiag: { /* ... */ },
+    tools: { "email-diag": { name: "...", description: "..." } },
+  },
+};
+```
+
+The toggle now shows three buttons. The AI prompt now requests Japanese
+output. No other file needs to change.
+
+### v1 candidate: no-flash SSR
+
+The current provider hydrates client-side, so a first-time English visitor
+sees one paint in Korean before the toggle resolves. A middleware + cookie
+strategy (read `Accept-Language` on first request, write a cookie, read it
+in server components) would eliminate that flash. Deferred — single paint
+of Korean is acceptable while the audience is small.
+
 ## Project layout
 
 ```

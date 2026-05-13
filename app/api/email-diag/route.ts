@@ -1,5 +1,12 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { analyze, AI_FALLBACK } from "@/lib/ai/analyze";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_NAMES,
+  isLocale,
+  type Locale,
+} from "@/lib/i18n/types";
+import { messages } from "@/lib/i18n/messages";
 
 type LookupResult = {
   found: boolean;
@@ -16,31 +23,38 @@ type DiagnosticResponse = {
   analysis: string | null;
 };
 
-const AI_SYSTEM_PROMPT = `당신은 이메일 인프라 전문가입니다. 주어진 DNS 진단 결과(MX/SPF/DMARC/PTR)를 분석해 한국어로 간결히 설명해주세요. 형식: 첫 줄에 한 문장 종합 진단(예: '이 도메인은 발송 설정이 양호합니다'), 그 아래 '-'로 시작하는 bullet 2-4개로 발견된 문제점 또는 권장 조치. 기술 용어는 그대로 쓰되 일반인도 이해 가능하게.
-응답은 반드시 한국어로 작성하세요. 영문은 기술 용어(SPF, DMARC, MX, PTR 등)만 허용.`;
+function buildSystemPrompt(locale: Locale): string {
+  const lang = LOCALE_NAMES[locale];
+  return `You are an email infrastructure expert. Analyze the given DNS diagnostic results (MX/SPF/DMARC/PTR) concisely.
+
+Format: first line is a one-sentence overall verdict (e.g., "This domain has solid sending configuration"), then 2-4 bullets starting with '-' for issues found or recommended actions. Use technical terms naturally; explain so non-experts can follow.
+
+Respond ONLY in ${lang}. Only technical acronyms (SPF, DMARC, MX, PTR, etc.) may appear in English.`;
+}
 
 function describeMx(result: LookupResult, records: MxRecord[]): string {
-  if (result.error) return `조회 실패: ${result.error}`;
-  if (records.length === 0) return "발견되지 않음";
+  if (result.error) return `lookup failed: ${result.error}`;
+  if (records.length === 0) return "not found";
   return records.map((r) => `- ${r.priority} ${r.host}`).join("\n");
 }
 
 function describeText(result: LookupResult): string {
-  if (result.error) return `조회 실패: ${result.error}`;
-  if (!result.found || result.value == null) return "발견되지 않음";
+  if (result.error) return `lookup failed: ${result.error}`;
+  if (!result.found || result.value == null) return "not found";
   return String(result.value);
 }
 
 function describePtr(result: LookupResult): string {
-  if (result.error) return `조회 실패: ${result.error}`;
+  if (result.error) return `lookup failed: ${result.error}`;
   const v = result.value as
     | { mxHost: string; ip: string | null; ptr: string | null }
     | null
     | undefined;
-  if (!v) return "MX 레코드가 없어 PTR 조회 건너뜀";
-  if (!v.ip) return `${v.mxHost} → IP를 찾지 못함`;
-  if (!v.ptr) return `${v.mxHost} → ${v.ip} → PTR 없음`;
-  const match = v.ptr === v.mxHost ? " (MX 호스트와 정합)" : " (MX 호스트와 불일치)";
+  if (!v) return "skipped (no MX records)";
+  if (!v.ip) return `${v.mxHost} → no IP`;
+  if (!v.ptr) return `${v.mxHost} → ${v.ip} → no PTR`;
+  const match =
+    v.ptr === v.mxHost ? " (matches MX host)" : " (does not match MX host)";
   return `${v.mxHost} → ${v.ip} → ${v.ptr}${match}`;
 }
 
@@ -132,7 +146,7 @@ async function lookupMx(
         found: false,
         value: null,
         raw: rawOf(query, null),
-        error: `MX 조회 실패: ${(e as Error).message}`,
+        error: `MX lookup failed: ${(e as Error).message}`,
       },
       records: [],
     };
@@ -157,7 +171,7 @@ async function lookupSpf(domain: string): Promise<LookupResult> {
       found: false,
       value: null,
       raw: rawOf(query, null),
-      error: `SPF 조회 실패: ${(e as Error).message}`,
+      error: `SPF lookup failed: ${(e as Error).message}`,
     };
   }
 }
@@ -181,7 +195,7 @@ async function lookupDmarc(domain: string): Promise<LookupResult> {
       found: false,
       value: null,
       raw: rawOf(query, null),
-      error: `DMARC 조회 실패: ${(e as Error).message}`,
+      error: `DMARC lookup failed: ${(e as Error).message}`,
     };
   }
 }
@@ -192,7 +206,7 @@ async function lookupPtr(mxRecords: MxRecord[]): Promise<LookupResult> {
     return {
       found: false,
       value: null,
-      raw: "MX 레코드가 없어 PTR 조회를 건너뛰었습니다.",
+      raw: "Skipped: no MX records to derive PTR from.",
     };
   }
   const aQuery = { name: firstMx, type: "A" };
@@ -232,35 +246,33 @@ async function lookupPtr(mxRecords: MxRecord[]): Promise<LookupResult> {
       found: false,
       value: { mxHost: firstMx, ip: null, ptr: null },
       raw: rawOf(aQuery, null),
-      error: `PTR 조회 실패: ${(e as Error).message}`,
+      error: `PTR lookup failed: ${(e as Error).message}`,
     };
   }
 }
 
 export async function POST(req: Request) {
+  let locale: Locale = DEFAULT_LOCALE;
   try {
     let body: unknown;
     try {
       body = await req.json();
     } catch {
-      return Response.json(
-        { error: "요청 본문이 올바른 JSON이 아닙니다." },
-        { status: 400 },
-      );
+      const t = messages[locale].emailDiag;
+      return Response.json({ error: t.invalidJson }, { status: 400 });
     }
+
+    const rawLocale = (body as { locale?: unknown })?.locale;
+    if (isLocale(rawLocale)) locale = rawLocale;
+    const t = messages[locale].emailDiag;
+
     const rawInput = (body as { domain?: unknown })?.domain;
     if (typeof rawInput !== "string") {
-      return Response.json(
-        { error: "도메인을 입력해주세요." },
-        { status: 400 },
-      );
+      return Response.json({ error: t.missingDomain }, { status: 400 });
     }
     const domain = rawInput.trim().toLowerCase();
     if (!DOMAIN_RE.test(domain)) {
-      return Response.json(
-        { error: "유효한 도메인 형식이 아닙니다 (예: example.com)." },
-        { status: 400 },
-      );
+      return Response.json({ error: t.invalidDomain }, { status: 400 });
     }
 
     const [mxOut, spf, dmarc] = await Promise.all([
@@ -275,7 +287,7 @@ export async function POST(req: Request) {
       const { env } = getCloudflareContext();
       analysis = await analyze({
         env,
-        system: AI_SYSTEM_PROMPT,
+        system: buildSystemPrompt(locale),
         user: buildUserPrompt(
           domain,
           mxOut.result,
