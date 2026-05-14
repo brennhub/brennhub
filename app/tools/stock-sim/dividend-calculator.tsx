@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
+import { DividendCashFlowChart } from "./dividend-cash-flow-chart";
 
 type Frequency = "monthly" | "quarterly" | "semiAnnual" | "annual";
 
@@ -32,15 +34,22 @@ const FREQ_MULTIPLIER: Record<Frequency, number> = {
 type Row = {
   id: string;
   ticker: string;
-  shares: string;
-  dividend: string;
+  equity: string;
+  currentPrice: string;
+  yieldPercent: string;
   frequency: Frequency;
-  invested: string;
 };
 
-type StoredState = { rows: Row[] };
+type StoredState = {
+  rows: Row[];
+  months?: string;
+};
 
 const STORAGE_KEY = "brennhub:stock-sim:dividend";
+const DEFAULT_MONTHS = "12";
+const DEFAULT_MONTHS_NUM = 12;
+const MONTHS_MIN = 1;
+const MONTHS_MAX = 60;
 
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -53,10 +62,10 @@ function emptyRow(): Row {
   return {
     id: newId(),
     ticker: "",
-    shares: "",
-    dividend: "",
+    equity: "",
+    currentPrice: "",
+    yieldPercent: "",
     frequency: "quarterly",
-    invested: "",
   };
 }
 
@@ -66,30 +75,44 @@ function parseNum(s: string): number {
 }
 
 function isFrequency(v: unknown): v is Frequency {
-  return typeof v === "string" && (FREQUENCIES as readonly string[]).includes(v);
+  return (
+    typeof v === "string" && (FREQUENCIES as readonly string[]).includes(v)
+  );
+}
+
+// Migrate stored rows from the older shares/dividend/invested shape.
+function migrateRow(raw: unknown): Row {
+  const obj = (raw ?? {}) as Record<string, unknown>;
+  const oldInvested = typeof obj.invested === "string" ? obj.invested : "";
+  return {
+    id: typeof obj.id === "string" ? obj.id : newId(),
+    ticker: typeof obj.ticker === "string" ? obj.ticker : "",
+    equity: typeof obj.equity === "string" ? obj.equity : oldInvested,
+    currentPrice:
+      typeof obj.currentPrice === "string" ? obj.currentPrice : "",
+    yieldPercent:
+      typeof obj.yieldPercent === "string" ? obj.yieldPercent : "",
+    frequency: isFrequency(obj.frequency) ? obj.frequency : "quarterly",
+  };
 }
 
 export function DividendCalculator() {
   const t = useMessages().stockSim.dividend;
   const { locale } = useLocale();
   const [rows, setRows] = useState<Row[]>(() => [emptyRow()]);
+  const [months, setMonths] = useState<string>(DEFAULT_MONTHS);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as StoredState;
+        const parsed = JSON.parse(raw) as Partial<StoredState>;
         if (Array.isArray(parsed.rows) && parsed.rows.length > 0) {
-          const safe = parsed.rows.map((r) => ({
-            id: typeof r.id === "string" ? r.id : newId(),
-            ticker: typeof r.ticker === "string" ? r.ticker : "",
-            shares: typeof r.shares === "string" ? r.shares : "",
-            dividend: typeof r.dividend === "string" ? r.dividend : "",
-            frequency: isFrequency(r.frequency) ? r.frequency : "quarterly",
-            invested: typeof r.invested === "string" ? r.invested : "",
-          }));
-          setRows(safe);
+          setRows(parsed.rows.map(migrateRow));
+        }
+        if (typeof parsed.months === "string") {
+          setMonths(parsed.months);
         }
       }
     } catch {
@@ -103,47 +126,41 @@ export function DividendCalculator() {
     try {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ rows } satisfies StoredState),
+        JSON.stringify({ rows, months } satisfies StoredState),
       );
     } catch {
-      // quota / private mode — selection still applies in-session
+      // quota / private mode — in-session only
     }
-  }, [rows, hydrated]);
+  }, [rows, months, hydrated]);
 
   const computed = useMemo(() => {
     type Per = {
       row: Row;
       annual: number;
       monthly: number;
-      yieldPct: number | null;
+      perPayment: number;
+      yieldPct: number;
       contributing: boolean;
     };
     const per: Per[] = rows.map((r) => {
-      const shares = parseNum(r.shares);
-      const dividend = parseNum(r.dividend);
-      const invested = parseNum(r.invested);
-      const contributing = shares > 0 && dividend > 0;
-      const annual = contributing
-        ? shares * dividend * FREQ_MULTIPLIER[r.frequency]
-        : 0;
+      const equity = parseNum(r.equity);
+      const yieldPct = parseNum(r.yieldPercent);
+      const contributing = equity > 0 && yieldPct > 0;
+      const annual = contributing ? (equity * yieldPct) / 100 : 0;
       const monthly = annual / 12;
-      const yieldPct =
-        invested > 0 && annual > 0 ? (annual / invested) * 100 : null;
-      return { row: r, annual, monthly, yieldPct, contributing };
+      const perPayment = annual / FREQ_MULTIPLIER[r.frequency];
+      return { row: r, annual, monthly, perPayment, yieldPct, contributing };
     });
-    const totalAnnual = per.reduce((sum, p) => sum + p.annual, 0);
-    const totalMonthly = totalAnnual / 12;
     const contributingPer = per.filter((p) => p.contributing);
-    const allHaveInvested =
-      contributingPer.length > 0 &&
-      contributingPer.every((p) => parseNum(p.row.invested) > 0);
-    const totalInvested = contributingPer.reduce(
-      (sum, p) => sum + parseNum(p.row.invested),
+    const totalAnnual = contributingPer.reduce((sum, p) => sum + p.annual, 0);
+    const totalMonthly = totalAnnual / 12;
+    const totalEquity = contributingPer.reduce(
+      (sum, p) => sum + parseNum(p.row.equity),
       0,
     );
     const portfolioYield =
-      allHaveInvested && totalInvested > 0
-        ? (totalAnnual / totalInvested) * 100
+      contributingPer.length > 0 && totalEquity > 0
+        ? (totalAnnual / totalEquity) * 100
         : null;
     return { per, totalAnnual, totalMonthly, portfolioYield };
   }, [rows]);
@@ -158,14 +175,37 @@ export function DividendCalculator() {
 
   const formatNum = (n: number): string => fmt.format(n);
 
+  const monthsNum = useMemo(() => {
+    const n = Math.floor(parseNum(months));
+    if (!Number.isFinite(n) || n < MONTHS_MIN) return DEFAULT_MONTHS_NUM;
+    return Math.min(n, MONTHS_MAX);
+  }, [months]);
+
+  const cashFlowData = useMemo(() => {
+    const buckets = new Array(monthsNum).fill(0) as number[];
+    for (const p of computed.per) {
+      if (!p.contributing) continue;
+      const step = 12 / FREQ_MULTIPLIER[p.row.frequency];
+      for (let m = step; m <= monthsNum; m += step) {
+        const idx = m - 1;
+        if (idx >= 0 && idx < buckets.length) {
+          buckets[idx] += p.perPayment;
+        }
+      }
+    }
+    let running = 0;
+    return buckets.map((v, i) => {
+      running += v;
+      return { month: i + 1, dividend: v, cumulative: running };
+    });
+  }, [computed.per, monthsNum]);
+
   const updateRow = (id: string, patch: Partial<Row>) => {
     setRows((prev) =>
       prev.map((r) => (r.id === id ? { ...r, ...patch } : r)),
     );
   };
-
   const addRow = () => setRows((prev) => [...prev, emptyRow()]);
-
   const removeRow = (id: string) => {
     setRows((prev) =>
       prev.length <= 1 ? prev : prev.filter((r) => r.id !== id),
@@ -183,177 +223,216 @@ export function DividendCalculator() {
   );
 
   const colsGrid =
-    "lg:grid lg:grid-cols-[1.2fr_1fr_1fr_1.3fr_1fr_auto] lg:gap-2 lg:items-center";
+    "lg:grid lg:grid-cols-[1.2fr_1fr_1fr_1fr_1.2fr_auto] lg:gap-2 lg:items-center";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t.inputTitle}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div
-            className={cn(
-              "hidden px-1 text-xs font-medium text-muted-foreground",
-              colsGrid,
-            )}
-          >
-            <span>{t.tickerHeader}</span>
-            <span>{t.sharesHeader}</span>
-            <span>{t.dividendHeader}</span>
-            <span>{t.frequencyHeader}</span>
-            <span>{t.investedHeader}</span>
-            <span className="w-8" />
-          </div>
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t.inputTitle}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div
+              className={cn(
+                "hidden px-1 text-xs font-medium text-muted-foreground",
+                colsGrid,
+              )}
+            >
+              <span>{t.tickerHeader}</span>
+              <span>{t.equityHeader}</span>
+              <span>{t.currentPriceHeader}</span>
+              <span>{t.yieldHeader}</span>
+              <span>{t.frequencyHeader}</span>
+              <span className="w-8" />
+            </div>
 
-          <div className="space-y-3">
-            {rows.map((r) => (
-              <div
-                key={r.id}
-                className={cn(
-                  "flex flex-col gap-2 rounded-lg border border-border p-3",
-                  "lg:border-0 lg:p-0",
-                  colsGrid,
-                )}
-              >
-                <Input
-                  placeholder={t.tickerPlaceholder}
-                  aria-label={t.tickerHeader}
-                  value={r.ticker}
-                  onChange={(e) => updateRow(r.id, { ticker: e.target.value })}
-                />
-                <Input
-                  type="number"
-                  step="any"
-                  inputMode="decimal"
-                  placeholder={t.sharesPlaceholder}
-                  aria-label={t.sharesHeader}
-                  value={r.shares}
-                  onChange={(e) => updateRow(r.id, { shares: e.target.value })}
-                  className="tnum"
-                />
-                <Input
-                  type="number"
-                  step="any"
-                  inputMode="decimal"
-                  placeholder={t.dividendPlaceholder}
-                  aria-label={t.dividendHeader}
-                  value={r.dividend}
-                  onChange={(e) =>
-                    updateRow(r.id, { dividend: e.target.value })
-                  }
-                  className="tnum"
-                />
-                <select
-                  aria-label={t.frequencyHeader}
-                  value={r.frequency}
-                  onChange={(e) => {
-                    if (isFrequency(e.target.value)) {
-                      updateRow(r.id, { frequency: e.target.value });
-                    }
-                  }}
-                  className={selectClass}
+            <div className="space-y-3">
+              {rows.map((r) => (
+                <div
+                  key={r.id}
+                  className={cn(
+                    "flex flex-col gap-2 rounded-lg border border-border p-3",
+                    "lg:border-0 lg:p-0",
+                    colsGrid,
+                  )}
                 >
-                  {FREQUENCIES.map((f) => (
-                    <option key={f} value={f}>
-                      {t.frequencyOptions[f]}
-                    </option>
-                  ))}
-                </select>
-                <Input
-                  type="number"
-                  step="any"
-                  inputMode="decimal"
-                  placeholder={t.investedPlaceholder}
-                  aria-label={t.investedHeader}
-                  value={r.invested}
-                  onChange={(e) =>
-                    updateRow(r.id, { invested: e.target.value })
-                  }
-                  className="tnum"
-                />
-                <div className="flex justify-end lg:justify-center">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeRow(r.id)}
-                    disabled={rows.length <= 1}
-                    aria-label={t.deleteRow}
-                  >
-                    <Trash2 />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <Button variant="outline" onClick={addRow} className="w-full">
-            {t.addRow}
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="self-start lg:sticky lg:top-4">
-        <CardHeader>
-          <CardTitle>{t.resultTitle}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!hasAnyContrib ? (
-            <p className="text-sm text-muted-foreground">{t.emptyHint}</p>
-          ) : (
-            <div className="space-y-6">
-              <dl className="space-y-3">
-                <ResultRow
-                  label={t.monthlyAverage}
-                  value={formatNum(computed.totalMonthly)}
-                />
-                <ResultRow
-                  label={t.annualTotal}
-                  value={formatNum(computed.totalAnnual)}
-                />
-                {computed.portfolioYield !== null && (
-                  <ResultRow
-                    label={t.portfolioYield}
-                    value={`${formatNum(computed.portfolioYield)}%`}
+                  <Input
+                    placeholder={t.tickerPlaceholder}
+                    aria-label={t.tickerHeader}
+                    value={r.ticker}
+                    onChange={(e) =>
+                      updateRow(r.id, { ticker: e.target.value })
+                    }
                   />
-                )}
-              </dl>
+                  <Input
+                    type="number"
+                    step="any"
+                    inputMode="decimal"
+                    placeholder={t.equityPlaceholder}
+                    aria-label={t.equityHeader}
+                    value={r.equity}
+                    onChange={(e) =>
+                      updateRow(r.id, { equity: e.target.value })
+                    }
+                    className="tnum"
+                  />
+                  <Input
+                    type="number"
+                    step="any"
+                    inputMode="decimal"
+                    placeholder={t.currentPricePlaceholder}
+                    aria-label={t.currentPriceHeader}
+                    value={r.currentPrice}
+                    onChange={(e) =>
+                      updateRow(r.id, { currentPrice: e.target.value })
+                    }
+                    className="tnum"
+                  />
+                  <Input
+                    type="number"
+                    step="any"
+                    inputMode="decimal"
+                    placeholder={t.yieldPlaceholder}
+                    aria-label={t.yieldHeader}
+                    value={r.yieldPercent}
+                    onChange={(e) =>
+                      updateRow(r.id, { yieldPercent: e.target.value })
+                    }
+                    className="tnum"
+                  />
+                  <select
+                    aria-label={t.frequencyHeader}
+                    value={r.frequency}
+                    onChange={(e) => {
+                      if (isFrequency(e.target.value)) {
+                        updateRow(r.id, { frequency: e.target.value });
+                      }
+                    }}
+                    className={selectClass}
+                  >
+                    {FREQUENCIES.map((f) => (
+                      <option key={f} value={f}>
+                        {t.frequencyOptions[f]}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex justify-end lg:justify-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeRow(r.id)}
+                      disabled={rows.length <= 1}
+                      aria-label={t.deleteRow}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-              <div className="space-y-2 border-t border-border pt-4">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  {t.breakdownTitle}
-                </h3>
-                <ul className="space-y-1.5 text-sm">
-                  {computed.per
-                    .filter((p) => p.contributing)
-                    .map((p) => {
-                      const tickerLabel =
-                        p.row.ticker.trim() || t.unnamedTicker;
-                      return (
-                        <li
-                          key={p.row.id}
-                          className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5"
-                        >
-                          <span className="font-medium">{tickerLabel}</span>
-                          <span className="text-muted-foreground">—</span>
-                          <span className="tnum">
-                            {t.monthlyShort} {formatNum(p.monthly)}
-                          </span>
-                          <span className="text-muted-foreground">/</span>
-                          <span className="tnum">
-                            {t.annualShort} {formatNum(p.annual)}
-                          </span>
-                          {p.yieldPct !== null && (
+            <Button variant="outline" onClick={addRow} className="w-full">
+              {t.addRow}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="self-start lg:sticky lg:top-4">
+          <CardHeader>
+            <CardTitle>{t.resultTitle}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!hasAnyContrib ? (
+              <p className="text-sm text-muted-foreground">{t.emptyHint}</p>
+            ) : (
+              <div className="space-y-6">
+                <dl className="space-y-3">
+                  <ResultRow
+                    label={t.monthlyAverage}
+                    value={formatNum(computed.totalMonthly)}
+                  />
+                  <ResultRow
+                    label={t.annualTotal}
+                    value={formatNum(computed.totalAnnual)}
+                  />
+                  {computed.portfolioYield !== null && (
+                    <ResultRow
+                      label={t.portfolioYield}
+                      value={`${formatNum(computed.portfolioYield)}%`}
+                    />
+                  )}
+                </dl>
+
+                <div className="space-y-2 border-t border-border pt-4">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    {t.breakdownTitle}
+                  </h3>
+                  <ul className="space-y-1.5 text-sm">
+                    {computed.per
+                      .filter((p) => p.contributing)
+                      .map((p) => {
+                        const tickerLabel =
+                          p.row.ticker.trim() || t.unnamedTicker;
+                        return (
+                          <li
+                            key={p.row.id}
+                            className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5"
+                          >
+                            <span className="font-medium">{tickerLabel}</span>
+                            <span className="text-muted-foreground">—</span>
+                            <span className="tnum">
+                              {t.monthlyShort} {formatNum(p.monthly)}
+                            </span>
+                            <span className="text-muted-foreground">/</span>
+                            <span className="tnum">
+                              {t.annualShort} {formatNum(p.annual)}
+                            </span>
                             <span className="tnum text-muted-foreground">
                               ({t.yieldShort} {formatNum(p.yieldPct)}%)
                             </span>
-                          )}
-                        </li>
-                      );
-                    })}
-                </ul>
+                          </li>
+                        );
+                      })}
+                  </ul>
+                </div>
               </div>
-            </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.cashFlowTitle}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Label htmlFor="cash-flow-months" className="text-sm">
+              {t.monthsLabel}
+            </Label>
+            <Input
+              id="cash-flow-months"
+              type="number"
+              min={MONTHS_MIN}
+              max={MONTHS_MAX}
+              step={1}
+              inputMode="numeric"
+              value={months}
+              onChange={(e) => setMonths(e.target.value)}
+              className="tnum max-w-24"
+            />
+          </div>
+          {!hasAnyContrib ? (
+            <p className="text-sm text-muted-foreground">{t.emptyHint}</p>
+          ) : (
+            <DividendCashFlowChart
+              data={cashFlowData}
+              fmt={fmt}
+              monthLabel={t.monthLabel}
+              dividendLabel={t.dividendLabel}
+              cumulativeLabel={t.cumulativeLabel}
+            />
           )}
         </CardContent>
       </Card>

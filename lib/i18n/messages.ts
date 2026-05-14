@@ -90,14 +90,14 @@ export type Messages = {
       addRow: string;
       deleteRow: string;
       tickerHeader: string;
-      sharesHeader: string;
-      dividendHeader: string;
+      equityHeader: string;
+      currentPriceHeader: string;
+      yieldHeader: string;
       frequencyHeader: string;
-      investedHeader: string;
       tickerPlaceholder: string;
-      sharesPlaceholder: string;
-      dividendPlaceholder: string;
-      investedPlaceholder: string;
+      equityPlaceholder: string;
+      currentPricePlaceholder: string;
+      yieldPlaceholder: string;
       frequencyOptions: {
         monthly: string;
         quarterly: string;
@@ -114,6 +114,11 @@ export type Messages = {
       portfolioYield: string;
       unnamedTicker: string;
       emptyHint: string;
+      cashFlowTitle: string;
+      monthsLabel: string;
+      monthLabel: string;
+      dividendLabel: string;
+      cumulativeLabel: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -212,14 +217,14 @@ export const messages: Record<Locale, Messages> = {
         addRow: "+ 종목 추가",
         deleteRow: "삭제",
         tickerHeader: "종목",
-        sharesHeader: "주식수",
-        dividendHeader: "주당 배당금",
+        equityHeader: "투자금",
+        currentPriceHeader: "현재가",
+        yieldHeader: "배당률 (%)",
         frequencyHeader: "지급 빈도",
-        investedHeader: "투자금 (선택)",
         tickerPlaceholder: "AAPL",
-        sharesPlaceholder: "주식수",
-        dividendPlaceholder: "1회 지급액",
-        investedPlaceholder: "투자금",
+        equityPlaceholder: "투자금",
+        currentPricePlaceholder: "주가",
+        yieldPlaceholder: "yield",
         frequencyOptions: {
           monthly: "매월",
           quarterly: "분기",
@@ -236,6 +241,11 @@ export const messages: Record<Locale, Messages> = {
         portfolioYield: "포트폴리오 yield",
         unnamedTicker: "—",
         emptyHint: "종목을 입력하면 결과가 나타납니다.",
+        cashFlowTitle: "월별 캐시플로우",
+        monthsLabel: "개월 수",
+        monthLabel: "월",
+        dividendLabel: "월 배당",
+        cumulativeLabel: "누적",
       },
     },
     tools: {
@@ -348,14 +358,14 @@ export const messages: Record<Locale, Messages> = {
         addRow: "+ Add holding",
         deleteRow: "Remove",
         tickerHeader: "Ticker",
-        sharesHeader: "Shares",
-        dividendHeader: "Dividend per share",
+        equityHeader: "Equity",
+        currentPriceHeader: "Current Price",
+        yieldHeader: "Yield (%)",
         frequencyHeader: "Frequency",
-        investedHeader: "Invested (optional)",
         tickerPlaceholder: "AAPL",
-        sharesPlaceholder: "Shares",
-        dividendPlaceholder: "Per payment",
-        investedPlaceholder: "Cost",
+        equityPlaceholder: "Cost",
+        currentPricePlaceholder: "Price",
+        yieldPlaceholder: "%",
         frequencyOptions: {
           monthly: "Monthly",
           quarterly: "Quarterly",
@@ -372,6 +382,11 @@ export const messages: Record<Locale, Messages> = {
         portfolioYield: "Portfolio yield",
         unnamedTicker: "—",
         emptyHint: "Enter a holding to see results.",
+        cashFlowTitle: "Monthly Cash Flow",
+        monthsLabel: "Months",
+        monthLabel: "Month",
+        dividendLabel: "Dividend",
+        cumulativeLabel: "Cumulative",
       },
     },
     tools: {
