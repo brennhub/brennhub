@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/tabs";
 import { useMessages } from "@/lib/i18n/provider";
 import { CostBasisCalculator } from "./cost-basis-calculator";
+import { DividendCalculator } from "./dividend-calculator";
 
 export default function StockSimPage() {
   const t = useMessages();
@@ -26,9 +27,15 @@ export default function StockSimPage() {
           <TabsTrigger value="cost-basis">
             {t.stockSim.tabs.costBasis}
           </TabsTrigger>
+          <TabsTrigger value="dividend">
+            {t.stockSim.tabs.dividend}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="cost-basis" className="mt-6">
           <CostBasisCalculator />
+        </TabsContent>
+        <TabsContent value="dividend" className="mt-6">
+          <DividendCalculator />
         </TabsContent>
       </Tabs>
     </main>

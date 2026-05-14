@@ -66,7 +66,7 @@ export type Messages = {
   stockSim: {
     title: string;
     description: string;
-    tabs: { costBasis: string };
+    tabs: { costBasis: string; dividend: string };
     costBasis: {
       inputTitle: string;
       priceHeader: string;
@@ -83,6 +83,36 @@ export type Messages = {
       totalInvest: string;
       currentValue: string;
       pnl: string;
+      emptyHint: string;
+    };
+    dividend: {
+      inputTitle: string;
+      addRow: string;
+      deleteRow: string;
+      tickerHeader: string;
+      sharesHeader: string;
+      dividendHeader: string;
+      frequencyHeader: string;
+      investedHeader: string;
+      tickerPlaceholder: string;
+      sharesPlaceholder: string;
+      dividendPlaceholder: string;
+      investedPlaceholder: string;
+      frequencyOptions: {
+        monthly: string;
+        quarterly: string;
+        semiAnnual: string;
+        annual: string;
+      };
+      resultTitle: string;
+      monthlyAverage: string;
+      annualTotal: string;
+      breakdownTitle: string;
+      monthlyShort: string;
+      annualShort: string;
+      yieldShort: string;
+      portfolioYield: string;
+      unnamedTicker: string;
       emptyHint: string;
     };
   };
@@ -158,7 +188,7 @@ export const messages: Record<Locale, Messages> = {
     stockSim: {
       title: "주식 시뮬레이터",
       description: "투자 결정에 필요한 계산을 한 곳에서",
-      tabs: { costBasis: "평단가" },
+      tabs: { costBasis: "평단가", dividend: "배당" },
       costBasis: {
         inputTitle: "매수 기록",
         priceHeader: "매수가",
@@ -176,6 +206,36 @@ export const messages: Record<Locale, Messages> = {
         currentValue: "현재 자산 가치",
         pnl: "평가 손익",
         emptyHint: "매수 기록을 입력하면 결과가 나타납니다.",
+      },
+      dividend: {
+        inputTitle: "보유 종목",
+        addRow: "+ 종목 추가",
+        deleteRow: "삭제",
+        tickerHeader: "종목",
+        sharesHeader: "주식수",
+        dividendHeader: "주당 배당금",
+        frequencyHeader: "지급 빈도",
+        investedHeader: "투자금 (선택)",
+        tickerPlaceholder: "AAPL",
+        sharesPlaceholder: "주식수",
+        dividendPlaceholder: "1회 지급액",
+        investedPlaceholder: "투자금",
+        frequencyOptions: {
+          monthly: "매월",
+          quarterly: "분기",
+          semiAnnual: "반기",
+          annual: "연 1회",
+        },
+        resultTitle: "결과",
+        monthlyAverage: "월 평균 배당 수익",
+        annualTotal: "연 배당 수익",
+        breakdownTitle: "종목별 내역",
+        monthlyShort: "월",
+        annualShort: "연",
+        yieldShort: "yield",
+        portfolioYield: "포트폴리오 yield",
+        unnamedTicker: "—",
+        emptyHint: "종목을 입력하면 결과가 나타납니다.",
       },
     },
     tools: {
@@ -264,7 +324,7 @@ export const messages: Record<Locale, Messages> = {
     stockSim: {
       title: "Stock Simulator",
       description: "Investment math in one place",
-      tabs: { costBasis: "Cost Basis" },
+      tabs: { costBasis: "Cost Basis", dividend: "Dividends" },
       costBasis: {
         inputTitle: "Purchases",
         priceHeader: "Price",
@@ -282,6 +342,36 @@ export const messages: Record<Locale, Messages> = {
         currentValue: "Current value",
         pnl: "P&L",
         emptyHint: "Enter a purchase to see results.",
+      },
+      dividend: {
+        inputTitle: "Holdings",
+        addRow: "+ Add holding",
+        deleteRow: "Remove",
+        tickerHeader: "Ticker",
+        sharesHeader: "Shares",
+        dividendHeader: "Dividend per share",
+        frequencyHeader: "Frequency",
+        investedHeader: "Invested (optional)",
+        tickerPlaceholder: "AAPL",
+        sharesPlaceholder: "Shares",
+        dividendPlaceholder: "Per payment",
+        investedPlaceholder: "Cost",
+        frequencyOptions: {
+          monthly: "Monthly",
+          quarterly: "Quarterly",
+          semiAnnual: "Semi-annual",
+          annual: "Annual",
+        },
+        resultTitle: "Results",
+        monthlyAverage: "Monthly average",
+        annualTotal: "Annual total",
+        breakdownTitle: "Per holding",
+        monthlyShort: "mo.",
+        annualShort: "yr.",
+        yieldShort: "yield",
+        portfolioYield: "Portfolio yield",
+        unnamedTicker: "—",
+        emptyHint: "Enter a holding to see results.",
       },
     },
     tools: {
