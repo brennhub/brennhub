@@ -11,14 +11,16 @@ import {
   YAxis,
 } from "recharts";
 
-type DataPoint = {
+type SeriesPoint = {
   month: number;
-  dividend: number;
-  cumulative: number;
+  monthPayment: number;
+  totalEquity: number;
+  totalShares: number;
+  cumulativePayment: number;
 };
 
 type Props = {
-  data: DataPoint[];
+  series: SeriesPoint[];
   fmt: Intl.NumberFormat;
   monthLabel: string;
   dividendLabel: string;
@@ -42,7 +44,7 @@ type ChartTooltipProps = {
 };
 
 export function DividendCashFlowChart({
-  data,
+  series,
   fmt,
   monthLabel,
   dividendLabel,
@@ -52,7 +54,7 @@ export function DividendCashFlowChart({
     <div className="h-72 w-full">
       <ResponsiveContainer>
         <ComposedChart
-          data={data}
+          data={series}
           margin={{ top: 10, right: 16, bottom: 0, left: 0 }}
         >
           <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
@@ -82,7 +84,9 @@ export function DividendCashFlowChart({
               <ChartTooltip
                 active={args.active}
                 payload={
-                  args.payload as ReadonlyArray<ChartTooltipPayloadEntry> | undefined
+                  args.payload as
+                    | ReadonlyArray<ChartTooltipPayloadEntry>
+                    | undefined
                 }
                 label={args.label as string | number | undefined}
                 fmt={fmt}
@@ -94,7 +98,7 @@ export function DividendCashFlowChart({
           />
           <Bar
             yAxisId="left"
-            dataKey="dividend"
+            dataKey="monthPayment"
             fill="var(--primary)"
             name={dividendLabel}
             radius={[2, 2, 0, 0]}
@@ -103,7 +107,7 @@ export function DividendCashFlowChart({
           <Line
             yAxisId="right"
             type="monotone"
-            dataKey="cumulative"
+            dataKey="cumulativePayment"
             stroke="var(--muted-foreground)"
             name={cumulativeLabel}
             strokeWidth={2}
@@ -126,8 +130,8 @@ function ChartTooltip({
   cumulativeLabel,
 }: ChartTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
-  const div = payload.find((p) => p.dataKey === "dividend")?.value;
-  const cum = payload.find((p) => p.dataKey === "cumulative")?.value;
+  const div = payload.find((p) => p.dataKey === "monthPayment")?.value;
+  const cum = payload.find((p) => p.dataKey === "cumulativePayment")?.value;
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-sm">
       <div className="font-medium">

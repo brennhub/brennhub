@@ -119,6 +119,14 @@ export type Messages = {
       monthLabel: string;
       dividendLabel: string;
       cumulativeLabel: string;
+      dripLabel: string;
+      monthlyDetailToggle: string;
+      sharesLabel: string;
+      equityLabel: string;
+      summaryTitle: string;
+      totalDividendLabel: string;
+      roiLabel: string;
+      finalEquityLabel: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -246,6 +254,14 @@ export const messages: Record<Locale, Messages> = {
         monthLabel: "월",
         dividendLabel: "월 배당",
         cumulativeLabel: "누적",
+        dripLabel: "DRIP 재투자",
+        monthlyDetailToggle: "월별 상세",
+        sharesLabel: "보유 주식수",
+        equityLabel: "자산 가치",
+        summaryTitle: "요약",
+        totalDividendLabel: "총 배당 수익",
+        roiLabel: "ROI",
+        finalEquityLabel: "최종 자산 가치",
       },
     },
     tools: {
@@ -387,6 +403,14 @@ export const messages: Record<Locale, Messages> = {
         monthLabel: "Month",
         dividendLabel: "Dividend",
         cumulativeLabel: "Cumulative",
+        dripLabel: "DRIP Reinvestment",
+        monthlyDetailToggle: "Monthly Detail",
+        sharesLabel: "Shares",
+        equityLabel: "Equity",
+        summaryTitle: "Summary",
+        totalDividendLabel: "Total Dividends",
+        roiLabel: "ROI",
+        finalEquityLabel: "Final Equity",
       },
     },
     tools: {

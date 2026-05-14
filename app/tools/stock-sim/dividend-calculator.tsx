@@ -5,6 +5,7 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/switch";
 import {
   Card,
   CardContent,
@@ -14,6 +15,7 @@ import {
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 import { DividendCashFlowChart } from "./dividend-cash-flow-chart";
+import { DividendMonthlyDetail } from "./dividend-monthly-detail";
 
 type Frequency = "monthly" | "quarterly" | "semiAnnual" | "annual";
 
@@ -43,6 +45,15 @@ type Row = {
 type StoredState = {
   rows: Row[];
   months?: string;
+  dripEnabled?: boolean;
+};
+
+type SeriesPoint = {
+  month: number;
+  monthPayment: number;
+  totalEquity: number;
+  totalShares: number;
+  cumulativePayment: number;
 };
 
 const STORAGE_KEY = "brennhub:stock-sim:dividend";
@@ -80,7 +91,6 @@ function isFrequency(v: unknown): v is Frequency {
   );
 }
 
-// Migrate stored rows from the older shares/dividend/invested shape.
 function migrateRow(raw: unknown): Row {
   const obj = (raw ?? {}) as Record<string, unknown>;
   const oldInvested = typeof obj.invested === "string" ? obj.invested : "";
@@ -101,6 +111,7 @@ export function DividendCalculator() {
   const { locale } = useLocale();
   const [rows, setRows] = useState<Row[]>(() => [emptyRow()]);
   const [months, setMonths] = useState<string>(DEFAULT_MONTHS);
+  const [dripEnabled, setDripEnabled] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -114,6 +125,9 @@ export function DividendCalculator() {
         if (typeof parsed.months === "string") {
           setMonths(parsed.months);
         }
+        if (typeof parsed.dripEnabled === "boolean") {
+          setDripEnabled(parsed.dripEnabled);
+        }
       }
     } catch {
       // corrupt state — start fresh
@@ -126,19 +140,24 @@ export function DividendCalculator() {
     try {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ rows, months } satisfies StoredState),
+        JSON.stringify({
+          rows,
+          months,
+          dripEnabled,
+        } satisfies StoredState),
       );
     } catch {
       // quota / private mode — in-session only
     }
-  }, [rows, months, hydrated]);
+  }, [rows, months, dripEnabled, hydrated]);
 
+  // Initial-state metrics for the Results card. These are a t=0 snapshot;
+  // they intentionally do not reflect DRIP compounding (the chart + summary do).
   const computed = useMemo(() => {
     type Per = {
       row: Row;
       annual: number;
       monthly: number;
-      perPayment: number;
       yieldPct: number;
       contributing: boolean;
     };
@@ -148,8 +167,7 @@ export function DividendCalculator() {
       const contributing = equity > 0 && yieldPct > 0;
       const annual = contributing ? (equity * yieldPct) / 100 : 0;
       const monthly = annual / 12;
-      const perPayment = annual / FREQ_MULTIPLIER[r.frequency];
-      return { row: r, annual, monthly, perPayment, yieldPct, contributing };
+      return { row: r, annual, monthly, yieldPct, contributing };
     });
     const contributingPer = per.filter((p) => p.contributing);
     const totalAnnual = contributingPer.reduce((sum, p) => sum + p.annual, 0);
@@ -162,7 +180,13 @@ export function DividendCalculator() {
       contributingPer.length > 0 && totalEquity > 0
         ? (totalAnnual / totalEquity) * 100
         : null;
-    return { per, totalAnnual, totalMonthly, portfolioYield };
+    return {
+      per,
+      totalAnnual,
+      totalMonthly,
+      portfolioYield,
+      totalInitialEquity: totalEquity,
+    };
   }, [rows]);
 
   const fmt = useMemo(
@@ -181,24 +205,83 @@ export function DividendCalculator() {
     return Math.min(n, MONTHS_MAX);
   }, [months]);
 
-  const cashFlowData = useMemo(() => {
-    const buckets = new Array(monthsNum).fill(0) as number[];
-    for (const p of computed.per) {
-      if (!p.contributing) continue;
-      const step = 12 / FREQ_MULTIPLIER[p.row.frequency];
-      for (let m = step; m <= monthsNum; m += step) {
-        const idx = m - 1;
-        if (idx >= 0 && idx < buckets.length) {
-          buckets[idx] += p.perPayment;
+  // DRIP-aware time series. Single source for chart, table, and summary.
+  const series = useMemo<SeriesPoint[]>(() => {
+    type RT = {
+      yieldPct: number;
+      currentPrice: number;
+      multiplier: number;
+      step: number;
+      currentEquity: number;
+      currentShares: number;
+      contributing: boolean;
+    };
+    const runtime: RT[] = rows.map((r) => {
+      const equity = parseNum(r.equity);
+      const yieldPct = parseNum(r.yieldPercent);
+      const cp = parseNum(r.currentPrice);
+      const multiplier = FREQ_MULTIPLIER[r.frequency];
+      const step = 12 / multiplier;
+      const contributing = equity > 0 && yieldPct > 0;
+      return {
+        yieldPct,
+        currentPrice: cp,
+        multiplier,
+        step,
+        currentEquity: contributing ? equity : 0,
+        currentShares: contributing && cp > 0 ? equity / cp : 0,
+        contributing,
+      };
+    });
+
+    const points: SeriesPoint[] = [];
+    let cumulative = 0;
+    for (let m = 1; m <= monthsNum; m++) {
+      let monthPayment = 0;
+      for (const rt of runtime) {
+        if (!rt.contributing) continue;
+        if (m % rt.step === 0) {
+          const payment =
+            (rt.currentEquity * rt.yieldPct) / 100 / rt.multiplier;
+          monthPayment += payment;
+          if (dripEnabled) {
+            rt.currentEquity += payment;
+            if (rt.currentPrice > 0) {
+              rt.currentShares += payment / rt.currentPrice;
+            }
+          }
         }
       }
+      cumulative += monthPayment;
+      const totalEquity = runtime.reduce(
+        (s, rt) => s + (rt.contributing ? rt.currentEquity : 0),
+        0,
+      );
+      const totalShares = runtime.reduce(
+        (s, rt) => s + (rt.contributing ? rt.currentShares : 0),
+        0,
+      );
+      points.push({
+        month: m,
+        monthPayment,
+        totalEquity,
+        totalShares,
+        cumulativePayment: cumulative,
+      });
     }
-    let running = 0;
-    return buckets.map((v, i) => {
-      running += v;
-      return { month: i + 1, dividend: v, cumulative: running };
-    });
-  }, [computed.per, monthsNum]);
+    return points;
+  }, [rows, monthsNum, dripEnabled]);
+
+  const summary = useMemo(() => {
+    const last = series[series.length - 1];
+    const totalDividend = last?.cumulativePayment ?? 0;
+    const finalEquity = last?.totalEquity ?? 0;
+    const roi =
+      computed.totalInitialEquity > 0
+        ? (totalDividend / computed.totalInitialEquity) * 100
+        : null;
+    return { totalDividend, roi, finalEquity };
+  }, [series, computed.totalInitialEquity]);
 
   const updateRow = (id: string, patch: Partial<Row>) => {
     setRows((prev) =>
@@ -214,7 +297,6 @@ export function DividendCalculator() {
 
   const hasAnyContrib = computed.per.some((p) => p.contributing);
 
-  // Native <select> styled to match the shared Input component.
   const selectClass = cn(
     "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base md:text-sm",
     "transition-colors outline-none",
@@ -407,32 +489,83 @@ export function DividendCalculator() {
           <CardTitle>{t.cashFlowTitle}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Label htmlFor="cash-flow-months" className="text-sm">
-              {t.monthsLabel}
-            </Label>
-            <Input
-              id="cash-flow-months"
-              type="number"
-              min={MONTHS_MIN}
-              max={MONTHS_MAX}
-              step={1}
-              inputMode="numeric"
-              value={months}
-              onChange={(e) => setMonths(e.target.value)}
-              className="tnum max-w-24"
-            />
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="drip-toggle"
+                checked={dripEnabled}
+                onCheckedChange={setDripEnabled}
+                aria-label={t.dripLabel}
+              />
+              <Label htmlFor="drip-toggle" className="cursor-pointer text-sm">
+                {t.dripLabel}
+              </Label>
+            </div>
+            <div className="flex items-center gap-3">
+              <Label htmlFor="cash-flow-months" className="text-sm">
+                {t.monthsLabel}
+              </Label>
+              <Input
+                id="cash-flow-months"
+                type="number"
+                min={MONTHS_MIN}
+                max={MONTHS_MAX}
+                step={1}
+                inputMode="numeric"
+                value={months}
+                onChange={(e) => setMonths(e.target.value)}
+                className="tnum max-w-24"
+              />
+            </div>
           </div>
+
           {!hasAnyContrib ? (
             <p className="text-sm text-muted-foreground">{t.emptyHint}</p>
           ) : (
-            <DividendCashFlowChart
-              data={cashFlowData}
-              fmt={fmt}
-              monthLabel={t.monthLabel}
-              dividendLabel={t.dividendLabel}
-              cumulativeLabel={t.cumulativeLabel}
-            />
+            <div className="space-y-6">
+              <DividendCashFlowChart
+                series={series}
+                fmt={fmt}
+                monthLabel={t.monthLabel}
+                dividendLabel={t.dividendLabel}
+                cumulativeLabel={t.cumulativeLabel}
+              />
+
+              <div className="space-y-3 border-t border-border pt-4">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  {t.summaryTitle}
+                </h3>
+                <dl className="space-y-3">
+                  <ResultRow
+                    label={t.totalDividendLabel}
+                    value={formatNum(summary.totalDividend)}
+                  />
+                  {summary.roi !== null && (
+                    <ResultRow
+                      label={t.roiLabel}
+                      value={`${formatNum(summary.roi)}%`}
+                    />
+                  )}
+                  {dripEnabled && (
+                    <ResultRow
+                      label={t.finalEquityLabel}
+                      value={formatNum(summary.finalEquity)}
+                    />
+                  )}
+                </dl>
+              </div>
+
+              <DividendMonthlyDetail
+                series={series}
+                fmt={fmt}
+                toggleLabel={t.monthlyDetailToggle}
+                monthLabel={t.monthLabel}
+                sharesLabel={t.sharesLabel}
+                equityLabel={t.equityLabel}
+                dividendLabel={t.dividendLabel}
+                cumulativeLabel={t.cumulativeLabel}
+              />
+            </div>
           )}
         </CardContent>
       </Card>
