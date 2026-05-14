@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Trash2 } from "lucide-react";
+import { Download, Info, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -192,6 +192,7 @@ export function DividendCalculator() {
   const fmt = useMemo(
     () =>
       new Intl.NumberFormat(locale === "ko" ? "ko-KR" : "en-US", {
+        minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),
     [locale],
@@ -282,6 +283,49 @@ export function DividendCalculator() {
         : null;
     return { totalDividend, roi, finalEquity };
   }, [series, computed.totalInitialEquity]);
+
+  const referenceLinks = useMemo(() => {
+    const seen = new Set<string>();
+    const links: Array<{ ticker: string; url: string }> = [];
+    for (const p of computed.per) {
+      if (!p.contributing) continue;
+      const tick = p.row.ticker.trim();
+      if (!tick) continue;
+      const upper = tick.toUpperCase();
+      if (seen.has(upper)) continue;
+      seen.add(upper);
+      links.push({
+        ticker: upper,
+        url: `https://finance.yahoo.com/quote/${encodeURIComponent(tick)}/dividends/`,
+      });
+    }
+    return links;
+  }, [computed.per]);
+
+  const handleExportCsv = () => {
+    const header =
+      "Month,Shares,Equity,Monthly Dividend,Cumulative Dividend";
+    const dataRows = series.map((p) =>
+      [
+        p.month,
+        p.totalShares.toFixed(2),
+        p.totalEquity.toFixed(2),
+        p.monthPayment.toFixed(2),
+        p.cumulativePayment.toFixed(2),
+      ].join(","),
+    );
+    const csv = [header, ...dataRows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const today = new Date().toISOString().slice(0, 10);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dividend-cashflow-${today}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const updateRow = (id: string, patch: Partial<Row>) => {
     setRows((prev) =>
@@ -500,6 +544,16 @@ export function DividendCalculator() {
               <Label htmlFor="drip-toggle" className="cursor-pointer text-sm">
                 {t.dripLabel}
               </Label>
+              <button
+                type="button"
+                className="group relative inline-flex"
+                aria-label={t.dripTooltip}
+              >
+                <Info className="size-3.5 cursor-help text-muted-foreground" />
+                <span className="pointer-events-none invisible absolute left-1/2 top-full z-10 mt-2 w-64 max-w-[80vw] -translate-x-1/2 rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100">
+                  {t.dripTooltip}
+                </span>
+              </button>
             </div>
             <div className="flex items-center gap-3">
               <Label htmlFor="cash-flow-months" className="text-sm">
@@ -527,14 +581,25 @@ export function DividendCalculator() {
                 series={series}
                 fmt={fmt}
                 monthLabel={t.monthLabel}
+                monthAxisLabel={t.monthAxisLabel}
                 dividendLabel={t.dividendLabel}
                 cumulativeLabel={t.cumulativeLabel}
               />
 
               <div className="space-y-3 border-t border-border pt-4">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  {t.summaryTitle}
-                </h3>
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    {t.summaryTitle}
+                  </h3>
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    onClick={handleExportCsv}
+                  >
+                    <Download />
+                    {t.exportCsvLabel}
+                  </Button>
+                </div>
                 <dl className="space-y-3">
                   <ResultRow
                     label={t.totalDividendLabel}
@@ -565,6 +630,34 @@ export function DividendCalculator() {
                 dividendLabel={t.dividendLabel}
                 cumulativeLabel={t.cumulativeLabel}
               />
+
+              <div className="space-y-3 border-t border-border pt-4 text-sm">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  {t.helpTitle}
+                </h3>
+                <p className="leading-relaxed">{t.exDateExplanation}</p>
+                {referenceLinks.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-medium text-muted-foreground">
+                      {t.referenceLinksTitle}
+                    </h4>
+                    <ul className="space-y-1">
+                      {referenceLinks.map((link) => (
+                        <li key={link.ticker}>
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {link.ticker} — Yahoo Finance ↗
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </CardContent>

@@ -1,15 +1,18 @@
 "use client";
 
 import {
+  Area,
   Bar,
   CartesianGrid,
   ComposedChart,
-  Line,
+  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+
+const CHART_BAR_COLOR = "var(--color-chart-bar)";
 
 type SeriesPoint = {
   month: number;
@@ -23,6 +26,7 @@ type Props = {
   series: SeriesPoint[];
   fmt: Intl.NumberFormat;
   monthLabel: string;
+  monthAxisLabel: string;
   dividendLabel: string;
   cumulativeLabel: string;
 };
@@ -47,11 +51,12 @@ export function DividendCashFlowChart({
   series,
   fmt,
   monthLabel,
+  monthAxisLabel,
   dividendLabel,
   cumulativeLabel,
 }: Props) {
   return (
-    <div className="h-72 w-full">
+    <div className="h-80 w-full">
       <ResponsiveContainer>
         <ComposedChart
           data={series}
@@ -62,13 +67,21 @@ export function DividendCashFlowChart({
             dataKey="month"
             tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
             stroke="var(--border)"
+            label={{
+              value: monthAxisLabel,
+              position: "insideBottom",
+              offset: -2,
+              fontSize: 11,
+              fill: "var(--muted-foreground)",
+            }}
+            height={42}
           />
           <YAxis
             yAxisId="left"
             tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
             stroke="var(--border)"
             tickFormatter={(v) => fmt.format(v as number)}
-            width={56}
+            width={64}
           />
           <YAxis
             yAxisId="right"
@@ -76,7 +89,7 @@ export function DividendCashFlowChart({
             tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
             stroke="var(--border)"
             tickFormatter={(v) => fmt.format(v as number)}
-            width={56}
+            width={64}
           />
           <Tooltip
             cursor={{ fill: "var(--muted)", opacity: 0.5 }}
@@ -96,22 +109,28 @@ export function DividendCashFlowChart({
               />
             )}
           />
+          <Legend
+            verticalAlign="bottom"
+            iconType="rect"
+            wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
+          />
           <Bar
             yAxisId="left"
             dataKey="monthPayment"
-            fill="var(--primary)"
+            fill={CHART_BAR_COLOR}
             name={dividendLabel}
             radius={[2, 2, 0, 0]}
             isAnimationActive={false}
           />
-          <Line
+          <Area
             yAxisId="right"
             type="monotone"
             dataKey="cumulativePayment"
-            stroke="var(--muted-foreground)"
-            name={cumulativeLabel}
+            stroke={CHART_BAR_COLOR}
+            fill={CHART_BAR_COLOR}
+            fillOpacity={0.2}
             strokeWidth={2}
-            dot={false}
+            name={cumulativeLabel}
             isAnimationActive={false}
           />
         </ComposedChart>
@@ -134,17 +153,27 @@ function ChartTooltip({
   const cum = payload.find((p) => p.dataKey === "cumulativePayment")?.value;
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-sm">
-      <div className="font-medium">
+      <div className="mb-1 font-medium">
         {monthLabel} {label}
       </div>
       {typeof div === "number" && (
-        <div className="tnum">
-          {dividendLabel}: {fmt.format(div)}
+        <div className="tnum flex items-center gap-2">
+          <span
+            className="inline-block size-2 rounded-sm"
+            style={{ background: CHART_BAR_COLOR }}
+          />
+          <span className="text-muted-foreground">{dividendLabel}:</span>
+          <span>{fmt.format(div)}</span>
         </div>
       )}
       {typeof cum === "number" && (
-        <div className="tnum text-muted-foreground">
-          {cumulativeLabel}: {fmt.format(cum)}
+        <div className="tnum flex items-center gap-2">
+          <span
+            className="inline-block size-2 rounded-sm"
+            style={{ background: CHART_BAR_COLOR, opacity: 0.4 }}
+          />
+          <span className="text-muted-foreground">{cumulativeLabel}:</span>
+          <span>{fmt.format(cum)}</span>
         </div>
       )}
     </div>

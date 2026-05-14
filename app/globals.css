@@ -133,6 +133,12 @@
   --color-gain: #dc2626; /* red-600 */
   --color-loss: #2563eb; /* blue-600 */
 }
+
+:root {
+  /* Chart accent — used by the dividend cash-flow Bar+Area in stock-sim.
+     Single value works in both light and dark modes (blue-500). */
+  --color-chart-bar: oklch(0.623 0.214 259.815);
+}
 :root[data-locale="en"] {
   --color-gain: #16a34a; /* green-600 */
   --color-loss: #dc2626; /* red-600 */

@@ -127,6 +127,12 @@ export type Messages = {
       totalDividendLabel: string;
       roiLabel: string;
       finalEquityLabel: string;
+      dripTooltip: string;
+      monthAxisLabel: string;
+      helpTitle: string;
+      exDateExplanation: string;
+      referenceLinksTitle: string;
+      exportCsvLabel: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -254,7 +260,7 @@ export const messages: Record<Locale, Messages> = {
         monthLabel: "월",
         dividendLabel: "월 배당",
         cumulativeLabel: "누적",
-        dripLabel: "DRIP 재투자",
+        dripLabel: "배당 재투자",
         monthlyDetailToggle: "월별 상세",
         sharesLabel: "보유 주식수",
         equityLabel: "자산 가치",
@@ -262,6 +268,14 @@ export const messages: Record<Locale, Messages> = {
         totalDividendLabel: "총 배당 수익",
         roiLabel: "ROI",
         finalEquityLabel: "최종 자산 가치",
+        dripTooltip:
+          "배당금을 같은 종목에 자동 재투자해서 주식수를 늘리는 전략 (DRIP). 복리 효과로 장기 수익률이 커집니다.",
+        monthAxisLabel: "월",
+        helpTitle: "도움말",
+        exDateExplanation:
+          "배당락일 (Ex-Date) — 이 날짜 전 거래일 장 마감까지 주식을 보유해야 다음 배당을 받을 수 있습니다.",
+        referenceLinksTitle: "종목별 참고 링크",
+        exportCsvLabel: "CSV로 내보내기",
       },
     },
     tools: {
@@ -403,7 +417,7 @@ export const messages: Record<Locale, Messages> = {
         monthLabel: "Month",
         dividendLabel: "Dividend",
         cumulativeLabel: "Cumulative",
-        dripLabel: "DRIP Reinvestment",
+        dripLabel: "Reinvest Dividends",
         monthlyDetailToggle: "Monthly Detail",
         sharesLabel: "Shares",
         equityLabel: "Equity",
@@ -411,6 +425,14 @@ export const messages: Record<Locale, Messages> = {
         totalDividendLabel: "Total Dividends",
         roiLabel: "ROI",
         finalEquityLabel: "Final Equity",
+        dripTooltip:
+          "Automatically reinvests dividends to buy more shares (DRIP). Compounds growth over time.",
+        monthAxisLabel: "Month",
+        helpTitle: "Help",
+        exDateExplanation:
+          "Ex-Date — You must own the stock by market close the trading day before this date to receive the next dividend.",
+        referenceLinksTitle: "Reference Links",
+        exportCsvLabel: "Export CSV",
       },
     },
     tools: {
