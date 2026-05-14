@@ -44,6 +44,12 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Keep <html data-locale> in sync so locale-conditioned CSS variables
+  // (e.g. --color-gain / --color-loss) update on toggle.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-locale", locale);
+  }, [locale]);
+
   const setLocale = (l: Locale) => {
     setLocaleState(l);
     try {

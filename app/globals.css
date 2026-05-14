@@ -1,13 +1,21 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Pretendard is loaded via <link> in app/layout.tsx — keeping it as a real
+   stylesheet link avoids the CSS @import-must-be-first rule after Tailwind
+   inlines its own bundle. */
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --color-gain: var(--color-gain);
+  --color-loss: var(--color-loss);
+  --font-sans:
+    "Pretendard Variable", Pretendard, var(--font-geist-sans), -apple-system,
+    BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR",
+    "Malgun Gothic", sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -117,6 +125,19 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Locale-aware gain/loss tokens. Korean convention: red = up, blue = down.
+   Western convention: green = up, red = down. The <html data-locale> attribute
+   is set by app/layout.tsx (SSR default) and updated by LocaleProvider. */
+:root,
+:root[data-locale="ko"] {
+  --color-gain: #dc2626; /* red-600 */
+  --color-loss: #2563eb; /* blue-600 */
+}
+:root[data-locale="en"] {
+  --color-gain: #16a34a; /* green-600 */
+  --color-loss: #dc2626; /* red-600 */
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -126,5 +147,11 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .tnum {
+    font-variant-numeric: tabular-nums;
   }
 }

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LocaleProvider } from "@/lib/i18n/provider";
 import { LocaleToggle } from "@/components/locale-toggle";
+import { DEFAULT_LOCALE } from "@/lib/i18n/types";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,8 +28,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-locale={DEFAULT_LOCALE}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css"
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-zinc-50 dark:bg-zinc-950">
         <LocaleProvider>
           <header className="flex justify-end px-4 pt-4 sm:px-6">

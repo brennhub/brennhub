@@ -5,7 +5,7 @@
 
 ## Cross-cutting (인프라/패턴)
 
-- (없음)
+- **Pretendard: next/font/local + 자체호스팅 woff2로 마이그레이션 검토** — CDN `@import`는 render-blocking이라 트래픽 의미 있게 늘면 LCP 개선용으로 도입.
 
 ## 도구별
 
