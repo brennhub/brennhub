@@ -20,4 +20,10 @@ export const tools: Tool[] = [
     status: "live",
     createdAt: "2026-05-12",
   },
+  {
+    id: "stock-sim",
+    slug: "stock-sim",
+    status: "live",
+    createdAt: "2026-05-14",
+  },
 ];

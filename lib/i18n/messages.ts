@@ -63,6 +63,29 @@ export type Messages = {
     timezoneLabel: string;
     timezoneNote: string;
   };
+  stockSim: {
+    title: string;
+    description: string;
+    tabs: { costBasis: string };
+    costBasis: {
+      inputTitle: string;
+      priceHeader: string;
+      qtyHeader: string;
+      pricePlaceholder: string;
+      qtyPlaceholder: string;
+      deleteRow: string;
+      addRow: string;
+      currentPriceLabel: string;
+      currentPricePlaceholder: string;
+      resultTitle: string;
+      avgPrice: string;
+      totalQty: string;
+      totalInvest: string;
+      currentValue: string;
+      pnl: string;
+      emptyHint: string;
+    };
+  };
   tools: Record<string, { name: string; description: string }>;
 };
 
@@ -132,6 +155,29 @@ export const messages: Record<Locale, Messages> = {
       timezoneNote:
         "cron 표현식은 시간대가 없습니다. 실제 실행 시각은 스케줄러에 따라 다릅니다 (GitHub Actions / Vercel은 UTC, Linux crontab은 시스템 로컬 시간).",
     },
+    stockSim: {
+      title: "주식 시뮬레이터",
+      description: "투자 결정에 필요한 계산을 한 곳에서",
+      tabs: { costBasis: "평단가" },
+      costBasis: {
+        inputTitle: "매수 기록",
+        priceHeader: "매수가",
+        qtyHeader: "수량",
+        pricePlaceholder: "가격",
+        qtyPlaceholder: "수량",
+        deleteRow: "삭제",
+        addRow: "+ 매수 추가",
+        currentPriceLabel: "현재가 (선택)",
+        currentPricePlaceholder: "현재 시장가",
+        resultTitle: "결과",
+        avgPrice: "평균 매수가",
+        totalQty: "총 보유 수량",
+        totalInvest: "총 투자금",
+        currentValue: "현재 자산 가치",
+        pnl: "평가 손익",
+        emptyHint: "매수 기록을 입력하면 결과가 나타납니다.",
+      },
+    },
     tools: {
       "email-diag": {
         name: "이메일 발송 진단기",
@@ -140,6 +186,10 @@ export const messages: Record<Locale, Messages> = {
       "cron-trans": {
         name: "Cron 변환기",
         description: "cron 식과 자연어를 양방향 변환합니다",
+      },
+      "stock-sim": {
+        name: "주식 시뮬레이터",
+        description: "투자 결정에 필요한 계산을 한 곳에서",
       },
     },
   },
@@ -211,6 +261,29 @@ export const messages: Record<Locale, Messages> = {
       timezoneNote:
         "Cron expressions are timezone-agnostic. Actual execution time depends on your scheduler (GitHub Actions / Vercel use UTC, Linux crontab uses system local time).",
     },
+    stockSim: {
+      title: "Stock Simulator",
+      description: "Investment math in one place",
+      tabs: { costBasis: "Cost Basis" },
+      costBasis: {
+        inputTitle: "Purchases",
+        priceHeader: "Price",
+        qtyHeader: "Qty",
+        pricePlaceholder: "Price",
+        qtyPlaceholder: "Qty",
+        deleteRow: "Remove",
+        addRow: "+ Add purchase",
+        currentPriceLabel: "Current price (optional)",
+        currentPricePlaceholder: "Market price",
+        resultTitle: "Results",
+        avgPrice: "Average price",
+        totalQty: "Total shares",
+        totalInvest: "Total invested",
+        currentValue: "Current value",
+        pnl: "P&L",
+        emptyHint: "Enter a purchase to see results.",
+      },
+    },
     tools: {
       "email-diag": {
         name: "Email Sender Diagnostics",
@@ -219,6 +292,10 @@ export const messages: Record<Locale, Messages> = {
       "cron-trans": {
         name: "Cron Converter",
         description: "Convert between cron expressions and plain English",
+      },
+      "stock-sim": {
+        name: "Stock Simulator",
+        description: "Investment math in one place",
       },
     },
   },
