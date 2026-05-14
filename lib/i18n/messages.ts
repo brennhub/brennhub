@@ -115,7 +115,6 @@ export type Messages = {
       unnamedTicker: string;
       emptyHint: string;
       cashFlowTitle: string;
-      monthsLabel: string;
       monthLabel: string;
       dividendLabel: string;
       cumulativeLabel: string;
@@ -133,6 +132,13 @@ export type Messages = {
       exDateExplanation: string;
       referenceLinksTitle: string;
       exportCsvLabel: string;
+      periodLabel: string;
+      yearsUnit: string;
+      monthlyYieldLabel: string;
+      cumulativeYieldLabel: string;
+      resetLabel: string;
+      resetConfirm: string;
+      perTickerTitle: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -256,7 +262,6 @@ export const messages: Record<Locale, Messages> = {
         unnamedTicker: "—",
         emptyHint: "종목을 입력하면 결과가 나타납니다.",
         cashFlowTitle: "월별 캐시플로우",
-        monthsLabel: "개월 수",
         monthLabel: "월",
         dividendLabel: "월 배당",
         cumulativeLabel: "누적",
@@ -276,6 +281,14 @@ export const messages: Record<Locale, Messages> = {
           "배당락일 (Ex-Date) — 이 날짜 전 거래일 장 마감까지 주식을 보유해야 다음 배당을 받을 수 있습니다.",
         referenceLinksTitle: "종목별 참고 링크",
         exportCsvLabel: "CSV로 내보내기",
+        periodLabel: "기간",
+        yearsUnit: "년",
+        monthlyYieldLabel: "매월 수익률",
+        cumulativeYieldLabel: "누적 수익률",
+        resetLabel: "초기화",
+        resetConfirm:
+          "모든 종목 입력을 지우시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+        perTickerTitle: "종목별 상세",
       },
     },
     tools: {
@@ -413,7 +426,6 @@ export const messages: Record<Locale, Messages> = {
         unnamedTicker: "—",
         emptyHint: "Enter a holding to see results.",
         cashFlowTitle: "Monthly Cash Flow",
-        monthsLabel: "Months",
         monthLabel: "Month",
         dividendLabel: "Dividend",
         cumulativeLabel: "Cumulative",
@@ -433,6 +445,13 @@ export const messages: Record<Locale, Messages> = {
           "Ex-Date — You must own the stock by market close the trading day before this date to receive the next dividend.",
         referenceLinksTitle: "Reference Links",
         exportCsvLabel: "Export CSV",
+        periodLabel: "Period",
+        yearsUnit: "yr",
+        monthlyYieldLabel: "Monthly Yield",
+        cumulativeYieldLabel: "Cumulative Yield",
+        resetLabel: "Reset",
+        resetConfirm: "Clear all stock entries? This cannot be undone.",
+        perTickerTitle: "Per-Ticker Detail",
       },
     },
     tools: {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Download, Info, Trash2 } from "lucide-react";
+import { Download, Info, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +14,12 @@ import {
 } from "@/components/ui/card";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
-import { DividendCashFlowChart } from "./dividend-cash-flow-chart";
+import {
+  CHART_PALETTE,
+  DividendCashFlowChart,
+} from "./dividend-cash-flow-chart";
 import { DividendMonthlyDetail } from "./dividend-monthly-detail";
+import { DividendPerTicker } from "./dividend-per-ticker";
 
 type Frequency = "monthly" | "quarterly" | "semiAnnual" | "annual";
 
@@ -55,13 +59,19 @@ type SeriesPoint = {
   totalShares: number;
   cumulativePayment: number;
   payments: Record<string, number>;
+  equities: Record<string, number>;
+  monthlyYieldPct: number;
+  cumulativeYieldPct: number;
 };
 
 const STORAGE_KEY = "brennhub:stock-sim:dividend";
 const DEFAULT_MONTHS = "12";
 const DEFAULT_MONTHS_NUM = 12;
 const MONTHS_MIN = 1;
-const MONTHS_MAX = 60;
+const MONTHS_MAX = 360; // 30 years
+const PERIOD_MIN_YEARS = 0.5;
+const PERIOD_MAX_YEARS = 30;
+const QUICK_PERIOD_YEARS: readonly number[] = [1, 3, 5, 10, 20, 30] as const;
 
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -112,6 +122,9 @@ export function DividendCalculator() {
   const { locale } = useLocale();
   const [rows, setRows] = useState<Row[]>(() => [emptyRow()]);
   const [months, setMonths] = useState<string>(DEFAULT_MONTHS);
+  const [periodInputStr, setPeriodInputStr] = useState<string>(() =>
+    String(DEFAULT_MONTHS_NUM / 12),
+  );
   const [dripEnabled, setDripEnabled] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
 
@@ -125,6 +138,10 @@ export function DividendCalculator() {
         }
         if (typeof parsed.months === "string") {
           setMonths(parsed.months);
+          const m = parseNum(parsed.months);
+          if (Number.isFinite(m) && m > 0) {
+            setPeriodInputStr(String(m / 12));
+          }
         }
         if (typeof parsed.dripEnabled === "boolean") {
           setDripEnabled(parsed.dripEnabled);
@@ -238,6 +255,7 @@ export function DividendCalculator() {
       };
     });
 
+    const initialEquity = computed.totalInitialEquity;
     const points: SeriesPoint[] = [];
     let cumulative = 0;
     for (let m = 1; m <= monthsNum; m++) {
@@ -260,6 +278,10 @@ export function DividendCalculator() {
         payments[rt.id] = payment;
       }
       cumulative += monthPayment;
+      const equities: Record<string, number> = {};
+      for (const rt of runtime) {
+        if (rt.contributing) equities[rt.id] = rt.currentEquity;
+      }
       const totalEquity = runtime.reduce(
         (s, rt) => s + (rt.contributing ? rt.currentEquity : 0),
         0,
@@ -268,6 +290,10 @@ export function DividendCalculator() {
         (s, rt) => s + (rt.contributing ? rt.currentShares : 0),
         0,
       );
+      const monthlyYieldPct =
+        initialEquity > 0 ? (monthPayment / initialEquity) * 100 : 0;
+      const cumulativeYieldPct =
+        initialEquity > 0 ? (cumulative / initialEquity) * 100 : 0;
       points.push({
         month: m,
         monthPayment,
@@ -275,10 +301,13 @@ export function DividendCalculator() {
         totalShares,
         cumulativePayment: cumulative,
         payments,
+        equities,
+        monthlyYieldPct,
+        cumulativeYieldPct,
       });
     }
     return points;
-  }, [rows, monthsNum, dripEnabled]);
+  }, [rows, monthsNum, dripEnabled, computed.totalInitialEquity]);
 
   const summary = useMemo(() => {
     const last = series[series.length - 1];
@@ -304,6 +333,28 @@ export function DividendCalculator() {
       });
   }, [computed.per]);
 
+  // Per-ticker detail card data. Pulls final equity from the last series
+  // point so the card reflects DRIP compounding when enabled.
+  const perTickerCards = useMemo(() => {
+    const lastEquities = series[series.length - 1]?.equities ?? {};
+    return contributingBars.map((bar, idx) => {
+      const per = computed.per.find((p) => p.row.id === bar.id);
+      const initialEquity = per ? parseNum(per.row.equity) : 0;
+      return {
+        id: bar.id,
+        label: bar.label,
+        color: CHART_PALETTE[idx % CHART_PALETTE.length],
+        equity: initialEquity,
+        monthly: per?.monthly ?? 0,
+        annual: per?.annual ?? 0,
+        yieldPct: per?.yieldPct ?? 0,
+        finalEquity: dripEnabled
+          ? (lastEquities[bar.id] ?? initialEquity)
+          : null,
+      };
+    });
+  }, [contributingBars, computed.per, series, dripEnabled]);
+
   const referenceLinks = useMemo(() => {
     const seen = new Set<string>();
     const links: Array<{ ticker: string; url: string }> = [];
@@ -324,7 +375,7 @@ export function DividendCalculator() {
 
   const handleExportCsv = () => {
     const header =
-      "Month,Shares,Equity,Monthly Dividend,Cumulative Dividend";
+      "Month,Shares,Equity,Monthly Dividend,Cumulative Dividend,Monthly Yield (%),Cumulative Yield (%)";
     const dataRows = series.map((p) =>
       [
         p.month,
@@ -332,6 +383,8 @@ export function DividendCalculator() {
         p.totalEquity.toFixed(2),
         p.monthPayment.toFixed(2),
         p.cumulativePayment.toFixed(2),
+        p.monthlyYieldPct.toFixed(2),
+        p.cumulativeYieldPct.toFixed(2),
       ].join(","),
     );
     const csv = [header, ...dataRows].join("\n");
@@ -345,6 +398,29 @@ export function DividendCalculator() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleReset = () => {
+    if (window.confirm(t.resetConfirm)) {
+      setRows([emptyRow()]);
+    }
+  };
+
+  const handlePeriodInputChange = (raw: string) => {
+    setPeriodInputStr(raw);
+    if (raw === "") {
+      setMonths("");
+      return;
+    }
+    const y = parseFloat(raw);
+    if (!Number.isFinite(y)) return;
+    const clamped = Math.min(Math.max(y, PERIOD_MIN_YEARS), PERIOD_MAX_YEARS);
+    setMonths(String(Math.round(clamped * 12)));
+  };
+
+  const handleChipClick = (years: number) => {
+    setMonths(String(years * 12));
+    setPeriodInputStr(String(years));
   };
 
   const updateRow = (id: string, patch: Partial<Row>) => {
@@ -376,7 +452,13 @@ export function DividendCalculator() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>{t.inputTitle}</CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>{t.inputTitle}</CardTitle>
+              <Button variant="ghost" size="xs" onClick={handleReset}>
+                <RotateCcw />
+                {t.resetLabel}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div
@@ -548,6 +630,19 @@ export function DividendCalculator() {
         </Card>
       </div>
 
+      {hasAnyContrib && perTickerCards.length >= 2 && (
+        <DividendPerTicker
+          tickers={perTickerCards}
+          fmt={fmt}
+          title={t.perTickerTitle}
+          equityLabel={t.equityHeader}
+          monthlyLabel={t.monthlyAverage}
+          annualLabel={t.annualTotal}
+          yieldLabel={t.yieldShort}
+          finalEquityLabel={t.finalEquityLabel}
+        />
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>{t.cashFlowTitle}</CardTitle>
@@ -575,21 +670,41 @@ export function DividendCalculator() {
                 </span>
               </button>
             </div>
-            <div className="flex items-center gap-3">
-              <Label htmlFor="cash-flow-months" className="text-sm">
-                {t.monthsLabel}
+            <div className="flex flex-wrap items-center gap-2">
+              <Label htmlFor="cash-flow-period" className="text-sm">
+                {t.periodLabel}
               </Label>
               <Input
-                id="cash-flow-months"
+                id="cash-flow-period"
                 type="number"
-                min={MONTHS_MIN}
-                max={MONTHS_MAX}
-                step={1}
-                inputMode="numeric"
-                value={months}
-                onChange={(e) => setMonths(e.target.value)}
-                className="tnum max-w-24"
+                min={PERIOD_MIN_YEARS}
+                max={PERIOD_MAX_YEARS}
+                step={0.5}
+                inputMode="decimal"
+                value={periodInputStr}
+                onChange={(e) => handlePeriodInputChange(e.target.value)}
+                className="tnum max-w-20"
               />
+              <span className="text-xs text-muted-foreground">
+                {t.yearsUnit}
+              </span>
+              <div className="ml-1 flex flex-wrap gap-1">
+                {QUICK_PERIOD_YEARS.map((y) => {
+                  const active = Math.abs(monthsNum - y * 12) < 0.5;
+                  return (
+                    <Button
+                      key={y}
+                      type="button"
+                      variant={active ? "default" : "outline"}
+                      size="xs"
+                      onClick={() => handleChipClick(y)}
+                    >
+                      {y}
+                      {t.yearsUnit}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -650,6 +765,8 @@ export function DividendCalculator() {
                 equityLabel={t.equityLabel}
                 dividendLabel={t.dividendLabel}
                 cumulativeLabel={t.cumulativeLabel}
+                monthlyYieldLabel={t.monthlyYieldLabel}
+                cumulativeYieldLabel={t.cumulativeYieldLabel}
               />
 
               <div className="space-y-3 border-t border-border pt-4 text-sm">

@@ -6,6 +6,8 @@ type SeriesPoint = {
   totalEquity: number;
   totalShares: number;
   cumulativePayment: number;
+  monthlyYieldPct: number;
+  cumulativeYieldPct: number;
 };
 
 type Props = {
@@ -17,6 +19,8 @@ type Props = {
   equityLabel: string;
   dividendLabel: string;
   cumulativeLabel: string;
+  monthlyYieldLabel: string;
+  cumulativeYieldLabel: string;
 };
 
 export function DividendMonthlyDetail({
@@ -28,6 +32,8 @@ export function DividendMonthlyDetail({
   equityLabel,
   dividendLabel,
   cumulativeLabel,
+  monthlyYieldLabel,
+  cumulativeYieldLabel,
 }: Props) {
   return (
     <details className="group rounded-lg border border-border">
@@ -38,7 +44,7 @@ export function DividendMonthlyDetail({
         {toggleLabel}
       </summary>
       <div className="overflow-x-auto border-t border-border">
-        <table className="w-full min-w-[480px] text-sm">
+        <table className="w-full min-w-[720px] text-sm">
           <thead className="bg-muted/40 text-xs text-muted-foreground">
             <tr>
               <th className="px-3 py-2 text-left font-medium">{monthLabel}</th>
@@ -49,6 +55,12 @@ export function DividendMonthlyDetail({
               </th>
               <th className="px-3 py-2 text-right font-medium">
                 {cumulativeLabel}
+              </th>
+              <th className="px-3 py-2 text-right font-medium">
+                {monthlyYieldLabel}
+              </th>
+              <th className="px-3 py-2 text-right font-medium">
+                {cumulativeYieldLabel}
               </th>
             </tr>
           </thead>
@@ -67,6 +79,12 @@ export function DividendMonthlyDetail({
                 </td>
                 <td className="tnum px-3 py-1.5 text-right">
                   {fmt.format(p.cumulativePayment)}
+                </td>
+                <td className="tnum px-3 py-1.5 text-right">
+                  {fmt.format(p.monthlyYieldPct)}%
+                </td>
+                <td className="tnum px-3 py-1.5 text-right">
+                  {fmt.format(p.cumulativeYieldPct)}%
                 </td>
               </tr>
             ))}

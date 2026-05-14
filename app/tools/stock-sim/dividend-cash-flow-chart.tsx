@@ -18,7 +18,7 @@ const CHART_BAR_COLOR = "var(--color-chart-bar)";
 // Tailwind 500-series hex. Bars cycle through this palette by index when
 // there are multiple tickers. Index 0 is blue-500 (same as --color-chart-bar)
 // so single-ticker visuals stay consistent.
-const CHART_PALETTE: readonly string[] = [
+export const CHART_PALETTE: readonly string[] = [
   "#3b82f6", // blue-500
   "#10b981", // emerald-500
   "#f59e0b", // amber-500
@@ -29,6 +29,9 @@ const CHART_PALETTE: readonly string[] = [
   "#ec4899", // pink-500
 ] as const;
 
+const ROTATE_THRESHOLD = 60;
+const NEAR_ZERO = 0.005;
+
 type SeriesPoint = {
   month: number;
   monthPayment: number;
@@ -36,6 +39,9 @@ type SeriesPoint = {
   totalShares: number;
   cumulativePayment: number;
   payments: Record<string, number>;
+  equities: Record<string, number>;
+  monthlyYieldPct: number;
+  cumulativeYieldPct: number;
 };
 
 type BarMeta = { id: string; label: string };
@@ -90,23 +96,7 @@ export function DividendCashFlowChart({
     return { year: now.getFullYear(), month: now.getMonth() };
   }, []);
 
-  // Explicit tick list so January months (where year labels appear) are
-  // always rendered. Recharts default tick density would sometimes skip them.
-  const xTicks = useMemo<number[] | undefined>(() => {
-    const N = series.length;
-    if (N === 0) return undefined;
-    if (N <= 12) {
-      return Array.from({ length: N }, (_, i) => i + 1);
-    }
-    const set = new Set<number>([1, N]);
-    const stride = N <= 24 ? 3 : N <= 36 ? 6 : 12;
-    for (let m = 1 + stride; m <= N; m += stride) set.add(m);
-    for (let m = 1; m <= N; m++) {
-      const total = startDate.month + (m - 1);
-      if (total % 12 === 0) set.add(m);
-    }
-    return Array.from(set).sort((a, b) => a - b);
-  }, [series.length, startDate]);
+  const rotated = series.length >= ROTATE_THRESHOLD;
 
   const renderXTick = (props: XTickProps) => {
     const x = typeof props.x === "number" ? props.x : Number(props.x ?? 0);
@@ -116,7 +106,39 @@ export function DividendCashFlowChart({
     if (!Number.isFinite(idx)) return <g />;
     const total = startDate.month + (idx - 1);
     const year = startDate.year + Math.floor(total / 12);
-    const calMonth = ((total % 12) + 12) % 12; // safe modulo
+    const calMonth = ((total % 12) + 12) % 12;
+
+    if (rotated) {
+      return (
+        <g transform={`translate(${x},${y})`}>
+          <text
+            x={0}
+            y={0}
+            dy={6}
+            textAnchor="end"
+            transform="rotate(-45)"
+            fill="var(--muted-foreground)"
+            fontSize="10"
+          >
+            {idx}
+          </text>
+          {calMonth === 0 && (
+            <text
+              x={0}
+              y={0}
+              dy={36}
+              textAnchor="middle"
+              fill="var(--muted-foreground)"
+              fontSize="10"
+              fontWeight={500}
+            >
+              {year}
+            </text>
+          )}
+        </g>
+      );
+    }
+
     return (
       <g transform={`translate(${x},${y})`}>
         <text
@@ -156,7 +178,6 @@ export function DividendCashFlowChart({
           <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
           <XAxis
             dataKey="month"
-            ticks={xTicks}
             interval={0}
             stroke="var(--border)"
             tick={renderXTick}
@@ -167,7 +188,7 @@ export function DividendCashFlowChart({
               fontSize: 11,
               fill: "var(--muted-foreground)",
             }}
-            height={52}
+            height={rotated ? 70 : 52}
           />
           <YAxis
             yAxisId="left"
@@ -247,12 +268,15 @@ function ChartTooltip({
   cumulativeLabel,
 }: ChartTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
-  const barEntries = payload.filter(
+  const allBars = payload.filter(
     (p) =>
       typeof p.dataKey === "string" && p.dataKey.startsWith("payments."),
   );
+  const visibleBars = allBars.filter(
+    (p) => typeof p.value === "number" && p.value > NEAR_ZERO,
+  );
   const cumulative = payload.find((p) => p.dataKey === "cumulativePayment");
-  const totalBar = barEntries.reduce(
+  const totalBar = allBars.reduce(
     (s, p) => s + (typeof p.value === "number" ? p.value : 0),
     0,
   );
@@ -261,7 +285,7 @@ function ChartTooltip({
       <div className="mb-1 font-medium">
         {monthLabel} {label}
       </div>
-      {barEntries.map((p) => (
+      {visibleBars.map((p) => (
         <div
           key={String(p.dataKey)}
           className="tnum flex items-center gap-2"
@@ -276,7 +300,7 @@ function ChartTooltip({
           </span>
         </div>
       ))}
-      {barEntries.length > 1 && (
+      {allBars.length > 1 && (
         <div className="tnum mt-1 flex items-center gap-2 border-t border-border pt-1">
           <span
             className="inline-block size-2 rounded-sm"
