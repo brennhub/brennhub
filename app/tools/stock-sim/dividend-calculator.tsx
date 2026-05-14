@@ -54,6 +54,7 @@ type SeriesPoint = {
   totalEquity: number;
   totalShares: number;
   cumulativePayment: number;
+  payments: Record<string, number>;
 };
 
 const STORAGE_KEY = "brennhub:stock-sim:dividend";
@@ -209,6 +210,7 @@ export function DividendCalculator() {
   // DRIP-aware time series. Single source for chart, table, and summary.
   const series = useMemo<SeriesPoint[]>(() => {
     type RT = {
+      id: string;
       yieldPct: number;
       currentPrice: number;
       multiplier: number;
@@ -225,6 +227,7 @@ export function DividendCalculator() {
       const step = 12 / multiplier;
       const contributing = equity > 0 && yieldPct > 0;
       return {
+        id: r.id,
         yieldPct,
         currentPrice: cp,
         multiplier,
@@ -239,10 +242,12 @@ export function DividendCalculator() {
     let cumulative = 0;
     for (let m = 1; m <= monthsNum; m++) {
       let monthPayment = 0;
+      const payments: Record<string, number> = {};
       for (const rt of runtime) {
         if (!rt.contributing) continue;
+        let payment = 0;
         if (m % rt.step === 0) {
-          const payment =
+          payment =
             (rt.currentEquity * rt.yieldPct) / 100 / rt.multiplier;
           monthPayment += payment;
           if (dripEnabled) {
@@ -252,6 +257,7 @@ export function DividendCalculator() {
             }
           }
         }
+        payments[rt.id] = payment;
       }
       cumulative += monthPayment;
       const totalEquity = runtime.reduce(
@@ -268,6 +274,7 @@ export function DividendCalculator() {
         totalEquity,
         totalShares,
         cumulativePayment: cumulative,
+        payments,
       });
     }
     return points;
@@ -283,6 +290,19 @@ export function DividendCalculator() {
         : null;
     return { totalDividend, roi, finalEquity };
   }, [series, computed.totalInitialEquity]);
+
+  // Per-ticker chart bars. Empty tickers get "Stock N" fallback (sequential
+  // across contributing rows). Order matches contributing row order.
+  const contributingBars = useMemo(() => {
+    let unnamed = 0;
+    return computed.per
+      .filter((p) => p.contributing)
+      .map((p) => {
+        const tick = p.row.ticker.trim();
+        const label = tick || `Stock ${++unnamed}`;
+        return { id: p.row.id, label };
+      });
+  }, [computed.per]);
 
   const referenceLinks = useMemo(() => {
     const seen = new Set<string>();
@@ -579,6 +599,7 @@ export function DividendCalculator() {
             <div className="space-y-6">
               <DividendCashFlowChart
                 series={series}
+                bars={contributingBars}
                 fmt={fmt}
                 monthLabel={t.monthLabel}
                 monthAxisLabel={t.monthAxisLabel}
