@@ -531,7 +531,11 @@ export function DcaDownCalculator() {
     setTaxType("custom");
   };
 
-  const selectTaxType = (type: "short" | "long") => {
+  const handleTermClick = (type: "short" | "long") => {
+    if (taxType === type) {
+      setTaxType("custom");
+      return;
+    }
     setTaxType(type);
     setTaxRate(type === "short" ? "24" : "15");
   };
@@ -735,7 +739,7 @@ export function DcaDownCalculator() {
                 type="button"
                 variant={taxType === "short" ? "default" : "outline"}
                 size="sm"
-                onClick={() => selectTaxType("short")}
+                onClick={() => handleTermClick("short")}
               >
                 {t.taxTypeShortTerm}
               </Button>
@@ -744,7 +748,7 @@ export function DcaDownCalculator() {
                 type="button"
                 variant={taxType === "long" ? "default" : "outline"}
                 size="sm"
-                onClick={() => selectTaxType("long")}
+                onClick={() => handleTermClick("long")}
               >
                 {t.taxTypeLongTerm}
               </Button>
@@ -837,6 +841,11 @@ export function DcaDownCalculator() {
                   .replace("{end}", String(zeroShareWarning.end))}
           </p>
         )}
+        {!computed.valid && (
+          <p className="border-t border-border pt-3 text-sm text-amber-600 dark:text-amber-400">
+            ⚠️ {t.invalidInputHint}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
@@ -850,53 +859,69 @@ export function DcaDownCalculator() {
         <dl className="space-y-3">
           <SummaryRow
             label={t.totalInvestLabel}
-            value={fmtCurrency(computed.totalInvest)}
+            value={computed.valid ? fmtCurrency(computed.totalInvest) : "—"}
           />
           <SummaryRow
             label={t.totalSharesLabel}
             value={
-              locale === "ko"
-                ? `${fmtInt.format(computed.totalShares)} 주`
-                : fmtInt.format(computed.totalShares)
+              computed.valid
+                ? locale === "ko"
+                  ? `${fmtInt.format(computed.totalShares)} 주`
+                  : fmtInt.format(computed.totalShares)
+                : "—"
             }
           />
           <SummaryRow
             label={t.finalAvgLabel}
-            value={fmtCurrency(computed.finalAvg)}
+            value={computed.valid ? fmtCurrency(computed.finalAvg) : "—"}
           />
           <SummaryRow
             label={t.targetReturnDisplayLabel}
-            value={`${fmt.format(computed.targetReturnPct)}%`}
+            value={
+              computed.valid ? `${fmt.format(computed.targetReturnPct)}%` : "—"
+            }
           />
           <SummaryRow
             label={t.targetPriceLabel}
-            value={fmtCurrency(computed.targetSell)}
+            value={computed.valid ? fmtCurrency(computed.targetSell) : "—"}
           />
           <SummaryRow
             label={t.expectedProfitLabel}
             value={
-              <span className={cn(profitColor)}>
-                {computed.expectedProfit > 0 ? "+" : ""}
-                {fmtCurrency(computed.expectedProfit)}
-              </span>
+              computed.valid ? (
+                <span className={cn(profitColor)}>
+                  {computed.expectedProfit > 0 ? "+" : ""}
+                  {fmtCurrency(computed.expectedProfit)}
+                </span>
+              ) : (
+                "—"
+              )
             }
           />
           <SummaryRow
             label={t.taxAmountLabel}
             value={
-              <span className={cn(taxColor)}>
-                {computed.taxAmount > 0 ? "−" : ""}
-                {fmtCurrency(computed.taxAmount)}
-              </span>
+              computed.valid ? (
+                <span className={cn(taxColor)}>
+                  {computed.taxAmount > 0 ? "−" : ""}
+                  {fmtCurrency(computed.taxAmount)}
+                </span>
+              ) : (
+                "—"
+              )
             }
           />
           <SummaryRow
             label={t.afterTaxProfitLabel}
             value={
-              <span className={cn(afterTaxColor)}>
-                {computed.afterTaxProfit > 0 ? "+" : ""}
-                {fmtCurrency(computed.afterTaxProfit)}
-              </span>
+              computed.valid ? (
+                <span className={cn(afterTaxColor)}>
+                  {computed.afterTaxProfit > 0 ? "+" : ""}
+                  {fmtCurrency(computed.afterTaxProfit)}
+                </span>
+              ) : (
+                "—"
+              )
             }
           />
         </dl>
@@ -906,48 +931,38 @@ export function DcaDownCalculator() {
 
   return (
     <div className="space-y-6">
-      {computed.valid ? (
-        <div className="grid gap-6 lg:grid-cols-2">
-          {inputCard}
-          {summaryCard}
-        </div>
-      ) : (
-        <>
-          {inputCard}
-          <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
-            ⚠️ {t.invalidInputHint}
-          </p>
-        </>
-      )}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {inputCard}
+        {summaryCard}
+      </div>
 
-      {computed.valid && (
-        <DcaDownDetail
-          rounds={computed.rounds}
-          fmt={fmt}
-          fmtInt={fmtInt}
-          fmtCurrency={fmtCurrency}
-          lastCompletedRound={lastCompletedRound}
-          onRoundClick={handleRowClick}
-          onReset={() => setLastCompletedRound(0)}
-          onExportCsv={handleExportCsv}
-          targetReturnPct={computed.targetReturnPct}
-          tableTitle={t.tableTitle}
-          legendCompleted={t.legendCompleted}
-          legendNextBuy={t.legendNextBuy}
-          legendReset={t.legendReset}
-          exportCsvLabel={t.exportCsvLabel}
-          colRound={t.colRound}
-          colPrice={t.colPrice}
-          colDropPct={t.colDropPct}
-          colAvgPrice={t.colAvgPrice}
-          colShares={t.colShares}
-          colCumShares={t.colCumShares}
-          colBuyAmount={t.colBuyAmount}
-          colCumBuyAmount={t.colCumBuyAmount}
-          colProfit={t.colProfit}
-          colTargetPrice={t.colTargetPrice}
-        />
-      )}
+      <DcaDownDetail
+        rounds={computed.rounds}
+        fmt={fmt}
+        fmtInt={fmtInt}
+        fmtCurrency={fmtCurrency}
+        lastCompletedRound={lastCompletedRound}
+        onRoundClick={handleRowClick}
+        onReset={() => setLastCompletedRound(0)}
+        onExportCsv={handleExportCsv}
+        targetReturnPct={computed.targetReturnPct}
+        tableTitle={t.tableTitle}
+        legendCompleted={t.legendCompleted}
+        legendNextBuy={t.legendNextBuy}
+        legendReset={t.legendReset}
+        exportCsvLabel={t.exportCsvLabel}
+        colRound={t.colRound}
+        colPrice={t.colPrice}
+        colDropPct={t.colDropPct}
+        colAvgPrice={t.colAvgPrice}
+        colShares={t.colShares}
+        colCumShares={t.colCumShares}
+        colBuyAmount={t.colBuyAmount}
+        colCumBuyAmount={t.colCumBuyAmount}
+        colProfit={t.colProfit}
+        colTargetPrice={t.colTargetPrice}
+        emptyHint={t.tableEmptyHint}
+      />
     </div>
   );
 }

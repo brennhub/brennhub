@@ -49,6 +49,7 @@ type Props = {
   colCumBuyAmount: string;
   colProfit: string;
   colTargetPrice: string;
+  emptyHint: string;
 };
 
 const COMPLETED_BG = "color-mix(in oklch, #facc15 15%, transparent)";
@@ -81,6 +82,7 @@ export function DcaDownDetail({
   colCumBuyAmount,
   colProfit,
   colTargetPrice,
+  emptyHint,
 }: Props) {
   return (
     <Card>
@@ -147,7 +149,17 @@ export function DcaDownDetail({
               </tr>
             </thead>
             <tbody>
-              {rounds.map((r) => {
+              {rounds.length === 0 ? (
+                <tr className="border-t border-border">
+                  <td
+                    colSpan={10}
+                    className="px-3 py-8 text-center text-sm text-muted-foreground"
+                  >
+                    {emptyHint}
+                  </td>
+                </tr>
+              ) : (
+                rounds.map((r) => {
                 const isCompleted = r.n <= lastCompletedRound;
                 const isNext = r.n === lastCompletedRound + 1;
                 const rowClass = cn(
@@ -209,7 +221,8 @@ export function DcaDownDetail({
                     </td>
                   </tr>
                 );
-              })}
+                })
+              )}
             </tbody>
           </table>
         </div>

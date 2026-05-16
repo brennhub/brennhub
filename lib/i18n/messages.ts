@@ -214,6 +214,7 @@ export type Messages = {
       stepperTaxMax: string;
       stepperTargetMax: string;
       invalidInputHint: string;
+      tableEmptyHint: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -448,6 +449,7 @@ export const messages: Record<Locale, Messages> = {
         stepperTargetMax: "목표 수익률은 최대 500%입니다",
         invalidInputHint:
           "분할매수 시뮬레이션을 위해 모든 입력값(총 예산, 현재가, 매수 횟수, 하락율)이 0보다 큰 값이어야 합니다.",
+        tableEmptyHint: "결과 없음",
       },
     },
     tools: {
@@ -698,6 +700,7 @@ export const messages: Record<Locale, Messages> = {
         stepperTargetMax: "Target return max is 500%",
         invalidInputHint:
           "All inputs (Total Budget, Current Price, Rounds, Drop %) must be greater than 0 for DCA simulation.",
+        tableEmptyHint: "No data",
       },
     },
     tools: {
