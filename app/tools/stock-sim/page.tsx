@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/tabs";
 import { useMessages } from "@/lib/i18n/provider";
 import { CostBasisCalculator } from "./cost-basis-calculator";
 import { DividendCalculator } from "./dividend-calculator";
+import { DcaDownCalculator } from "./dca-down-calculator";
 
 export default function StockSimPage() {
   const t = useMessages();
@@ -30,12 +31,18 @@ export default function StockSimPage() {
           <TabsTrigger value="dividend">
             {t.stockSim.tabs.dividend}
           </TabsTrigger>
+          <TabsTrigger value="dca-down">
+            {t.stockSim.tabs.dcaDown}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="cost-basis" className="mt-6">
           <CostBasisCalculator />
         </TabsContent>
         <TabsContent value="dividend" className="mt-6">
           <DividendCalculator />
+        </TabsContent>
+        <TabsContent value="dca-down" className="mt-6">
+          <DcaDownCalculator />
         </TabsContent>
       </Tabs>
     </main>

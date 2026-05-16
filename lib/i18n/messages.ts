@@ -66,7 +66,7 @@ export type Messages = {
   stockSim: {
     title: string;
     description: string;
-    tabs: { costBasis: string; dividend: string };
+    tabs: { costBasis: string; dividend: string; dcaDown: string };
     costBasis: {
       inputTitle: string;
       priceHeader: string;
@@ -139,6 +139,44 @@ export type Messages = {
       resetLabel: string;
       resetConfirm: string;
       perTickerTitle: string;
+    };
+    dcaDown: {
+      title: string;
+      description: string;
+      inputTitle: string;
+      emptyHint: string;
+      tickerHeader: string;
+      tickerPlaceholder: string;
+      budgetHeader: string;
+      budgetPlaceholder: string;
+      startPriceHeader: string;
+      startPricePlaceholder: string;
+      nLabel: string;
+      nPlaceholder: string;
+      dropIntervalLabel: string;
+      dropIntervalPlaceholder: string;
+      targetReturnLabel: string;
+      targetReturnPlaceholder: string;
+      weightToggle: string;
+      weightTooltip: string;
+      firstWeightLabel: string;
+      firstWeightPlaceholder: string;
+      weightEqualBenchmark: string;
+      tableTitle: string;
+      colRound: string;
+      colPrice: string;
+      colDropPct: string;
+      colBuyAmount: string;
+      colShares: string;
+      colCumShares: string;
+      colCumCost: string;
+      colAvgPrice: string;
+      summaryTitle: string;
+      totalInvestLabel: string;
+      totalSharesLabel: string;
+      finalAvgLabel: string;
+      targetPriceLabel: string;
+      expectedProfitLabel: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -213,7 +251,7 @@ export const messages: Record<Locale, Messages> = {
     stockSim: {
       title: "주식 시뮬레이터",
       description: "투자 결정에 필요한 계산을 한 곳에서",
-      tabs: { costBasis: "평단가", dividend: "배당" },
+      tabs: { costBasis: "평단가", dividend: "배당", dcaDown: "분할매수" },
       costBasis: {
         inputTitle: "매수 기록",
         priceHeader: "매수가",
@@ -289,6 +327,46 @@ export const messages: Record<Locale, Messages> = {
         resetConfirm:
           "모든 종목 입력을 지우시겠습니까? 이 작업은 되돌릴 수 없습니다.",
         perTickerTitle: "종목별 상세",
+      },
+      dcaDown: {
+        title: "분할매수 시뮬레이터",
+        description:
+          "주가 하락 시 분할 매수의 평단가와 수익 시나리오를 시뮬레이션합니다.",
+        inputTitle: "매수 계획",
+        emptyHint: "Budget, 시작가, 매수 횟수를 입력하면 결과가 나타납니다.",
+        tickerHeader: "종목",
+        tickerPlaceholder: "AAPL",
+        budgetHeader: "Budget",
+        budgetPlaceholder: "총 예산",
+        startPriceHeader: "시작가",
+        startPricePlaceholder: "첫 매수가",
+        nLabel: "매수 횟수",
+        nPlaceholder: "2-50",
+        dropIntervalLabel: "하락 간격 (%)",
+        dropIntervalPlaceholder: "5",
+        targetReturnLabel: "목표 수익률 (%)",
+        targetReturnPlaceholder: "30",
+        weightToggle: "가중치 적용",
+        weightTooltip:
+          "각 회차별 매수 비중을 '첫 매수 비중(%)'로 조절. 값이 작을수록 후반에 많이 매수 (Martingale 방향). 큰 값일수록 균등 가까움.",
+        firstWeightLabel: "첫 매수 비중 (%)",
+        firstWeightPlaceholder: "10",
+        weightEqualBenchmark: "균등",
+        tableTitle: "회차별 매수",
+        colRound: "회차",
+        colPrice: "가격",
+        colDropPct: "누적 하락 (%)",
+        colBuyAmount: "매수금",
+        colShares: "주식 수",
+        colCumShares: "누적 주식",
+        colCumCost: "누적 비용",
+        colAvgPrice: "평단가",
+        summaryTitle: "요약",
+        totalInvestLabel: "총 투자금",
+        totalSharesLabel: "총 보유 주식",
+        finalAvgLabel: "최종 평단가",
+        targetPriceLabel: "목표 매도가",
+        expectedProfitLabel: "예상 수익",
       },
     },
     tools: {
@@ -377,7 +455,11 @@ export const messages: Record<Locale, Messages> = {
     stockSim: {
       title: "Stock Simulator",
       description: "Investment math in one place",
-      tabs: { costBasis: "Cost Basis", dividend: "Dividends" },
+      tabs: {
+        costBasis: "Cost Basis",
+        dividend: "Dividends",
+        dcaDown: "Averaging Down",
+      },
       costBasis: {
         inputTitle: "Purchases",
         priceHeader: "Price",
@@ -452,6 +534,46 @@ export const messages: Record<Locale, Messages> = {
         resetLabel: "Reset",
         resetConfirm: "Clear all stock entries? This cannot be undone.",
         perTickerTitle: "Per-Ticker Detail",
+      },
+      dcaDown: {
+        title: "Averaging Down",
+        description:
+          "Cost basis and profit scenario for split buys on price drops.",
+        inputTitle: "Buy Plan",
+        emptyHint: "Enter Budget, Start Price, and Rounds to see results.",
+        tickerHeader: "Ticker",
+        tickerPlaceholder: "AAPL",
+        budgetHeader: "Budget",
+        budgetPlaceholder: "Total",
+        startPriceHeader: "Start Price",
+        startPricePlaceholder: "First buy",
+        nLabel: "Rounds",
+        nPlaceholder: "2-50",
+        dropIntervalLabel: "Drop Interval (%)",
+        dropIntervalPlaceholder: "5",
+        targetReturnLabel: "Target Return (%)",
+        targetReturnPlaceholder: "30",
+        weightToggle: "Apply Weighting",
+        weightTooltip:
+          "Control weighting via 'First Buy Share (%)'. Smaller = more back-loaded (Martingale). Larger = closer to equal.",
+        firstWeightLabel: "First Buy Share (%)",
+        firstWeightPlaceholder: "10",
+        weightEqualBenchmark: "Equal",
+        tableTitle: "Round-by-Round",
+        colRound: "Round",
+        colPrice: "Price",
+        colDropPct: "Drop %",
+        colBuyAmount: "Buy Amount",
+        colShares: "Shares",
+        colCumShares: "Cum Shares",
+        colCumCost: "Cum Cost",
+        colAvgPrice: "Avg Price",
+        summaryTitle: "Summary",
+        totalInvestLabel: "Total Invested",
+        totalSharesLabel: "Total Shares",
+        finalAvgLabel: "Final Avg Price",
+        targetPriceLabel: "Target Sell Price",
+        expectedProfitLabel: "Expected Profit",
       },
     },
     tools: {
