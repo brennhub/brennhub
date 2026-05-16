@@ -399,7 +399,7 @@ export const messages: Record<Locale, Messages> = {
           "각 회차별 매수 비중을 '첫 매수 비중(%)'로 조절. 값이 작을수록 후반에 많이 매수 (Martingale 방향). 큰 값일수록 균등 가까움.",
         firstWeightLabel: "분배 균형 (0-100)",
         firstWeightPlaceholder: "50",
-        weightEqualBenchmark: "(50 = 균등)",
+        weightEqualBenchmark: "(50 = 균등값)",
         tableTitle: "회차별 매수",
         colRound: "매수 회차",
         colPrice: "가격",
