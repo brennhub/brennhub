@@ -200,12 +200,9 @@ export function DcaDownCalculator() {
     const dropNum = parseNum(dropInterval);
     const targetReturnNum = parseNum(targetReturn);
 
-    // Budget is only required when weighting is on. Default rule buys 1 share
-    // per round and doesn't depend on Budget.
-    const valid =
-      startPriceNum > 0 &&
-      nNum >= N_MIN &&
-      (!weightEnabled || budgetNum > 0);
+    // Budget always required. Default (Martingale, r=2) and weighted paths
+    // both distribute Budget across rounds via the geometric weight formula.
+    const valid = budgetNum > 0 && startPriceNum > 0 && nNum >= N_MIN;
     if (!valid) {
       return {
         valid: false,
@@ -218,37 +215,24 @@ export function DcaDownCalculator() {
       };
     }
 
-    let normalizedWeights: number[] | null = null;
-    if (weightEnabled) {
-      const p = clamp(parseNum(firstWeightPct), WEIGHT_MIN, WEIGHT_MAX);
-      const r = solveR(p, nNum);
-      const weights = Array.from({ length: nNum }, (_, k) => Math.pow(r, k));
-      const weightSum = weights.reduce((s, w) => s + w, 0);
-      normalizedWeights = weights.map((w) => w / weightSum);
-    }
+    // Single weight path. OFF = Martingale: first weight = 1/(2^N − 1) so r=2.
+    // ON = user-specified first-buy share percentage.
+    const effectiveP = weightEnabled
+      ? clamp(parseNum(firstWeightPct), WEIGHT_MIN, WEIGHT_MAX)
+      : 100 / (Math.pow(2, nNum) - 1);
+    const r = solveR(effectiveP, nNum);
+    const weights = Array.from({ length: nNum }, (_, k) => Math.pow(r, k));
+    const weightSum = weights.reduce((s, w) => s + w, 0);
+    const normalizedWeights = weights.map((w) => w / weightSum);
 
     const roundsArr: Round[] = [];
     let cumulativeShares = 0;
     let cumulativeCost = 0;
     for (let n = 0; n < nNum; n++) {
       const price = startPriceNum * (1 - (dropNum / 100) * n);
-      let buyAmount: number;
-      let shares: number;
-      let actualCost: number;
-
-      if (weightEnabled && normalizedWeights) {
-        buyAmount = budgetNum * normalizedWeights[n];
-        shares = price > 0 ? Math.floor(buyAmount / price) : 0;
-        actualCost = shares * price;
-      } else if (price > 0) {
-        shares = 1;
-        actualCost = price;
-        buyAmount = price;
-      } else {
-        shares = 0;
-        actualCost = 0;
-        buyAmount = 0;
-      }
+      const buyAmount = budgetNum * normalizedWeights[n];
+      const shares = price > 0 ? Math.floor(buyAmount / price) : 0;
+      const actualCost = shares * price;
 
       cumulativeShares += shares;
       cumulativeCost += actualCost;

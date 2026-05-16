@@ -373,7 +373,7 @@ export const messages: Record<Locale, Messages> = {
         colTargetPrice: "목표가",
         nextBuyRoundLabel: "다음 매수 회차",
         weightHint:
-          "가중치 OFF: 회차당 1주. 가중치 ON: Budget을 가중치 비율로 분배",
+          "가중치 OFF: Martingale (2배 배수). 가중치 ON: 첫 매수 비중 % 직접 입력",
       },
     },
     tools: {
@@ -583,7 +583,7 @@ export const messages: Record<Locale, Messages> = {
         expectedProfitLabel: "Expected Profit",
         colTargetPrice: "Target Price",
         nextBuyRoundLabel: "Next Buy Round",
-        weightHint: "OFF: 1 share per round. ON: Budget distributed by weight",
+        weightHint: "OFF: Martingale (2x doubling). ON: Set first-buy %",
       },
     },
     tools: {
