@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { Info } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -13,55 +14,79 @@ type Round = {
   n: number;
   price: number;
   cumulativeDropPct: number;
-  buyAmount: number;
+  avgPrice: number;
   shares: number;
   cumulativeShares: number;
-  cumulativeCost: number;
-  avgPrice: number;
+  buyAmount: number;
+  cumulativeBuyAmount: number;
   targetPrice: number;
 };
 
 type Props = {
   rounds: Round[];
   fmt: Intl.NumberFormat;
-  nextBuyRound: number;
+  fmtInt: Intl.NumberFormat;
+  lastCompletedRound: number;
   onRoundClick: (n: number) => void;
+  targetReturnPct: number;
   tableTitle: string;
+  tableHelp: string;
   colRound: string;
   colPrice: string;
   colDropPct: string;
-  colBuyAmount: string;
+  colAvgPrice: string;
   colShares: string;
   colCumShares: string;
-  colCumCost: string;
-  colAvgPrice: string;
+  colBuyAmount: string;
+  colCumBuyAmount: string;
   colTargetPrice: string;
 };
+
+// Hardcoded row tints. Independent of the gain/loss color scheme so the
+// completion indicator stays semantically clear regardless of locale or
+// user color preference.
+const COMPLETED_BG = "color-mix(in oklch, #facc15 15%, transparent)"; // yellow-400
+const NEXT_BG = "color-mix(in oklch, #22c55e 15%, transparent)"; // green-500
 
 export function DcaDownDetail({
   rounds,
   fmt,
-  nextBuyRound,
+  fmtInt,
+  lastCompletedRound,
   onRoundClick,
+  targetReturnPct,
   tableTitle,
+  tableHelp,
   colRound,
   colPrice,
   colDropPct,
-  colBuyAmount,
+  colAvgPrice,
   colShares,
   colCumShares,
-  colCumCost,
-  colAvgPrice,
+  colBuyAmount,
+  colCumBuyAmount,
   colTargetPrice,
 }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{tableTitle}</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle>{tableTitle}</CardTitle>
+          <button
+            type="button"
+            className="group relative inline-flex"
+            aria-label={tableHelp}
+          >
+            <Info className="size-3.5 cursor-help text-muted-foreground" />
+            <span className="pointer-events-none invisible absolute left-1/2 top-full z-10 mt-2 w-72 max-w-[80vw] -translate-x-1/2 rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100">
+              {tableHelp}
+            </span>
+          </button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-sm">
+          <table className="w-full min-w-[800px] text-sm">
             <thead className="bg-muted/40 text-xs text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left font-medium">{colRound}</th>
@@ -70,7 +95,7 @@ export function DcaDownDetail({
                   {colDropPct}
                 </th>
                 <th className="px-3 py-2 text-right font-medium">
-                  {colBuyAmount}
+                  {colAvgPrice}
                 </th>
                 <th className="px-3 py-2 text-right font-medium">
                   {colShares}
@@ -79,33 +104,31 @@ export function DcaDownDetail({
                   {colCumShares}
                 </th>
                 <th className="px-3 py-2 text-right font-medium">
-                  {colCumCost}
+                  {colBuyAmount}
                 </th>
                 <th className="px-3 py-2 text-right font-medium">
-                  {colAvgPrice}
+                  {colCumBuyAmount}
                 </th>
                 <th className="px-3 py-2 text-right font-medium">
-                  {colTargetPrice}
+                  {colTargetPrice} ({fmt.format(targetReturnPct)}%)
                 </th>
               </tr>
             </thead>
             <tbody>
               {rounds.map((r) => {
-                const isPast = r.n < nextBuyRound;
-                const isNext = r.n === nextBuyRound;
+                const isCompleted = r.n <= lastCompletedRound;
+                const isNext = r.n === lastCompletedRound + 1;
                 const rowClass = cn(
                   "cursor-pointer border-t border-border transition-colors",
-                  isPast &&
-                    "bg-muted/30 text-muted-foreground hover:bg-muted/50",
-                  isNext && "font-medium",
-                  !isPast && !isNext && "hover:bg-muted/20",
+                  (isCompleted || isNext) && "font-medium",
+                  !isCompleted && !isNext && "hover:bg-muted/20",
                 );
-                const rowStyle: CSSProperties | undefined = isNext
-                  ? {
-                      backgroundColor:
-                        "color-mix(in oklch, var(--color-gain) 15%, transparent)",
-                    }
-                  : undefined;
+                let rowStyle: CSSProperties | undefined;
+                if (isCompleted) {
+                  rowStyle = { backgroundColor: COMPLETED_BG };
+                } else if (isNext) {
+                  rowStyle = { backgroundColor: NEXT_BG };
+                }
                 return (
                   <tr
                     key={r.n}
@@ -121,19 +144,19 @@ export function DcaDownDetail({
                       {fmt.format(r.cumulativeDropPct)}%
                     </td>
                     <td className="tnum px-3 py-1.5 text-right">
+                      {fmt.format(r.avgPrice)}
+                    </td>
+                    <td className="tnum px-3 py-1.5 text-right">
+                      {fmtInt.format(r.shares)}
+                    </td>
+                    <td className="tnum px-3 py-1.5 text-right">
+                      {fmtInt.format(r.cumulativeShares)}
+                    </td>
+                    <td className="tnum px-3 py-1.5 text-right">
                       {fmt.format(r.buyAmount)}
                     </td>
                     <td className="tnum px-3 py-1.5 text-right">
-                      {fmt.format(r.shares)}
-                    </td>
-                    <td className="tnum px-3 py-1.5 text-right">
-                      {fmt.format(r.cumulativeShares)}
-                    </td>
-                    <td className="tnum px-3 py-1.5 text-right">
-                      {fmt.format(r.cumulativeCost)}
-                    </td>
-                    <td className="tnum px-3 py-1.5 text-right">
-                      {fmt.format(r.avgPrice)}
+                      {fmt.format(r.cumulativeBuyAmount)}
                     </td>
                     <td className="tnum px-3 py-1.5 text-right">
                       {fmt.format(r.targetPrice)}

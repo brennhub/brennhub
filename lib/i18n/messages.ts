@@ -66,6 +66,8 @@ export type Messages = {
   stockSim: {
     title: string;
     description: string;
+    colorSchemeKr: string;
+    colorSchemeUs: string;
     tabs: { costBasis: string; dividend: string; dcaDown: string };
     costBasis: {
       inputTitle: string;
@@ -169,7 +171,7 @@ export type Messages = {
       colBuyAmount: string;
       colShares: string;
       colCumShares: string;
-      colCumCost: string;
+      colCumBuyAmount: string;
       colAvgPrice: string;
       summaryTitle: string;
       totalInvestLabel: string;
@@ -178,8 +180,11 @@ export type Messages = {
       targetPriceLabel: string;
       expectedProfitLabel: string;
       colTargetPrice: string;
-      nextBuyRoundLabel: string;
       weightHint: string;
+      targetReturnDisplayLabel: string;
+      dcaTableHelp: string;
+      zeroShareWarningSingle: string;
+      zeroShareWarningRange: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -254,6 +259,8 @@ export const messages: Record<Locale, Messages> = {
     stockSim: {
       title: "주식 시뮬레이터",
       description: "투자 결정에 필요한 계산을 한 곳에서",
+      colorSchemeKr: "한국식",
+      colorSchemeUs: "미국식",
       tabs: { costBasis: "평단가", dividend: "배당", dcaDown: "분할매수" },
       costBasis: {
         inputTitle: "매수 기록",
@@ -358,11 +365,11 @@ export const messages: Record<Locale, Messages> = {
         tableTitle: "회차별 매수",
         colRound: "회차",
         colPrice: "가격",
-        colDropPct: "누적 하락 (%)",
+        colDropPct: "하락율 (%)",
         colBuyAmount: "매수금",
         colShares: "주식 수",
         colCumShares: "누적 주식",
-        colCumCost: "누적 비용",
+        colCumBuyAmount: "누적 매수금",
         colAvgPrice: "평단가",
         summaryTitle: "요약",
         totalInvestLabel: "총 투자금",
@@ -371,9 +378,15 @@ export const messages: Record<Locale, Messages> = {
         targetPriceLabel: "목표 매도가",
         expectedProfitLabel: "예상 수익",
         colTargetPrice: "목표가",
-        nextBuyRoundLabel: "다음 매수 회차",
         weightHint:
           "가중치 OFF: Martingale (2배 배수). 가중치 ON: 첫 매수 비중 % 직접 입력",
+        targetReturnDisplayLabel: "목표 수익률",
+        dcaTableHelp:
+          "회차 클릭 시 매수 완료로 표시. 다음 회차가 자동으로 '다음 매수'로 표시됩니다. 같은 회차 다시 클릭 시 한 칸 뒤로.",
+        zeroShareWarningSingle:
+          "회차 {n}은 매수금이 1주 가격보다 작아 0주 매수입니다. 매수 횟수를 줄이거나 Budget을 늘리세요.",
+        zeroShareWarningRange:
+          "회차 {start}~{end}는 매수금이 1주 가격보다 작아 0주 매수입니다. 매수 횟수를 줄이거나 Budget을 늘리세요.",
       },
     },
     tools: {
@@ -462,6 +475,8 @@ export const messages: Record<Locale, Messages> = {
     stockSim: {
       title: "Stock Simulator",
       description: "Investment math in one place",
+      colorSchemeKr: "Korean",
+      colorSchemeUs: "US",
       tabs: {
         costBasis: "Cost Basis",
         dividend: "Dividends",
@@ -573,7 +588,7 @@ export const messages: Record<Locale, Messages> = {
         colBuyAmount: "Buy Amount",
         colShares: "Shares",
         colCumShares: "Cum Shares",
-        colCumCost: "Cum Cost",
+        colCumBuyAmount: "Cum Buy Amount",
         colAvgPrice: "Avg Price",
         summaryTitle: "Summary",
         totalInvestLabel: "Total Invested",
@@ -582,8 +597,14 @@ export const messages: Record<Locale, Messages> = {
         targetPriceLabel: "Target Sell Price",
         expectedProfitLabel: "Expected Profit",
         colTargetPrice: "Target Price",
-        nextBuyRoundLabel: "Next Buy Round",
         weightHint: "OFF: Martingale (2x doubling). ON: Set first-buy %",
+        targetReturnDisplayLabel: "Target Return",
+        dcaTableHelp:
+          "Click a round to mark as completed. Next round auto-marks as 'next buy'. Click same row again to step back.",
+        zeroShareWarningSingle:
+          "Round {n} allocates below 1 share price (0 shares bought). Reduce rounds or increase Budget.",
+        zeroShareWarningRange:
+          "Rounds {start}-{end} allocate below 1 share price (0 shares bought). Reduce rounds or increase Budget.",
       },
     },
     tools: {

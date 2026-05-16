@@ -125,11 +125,13 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* Locale-aware gain/loss tokens. Korean convention: red = up, blue = down.
-   Western convention: green = up, red = down. The <html data-locale> attribute
-   is set by app/layout.tsx (SSR default) and updated by LocaleProvider. */
+/* Color scheme tokens. Korean convention: red = up, blue = down.
+   Western convention: green = up, red = down. The <html data-color-scheme>
+   attribute is set by app/layout.tsx (SSR default) and updated by
+   ColorSchemeProvider. Decoupled from data-locale so language and color
+   convention can be set independently. */
 :root,
-:root[data-locale="ko"] {
+:root[data-color-scheme="kr"] {
   --color-gain: #dc2626; /* red-600 */
   --color-loss: #2563eb; /* blue-600 */
 }
@@ -139,7 +141,7 @@
      Single value works in both light and dark modes (blue-500). */
   --color-chart-bar: oklch(0.623 0.214 259.815);
 }
-:root[data-locale="en"] {
+:root[data-color-scheme="us"] {
   --color-gain: #16a34a; /* green-600 */
   --color-loss: #dc2626; /* red-600 */
 }

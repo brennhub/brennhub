@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/tabs";
+import { ColorSchemeToggle } from "@/components/color-scheme-toggle";
 import { useMessages } from "@/lib/i18n/provider";
 import { CostBasisCalculator } from "./cost-basis-calculator";
 import { DividendCalculator } from "./dividend-calculator";
@@ -24,17 +25,20 @@ export default function StockSimPage() {
         <p className="mt-2 text-muted-foreground">{t.stockSim.description}</p>
       </header>
       <Tabs defaultValue="cost-basis">
-        <TabsList>
-          <TabsTrigger value="cost-basis">
-            {t.stockSim.tabs.costBasis}
-          </TabsTrigger>
-          <TabsTrigger value="dividend">
-            {t.stockSim.tabs.dividend}
-          </TabsTrigger>
-          <TabsTrigger value="dca-down">
-            {t.stockSim.tabs.dcaDown}
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <TabsList>
+            <TabsTrigger value="cost-basis">
+              {t.stockSim.tabs.costBasis}
+            </TabsTrigger>
+            <TabsTrigger value="dividend">
+              {t.stockSim.tabs.dividend}
+            </TabsTrigger>
+            <TabsTrigger value="dca-down">
+              {t.stockSim.tabs.dcaDown}
+            </TabsTrigger>
+          </TabsList>
+          <ColorSchemeToggle />
+        </div>
         <TabsContent value="cost-basis" className="mt-6">
           <CostBasisCalculator />
         </TabsContent>

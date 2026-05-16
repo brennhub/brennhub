@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LocaleProvider } from "@/lib/i18n/provider";
 import { LocaleToggle } from "@/components/locale-toggle";
+import { ColorSchemeProvider } from "@/components/color-scheme-provider";
 import { DEFAULT_LOCALE } from "@/lib/i18n/types";
 
 const geistSans = Geist({
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-locale={DEFAULT_LOCALE}
+      data-color-scheme="kr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
@@ -39,10 +41,12 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-zinc-50 dark:bg-zinc-950">
         <LocaleProvider>
-          <header className="flex justify-end px-4 pt-4 sm:px-6">
-            <LocaleToggle />
-          </header>
-          {children}
+          <ColorSchemeProvider>
+            <header className="flex justify-end px-4 pt-4 sm:px-6">
+              <LocaleToggle />
+            </header>
+            {children}
+          </ColorSchemeProvider>
         </LocaleProvider>
       </body>
     </html>

@@ -32,18 +32,20 @@ type StoredState = {
   targetReturn: string;
   weightEnabled: boolean;
   firstWeightPct: string;
-  nextBuyRound: number;
+  lastCompletedRound: number;
+  // Legacy: Task 10 used `nextBuyRound` (1..N upcoming round). Migrated on load.
+  nextBuyRound?: number;
 };
 
 type Round = {
   n: number;
   price: number;
   cumulativeDropPct: number;
-  buyAmount: number;
+  avgPrice: number;
   shares: number;
   cumulativeShares: number;
-  cumulativeCost: number;
-  avgPrice: number;
+  buyAmount: number;
+  cumulativeBuyAmount: number;
   targetPrice: number;
 };
 
@@ -105,7 +107,7 @@ export function DcaDownCalculator() {
   const [targetReturn, setTargetReturn] = useState<string>("30");
   const [weightEnabled, setWeightEnabled] = useState<boolean>(false);
   const [firstWeightPct, setFirstWeightPct] = useState<string>("10");
-  const [nextBuyRound, setNextBuyRound] = useState<number>(1);
+  const [lastCompletedRound, setLastCompletedRound] = useState<number>(0);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -126,8 +128,13 @@ export function DcaDownCalculator() {
           setWeightEnabled(parsed.weightEnabled);
         if (typeof parsed.firstWeightPct === "string")
           setFirstWeightPct(parsed.firstWeightPct);
-        if (typeof parsed.nextBuyRound === "number")
-          setNextBuyRound(parsed.nextBuyRound);
+        if (typeof parsed.lastCompletedRound === "number") {
+          setLastCompletedRound(parsed.lastCompletedRound);
+        } else if (typeof parsed.nextBuyRound === "number") {
+          // Migration: old `nextBuyRound` was 1..N (the upcoming round).
+          // `lastCompletedRound` is 0..N (the most-recent completed).
+          setLastCompletedRound(Math.max(0, parsed.nextBuyRound - 1));
+        }
       }
     } catch {
       // corrupt state — start fresh
@@ -149,7 +156,7 @@ export function DcaDownCalculator() {
           targetReturn,
           weightEnabled,
           firstWeightPct,
-          nextBuyRound,
+          lastCompletedRound,
         } satisfies StoredState),
       );
     } catch {
@@ -165,7 +172,7 @@ export function DcaDownCalculator() {
     targetReturn,
     weightEnabled,
     firstWeightPct,
-    nextBuyRound,
+    lastCompletedRound,
   ]);
 
   const fmt = useMemo(
@@ -173,6 +180,14 @@ export function DcaDownCalculator() {
       new Intl.NumberFormat(locale === "ko" ? "ko-KR" : "en-US", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
+      }),
+    [locale],
+  );
+
+  const fmtInt = useMemo(
+    () =>
+      new Intl.NumberFormat(locale === "ko" ? "ko-KR" : "en-US", {
+        maximumFractionDigits: 0,
       }),
     [locale],
   );
@@ -185,14 +200,29 @@ export function DcaDownCalculator() {
     return Math.min(n, N_MAX);
   }, [rounds]);
 
-  // Auto-clamp nextBuyRound to current N range. Fires after N decreases.
+  // With linear price drop, price reaches 0 at round floor(100/drop) + 1.
+  // Cap N upstream so no round buys at non-positive price.
+  const maxN = useMemo(() => {
+    const dropNum = parseNum(dropInterval);
+    if (dropNum <= 0) return N_MAX;
+    return Math.min(Math.floor(100 / dropNum), N_MAX);
+  }, [dropInterval]);
+
+  // Auto-clamp N when drop change makes the current N invalid.
   useEffect(() => {
-    if (nextBuyRound > nNum) {
-      setNextBuyRound(nNum);
-    } else if (nextBuyRound < 1) {
-      setNextBuyRound(1);
+    if (nNum > maxN && maxN >= N_MIN) {
+      setRounds(String(maxN));
     }
-  }, [nNum, nextBuyRound]);
+  }, [maxN, nNum]);
+
+  // Auto-clamp lastCompletedRound to current N range.
+  useEffect(() => {
+    if (lastCompletedRound > nNum) {
+      setLastCompletedRound(nNum);
+    } else if (lastCompletedRound < 0) {
+      setLastCompletedRound(0);
+    }
+  }, [nNum, lastCompletedRound]);
 
   const computed = useMemo(() => {
     const budgetNum = parseNum(budget);
@@ -200,8 +230,6 @@ export function DcaDownCalculator() {
     const dropNum = parseNum(dropInterval);
     const targetReturnNum = parseNum(targetReturn);
 
-    // Budget always required. Default (Martingale, r=2) and weighted paths
-    // both distribute Budget across rounds via the geometric weight formula.
     const valid = budgetNum > 0 && startPriceNum > 0 && nNum >= N_MIN;
     if (!valid) {
       return {
@@ -212,6 +240,7 @@ export function DcaDownCalculator() {
         finalAvg: 0,
         targetSell: 0,
         expectedProfit: 0,
+        targetReturnPct: targetReturnNum,
       };
     }
 
@@ -227,33 +256,35 @@ export function DcaDownCalculator() {
 
     const roundsArr: Round[] = [];
     let cumulativeShares = 0;
-    let cumulativeCost = 0;
+    let cumulativeBuyAmount = 0;
     for (let n = 0; n < nNum; n++) {
       const price = startPriceNum * (1 - (dropNum / 100) * n);
-      const buyAmount = budgetNum * normalizedWeights[n];
-      const shares = price > 0 ? Math.floor(buyAmount / price) : 0;
-      const actualCost = shares * price;
+      // Internal allocation (Budget × weight) — used only to compute shares.
+      // The user-facing "매수금" is the actual outlay (shares × price).
+      const allocation = budgetNum * normalizedWeights[n];
+      const shares = price > 0 ? Math.floor(allocation / price) : 0;
+      const buyAmount = shares * price;
 
       cumulativeShares += shares;
-      cumulativeCost += actualCost;
+      cumulativeBuyAmount += buyAmount;
       const avgPrice =
-        cumulativeShares > 0 ? cumulativeCost / cumulativeShares : 0;
+        cumulativeShares > 0 ? cumulativeBuyAmount / cumulativeShares : 0;
       const targetPrice = avgPrice * (1 + targetReturnNum / 100);
       roundsArr.push({
         n: n + 1,
         price,
         cumulativeDropPct: dropNum * n,
-        buyAmount,
+        avgPrice,
         shares,
         cumulativeShares,
-        cumulativeCost,
-        avgPrice,
+        buyAmount,
+        cumulativeBuyAmount,
         targetPrice,
       });
     }
 
     const last = roundsArr[roundsArr.length - 1];
-    const totalInvest = last?.cumulativeCost ?? 0;
+    const totalInvest = last?.cumulativeBuyAmount ?? 0;
     const totalShares = last?.cumulativeShares ?? 0;
     const finalAvg = last?.avgPrice ?? 0;
     const targetSell = finalAvg * (1 + targetReturnNum / 100);
@@ -268,6 +299,7 @@ export function DcaDownCalculator() {
       finalAvg,
       targetSell,
       expectedProfit,
+      targetReturnPct: targetReturnNum,
     };
   }, [
     budget,
@@ -288,10 +320,23 @@ export function DcaDownCalculator() {
         ? "text-[var(--color-gain)]"
         : "text-[var(--color-loss)]";
 
-  const handleNextBuyRoundChange = (raw: string) => {
-    const v = parseInt(raw, 10);
-    if (!Number.isFinite(v)) return;
-    setNextBuyRound(clamp(v, 1, nNum));
+  // Detect contiguous leading rounds with 0 shares — under Martingale these
+  // always come first since the smallest allocations are at the start.
+  const zeroShareWarning = useMemo(() => {
+    if (!computed.valid) return null;
+    const zeros = computed.rounds
+      .filter((r) => r.shares === 0)
+      .map((r) => r.n);
+    if (zeros.length === 0) return null;
+    return {
+      start: zeros[0],
+      end: zeros[zeros.length - 1],
+      count: zeros.length,
+    };
+  }, [computed]);
+
+  const handleRowClick = (n: number) => {
+    setLastCompletedRound((prev) => (prev === n ? n - 1 : n));
   };
 
   return (
@@ -340,7 +385,7 @@ export function DcaDownCalculator() {
                   id="dca-rounds"
                   type="number"
                   min={N_MIN}
-                  max={N_MAX}
+                  max={maxN}
                   step={1}
                   inputMode="numeric"
                   placeholder={t.nPlaceholder}
@@ -374,20 +419,6 @@ export function DcaDownCalculator() {
                 />
               </Field>
             </div>
-
-            <Field label={t.nextBuyRoundLabel} htmlFor="dca-next-buy">
-              <Input
-                id="dca-next-buy"
-                type="number"
-                min={1}
-                max={nNum}
-                step={1}
-                inputMode="numeric"
-                value={nextBuyRound}
-                onChange={(e) => handleNextBuyRoundChange(e.target.value)}
-                className="tnum max-w-24"
-              />
-            </Field>
 
             <div className="space-y-2 border-t border-border pt-3">
               <div className="flex items-center gap-2">
@@ -438,6 +469,20 @@ export function DcaDownCalculator() {
                 </div>
               )}
             </div>
+
+            {zeroShareWarning && (
+              <p className="border-t border-border pt-3 text-sm text-amber-600 dark:text-amber-400">
+                ⚠️{" "}
+                {zeroShareWarning.count === 1
+                  ? t.zeroShareWarningSingle.replace(
+                      "{n}",
+                      String(zeroShareWarning.start),
+                    )
+                  : t.zeroShareWarningRange
+                      .replace("{start}", String(zeroShareWarning.start))
+                      .replace("{end}", String(zeroShareWarning.end))}
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -456,11 +501,15 @@ export function DcaDownCalculator() {
                 />
                 <SummaryRow
                   label={t.totalSharesLabel}
-                  value={formatNum(computed.totalShares)}
+                  value={fmtInt.format(computed.totalShares)}
                 />
                 <SummaryRow
                   label={t.finalAvgLabel}
                   value={formatNum(computed.finalAvg)}
+                />
+                <SummaryRow
+                  label={t.targetReturnDisplayLabel}
+                  value={`${formatNum(computed.targetReturnPct)}%`}
                 />
                 <SummaryRow
                   label={t.targetPriceLabel}
@@ -485,17 +534,20 @@ export function DcaDownCalculator() {
         <DcaDownDetail
           rounds={computed.rounds}
           fmt={fmt}
-          nextBuyRound={nextBuyRound}
-          onRoundClick={setNextBuyRound}
+          fmtInt={fmtInt}
+          lastCompletedRound={lastCompletedRound}
+          onRoundClick={handleRowClick}
+          targetReturnPct={computed.targetReturnPct}
           tableTitle={t.tableTitle}
+          tableHelp={t.dcaTableHelp}
           colRound={t.colRound}
           colPrice={t.colPrice}
           colDropPct={t.colDropPct}
-          colBuyAmount={t.colBuyAmount}
+          colAvgPrice={t.colAvgPrice}
           colShares={t.colShares}
           colCumShares={t.colCumShares}
-          colCumCost={t.colCumCost}
-          colAvgPrice={t.colAvgPrice}
+          colBuyAmount={t.colBuyAmount}
+          colCumBuyAmount={t.colCumBuyAmount}
           colTargetPrice={t.colTargetPrice}
         />
       )}
