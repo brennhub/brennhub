@@ -182,9 +182,12 @@ export type Messages = {
       colTargetPrice: string;
       weightHint: string;
       targetReturnDisplayLabel: string;
-      dcaTableHelp: string;
       zeroShareWarningSingle: string;
       zeroShareWarningRange: string;
+      colProfit: string;
+      legendCompleted: string;
+      legendNextBuy: string;
+      legendReset: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -352,7 +355,7 @@ export const messages: Record<Locale, Messages> = {
         startPricePlaceholder: "첫 매수가",
         nLabel: "매수 횟수",
         nPlaceholder: "2-50",
-        dropIntervalLabel: "하락 간격 (%)",
+        dropIntervalLabel: "하락율 (%)",
         dropIntervalPlaceholder: "5",
         targetReturnLabel: "목표 수익률 (%)",
         targetReturnPlaceholder: "30",
@@ -363,17 +366,17 @@ export const messages: Record<Locale, Messages> = {
         firstWeightPlaceholder: "10",
         weightEqualBenchmark: "균등",
         tableTitle: "회차별 매수",
-        colRound: "회차",
+        colRound: "매수 회차",
         colPrice: "가격",
         colDropPct: "하락율 (%)",
         colBuyAmount: "매수금",
         colShares: "주식 수",
-        colCumShares: "누적 주식",
+        colCumShares: "누적 주식수",
         colCumBuyAmount: "누적 매수금",
         colAvgPrice: "평단가",
         summaryTitle: "요약",
         totalInvestLabel: "총 투자금",
-        totalSharesLabel: "총 보유 주식",
+        totalSharesLabel: "총 보유 주식수",
         finalAvgLabel: "최종 평단가",
         targetPriceLabel: "목표 매도가",
         expectedProfitLabel: "예상 수익",
@@ -381,12 +384,14 @@ export const messages: Record<Locale, Messages> = {
         weightHint:
           "가중치 OFF: Martingale (2배 배수). 가중치 ON: 첫 매수 비중 % 직접 입력",
         targetReturnDisplayLabel: "목표 수익률",
-        dcaTableHelp:
-          "회차 클릭 시 매수 완료로 표시. 다음 회차가 자동으로 '다음 매수'로 표시됩니다. 같은 회차 다시 클릭 시 한 칸 뒤로.",
         zeroShareWarningSingle:
           "회차 {n}은 매수금이 1주 가격보다 작아 0주 매수입니다. 매수 횟수를 줄이거나 Budget을 늘리세요.",
         zeroShareWarningRange:
           "회차 {start}~{end}는 매수금이 1주 가격보다 작아 0주 매수입니다. 매수 횟수를 줄이거나 Budget을 늘리세요.",
+        colProfit: "Profit",
+        legendCompleted: "매수 완료",
+        legendNextBuy: "다음 매수",
+        legendReset: "리셋",
       },
     },
     tools: {
@@ -599,12 +604,14 @@ export const messages: Record<Locale, Messages> = {
         colTargetPrice: "Target Price",
         weightHint: "OFF: Martingale (2x doubling). ON: Set first-buy %",
         targetReturnDisplayLabel: "Target Return",
-        dcaTableHelp:
-          "Click a round to mark as completed. Next round auto-marks as 'next buy'. Click same row again to step back.",
         zeroShareWarningSingle:
           "Round {n} allocates below 1 share price (0 shares bought). Reduce rounds or increase Budget.",
         zeroShareWarningRange:
           "Rounds {start}-{end} allocate below 1 share price (0 shares bought). Reduce rounds or increase Budget.",
+        colProfit: "Profit",
+        legendCompleted: "Completed",
+        legendNextBuy: "Next Buy",
+        legendReset: "Reset",
       },
     },
     tools: {

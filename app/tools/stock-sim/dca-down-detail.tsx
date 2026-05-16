@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -19,6 +19,7 @@ type Round = {
   cumulativeShares: number;
   buyAmount: number;
   cumulativeBuyAmount: number;
+  profit: number;
   targetPrice: number;
 };
 
@@ -28,9 +29,12 @@ type Props = {
   fmtInt: Intl.NumberFormat;
   lastCompletedRound: number;
   onRoundClick: (n: number) => void;
+  onReset: () => void;
   targetReturnPct: number;
   tableTitle: string;
-  tableHelp: string;
+  legendCompleted: string;
+  legendNextBuy: string;
+  legendReset: string;
   colRound: string;
   colPrice: string;
   colDropPct: string;
@@ -39,6 +43,7 @@ type Props = {
   colCumShares: string;
   colBuyAmount: string;
   colCumBuyAmount: string;
+  colProfit: string;
   colTargetPrice: string;
 };
 
@@ -47,6 +52,9 @@ type Props = {
 // user color preference.
 const COMPLETED_BG = "color-mix(in oklch, #facc15 15%, transparent)"; // yellow-400
 const NEXT_BG = "color-mix(in oklch, #22c55e 15%, transparent)"; // green-500
+// Legend swatches use a stronger tint so they read clearly outside the table.
+const COMPLETED_SWATCH = "color-mix(in oklch, #facc15 30%, transparent)";
+const NEXT_SWATCH = "color-mix(in oklch, #22c55e 30%, transparent)";
 
 export function DcaDownDetail({
   rounds,
@@ -54,9 +62,12 @@ export function DcaDownDetail({
   fmtInt,
   lastCompletedRound,
   onRoundClick,
+  onReset,
   targetReturnPct,
   tableTitle,
-  tableHelp,
+  legendCompleted,
+  legendNextBuy,
+  legendReset,
   colRound,
   colPrice,
   colDropPct,
@@ -65,28 +76,36 @@ export function DcaDownDetail({
   colCumShares,
   colBuyAmount,
   colCumBuyAmount,
+  colProfit,
   colTargetPrice,
 }: Props) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <CardTitle>{tableTitle}</CardTitle>
-          <button
-            type="button"
-            className="group relative inline-flex"
-            aria-label={tableHelp}
-          >
-            <Info className="size-3.5 cursor-help text-muted-foreground" />
-            <span className="pointer-events-none invisible absolute left-1/2 top-full z-10 mt-2 w-72 max-w-[80vw] -translate-x-1/2 rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100">
-              {tableHelp}
-            </span>
-          </button>
-        </div>
+        <CardTitle>{tableTitle}</CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="mb-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-block size-3 rounded"
+              style={{ backgroundColor: COMPLETED_SWATCH }}
+            />
+            <span>{legendCompleted}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-block size-3 rounded"
+              style={{ backgroundColor: NEXT_SWATCH }}
+            />
+            <span>{legendNextBuy}</span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onReset}>
+            {legendReset}
+          </Button>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px] text-sm">
+          <table className="w-full min-w-[900px] text-sm">
             <thead className="bg-muted/40 text-xs text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left font-medium">{colRound}</th>
@@ -110,6 +129,9 @@ export function DcaDownDetail({
                   {colCumBuyAmount}
                 </th>
                 <th className="px-3 py-2 text-right font-medium">
+                  {colProfit}
+                </th>
+                <th className="px-3 py-2 text-right font-medium">
                   {colTargetPrice} ({fmt.format(targetReturnPct)}%)
                 </th>
               </tr>
@@ -129,6 +151,12 @@ export function DcaDownDetail({
                 } else if (isNext) {
                   rowStyle = { backgroundColor: NEXT_BG };
                 }
+                const profitClass =
+                  r.profit > 0
+                    ? "text-[var(--color-gain)]"
+                    : r.profit < 0
+                      ? "text-[var(--color-loss)]"
+                      : "";
                 return (
                   <tr
                     key={r.n}
@@ -157,6 +185,9 @@ export function DcaDownDetail({
                     </td>
                     <td className="tnum px-3 py-1.5 text-right">
                       {fmt.format(r.cumulativeBuyAmount)}
+                    </td>
+                    <td className={cn("tnum px-3 py-1.5 text-right", profitClass)}>
+                      {fmt.format(r.profit)}
                     </td>
                     <td className="tnum px-3 py-1.5 text-right">
                       {fmt.format(r.targetPrice)}

@@ -5,6 +5,7 @@ import { Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/switch";
+import { NumberStepper } from "@/components/number-stepper";
 import {
   Card,
   CardContent,
@@ -22,6 +23,8 @@ const N_MAX = 50;
 const N_DEFAULT = 10;
 const WEIGHT_MIN = 0.01;
 const WEIGHT_MAX = 95;
+const DROP_MIN = 0.5;
+const DROP_MAX = 99;
 
 type StoredState = {
   ticker: string;
@@ -46,6 +49,7 @@ type Round = {
   cumulativeShares: number;
   buyAmount: number;
   cumulativeBuyAmount: number;
+  profit: number;
   targetPrice: number;
 };
 
@@ -131,8 +135,8 @@ export function DcaDownCalculator() {
         if (typeof parsed.lastCompletedRound === "number") {
           setLastCompletedRound(parsed.lastCompletedRound);
         } else if (typeof parsed.nextBuyRound === "number") {
-          // Migration: old `nextBuyRound` was 1..N (the upcoming round).
-          // `lastCompletedRound` is 0..N (the most-recent completed).
+          // Migration from Task 10 shape (upcoming round → most-recent
+          // completed).
           setLastCompletedRound(Math.max(0, parsed.nextBuyRound - 1));
         }
       }
@@ -254,6 +258,7 @@ export function DcaDownCalculator() {
     const weightSum = weights.reduce((s, w) => s + w, 0);
     const normalizedWeights = weights.map((w) => w / weightSum);
 
+    const returnRatio = targetReturnNum / 100;
     const roundsArr: Round[] = [];
     let cumulativeShares = 0;
     let cumulativeBuyAmount = 0;
@@ -269,7 +274,8 @@ export function DcaDownCalculator() {
       cumulativeBuyAmount += buyAmount;
       const avgPrice =
         cumulativeShares > 0 ? cumulativeBuyAmount / cumulativeShares : 0;
-      const targetPrice = avgPrice * (1 + targetReturnNum / 100);
+      const targetPrice = avgPrice * (1 + returnRatio);
+      const profit = cumulativeBuyAmount * returnRatio;
       roundsArr.push({
         n: n + 1,
         price,
@@ -279,6 +285,7 @@ export function DcaDownCalculator() {
         cumulativeShares,
         buyAmount,
         cumulativeBuyAmount,
+        profit,
         targetPrice,
       });
     }
@@ -287,9 +294,8 @@ export function DcaDownCalculator() {
     const totalInvest = last?.cumulativeBuyAmount ?? 0;
     const totalShares = last?.cumulativeShares ?? 0;
     const finalAvg = last?.avgPrice ?? 0;
-    const targetSell = finalAvg * (1 + targetReturnNum / 100);
-    const expectedProfit =
-      totalShares > 0 ? (targetSell - finalAvg) * totalShares : 0;
+    const targetSell = finalAvg * (1 + returnRatio);
+    const expectedProfit = last?.profit ?? 0;
 
     return {
       valid: true,
@@ -335,8 +341,33 @@ export function DcaDownCalculator() {
     };
   }, [computed]);
 
+  // Idempotent: clicking a row always sets that round as the last-completed.
+  // To step back, click an earlier row or use the legend's Reset button.
   const handleRowClick = (n: number) => {
-    setLastCompletedRound((prev) => (prev === n ? n - 1 : n));
+    setLastCompletedRound(n);
+  };
+
+  // Stepping N upward past the current maxN auto-relaxes drop so the new N
+  // is still valid. Keeps the user from having to manually retune drop.
+  const handleRoundsStep = (newN: number) => {
+    if (newN < N_MIN || newN > N_MAX) return;
+    const dropNum = parseNum(dropInterval);
+    const currentMaxN =
+      dropNum > 0 ? Math.floor(100 / dropNum) : N_MAX;
+    if (newN > currentMaxN) {
+      const newDrop = 100 / newN;
+      setDropInterval(newDrop.toFixed(2));
+    }
+    setRounds(String(newN));
+  };
+
+  const handleDropStep = (newDrop: number) => {
+    if (newDrop < DROP_MIN || newDrop > DROP_MAX) return;
+    setDropInterval(newDrop.toFixed(2));
+  };
+
+  const handleTargetStep = (newTarget: number) => {
+    setTargetReturn(String(newTarget));
   };
 
   return (
@@ -381,41 +412,43 @@ export function DcaDownCalculator() {
             </Field>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Field label={t.nLabel} htmlFor="dca-rounds">
-                <Input
+                <NumberStepper
                   id="dca-rounds"
-                  type="number"
+                  value={rounds}
+                  onInputChange={setRounds}
+                  onStep={handleRoundsStep}
                   min={N_MIN}
-                  max={maxN}
+                  max={N_MAX}
                   step={1}
                   inputMode="numeric"
                   placeholder={t.nPlaceholder}
-                  value={rounds}
-                  onChange={(e) => setRounds(e.target.value)}
-                  className="tnum"
+                  aria-label={t.nLabel}
                 />
               </Field>
               <Field label={t.dropIntervalLabel} htmlFor="dca-drop">
-                <Input
+                <NumberStepper
                   id="dca-drop"
-                  type="number"
-                  step="any"
+                  value={dropInterval}
+                  onInputChange={setDropInterval}
+                  onStep={handleDropStep}
+                  min={DROP_MIN}
+                  max={DROP_MAX}
+                  step={0.5}
                   inputMode="decimal"
                   placeholder={t.dropIntervalPlaceholder}
-                  value={dropInterval}
-                  onChange={(e) => setDropInterval(e.target.value)}
-                  className="tnum"
+                  aria-label={t.dropIntervalLabel}
                 />
               </Field>
               <Field label={t.targetReturnLabel} htmlFor="dca-target">
-                <Input
+                <NumberStepper
                   id="dca-target"
-                  type="number"
-                  step="any"
+                  value={targetReturn}
+                  onInputChange={setTargetReturn}
+                  onStep={handleTargetStep}
+                  step={1}
                   inputMode="decimal"
                   placeholder={t.targetReturnPlaceholder}
-                  value={targetReturn}
-                  onChange={(e) => setTargetReturn(e.target.value)}
-                  className="tnum"
+                  aria-label={t.targetReturnLabel}
                 />
               </Field>
             </div>
@@ -537,9 +570,12 @@ export function DcaDownCalculator() {
           fmtInt={fmtInt}
           lastCompletedRound={lastCompletedRound}
           onRoundClick={handleRowClick}
+          onReset={() => setLastCompletedRound(0)}
           targetReturnPct={computed.targetReturnPct}
           tableTitle={t.tableTitle}
-          tableHelp={t.dcaTableHelp}
+          legendCompleted={t.legendCompleted}
+          legendNextBuy={t.legendNextBuy}
+          legendReset={t.legendReset}
           colRound={t.colRound}
           colPrice={t.colPrice}
           colDropPct={t.colDropPct}
@@ -548,6 +584,7 @@ export function DcaDownCalculator() {
           colCumShares={t.colCumShares}
           colBuyAmount={t.colBuyAmount}
           colCumBuyAmount={t.colCumBuyAmount}
+          colProfit={t.colProfit}
           colTargetPrice={t.colTargetPrice}
         />
       )}
