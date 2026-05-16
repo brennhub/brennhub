@@ -13,6 +13,7 @@ type SeriesPoint = {
 type Props = {
   series: SeriesPoint[];
   fmt: Intl.NumberFormat;
+  fmtCurrency: (n: number) => string;
   toggleLabel: string;
   monthLabel: string;
   sharesLabel: string;
@@ -26,6 +27,7 @@ type Props = {
 export function DividendMonthlyDetail({
   series,
   fmt,
+  fmtCurrency,
   toggleLabel,
   monthLabel,
   sharesLabel,
@@ -72,13 +74,13 @@ export function DividendMonthlyDetail({
                   {fmt.format(p.totalShares)}
                 </td>
                 <td className="tnum px-3 py-1.5 text-right">
-                  {fmt.format(p.totalEquity)}
+                  {fmtCurrency(p.totalEquity)}
                 </td>
                 <td className="tnum px-3 py-1.5 text-right">
-                  {fmt.format(p.monthPayment)}
+                  {fmtCurrency(p.monthPayment)}
                 </td>
                 <td className="tnum px-3 py-1.5 text-right">
-                  {fmt.format(p.cumulativePayment)}
+                  {fmtCurrency(p.cumulativePayment)}
                 </td>
                 <td className="tnum px-3 py-1.5 text-right">
                   {fmt.format(p.monthlyYieldPct)}%

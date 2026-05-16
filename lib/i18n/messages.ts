@@ -69,6 +69,9 @@ export type Messages = {
     colorSchemeLabel: string;
     colorSchemeKr: string;
     colorSchemeUs: string;
+    currencyLabel: string;
+    currencyUsd: string;
+    currencyKrw: string;
     tabs: { costBasis: string; dividend: string; dcaDown: string };
     costBasis: {
       inputTitle: string;
@@ -189,7 +192,13 @@ export type Messages = {
       legendCompleted: string;
       legendNextBuy: string;
       legendReset: string;
-      roundDropDisplay: string;
+      stepperDropMax: string;
+      stepperDropMin: string;
+      stepperNMax: string;
+      stepperNMin: string;
+      stepperGenericMax: string;
+      forceFirstShareLabel: string;
+      forceFirstShareTooltip: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -267,6 +276,9 @@ export const messages: Record<Locale, Messages> = {
       colorSchemeLabel: "수익/손실 색상",
       colorSchemeKr: "한국식",
       colorSchemeUs: "미국식",
+      currencyLabel: "통화",
+      currencyUsd: "USD ($)",
+      currencyKrw: "KRW (₩)",
       tabs: { costBasis: "평단가", dividend: "배당", dcaDown: "분할매수" },
       costBasis: {
         inputTitle: "매수 기록",
@@ -352,14 +364,14 @@ export const messages: Record<Locale, Messages> = {
         emptyHint: "Budget, 시작가, 매수 횟수를 입력하면 결과가 나타납니다.",
         tickerHeader: "종목",
         tickerPlaceholder: "AAPL",
-        budgetHeader: "Budget",
+        budgetHeader: "예산",
         budgetPlaceholder: "총 예산",
         startPriceHeader: "시작가",
         startPricePlaceholder: "첫 매수가",
         nLabel: "매수 횟수",
         nPlaceholder: "2-50",
-        dropIntervalLabel: "총 하락율 (%)",
-        dropIntervalPlaceholder: "50",
+        dropIntervalLabel: "하락율 (%)",
+        dropIntervalPlaceholder: "5",
         targetReturnLabel: "목표 수익률 (%)",
         targetReturnPlaceholder: "30",
         weightToggle: "가중치 적용",
@@ -395,7 +407,14 @@ export const messages: Record<Locale, Messages> = {
         legendCompleted: "매수 완료",
         legendNextBuy: "다음 매수",
         legendReset: "리셋",
-        roundDropDisplay: "회차당 평균 하락: {value}%",
+        stepperDropMax: "하락율은 최대 50% 입니다",
+        stepperDropMin: "하락율은 최소 0.1% 입니다",
+        stepperNMax: "매수 횟수는 최대 100 입니다",
+        stepperNMin: "최소 2회 매수 필요",
+        stepperGenericMax: "최대값 도달",
+        forceFirstShareLabel: "시작가 매수 보장",
+        forceFirstShareTooltip:
+          "1회차부터 1주 이상 매수 강제. Budget 안전 가드 유지.",
       },
     },
     tools: {
@@ -487,6 +506,9 @@ export const messages: Record<Locale, Messages> = {
       colorSchemeLabel: "Gain/Loss Color",
       colorSchemeKr: "Korean",
       colorSchemeUs: "US",
+      currencyLabel: "Currency",
+      currencyUsd: "USD ($)",
+      currencyKrw: "KRW (₩)",
       tabs: {
         costBasis: "Cost Basis",
         dividend: "Dividends",
@@ -581,8 +603,8 @@ export const messages: Record<Locale, Messages> = {
         startPricePlaceholder: "First buy",
         nLabel: "Rounds",
         nPlaceholder: "2-50",
-        dropIntervalLabel: "Total Drop %",
-        dropIntervalPlaceholder: "50",
+        dropIntervalLabel: "Drop %",
+        dropIntervalPlaceholder: "5",
         targetReturnLabel: "Target Return (%)",
         targetReturnPlaceholder: "30",
         weightToggle: "Apply Weighting",
@@ -617,7 +639,14 @@ export const messages: Record<Locale, Messages> = {
         legendCompleted: "Completed",
         legendNextBuy: "Next Buy",
         legendReset: "Reset",
-        roundDropDisplay: "Per-round drop: {value}%",
+        stepperDropMax: "Drop max is 50%",
+        stepperDropMin: "Drop min is 0.1%",
+        stepperNMax: "Max rounds is 100",
+        stepperNMin: "Minimum 2 rounds",
+        stepperGenericMax: "Max reached",
+        forceFirstShareLabel: "Buy at Start Price",
+        forceFirstShareTooltip:
+          "Force minimum 1 share from round 1 (Budget cap protected)",
       },
     },
     tools: {

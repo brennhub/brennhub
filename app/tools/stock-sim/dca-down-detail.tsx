@@ -28,6 +28,7 @@ type Props = {
   rounds: Round[];
   fmt: Intl.NumberFormat;
   fmtInt: Intl.NumberFormat;
+  fmtCurrency: (n: number) => string;
   lastCompletedRound: number;
   onRoundClick: (n: number) => void;
   onReset: () => void;
@@ -48,12 +49,9 @@ type Props = {
   colTargetPrice: string;
 };
 
-// Hardcoded row tints. Independent of the gain/loss color scheme so the
-// completion indicator stays semantically clear regardless of locale or
-// user color preference.
-const COMPLETED_BG = "color-mix(in oklch, #facc15 15%, transparent)"; // yellow-400
-const NEXT_BG = "color-mix(in oklch, #22c55e 15%, transparent)"; // green-500
-// Legend swatches use a stronger tint so they read clearly outside the table.
+// Hardcoded row tints. Independent of the gain/loss color scheme.
+const COMPLETED_BG = "color-mix(in oklch, #facc15 15%, transparent)";
+const NEXT_BG = "color-mix(in oklch, #22c55e 15%, transparent)";
 const COMPLETED_SWATCH = "color-mix(in oklch, #facc15 30%, transparent)";
 const NEXT_SWATCH = "color-mix(in oklch, #22c55e 30%, transparent)";
 
@@ -61,6 +59,7 @@ export function DcaDownDetail({
   rounds,
   fmt,
   fmtInt,
+  fmtCurrency,
   lastCompletedRound,
   onRoundClick,
   onReset,
@@ -168,13 +167,13 @@ export function DcaDownDetail({
                   >
                     <td className="tnum px-3 py-1.5">{r.n}</td>
                     <td className="tnum px-3 py-1.5 text-right">
-                      {fmt.format(r.price)}
+                      {fmtCurrency(r.price)}
                     </td>
                     <td className="tnum px-3 py-1.5 text-right">
                       {fmt.format(r.cumulativeDropPct)}%
                     </td>
                     <td className="tnum px-3 py-1.5 text-right">
-                      {fmt.format(r.avgPrice)}
+                      {fmtCurrency(r.avgPrice)}
                     </td>
                     <td className="tnum px-3 py-1.5 text-right">
                       {fmtInt.format(r.shares)}
@@ -183,16 +182,21 @@ export function DcaDownDetail({
                       {fmtInt.format(r.cumulativeShares)}
                     </td>
                     <td className="tnum px-3 py-1.5 text-right">
-                      {fmt.format(r.buyAmount)}
+                      {fmtCurrency(r.buyAmount)}
                     </td>
                     <td className="tnum px-3 py-1.5 text-right">
-                      {fmt.format(r.cumulativeBuyAmount)}
+                      {fmtCurrency(r.cumulativeBuyAmount)}
                     </td>
-                    <td className={cn("tnum px-3 py-1.5 text-right", profitClass)}>
-                      {fmt.format(r.profit)}
+                    <td
+                      className={cn(
+                        "tnum px-3 py-1.5 text-right",
+                        profitClass,
+                      )}
+                    >
+                      {fmtCurrency(r.profit)}
                     </td>
                     <td className="tnum px-3 py-1.5 text-right">
-                      {fmt.format(r.targetPrice)}
+                      {fmtCurrency(r.targetPrice)}
                     </td>
                   </tr>
                 );

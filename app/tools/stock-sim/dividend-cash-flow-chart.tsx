@@ -50,6 +50,7 @@ type Props = {
   series: SeriesPoint[];
   bars: BarMeta[];
   fmt: Intl.NumberFormat;
+  fmtCurrency: (n: number) => string;
   monthLabel: string;
   monthAxisLabel: string;
   dividendLabel: string;
@@ -68,7 +69,7 @@ type ChartTooltipProps = {
   active?: boolean;
   payload?: ReadonlyArray<ChartTooltipPayloadEntry>;
   label?: string | number;
-  fmt: Intl.NumberFormat;
+  fmtCurrency: (n: number) => string;
   monthLabel: string;
   dividendLabel: string;
   cumulativeLabel: string;
@@ -84,6 +85,7 @@ export function DividendCashFlowChart({
   series,
   bars,
   fmt,
+  fmtCurrency,
   monthLabel,
   monthAxisLabel,
   dividendLabel,
@@ -216,7 +218,7 @@ export function DividendCashFlowChart({
                     | undefined
                 }
                 label={args.label as string | number | undefined}
-                fmt={fmt}
+                fmtCurrency={fmtCurrency}
                 monthLabel={monthLabel}
                 dividendLabel={dividendLabel}
                 cumulativeLabel={cumulativeLabel}
@@ -262,7 +264,7 @@ function ChartTooltip({
   active,
   payload,
   label,
-  fmt,
+  fmtCurrency,
   monthLabel,
   dividendLabel,
   cumulativeLabel,
@@ -296,7 +298,7 @@ function ChartTooltip({
           />
           <span className="text-muted-foreground">{p.name}:</span>
           <span>
-            {fmt.format(typeof p.value === "number" ? p.value : 0)}
+            {fmtCurrency(typeof p.value === "number" ? p.value : 0)}
           </span>
         </div>
       ))}
@@ -307,7 +309,7 @@ function ChartTooltip({
             style={{ background: "var(--muted-foreground)", opacity: 0.5 }}
           />
           <span className="text-muted-foreground">{dividendLabel}:</span>
-          <span>{fmt.format(totalBar)}</span>
+          <span>{fmtCurrency(totalBar)}</span>
         </div>
       )}
       {cumulative && typeof cumulative.value === "number" && (
@@ -317,7 +319,7 @@ function ChartTooltip({
             style={{ background: CHART_BAR_COLOR, opacity: 0.4 }}
           />
           <span className="text-muted-foreground">{cumulativeLabel}:</span>
-          <span>{fmt.format(cumulative.value)}</span>
+          <span>{fmtCurrency(cumulative.value)}</span>
         </div>
       )}
     </div>

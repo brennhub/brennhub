@@ -1,6 +1,11 @@
 "use client";
 
-import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronsDown,
+  ChevronsUp,
+  ChevronUp,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -9,12 +14,15 @@ type Props = {
   onInputChange: (text: string) => void;
   min?: number;
   max?: number;
-  step?: number;
+  smallStep: number;
+  bigStep: number;
   id?: string;
   className?: string;
   placeholder?: string;
   inputMode?: "numeric" | "decimal";
   "aria-label"?: string;
+  maxReachedMessage?: string;
+  minReachedMessage?: string;
 };
 
 function roundForStep(value: number, step: number): number {
@@ -29,32 +37,37 @@ export function NumberStepper({
   onInputChange,
   min = Number.NEGATIVE_INFINITY,
   max = Number.POSITIVE_INFINITY,
-  step = 1,
+  smallStep,
+  bigStep,
   id,
   className,
   placeholder,
   inputMode = "decimal",
   "aria-label": ariaLabel,
+  maxReachedMessage,
+  minReachedMessage,
 }: Props) {
   const current = parseFloat(value);
-  const valid = Number.isFinite(current);
-  const base = valid
+  const base = Number.isFinite(current)
     ? current
     : Number.isFinite(min)
       ? Math.max(min, 0)
       : 0;
-  const nextUp = base + step;
-  const nextDown = base - step;
-  const upDisabled = nextUp > max;
-  const downDisabled = nextDown < min;
 
-  const handleUp = () => {
-    if (upDisabled) return;
-    onStep(roundForStep(nextUp, step));
+  const candidates = {
+    smallUp: base + smallStep,
+    bigUp: base + bigStep,
+    smallDown: base - smallStep,
+    bigDown: base - bigStep,
   };
-  const handleDown = () => {
-    if (downDisabled) return;
-    onStep(roundForStep(nextDown, step));
+
+  const smallUpDisabled = candidates.smallUp > max;
+  const bigUpDisabled = candidates.bigUp > max;
+  const smallDownDisabled = candidates.smallDown < min;
+  const bigDownDisabled = candidates.bigDown < min;
+
+  const handle = (next: number, step: number) => {
+    onStep(roundForStep(next, step));
   };
 
   return (
@@ -76,28 +89,80 @@ export function NumberStepper({
         aria-label={ariaLabel}
         className="tnum w-full min-w-0 bg-transparent px-2.5 py-1 text-base text-foreground outline-none placeholder:text-muted-foreground md:text-sm"
       />
-      <div className="flex shrink-0 flex-col border-l border-input">
-        <button
-          type="button"
-          onClick={handleUp}
-          disabled={upDisabled}
-          aria-label="Increase"
-          tabIndex={-1}
-          className="flex h-4 w-6 items-center justify-center text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+      <div className="grid shrink-0 grid-cols-2 grid-rows-2 border-l border-input">
+        <StepperButton
+          onClick={() => handle(candidates.smallUp, smallStep)}
+          disabled={smallUpDisabled}
+          title={smallUpDisabled ? maxReachedMessage : undefined}
+          aria-label="Increase small"
         >
           <ChevronUp className="size-3" />
-        </button>
-        <button
-          type="button"
-          onClick={handleDown}
-          disabled={downDisabled}
-          aria-label="Decrease"
-          tabIndex={-1}
-          className="flex h-4 w-6 items-center justify-center border-t border-input text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+        </StepperButton>
+        <StepperButton
+          onClick={() => handle(candidates.bigUp, bigStep)}
+          disabled={bigUpDisabled}
+          title={bigUpDisabled ? maxReachedMessage : undefined}
+          aria-label="Increase big"
+          borderLeft
+        >
+          <ChevronsUp className="size-3" />
+        </StepperButton>
+        <StepperButton
+          onClick={() => handle(candidates.smallDown, smallStep)}
+          disabled={smallDownDisabled}
+          title={smallDownDisabled ? minReachedMessage : undefined}
+          aria-label="Decrease small"
+          borderTop
         >
           <ChevronDown className="size-3" />
-        </button>
+        </StepperButton>
+        <StepperButton
+          onClick={() => handle(candidates.bigDown, bigStep)}
+          disabled={bigDownDisabled}
+          title={bigDownDisabled ? minReachedMessage : undefined}
+          aria-label="Decrease big"
+          borderLeft
+          borderTop
+        >
+          <ChevronsDown className="size-3" />
+        </StepperButton>
       </div>
     </div>
+  );
+}
+
+function StepperButton({
+  onClick,
+  disabled,
+  title,
+  children,
+  borderLeft,
+  borderTop,
+  "aria-label": ariaLabel,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  title?: string;
+  children: React.ReactNode;
+  borderLeft?: boolean;
+  borderTop?: boolean;
+  "aria-label": string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      tabIndex={-1}
+      className={cn(
+        "flex h-4 w-6 items-center justify-center text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40",
+        borderLeft && "border-l border-input",
+        borderTop && "border-t border-input",
+      )}
+    >
+      {children}
+    </button>
   );
 }

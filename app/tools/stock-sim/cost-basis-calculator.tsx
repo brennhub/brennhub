@@ -12,6 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
+import { useCurrency } from "@/components/currency-provider";
+import { formatCurrency } from "@/lib/format/currency";
 import { cn } from "@/lib/utils";
 
 type Row = { id: string; price: string; qty: string };
@@ -42,6 +44,7 @@ function parseNum(s: string): number {
 export function CostBasisCalculator() {
   const t = useMessages().stockSim.costBasis;
   const { locale } = useLocale();
+  const { currency } = useCurrency();
   const [rows, setRows] = useState<Row[]>(() => [emptyRow()]);
   const [currentPrice, setCurrentPrice] = useState("");
   const [hydrated, setHydrated] = useState(false);
@@ -105,6 +108,9 @@ export function CostBasisCalculator() {
 
   const formatNum = (n: number | null): string =>
     n === null ? "—" : fmt.format(n);
+
+  const fmtCurrency = (n: number | null): string =>
+    n === null ? "—" : formatCurrency(n, currency);
 
   const updateRow = (id: string, patch: Partial<Row>) => {
     setRows((prev) =>
@@ -205,7 +211,7 @@ export function CostBasisCalculator() {
             <dl className="space-y-3">
               <ResultRow
                 label={t.avgPrice}
-                value={formatNum(totals.avgPrice)}
+                value={fmtCurrency(totals.avgPrice)}
               />
               <ResultRow
                 label={t.totalQty}
@@ -213,20 +219,20 @@ export function CostBasisCalculator() {
               />
               <ResultRow
                 label={t.totalInvest}
-                value={formatNum(totals.totalInvest)}
+                value={fmtCurrency(totals.totalInvest)}
               />
               {totals.currentValue !== null && (
                 <>
                   <ResultRow
                     label={t.currentValue}
-                    value={formatNum(totals.currentValue)}
+                    value={fmtCurrency(totals.currentValue)}
                   />
                   <ResultRow
                     label={t.pnl}
                     value={
                       <span className={cn(pnlColor)}>
                         {pnlSign}
-                        {formatNum(totals.pnl)}
+                        {fmtCurrency(totals.pnl)}
                         {totals.pnlPercent !== null && (
                           <span className="ml-2 text-sm">
                             ({pnlSign}

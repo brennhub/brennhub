@@ -4,6 +4,7 @@ import "./globals.css";
 import { LocaleProvider } from "@/lib/i18n/provider";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { ColorSchemeProvider } from "@/components/color-scheme-provider";
+import { CurrencyProvider } from "@/components/currency-provider";
 import { DEFAULT_LOCALE } from "@/lib/i18n/types";
 
 const geistSans = Geist({
@@ -42,10 +43,12 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-zinc-50 dark:bg-zinc-950">
         <LocaleProvider>
           <ColorSchemeProvider>
-            <header className="flex justify-end px-4 pt-4 sm:px-6">
-              <LocaleToggle />
-            </header>
-            {children}
+            <CurrencyProvider>
+              <header className="flex justify-end px-4 pt-4 sm:px-6">
+                <LocaleToggle />
+              </header>
+              {children}
+            </CurrencyProvider>
           </ColorSchemeProvider>
         </LocaleProvider>
       </body>

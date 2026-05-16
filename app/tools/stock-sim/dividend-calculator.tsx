@@ -13,6 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
+import { useCurrency } from "@/components/currency-provider";
+import { formatCurrency } from "@/lib/format/currency";
 import { cn } from "@/lib/utils";
 import {
   CHART_PALETTE,
@@ -120,6 +122,7 @@ function migrateRow(raw: unknown): Row {
 export function DividendCalculator() {
   const t = useMessages().stockSim.dividend;
   const { locale } = useLocale();
+  const { currency } = useCurrency();
   const [rows, setRows] = useState<Row[]>(() => [emptyRow()]);
   const [months, setMonths] = useState<string>(DEFAULT_MONTHS);
   const [periodInputStr, setPeriodInputStr] = useState<string>(() =>
@@ -217,6 +220,11 @@ export function DividendCalculator() {
   );
 
   const formatNum = (n: number): string => fmt.format(n);
+
+  const fmtCurrency = useMemo(
+    () => (n: number) => formatCurrency(n, currency),
+    [currency],
+  );
 
   const monthsNum = useMemo(() => {
     const n = Math.floor(parseNum(months));
@@ -578,11 +586,11 @@ export function DividendCalculator() {
                 <dl className="space-y-3">
                   <ResultRow
                     label={t.monthlyAverage}
-                    value={formatNum(computed.totalMonthly)}
+                    value={fmtCurrency(computed.totalMonthly)}
                   />
                   <ResultRow
                     label={t.annualTotal}
-                    value={formatNum(computed.totalAnnual)}
+                    value={fmtCurrency(computed.totalAnnual)}
                   />
                   {computed.portfolioYield !== null && (
                     <ResultRow
@@ -610,11 +618,11 @@ export function DividendCalculator() {
                             <span className="font-medium">{tickerLabel}</span>
                             <span className="text-muted-foreground">—</span>
                             <span className="tnum">
-                              {t.monthlyShort} {formatNum(p.monthly)}
+                              {t.monthlyShort} {fmtCurrency(p.monthly)}
                             </span>
                             <span className="text-muted-foreground">/</span>
                             <span className="tnum">
-                              {t.annualShort} {formatNum(p.annual)}
+                              {t.annualShort} {fmtCurrency(p.annual)}
                             </span>
                             <span className="tnum text-muted-foreground">
                               ({t.yieldShort} {formatNum(p.yieldPct)}%)
@@ -634,6 +642,7 @@ export function DividendCalculator() {
         <DividendPerTicker
           tickers={perTickerCards}
           fmt={fmt}
+          fmtCurrency={fmtCurrency}
           title={t.perTickerTitle}
           equityLabel={t.equityHeader}
           monthlyLabel={t.monthlyAverage}
@@ -716,6 +725,7 @@ export function DividendCalculator() {
                 series={series}
                 bars={contributingBars}
                 fmt={fmt}
+                fmtCurrency={fmtCurrency}
                 monthLabel={t.monthLabel}
                 monthAxisLabel={t.monthAxisLabel}
                 dividendLabel={t.dividendLabel}
@@ -739,7 +749,7 @@ export function DividendCalculator() {
                 <dl className="space-y-3">
                   <ResultRow
                     label={t.totalDividendLabel}
-                    value={formatNum(summary.totalDividend)}
+                    value={fmtCurrency(summary.totalDividend)}
                   />
                   {summary.roi !== null && (
                     <ResultRow
@@ -750,7 +760,7 @@ export function DividendCalculator() {
                   {dripEnabled && (
                     <ResultRow
                       label={t.finalEquityLabel}
-                      value={formatNum(summary.finalEquity)}
+                      value={fmtCurrency(summary.finalEquity)}
                     />
                   )}
                 </dl>
@@ -759,6 +769,7 @@ export function DividendCalculator() {
               <DividendMonthlyDetail
                 series={series}
                 fmt={fmt}
+                fmtCurrency={fmtCurrency}
                 toggleLabel={t.monthlyDetailToggle}
                 monthLabel={t.monthLabel}
                 sharesLabel={t.sharesLabel}

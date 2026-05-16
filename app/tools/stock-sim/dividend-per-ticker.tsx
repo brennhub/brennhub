@@ -14,6 +14,7 @@ type PerTickerCard = {
 type Props = {
   tickers: PerTickerCard[];
   fmt: Intl.NumberFormat;
+  fmtCurrency: (n: number) => string;
   title: string;
   equityLabel: string;
   monthlyLabel: string;
@@ -25,6 +26,7 @@ type Props = {
 export function DividendPerTicker({
   tickers,
   fmt,
+  fmtCurrency,
   title,
   equityLabel,
   monthlyLabel,
@@ -50,9 +52,9 @@ export function DividendPerTicker({
               <span className="text-sm font-medium">{t.label}</span>
             </div>
             <dl className="space-y-1 text-xs">
-              <Row label={equityLabel} value={fmt.format(t.equity)} />
-              <Row label={monthlyLabel} value={fmt.format(t.monthly)} />
-              <Row label={annualLabel} value={fmt.format(t.annual)} />
+              <Row label={equityLabel} value={fmtCurrency(t.equity)} />
+              <Row label={monthlyLabel} value={fmtCurrency(t.monthly)} />
+              <Row label={annualLabel} value={fmtCurrency(t.annual)} />
               <Row
                 label={yieldLabel}
                 value={`${fmt.format(t.yieldPct)}%`}
@@ -60,7 +62,7 @@ export function DividendPerTicker({
               {t.finalEquity !== null && (
                 <Row
                   label={finalEquityLabel}
-                  value={fmt.format(t.finalEquity)}
+                  value={fmtCurrency(t.finalEquity)}
                 />
               )}
             </dl>
