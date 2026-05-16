@@ -23,20 +23,22 @@ const N_MAX = 200;
 const N_DEFAULT = 10;
 const WEIGHT_MIN = 0.01;
 const WEIGHT_MAX = 95;
-const DROP_MIN = 0.5;
-const DROP_MAX = 99;
+const DROP_MIN = 5;
+const DROP_MAX = 100;
+const FINAL_DROP_DEFAULT = "50";
 
 type StoredState = {
   ticker: string;
   budget: string;
   startPrice: string;
   rounds: string;
-  dropInterval: string;
+  finalDrop: string;
   targetReturn: string;
   weightEnabled: boolean;
   firstWeightPct: string;
   lastCompletedRound: number;
-  // Legacy: Task 10 used `nextBuyRound` (1..N upcoming round). Migrated on load.
+  // Legacy fields (Task 10–14 shape). Migrated on load.
+  dropInterval?: string;
   nextBuyRound?: number;
 };
 
@@ -107,7 +109,7 @@ export function DcaDownCalculator() {
   const [budget, setBudget] = useState<string>("");
   const [startPrice, setStartPrice] = useState<string>("");
   const [rounds, setRounds] = useState<string>(String(N_DEFAULT));
-  const [dropInterval, setDropInterval] = useState<string>("5");
+  const [finalDrop, setFinalDrop] = useState<string>(FINAL_DROP_DEFAULT);
   const [targetReturn, setTargetReturn] = useState<string>("30");
   const [weightEnabled, setWeightEnabled] = useState<boolean>(false);
   const [firstWeightPct, setFirstWeightPct] = useState<string>("10");
@@ -124,8 +126,21 @@ export function DcaDownCalculator() {
         if (typeof parsed.startPrice === "string")
           setStartPrice(parsed.startPrice);
         if (typeof parsed.rounds === "string") setRounds(parsed.rounds);
-        if (typeof parsed.dropInterval === "string")
-          setDropInterval(parsed.dropInterval);
+        if (typeof parsed.finalDrop === "string") {
+          setFinalDrop(parsed.finalDrop);
+        } else if (
+          typeof parsed.dropInterval === "string" &&
+          typeof parsed.rounds === "string"
+        ) {
+          // Migration from per-round dropInterval shape: total drop ≈
+          // per-round × (N - 1). Cap at 100%.
+          const oldDrop = parseFloat(parsed.dropInterval);
+          const oldN = parseInt(parsed.rounds, 10);
+          if (Number.isFinite(oldDrop) && oldDrop > 0 && oldN >= 2) {
+            const computed = Math.min(100, oldDrop * (oldN - 1));
+            setFinalDrop(computed.toFixed(1));
+          }
+        }
         if (typeof parsed.targetReturn === "string")
           setTargetReturn(parsed.targetReturn);
         if (typeof parsed.weightEnabled === "boolean")
@@ -135,8 +150,7 @@ export function DcaDownCalculator() {
         if (typeof parsed.lastCompletedRound === "number") {
           setLastCompletedRound(parsed.lastCompletedRound);
         } else if (typeof parsed.nextBuyRound === "number") {
-          // Migration from Task 10 shape (upcoming round → most-recent
-          // completed).
+          // Migration from Task 10 shape.
           setLastCompletedRound(Math.max(0, parsed.nextBuyRound - 1));
         }
       }
@@ -156,7 +170,7 @@ export function DcaDownCalculator() {
           budget,
           startPrice,
           rounds,
-          dropInterval,
+          finalDrop,
           targetReturn,
           weightEnabled,
           firstWeightPct,
@@ -172,7 +186,7 @@ export function DcaDownCalculator() {
     budget,
     startPrice,
     rounds,
-    dropInterval,
+    finalDrop,
     targetReturn,
     weightEnabled,
     firstWeightPct,
@@ -204,22 +218,14 @@ export function DcaDownCalculator() {
     return Math.min(n, N_MAX);
   }, [rounds]);
 
-  // Largest N such that round N still buys at a positive price. With linear
-  // drop, price[N-1] > 0 ↔ (N-1) < 100/drop, so maxN = ceil(100/drop).
-  // (floor would be off-by-one for non-integer 100/drop, causing the auto-clamp
-  // useEffect to revert N+ stepper clicks.)
-  const maxN = useMemo(() => {
-    const dropNum = parseNum(dropInterval);
-    if (dropNum <= 0) return N_MAX;
-    return Math.min(Math.ceil(100 / dropNum), N_MAX);
-  }, [dropInterval]);
-
-  // Auto-clamp N when drop change makes the current N invalid.
-  useEffect(() => {
-    if (nNum > maxN && maxN >= N_MIN) {
-      setRounds(String(maxN));
-    }
-  }, [maxN, nNum]);
+  // Average per-round drop derived from total drop and N. Surfaced under the
+  // inputs so users can see the relationship at a glance.
+  const roundDropPct = useMemo(() => {
+    if (nNum <= 1) return 0;
+    const fd = parseNum(finalDrop);
+    if (fd <= 0) return 0;
+    return fd / (nNum - 1);
+  }, [finalDrop, nNum]);
 
   // Auto-clamp lastCompletedRound to current N range.
   useEffect(() => {
@@ -233,7 +239,7 @@ export function DcaDownCalculator() {
   const computed = useMemo(() => {
     const budgetNum = parseNum(budget);
     const startPriceNum = parseNum(startPrice);
-    const dropNum = parseNum(dropInterval);
+    const finalDropNum = parseNum(finalDrop);
     const targetReturnNum = parseNum(targetReturn);
 
     const valid = budgetNum > 0 && startPriceNum > 0 && nNum >= N_MIN;
@@ -261,11 +267,15 @@ export function DcaDownCalculator() {
     const normalizedWeights = weights.map((w) => w / weightSum);
 
     const returnRatio = targetReturnNum / 100;
+    // Total drop is split evenly across (N-1) gaps so price[0]=startPrice and
+    // price[N-1]=startPrice × (1 − finalDrop/100).
+    const dropPerStep = nNum > 1 ? finalDropNum / (nNum - 1) : 0;
     const roundsArr: Round[] = [];
     let cumulativeShares = 0;
     let cumulativeBuyAmount = 0;
     for (let n = 0; n < nNum; n++) {
-      const price = startPriceNum * (1 - (dropNum / 100) * n);
+      const cumulativeDropPct = dropPerStep * n;
+      const price = startPriceNum * (1 - cumulativeDropPct / 100);
       // Internal allocation (Budget × weight) — used only to compute shares.
       // The user-facing "매수금" is the actual outlay (shares × price).
       const allocation = budgetNum * normalizedWeights[n];
@@ -281,7 +291,7 @@ export function DcaDownCalculator() {
       roundsArr.push({
         n: n + 1,
         price,
-        cumulativeDropPct: dropNum * n,
+        cumulativeDropPct,
         avgPrice,
         shares,
         cumulativeShares,
@@ -313,7 +323,7 @@ export function DcaDownCalculator() {
     budget,
     startPrice,
     nNum,
-    dropInterval,
+    finalDrop,
     targetReturn,
     weightEnabled,
     firstWeightPct,
@@ -349,23 +359,14 @@ export function DcaDownCalculator() {
     setLastCompletedRound(n);
   };
 
-  // Stepping N upward past the current maxN auto-relaxes drop so the new N
-  // is still valid. Keeps the user from having to manually retune drop.
   const handleRoundsStep = (newN: number) => {
     if (newN < N_MIN || newN > N_MAX) return;
-    const dropNum = parseNum(dropInterval);
-    const currentMaxN =
-      dropNum > 0 ? Math.floor(100 / dropNum) : N_MAX;
-    if (newN > currentMaxN) {
-      const newDrop = 100 / newN;
-      setDropInterval(newDrop.toFixed(2));
-    }
     setRounds(String(newN));
   };
 
-  const handleDropStep = (newDrop: number) => {
+  const handleFinalDropStep = (newDrop: number) => {
     if (newDrop < DROP_MIN || newDrop > DROP_MAX) return;
-    setDropInterval(newDrop.toFixed(2));
+    setFinalDrop(String(newDrop));
   };
 
   const handleTargetStep = (newTarget: number) => {
@@ -427,15 +428,15 @@ export function DcaDownCalculator() {
                   aria-label={t.nLabel}
                 />
               </Field>
-              <Field label={t.dropIntervalLabel} htmlFor="dca-drop">
+              <Field label={t.dropIntervalLabel} htmlFor="dca-final-drop">
                 <NumberStepper
-                  id="dca-drop"
-                  value={dropInterval}
-                  onInputChange={setDropInterval}
-                  onStep={handleDropStep}
+                  id="dca-final-drop"
+                  value={finalDrop}
+                  onInputChange={setFinalDrop}
+                  onStep={handleFinalDropStep}
                   min={DROP_MIN}
                   max={DROP_MAX}
-                  step={0.5}
+                  step={5}
                   inputMode="decimal"
                   placeholder={t.dropIntervalPlaceholder}
                   aria-label={t.dropIntervalLabel}
@@ -504,6 +505,12 @@ export function DcaDownCalculator() {
                 </div>
               )}
             </div>
+
+            {roundDropPct > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {t.roundDropDisplay.replace("{value}", roundDropPct.toFixed(2))}
+              </p>
+            )}
 
             {zeroShareWarning && (
               <p className="border-t border-border pt-3 text-sm text-amber-600 dark:text-amber-400">

@@ -189,6 +189,7 @@ export type Messages = {
       legendCompleted: string;
       legendNextBuy: string;
       legendReset: string;
+      roundDropDisplay: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -357,8 +358,8 @@ export const messages: Record<Locale, Messages> = {
         startPricePlaceholder: "첫 매수가",
         nLabel: "매수 횟수",
         nPlaceholder: "2-50",
-        dropIntervalLabel: "하락율 (%)",
-        dropIntervalPlaceholder: "5",
+        dropIntervalLabel: "총 하락율 (%)",
+        dropIntervalPlaceholder: "50",
         targetReturnLabel: "목표 수익률 (%)",
         targetReturnPlaceholder: "30",
         weightToggle: "가중치 적용",
@@ -394,6 +395,7 @@ export const messages: Record<Locale, Messages> = {
         legendCompleted: "매수 완료",
         legendNextBuy: "다음 매수",
         legendReset: "리셋",
+        roundDropDisplay: "회차당 평균 하락: {value}%",
       },
     },
     tools: {
@@ -579,8 +581,8 @@ export const messages: Record<Locale, Messages> = {
         startPricePlaceholder: "First buy",
         nLabel: "Rounds",
         nPlaceholder: "2-50",
-        dropIntervalLabel: "Drop Interval (%)",
-        dropIntervalPlaceholder: "5",
+        dropIntervalLabel: "Total Drop %",
+        dropIntervalPlaceholder: "50",
         targetReturnLabel: "Target Return (%)",
         targetReturnPlaceholder: "30",
         weightToggle: "Apply Weighting",
@@ -615,6 +617,7 @@ export const messages: Record<Locale, Messages> = {
         legendCompleted: "Completed",
         legendNextBuy: "Next Buy",
         legendReset: "Reset",
+        roundDropDisplay: "Per-round drop: {value}%",
       },
     },
     tools: {
