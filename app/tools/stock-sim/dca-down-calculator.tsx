@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Info } from "lucide-react";
+import { Info, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,12 +32,16 @@ import { DcaDownDetail } from "./dca-down-detail";
 const STORAGE_KEY = "brennhub:stock-sim:dca-down";
 
 const N_MIN = 2;
-const N_MAX_HARD = 100;
-const N_DEFAULT = 10;
+const N_MAX_HARD = 50;
+const N_DEFAULT = 5;
+const TARGET_RETURN_DEFAULT = "10";
+const DROP_INTERVAL_DEFAULT = "5";
 const WEIGHT_MIN = 0.01;
 const WEIGHT_MAX = 95;
 const DROP_MIN = 0;
 const DROP_MAX = 50;
+const TAX_MAX = 50;
+const TARGET_MAX = 500;
 
 type TaxType = "short" | "long" | "custom";
 
@@ -126,8 +130,12 @@ export function DcaDownCalculator() {
   const [budget, setBudget] = useState<string>("");
   const [startPrice, setStartPrice] = useState<string>("");
   const [rounds, setRounds] = useState<string>(String(N_DEFAULT));
-  const [dropInterval, setDropInterval] = useState<string>("5");
-  const [targetReturn, setTargetReturn] = useState<string>("30");
+  const [dropInterval, setDropInterval] = useState<string>(
+    DROP_INTERVAL_DEFAULT,
+  );
+  const [targetReturn, setTargetReturn] = useState<string>(
+    TARGET_RETURN_DEFAULT,
+  );
   const [taxRate, setTaxRate] = useState<string>("0");
   const [taxType, setTaxType] = useState<TaxType>("custom");
   const [weightEnabled, setWeightEnabled] = useState<boolean>(false);
@@ -278,8 +286,6 @@ export function DcaDownCalculator() {
     [startPrice, currency, rate],
   );
 
-  // Display formatter for currency inputs: when unfocused, show formatted ($/₩
-  // prefix + commas); when focused, NumberStepper shows the raw editable text.
   const formatBudgetDisplay = (raw: string): string => {
     if (!raw) return "";
     const usd = parseCurrency(raw, currency, rate);
@@ -292,6 +298,9 @@ export function DcaDownCalculator() {
     if (usd === 0) return raw;
     return fmtCurrency(usd);
   };
+  const formatNWithUnit = (raw: string): string =>
+    raw ? `${raw} ${t.unitN}` : "";
+  const formatPercent = (raw: string): string => (raw ? `${raw} %` : "");
 
   const nNum = useMemo(() => {
     const n = Math.floor(parseNum(rounds));
@@ -305,8 +314,6 @@ export function DcaDownCalculator() {
     return Math.min(Math.ceil(100 / dn), N_MAX_HARD);
   }, [dropInterval]);
 
-  // Drop-change silent clamp: when the user lowers drop% the legal N range
-  // shrinks. This adjusts N quietly so the calculation stays valid.
   useEffect(() => {
     if (nNum > maxN && maxN >= N_MIN) {
       setRounds(String(maxN));
@@ -326,7 +333,11 @@ export function DcaDownCalculator() {
     const targetReturnNum = parseNum(targetReturn);
     const taxRateNum = parseNum(taxRate);
 
-    const valid = budgetUSD > 0 && startPriceUSD > 0 && nNum >= N_MIN;
+    const valid =
+      budgetUSD > 0 &&
+      startPriceUSD > 0 &&
+      nNum >= N_MIN &&
+      dropNum > 0;
     if (!valid) {
       return {
         valid: false,
@@ -487,8 +498,6 @@ export function DcaDownCalculator() {
     setRounds(text.replace(/[^\d]/g, ""));
   };
 
-  // Defaults N to N_MIN on blur if empty or out of range — protects against
-  // the user clearing the field and leaving an invalid state.
   const handleRoundsBlur = () => {
     const n = parseInt(rounds, 10);
     if (!rounds || !Number.isFinite(n) || n < N_MIN) {
@@ -507,11 +516,12 @@ export function DcaDownCalculator() {
   };
 
   const handleTargetStep = (newTarget: number) => {
+    if (newTarget < 0 || newTarget > TARGET_MAX) return;
     setTargetReturn(String(newTarget));
   };
 
   const handleTaxStep = (newTax: number) => {
-    if (newTax < 0) return;
+    if (newTax < 0 || newTax > TAX_MAX) return;
     setTaxRate(String(newTax));
     setTaxType("custom");
   };
@@ -534,6 +544,22 @@ export function DcaDownCalculator() {
   const handleStartPriceStep = (newPrice: number) => {
     if (newPrice < 0) return;
     setStartPrice(String(newPrice));
+  };
+
+  // Reset every plan-card input back to defaults. lastCompletedRound (detail
+  // card) and global toggles (color/currency) intentionally stay untouched.
+  const resetPlan = () => {
+    setTicker("");
+    setBudget("");
+    setStartPrice("");
+    setRounds(String(N_DEFAULT));
+    setDropInterval(DROP_INTERVAL_DEFAULT);
+    setTargetReturn(TARGET_RETURN_DEFAULT);
+    setTaxRate("0");
+    setTaxType("custom");
+    setWeightEnabled(false);
+    setFirstWeightPct("10");
+    setForceFirstShare(true);
   };
 
   const budgetSteps =
@@ -577,8 +603,6 @@ export function DcaDownCalculator() {
         fmtNum(r.targetPrice),
       ].join(","),
     );
-    // BOM (﻿) so Excel reads the file as UTF-8 instead of falling back
-    // to CP949 and corrupting Korean column headers.
     const csv = "﻿" + [header, ...lines].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -594,304 +618,307 @@ export function DcaDownCalculator() {
 
   const nMaxMessage = t.stepperNMax.replace("{max}", String(maxN));
 
+  const inputCard = (
+    <Card className="overflow-visible">
+      <CardHeader>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle>{t.inputTitle}</CardTitle>
+          <Button variant="outline" size="sm" onClick={resetPlan}>
+            <RotateCcw className="size-3" />
+            {t.legendReset}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Field label={t.tickerHeader} htmlFor="dca-ticker">
+          <Input
+            id="dca-ticker"
+            placeholder={t.tickerPlaceholder}
+            value={ticker}
+            onChange={(e) => setTicker(e.target.value)}
+          />
+        </Field>
+        <Field label={t.budgetHeader} htmlFor="dca-budget">
+          <NumberStepper
+            id="dca-budget"
+            value={budget}
+            onInputChange={setBudget}
+            onStep={handleBudgetStep}
+            displayFormatter={formatBudgetDisplay}
+            min={0}
+            smallStep={budgetSteps.small}
+            bigStep={budgetSteps.big}
+            inputMode="decimal"
+            placeholder={t.budgetPlaceholder}
+            aria-label={t.budgetHeader}
+          />
+        </Field>
+        <Field label={t.startPriceHeader} htmlFor="dca-start">
+          <NumberStepper
+            id="dca-start"
+            value={startPrice}
+            onInputChange={setStartPrice}
+            onStep={handleStartPriceStep}
+            displayFormatter={formatStartPriceDisplay}
+            min={0}
+            smallStep={startPriceSteps.small}
+            bigStep={startPriceSteps.big}
+            inputMode="decimal"
+            placeholder={t.startPricePlaceholder}
+            aria-label={t.startPriceHeader}
+          />
+        </Field>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Field label={t.nLabel} htmlFor="dca-rounds">
+            <NumberStepper
+              id="dca-rounds"
+              value={rounds}
+              onInputChange={handleRoundsChange}
+              onInputBlur={handleRoundsBlur}
+              onStep={handleRoundsStep}
+              displayFormatter={formatNWithUnit}
+              min={N_MIN}
+              max={maxN}
+              smallStep={1}
+              bigStep={10}
+              inputMode="numeric"
+              placeholder={t.nPlaceholder}
+              aria-label={t.nLabel}
+              maxReachedMessage={nMaxMessage}
+              minReachedMessage={t.stepperNMin}
+            />
+          </Field>
+          <Field label={t.dropIntervalLabel} htmlFor="dca-drop">
+            <NumberStepper
+              id="dca-drop"
+              value={dropInterval}
+              onInputChange={setDropInterval}
+              onStep={handleDropStep}
+              displayFormatter={formatPercent}
+              min={DROP_MIN}
+              max={DROP_MAX}
+              smallStep={1}
+              bigStep={5}
+              inputMode="decimal"
+              placeholder={t.dropIntervalPlaceholder}
+              aria-label={t.dropIntervalLabel}
+              maxReachedMessage={t.stepperDropMax}
+              minReachedMessage={t.stepperDropMin}
+            />
+          </Field>
+          <Field label={t.targetReturnLabel} htmlFor="dca-target">
+            <NumberStepper
+              id="dca-target"
+              value={targetReturn}
+              onInputChange={setTargetReturn}
+              onStep={handleTargetStep}
+              displayFormatter={formatPercent}
+              min={0}
+              max={TARGET_MAX}
+              smallStep={1}
+              bigStep={5}
+              inputMode="decimal"
+              placeholder={t.targetReturnPlaceholder}
+              aria-label={t.targetReturnLabel}
+              maxReachedMessage={t.stepperTargetMax}
+            />
+          </Field>
+        </div>
+
+        <div className="space-y-2 border-t border-border pt-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Label htmlFor="dca-tax-rate" className="text-sm">
+              {t.taxRateLabel}
+            </Label>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant={taxType === "short" ? "default" : "outline"}
+                size="sm"
+                onClick={() => selectTaxType("short")}
+              >
+                {t.taxTypeShortTerm}
+              </Button>
+              <InfoTooltip text={t.taxTooltipShortTerm} />
+              <Button
+                type="button"
+                variant={taxType === "long" ? "default" : "outline"}
+                size="sm"
+                onClick={() => selectTaxType("long")}
+              >
+                {t.taxTypeLongTerm}
+              </Button>
+              <InfoTooltip text={t.taxTooltipLongTerm} />
+            </div>
+          </div>
+          <NumberStepper
+            id="dca-tax-rate"
+            value={taxRate}
+            onInputChange={handleTaxRateChange}
+            onStep={handleTaxStep}
+            displayFormatter={formatPercent}
+            min={0}
+            max={TAX_MAX}
+            smallStep={1}
+            bigStep={5}
+            inputMode="decimal"
+            aria-label={t.taxRateLabel}
+            maxReachedMessage={t.stepperTaxMax}
+          />
+        </div>
+
+        <div className="space-y-2 border-t border-border pt-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="dca-weight-toggle"
+              checked={weightEnabled}
+              onCheckedChange={setWeightEnabled}
+              aria-label={t.weightToggle}
+            />
+            <Label
+              htmlFor="dca-weight-toggle"
+              className="cursor-pointer text-sm"
+            >
+              {t.weightToggle}
+            </Label>
+            <InfoTooltip text={t.weightTooltip} />
+          </div>
+          <p className="text-xs text-muted-foreground">{t.weightHint}</p>
+          {weightEnabled && (
+            <div>
+              <Label htmlFor="dca-first-weight" className="text-sm">
+                {t.firstWeightLabel}
+              </Label>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <Input
+                  id="dca-first-weight"
+                  type="number"
+                  step="any"
+                  inputMode="decimal"
+                  placeholder={t.firstWeightPlaceholder}
+                  value={firstWeightPct}
+                  onChange={(e) => setFirstWeightPct(e.target.value)}
+                  className="tnum max-w-24"
+                />
+                <span className="text-xs text-muted-foreground">
+                  ({t.weightEqualBenchmark} = {equalBenchmark.toFixed(2)}%)
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 border-t border-border pt-3">
+          <Switch
+            id="dca-force-first-share"
+            checked={forceFirstShare}
+            onCheckedChange={setForceFirstShare}
+            aria-label={t.forceFirstShareLabel}
+          />
+          <Label
+            htmlFor="dca-force-first-share"
+            className="cursor-pointer text-sm"
+          >
+            {t.forceFirstShareLabel}
+          </Label>
+          <InfoTooltip text={t.forceFirstShareTooltip} />
+        </div>
+
+        {zeroShareWarning && (
+          <p className="border-t border-border pt-3 text-sm text-amber-600 dark:text-amber-400">
+            ⚠️{" "}
+            {zeroShareWarning.count === 1
+              ? t.zeroShareWarningSingle.replace(
+                  "{n}",
+                  String(zeroShareWarning.start),
+                )
+              : t.zeroShareWarningRange
+                  .replace("{start}", String(zeroShareWarning.start))
+                  .replace("{end}", String(zeroShareWarning.end))}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const summaryCard = (
+    <Card className="self-start lg:sticky lg:top-4">
+      <CardHeader>
+        <CardTitle>{t.summaryTitle}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <dl className="space-y-3">
+          <SummaryRow
+            label={t.totalInvestLabel}
+            value={fmtCurrency(computed.totalInvest)}
+          />
+          <SummaryRow
+            label={t.totalSharesLabel}
+            value={
+              locale === "ko"
+                ? `${fmtInt.format(computed.totalShares)} 주`
+                : fmtInt.format(computed.totalShares)
+            }
+          />
+          <SummaryRow
+            label={t.finalAvgLabel}
+            value={fmtCurrency(computed.finalAvg)}
+          />
+          <SummaryRow
+            label={t.targetReturnDisplayLabel}
+            value={`${fmt.format(computed.targetReturnPct)}%`}
+          />
+          <SummaryRow
+            label={t.targetPriceLabel}
+            value={fmtCurrency(computed.targetSell)}
+          />
+          <SummaryRow
+            label={t.expectedProfitLabel}
+            value={
+              <span className={cn(profitColor)}>
+                {computed.expectedProfit > 0 ? "+" : ""}
+                {fmtCurrency(computed.expectedProfit)}
+              </span>
+            }
+          />
+          <SummaryRow
+            label={t.taxAmountLabel}
+            value={
+              <span className={cn(taxColor)}>
+                {computed.taxAmount > 0 ? "−" : ""}
+                {fmtCurrency(computed.taxAmount)}
+              </span>
+            }
+          />
+          <SummaryRow
+            label={t.afterTaxProfitLabel}
+            value={
+              <span className={cn(afterTaxColor)}>
+                {computed.afterTaxProfit > 0 ? "+" : ""}
+                {fmtCurrency(computed.afterTaxProfit)}
+              </span>
+            }
+          />
+        </dl>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="overflow-visible">
-          <CardHeader>
-            <CardTitle>{t.inputTitle}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Field label={t.tickerHeader} htmlFor="dca-ticker">
-              <Input
-                id="dca-ticker"
-                placeholder={t.tickerPlaceholder}
-                value={ticker}
-                onChange={(e) => setTicker(e.target.value)}
-              />
-            </Field>
-            <Field label={t.budgetHeader} htmlFor="dca-budget">
-              <NumberStepper
-                id="dca-budget"
-                value={budget}
-                onInputChange={setBudget}
-                onStep={handleBudgetStep}
-                displayFormatter={formatBudgetDisplay}
-                min={0}
-                smallStep={budgetSteps.small}
-                bigStep={budgetSteps.big}
-                inputMode="decimal"
-                placeholder={t.budgetPlaceholder}
-                aria-label={t.budgetHeader}
-              />
-            </Field>
-            <Field label={t.startPriceHeader} htmlFor="dca-start">
-              <NumberStepper
-                id="dca-start"
-                value={startPrice}
-                onInputChange={setStartPrice}
-                onStep={handleStartPriceStep}
-                displayFormatter={formatStartPriceDisplay}
-                min={0}
-                smallStep={startPriceSteps.small}
-                bigStep={startPriceSteps.big}
-                inputMode="decimal"
-                placeholder={t.startPricePlaceholder}
-                aria-label={t.startPriceHeader}
-              />
-            </Field>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Field label={t.nLabel} htmlFor="dca-rounds">
-                <div className="flex items-center gap-1">
-                  <div className="min-w-0 flex-1">
-                    <NumberStepper
-                      id="dca-rounds"
-                      value={rounds}
-                      onInputChange={handleRoundsChange}
-                      onInputBlur={handleRoundsBlur}
-                      onStep={handleRoundsStep}
-                      min={N_MIN}
-                      max={maxN}
-                      smallStep={1}
-                      bigStep={10}
-                      inputMode="numeric"
-                      placeholder={t.nPlaceholder}
-                      aria-label={t.nLabel}
-                      maxReachedMessage={nMaxMessage}
-                      minReachedMessage={t.stepperNMin}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {t.unitN}
-                  </span>
-                </div>
-              </Field>
-              <Field label={t.dropIntervalLabel} htmlFor="dca-drop">
-                <div className="flex items-center gap-1">
-                  <div className="min-w-0 flex-1">
-                    <NumberStepper
-                      id="dca-drop"
-                      value={dropInterval}
-                      onInputChange={setDropInterval}
-                      onStep={handleDropStep}
-                      min={DROP_MIN}
-                      max={DROP_MAX}
-                      smallStep={1}
-                      bigStep={5}
-                      inputMode="decimal"
-                      placeholder={t.dropIntervalPlaceholder}
-                      aria-label={t.dropIntervalLabel}
-                      maxReachedMessage={t.stepperDropMax}
-                      minReachedMessage={t.stepperDropMin}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground">%</span>
-                </div>
-              </Field>
-              <Field label={t.targetReturnLabel} htmlFor="dca-target">
-                <div className="flex items-center gap-1">
-                  <div className="min-w-0 flex-1">
-                    <NumberStepper
-                      id="dca-target"
-                      value={targetReturn}
-                      onInputChange={setTargetReturn}
-                      onStep={handleTargetStep}
-                      min={0}
-                      smallStep={1}
-                      bigStep={5}
-                      inputMode="decimal"
-                      placeholder={t.targetReturnPlaceholder}
-                      aria-label={t.targetReturnLabel}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground">%</span>
-                </div>
-              </Field>
-            </div>
-
-            {/* Tax: label + Short/Long-term selector inline; stepper below */}
-            <div className="space-y-2 border-t border-border pt-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <Label htmlFor="dca-tax-rate" className="text-sm">
-                  {t.taxRateLabel}
-                </Label>
-                <div className="flex items-center gap-1">
-                  <Button
-                    type="button"
-                    variant={taxType === "short" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => selectTaxType("short")}
-                  >
-                    {t.taxTypeShortTerm}
-                  </Button>
-                  <InfoTooltip text={t.taxTooltipShortTerm} />
-                  <Button
-                    type="button"
-                    variant={taxType === "long" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => selectTaxType("long")}
-                  >
-                    {t.taxTypeLongTerm}
-                  </Button>
-                  <InfoTooltip text={t.taxTooltipLongTerm} />
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="min-w-0 flex-1">
-                  <NumberStepper
-                    id="dca-tax-rate"
-                    value={taxRate}
-                    onInputChange={handleTaxRateChange}
-                    onStep={handleTaxStep}
-                    min={0}
-                    smallStep={1}
-                    bigStep={5}
-                    inputMode="decimal"
-                    aria-label={t.taxRateLabel}
-                  />
-                </div>
-                <span className="text-xs text-muted-foreground">%</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 border-t border-border pt-3">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="dca-weight-toggle"
-                  checked={weightEnabled}
-                  onCheckedChange={setWeightEnabled}
-                  aria-label={t.weightToggle}
-                />
-                <Label
-                  htmlFor="dca-weight-toggle"
-                  className="cursor-pointer text-sm"
-                >
-                  {t.weightToggle}
-                </Label>
-                <InfoTooltip text={t.weightTooltip} />
-              </div>
-              <p className="text-xs text-muted-foreground">{t.weightHint}</p>
-              {weightEnabled && (
-                <div>
-                  <Label htmlFor="dca-first-weight" className="text-sm">
-                    {t.firstWeightLabel}
-                  </Label>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                    <Input
-                      id="dca-first-weight"
-                      type="number"
-                      step="any"
-                      inputMode="decimal"
-                      placeholder={t.firstWeightPlaceholder}
-                      value={firstWeightPct}
-                      onChange={(e) => setFirstWeightPct(e.target.value)}
-                      className="tnum max-w-24"
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      ({t.weightEqualBenchmark} = {equalBenchmark.toFixed(2)}%)
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 border-t border-border pt-3">
-              <Switch
-                id="dca-force-first-share"
-                checked={forceFirstShare}
-                onCheckedChange={setForceFirstShare}
-                aria-label={t.forceFirstShareLabel}
-              />
-              <Label
-                htmlFor="dca-force-first-share"
-                className="cursor-pointer text-sm"
-              >
-                {t.forceFirstShareLabel}
-              </Label>
-              <InfoTooltip text={t.forceFirstShareTooltip} />
-            </div>
-
-            {zeroShareWarning && (
-              <p className="border-t border-border pt-3 text-sm text-amber-600 dark:text-amber-400">
-                ⚠️{" "}
-                {zeroShareWarning.count === 1
-                  ? t.zeroShareWarningSingle.replace(
-                      "{n}",
-                      String(zeroShareWarning.start),
-                    )
-                  : t.zeroShareWarningRange
-                      .replace("{start}", String(zeroShareWarning.start))
-                      .replace("{end}", String(zeroShareWarning.end))}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="self-start lg:sticky lg:top-4">
-          <CardHeader>
-            <CardTitle>{t.summaryTitle}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!computed.valid ? (
-              <p className="text-sm text-muted-foreground">{t.emptyHint}</p>
-            ) : (
-              <dl className="space-y-3">
-                <SummaryRow
-                  label={t.totalInvestLabel}
-                  value={fmtCurrency(computed.totalInvest)}
-                />
-                <SummaryRow
-                  label={t.totalSharesLabel}
-                  value={
-                    locale === "ko"
-                      ? `${fmtInt.format(computed.totalShares)} 주`
-                      : fmtInt.format(computed.totalShares)
-                  }
-                />
-                <SummaryRow
-                  label={t.finalAvgLabel}
-                  value={fmtCurrency(computed.finalAvg)}
-                />
-                <SummaryRow
-                  label={t.targetReturnDisplayLabel}
-                  value={`${fmt.format(computed.targetReturnPct)}%`}
-                />
-                <SummaryRow
-                  label={t.targetPriceLabel}
-                  value={fmtCurrency(computed.targetSell)}
-                />
-                <SummaryRow
-                  label={t.expectedProfitLabel}
-                  value={
-                    <span className={cn(profitColor)}>
-                      {computed.expectedProfit > 0 ? "+" : ""}
-                      {fmtCurrency(computed.expectedProfit)}
-                    </span>
-                  }
-                />
-                <SummaryRow
-                  label={t.taxAmountLabel}
-                  value={
-                    <span className={cn(taxColor)}>
-                      {computed.taxAmount > 0 ? "−" : ""}
-                      {fmtCurrency(computed.taxAmount)}
-                    </span>
-                  }
-                />
-                <SummaryRow
-                  label={t.afterTaxProfitLabel}
-                  value={
-                    <span className={cn(afterTaxColor)}>
-                      {computed.afterTaxProfit > 0 ? "+" : ""}
-                      {fmtCurrency(computed.afterTaxProfit)}
-                    </span>
-                  }
-                />
-              </dl>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {computed.valid ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {inputCard}
+          {summaryCard}
+        </div>
+      ) : (
+        <>
+          {inputCard}
+          <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+            ⚠️ {t.invalidInputHint}
+          </p>
+        </>
+      )}
 
       {computed.valid && (
         <DcaDownDetail

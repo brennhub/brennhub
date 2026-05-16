@@ -211,6 +211,9 @@ export type Messages = {
       taxTooltipLongTerm: string;
       taxAmountLabel: string;
       unitN: string;
+      stepperTaxMax: string;
+      stepperTargetMax: string;
+      invalidInputHint: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -385,9 +388,9 @@ export const messages: Record<Locale, Messages> = {
         startPricePlaceholder: "첫 매수가",
         nLabel: "매수 횟수",
         nPlaceholder: "2-50",
-        dropIntervalLabel: "하락율",
+        dropIntervalLabel: "하락율 (%)",
         dropIntervalPlaceholder: "5",
-        targetReturnLabel: "목표 수익률",
+        targetReturnLabel: "목표 수익률 (%)",
         targetReturnPlaceholder: "30",
         weightToggle: "가중치 적용",
         weightTooltip:
@@ -430,7 +433,7 @@ export const messages: Record<Locale, Messages> = {
         forceFirstShareLabel: "시작가 매수 보장",
         forceFirstShareTooltip:
           "1회차부터 1주 이상 매수 강제. Budget 안전 가드 유지.",
-        taxRateLabel: "세율",
+        taxRateLabel: "세율 (%)",
         afterTaxProfitLabel: "세후 최종 예상 수익",
         exportCsvLabel: "CSV로 내보내기",
         taxTypeShortTerm: "단기",
@@ -441,6 +444,10 @@ export const messages: Record<Locale, Messages> = {
           "1년 이상 보유. 장기 자본이득세 15% 적용 (단일 신고 $48k~$533k 소득 기준, 2025)",
         taxAmountLabel: "예상 세금",
         unitN: "회",
+        stepperTaxMax: "세율은 최대 50%입니다",
+        stepperTargetMax: "목표 수익률은 최대 500%입니다",
+        invalidInputHint:
+          "분할매수 시뮬레이션을 위해 모든 입력값(총 예산, 현재가, 매수 횟수, 하락율)이 0보다 큰 값이어야 합니다.",
       },
     },
     tools: {
@@ -632,9 +639,9 @@ export const messages: Record<Locale, Messages> = {
         startPricePlaceholder: "First buy",
         nLabel: "Rounds",
         nPlaceholder: "2-50",
-        dropIntervalLabel: "Drop",
+        dropIntervalLabel: "Drop %",
         dropIntervalPlaceholder: "5",
-        targetReturnLabel: "Target Return",
+        targetReturnLabel: "Target Return (%)",
         targetReturnPlaceholder: "30",
         weightToggle: "Apply Weighting",
         weightTooltip:
@@ -676,7 +683,7 @@ export const messages: Record<Locale, Messages> = {
         forceFirstShareLabel: "Buy at Start Price",
         forceFirstShareTooltip:
           "Force minimum 1 share from round 1 (Budget cap protected)",
-        taxRateLabel: "Tax Rate",
+        taxRateLabel: "Tax Rate (%)",
         afterTaxProfitLabel: "After-Tax Expected Profit",
         exportCsvLabel: "Export CSV",
         taxTypeShortTerm: "Short-term",
@@ -687,6 +694,10 @@ export const messages: Record<Locale, Messages> = {
           "Held > 1 year. Long-term capital gains 15% (single filer $48k~$533k bracket, 2025)",
         taxAmountLabel: "Tax",
         unitN: "rounds",
+        stepperTaxMax: "Tax rate max is 50%",
+        stepperTargetMax: "Target return max is 500%",
+        invalidInputHint:
+          "All inputs (Total Budget, Current Price, Rounds, Drop %) must be greater than 0 for DCA simulation.",
       },
     },
     tools: {
