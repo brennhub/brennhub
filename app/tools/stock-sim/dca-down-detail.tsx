@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -100,7 +101,8 @@ export function DcaDownDetail({
             />
             <span>{legendNextBuy}</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={onReset}>
+          <Button variant="outline" size="sm" onClick={onReset}>
+            <RotateCcw className="size-3" />
             {legendReset}
           </Button>
         </div>

@@ -19,7 +19,7 @@ import { DcaDownDetail } from "./dca-down-detail";
 const STORAGE_KEY = "brennhub:stock-sim:dca-down";
 
 const N_MIN = 2;
-const N_MAX = 50;
+const N_MAX = 200;
 const N_DEFAULT = 10;
 const WEIGHT_MIN = 0.01;
 const WEIGHT_MAX = 95;
@@ -204,12 +204,14 @@ export function DcaDownCalculator() {
     return Math.min(n, N_MAX);
   }, [rounds]);
 
-  // With linear price drop, price reaches 0 at round floor(100/drop) + 1.
-  // Cap N upstream so no round buys at non-positive price.
+  // Largest N such that round N still buys at a positive price. With linear
+  // drop, price[N-1] > 0 ↔ (N-1) < 100/drop, so maxN = ceil(100/drop).
+  // (floor would be off-by-one for non-integer 100/drop, causing the auto-clamp
+  // useEffect to revert N+ stepper clicks.)
   const maxN = useMemo(() => {
     const dropNum = parseNum(dropInterval);
     if (dropNum <= 0) return N_MAX;
-    return Math.min(Math.floor(100 / dropNum), N_MAX);
+    return Math.min(Math.ceil(100 / dropNum), N_MAX);
   }, [dropInterval]);
 
   // Auto-clamp N when drop change makes the current N invalid.

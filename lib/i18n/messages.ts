@@ -66,6 +66,7 @@ export type Messages = {
   stockSim: {
     title: string;
     description: string;
+    colorSchemeLabel: string;
     colorSchemeKr: string;
     colorSchemeUs: string;
     tabs: { costBasis: string; dividend: string; dcaDown: string };
@@ -262,6 +263,7 @@ export const messages: Record<Locale, Messages> = {
     stockSim: {
       title: "주식 시뮬레이터",
       description: "투자 결정에 필요한 계산을 한 곳에서",
+      colorSchemeLabel: "수익/손실 색상",
       colorSchemeKr: "한국식",
       colorSchemeUs: "미국식",
       tabs: { costBasis: "평단가", dividend: "배당", dcaDown: "분할매수" },
@@ -370,7 +372,7 @@ export const messages: Record<Locale, Messages> = {
         colPrice: "가격",
         colDropPct: "하락율 (%)",
         colBuyAmount: "매수금",
-        colShares: "주식 수",
+        colShares: "주식수",
         colCumShares: "누적 주식수",
         colCumBuyAmount: "누적 매수금",
         colAvgPrice: "평단가",
@@ -388,7 +390,7 @@ export const messages: Record<Locale, Messages> = {
           "회차 {n}은 매수금이 1주 가격보다 작아 0주 매수입니다. 매수 횟수를 줄이거나 Budget을 늘리세요.",
         zeroShareWarningRange:
           "회차 {start}~{end}는 매수금이 1주 가격보다 작아 0주 매수입니다. 매수 횟수를 줄이거나 Budget을 늘리세요.",
-        colProfit: "Profit",
+        colProfit: "수익",
         legendCompleted: "매수 완료",
         legendNextBuy: "다음 매수",
         legendReset: "리셋",
@@ -480,6 +482,7 @@ export const messages: Record<Locale, Messages> = {
     stockSim: {
       title: "Stock Simulator",
       description: "Investment math in one place",
+      colorSchemeLabel: "Gain/Loss Color",
       colorSchemeKr: "Korean",
       colorSchemeUs: "US",
       tabs: {
