@@ -177,6 +177,9 @@ export type Messages = {
       finalAvgLabel: string;
       targetPriceLabel: string;
       expectedProfitLabel: string;
+      colTargetPrice: string;
+      nextBuyRoundLabel: string;
+      weightHint: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -367,6 +370,10 @@ export const messages: Record<Locale, Messages> = {
         finalAvgLabel: "최종 평단가",
         targetPriceLabel: "목표 매도가",
         expectedProfitLabel: "예상 수익",
+        colTargetPrice: "목표가",
+        nextBuyRoundLabel: "다음 매수 회차",
+        weightHint:
+          "가중치 OFF: 회차당 1주. 가중치 ON: Budget을 가중치 비율로 분배",
       },
     },
     tools: {
@@ -574,6 +581,9 @@ export const messages: Record<Locale, Messages> = {
         finalAvgLabel: "Final Avg Price",
         targetPriceLabel: "Target Sell Price",
         expectedProfitLabel: "Expected Profit",
+        colTargetPrice: "Target Price",
+        nextBuyRoundLabel: "Next Buy Round",
+        weightHint: "OFF: 1 share per round. ON: Budget distributed by weight",
       },
     },
     tools: {

@@ -32,6 +32,7 @@ type StoredState = {
   targetReturn: string;
   weightEnabled: boolean;
   firstWeightPct: string;
+  nextBuyRound: number;
 };
 
 type Round = {
@@ -43,6 +44,7 @@ type Round = {
   cumulativeShares: number;
   cumulativeCost: number;
   avgPrice: number;
+  targetPrice: number;
 };
 
 function parseNum(s: string): number {
@@ -71,12 +73,10 @@ function solveR(P: number, N: number): number {
   let lo: number;
   let hi: number;
   if (target > N) {
-    // r > 1 (back-loaded)
     lo = 1.0;
     hi = 100;
     while (sumAt(hi) < target && hi < 1e9) hi *= 2;
   } else {
-    // r < 1 (front-loaded)
     lo = 1e-9;
     hi = 1.0;
   }
@@ -105,6 +105,7 @@ export function DcaDownCalculator() {
   const [targetReturn, setTargetReturn] = useState<string>("30");
   const [weightEnabled, setWeightEnabled] = useState<boolean>(false);
   const [firstWeightPct, setFirstWeightPct] = useState<string>("10");
+  const [nextBuyRound, setNextBuyRound] = useState<number>(1);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -125,6 +126,8 @@ export function DcaDownCalculator() {
           setWeightEnabled(parsed.weightEnabled);
         if (typeof parsed.firstWeightPct === "string")
           setFirstWeightPct(parsed.firstWeightPct);
+        if (typeof parsed.nextBuyRound === "number")
+          setNextBuyRound(parsed.nextBuyRound);
       }
     } catch {
       // corrupt state — start fresh
@@ -146,6 +149,7 @@ export function DcaDownCalculator() {
           targetReturn,
           weightEnabled,
           firstWeightPct,
+          nextBuyRound,
         } satisfies StoredState),
       );
     } catch {
@@ -161,6 +165,7 @@ export function DcaDownCalculator() {
     targetReturn,
     weightEnabled,
     firstWeightPct,
+    nextBuyRound,
   ]);
 
   const fmt = useMemo(
@@ -180,13 +185,27 @@ export function DcaDownCalculator() {
     return Math.min(n, N_MAX);
   }, [rounds]);
 
+  // Auto-clamp nextBuyRound to current N range. Fires after N decreases.
+  useEffect(() => {
+    if (nextBuyRound > nNum) {
+      setNextBuyRound(nNum);
+    } else if (nextBuyRound < 1) {
+      setNextBuyRound(1);
+    }
+  }, [nNum, nextBuyRound]);
+
   const computed = useMemo(() => {
     const budgetNum = parseNum(budget);
     const startPriceNum = parseNum(startPrice);
     const dropNum = parseNum(dropInterval);
     const targetReturnNum = parseNum(targetReturn);
 
-    const valid = budgetNum > 0 && startPriceNum > 0 && nNum >= N_MIN;
+    // Budget is only required when weighting is on. Default rule buys 1 share
+    // per round and doesn't depend on Budget.
+    const valid =
+      startPriceNum > 0 &&
+      nNum >= N_MIN &&
+      (!weightEnabled || budgetNum > 0);
     if (!valid) {
       return {
         valid: false,
@@ -199,29 +218,43 @@ export function DcaDownCalculator() {
       };
     }
 
-    let weights: number[];
+    let normalizedWeights: number[] | null = null;
     if (weightEnabled) {
       const p = clamp(parseNum(firstWeightPct), WEIGHT_MIN, WEIGHT_MAX);
       const r = solveR(p, nNum);
-      weights = Array.from({ length: nNum }, (_, k) => Math.pow(r, k));
-    } else {
-      weights = Array.from({ length: nNum }, () => 1);
+      const weights = Array.from({ length: nNum }, (_, k) => Math.pow(r, k));
+      const weightSum = weights.reduce((s, w) => s + w, 0);
+      normalizedWeights = weights.map((w) => w / weightSum);
     }
-    const weightSum = weights.reduce((s, w) => s + w, 0);
-    const normalizedWeights = weights.map((w) => w / weightSum);
 
     const roundsArr: Round[] = [];
     let cumulativeShares = 0;
     let cumulativeCost = 0;
     for (let n = 0; n < nNum; n++) {
       const price = startPriceNum * (1 - (dropNum / 100) * n);
-      const buyAmount = budgetNum * normalizedWeights[n];
-      const shares = price > 0 ? Math.floor(buyAmount / price) : 0;
-      const actualCost = shares * price;
+      let buyAmount: number;
+      let shares: number;
+      let actualCost: number;
+
+      if (weightEnabled && normalizedWeights) {
+        buyAmount = budgetNum * normalizedWeights[n];
+        shares = price > 0 ? Math.floor(buyAmount / price) : 0;
+        actualCost = shares * price;
+      } else if (price > 0) {
+        shares = 1;
+        actualCost = price;
+        buyAmount = price;
+      } else {
+        shares = 0;
+        actualCost = 0;
+        buyAmount = 0;
+      }
+
       cumulativeShares += shares;
       cumulativeCost += actualCost;
       const avgPrice =
         cumulativeShares > 0 ? cumulativeCost / cumulativeShares : 0;
+      const targetPrice = avgPrice * (1 + targetReturnNum / 100);
       roundsArr.push({
         n: n + 1,
         price,
@@ -231,6 +264,7 @@ export function DcaDownCalculator() {
         cumulativeShares,
         cumulativeCost,
         avgPrice,
+        targetPrice,
       });
     }
 
@@ -269,6 +303,12 @@ export function DcaDownCalculator() {
       : computed.expectedProfit > 0
         ? "text-[var(--color-gain)]"
         : "text-[var(--color-loss)]";
+
+  const handleNextBuyRoundChange = (raw: string) => {
+    const v = parseInt(raw, 10);
+    if (!Number.isFinite(v)) return;
+    setNextBuyRound(clamp(v, 1, nNum));
+  };
 
   return (
     <div className="space-y-6">
@@ -351,6 +391,20 @@ export function DcaDownCalculator() {
               </Field>
             </div>
 
+            <Field label={t.nextBuyRoundLabel} htmlFor="dca-next-buy">
+              <Input
+                id="dca-next-buy"
+                type="number"
+                min={1}
+                max={nNum}
+                step={1}
+                inputMode="numeric"
+                value={nextBuyRound}
+                onChange={(e) => handleNextBuyRoundChange(e.target.value)}
+                className="tnum max-w-24"
+              />
+            </Field>
+
             <div className="space-y-2 border-t border-border pt-3">
               <div className="flex items-center gap-2">
                 <Switch
@@ -376,6 +430,7 @@ export function DcaDownCalculator() {
                   </span>
                 </button>
               </div>
+              <p className="text-xs text-muted-foreground">{t.weightHint}</p>
               {weightEnabled && (
                 <div>
                   <Label htmlFor="dca-first-weight" className="text-sm">
@@ -446,6 +501,8 @@ export function DcaDownCalculator() {
         <DcaDownDetail
           rounds={computed.rounds}
           fmt={fmt}
+          nextBuyRound={nextBuyRound}
+          onRoundClick={setNextBuyRound}
           tableTitle={t.tableTitle}
           colRound={t.colRound}
           colPrice={t.colPrice}
@@ -455,6 +512,7 @@ export function DcaDownCalculator() {
           colCumShares={t.colCumShares}
           colCumCost={t.colCumCost}
           colAvgPrice={t.colAvgPrice}
+          colTargetPrice={t.colTargetPrice}
         />
       )}
     </div>
