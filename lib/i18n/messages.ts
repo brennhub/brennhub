@@ -213,6 +213,7 @@ export type Messages = {
       unitN: string;
       stepperTaxMax: string;
       stepperTargetMax: string;
+      stepperWeightMax: string;
       invalidInputHint: string;
       tableEmptyHint: string;
     };
@@ -396,9 +397,9 @@ export const messages: Record<Locale, Messages> = {
         weightToggle: "가중치 적용",
         weightTooltip:
           "각 회차별 매수 비중을 '첫 매수 비중(%)'로 조절. 값이 작을수록 후반에 많이 매수 (Martingale 방향). 큰 값일수록 균등 가까움.",
-        firstWeightLabel: "첫 매수 비중 (%)",
-        firstWeightPlaceholder: "10",
-        weightEqualBenchmark: "균등",
+        firstWeightLabel: "분배 균형 (0-100)",
+        firstWeightPlaceholder: "50",
+        weightEqualBenchmark: "(50 = 균등)",
         tableTitle: "회차별 매수",
         colRound: "매수 회차",
         colPrice: "가격",
@@ -447,6 +448,7 @@ export const messages: Record<Locale, Messages> = {
         unitN: "회",
         stepperTaxMax: "세율은 최대 50%입니다",
         stepperTargetMax: "목표 수익률은 최대 500%입니다",
+        stepperWeightMax: "분배 균형은 최대 100입니다",
         invalidInputHint:
           "분할매수 시뮬레이션을 위해 모든 입력값(총 예산, 현재가, 매수 횟수, 하락율)이 0보다 큰 값이어야 합니다.",
         tableEmptyHint: "결과 없음",
@@ -648,9 +650,9 @@ export const messages: Record<Locale, Messages> = {
         weightToggle: "Apply Weighting",
         weightTooltip:
           "Control weighting via 'First Buy Share (%)'. Smaller = more back-loaded (Martingale). Larger = closer to equal.",
-        firstWeightLabel: "First Buy Share (%)",
-        firstWeightPlaceholder: "10",
-        weightEqualBenchmark: "Equal",
+        firstWeightLabel: "Weight Balance (0-100)",
+        firstWeightPlaceholder: "50",
+        weightEqualBenchmark: "(50 = Equal)",
         tableTitle: "Round-by-Round",
         colRound: "Round",
         colPrice: "Price",
@@ -698,6 +700,7 @@ export const messages: Record<Locale, Messages> = {
         unitN: "rounds",
         stepperTaxMax: "Tax rate max is 50%",
         stepperTargetMax: "Target return max is 500%",
+        stepperWeightMax: "Weight balance max is 100",
         invalidInputHint:
           "All inputs (Total Budget, Current Price, Rounds, Drop %) must be greater than 0 for DCA simulation.",
         tableEmptyHint: "No data",

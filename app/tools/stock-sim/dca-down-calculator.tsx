@@ -36,8 +36,8 @@ const N_MAX_HARD = 50;
 const N_DEFAULT = 5;
 const TARGET_RETURN_DEFAULT = "10";
 const DROP_INTERVAL_DEFAULT = "5";
-const WEIGHT_MIN = 0.01;
-const WEIGHT_MAX = 95;
+const WEIGHT_MIN = 0;
+const WEIGHT_MAX = 100;
 const DROP_MIN = 0;
 const DROP_MAX = 50;
 const TAX_MAX = 50;
@@ -88,39 +88,6 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
-function solveR(P: number, N: number): number {
-  if (N < 2) return 1;
-  const target = 100 / P;
-  if (Math.abs(target - N) < 1e-6) return 1;
-
-  const sumAt = (r: number): number => {
-    if (Math.abs(r - 1) < 1e-9) return N;
-    return (1 - Math.pow(r, N)) / (1 - r);
-  };
-
-  let lo: number;
-  let hi: number;
-  if (target > N) {
-    lo = 1.0;
-    hi = 100;
-    while (sumAt(hi) < target && hi < 1e9) hi *= 2;
-  } else {
-    lo = 1e-9;
-    hi = 1.0;
-  }
-
-  for (let i = 0; i < 80; i++) {
-    const mid = (lo + hi) / 2;
-    const s = sumAt(mid);
-    if (s < target) {
-      lo = mid;
-    } else {
-      hi = mid;
-    }
-  }
-  return (lo + hi) / 2;
-}
-
 export function DcaDownCalculator() {
   const t = useMessages().stockSim.dcaDown;
   const { locale } = useLocale();
@@ -139,7 +106,7 @@ export function DcaDownCalculator() {
   const [taxRate, setTaxRate] = useState<string>("0");
   const [taxType, setTaxType] = useState<TaxType>("custom");
   const [weightEnabled, setWeightEnabled] = useState<boolean>(false);
-  const [firstWeightPct, setFirstWeightPct] = useState<string>("10");
+  const [firstWeightPct, setFirstWeightPct] = useState<string>("50");
   const [forceFirstShare, setForceFirstShare] = useState<boolean>(true);
   const [lastCompletedRound, setLastCompletedRound] = useState<number>(0);
   const [hydrated, setHydrated] = useState(false);
@@ -174,8 +141,8 @@ export function DcaDownCalculator() {
         if (isTaxType(parsed.taxType)) setTaxType(parsed.taxType);
         if (typeof parsed.weightEnabled === "boolean")
           setWeightEnabled(parsed.weightEnabled);
-        if (typeof parsed.firstWeightPct === "string")
-          setFirstWeightPct(parsed.firstWeightPct);
+        // firstWeightPct: old values used asymmetric R1-share meaning;
+        // new mapping is symmetric tilt (0-100). Skip load to force default 50.
         if (typeof parsed.forceFirstShare === "boolean")
           setForceFirstShare(parsed.forceFirstShare);
         if (typeof parsed.lastCompletedRound === "number") {
@@ -354,11 +321,12 @@ export function DcaDownCalculator() {
       };
     }
 
-    const effectiveP = weightEnabled
-      ? clamp(parseNum(firstWeightPct), WEIGHT_MIN, WEIGHT_MAX)
-      : 100 / (Math.pow(2, nNum) - 1);
-    const r = solveR(effectiveP, nNum);
-    const weights = Array.from({ length: nNum }, (_, k) => Math.pow(r, k));
+    const effectiveR = weightEnabled
+      ? (100 - clamp(parseNum(firstWeightPct), WEIGHT_MIN, WEIGHT_MAX)) / 50
+      : 2;
+    const weights = Array.from({ length: nNum }, (_, k) =>
+      Math.pow(effectiveR, k),
+    );
     const weightSum = weights.reduce((s, w) => s + w, 0);
     const normalizedWeights = weights.map((w) => w / weightSum);
 
@@ -458,8 +426,6 @@ export function DcaDownCalculator() {
     forceFirstShare,
   ]);
 
-  const equalBenchmark = useMemo(() => 100 / nNum, [nNum]);
-
   const profitColor =
     computed.expectedProfit === 0
       ? ""
@@ -531,9 +497,15 @@ export function DcaDownCalculator() {
     setTaxType("custom");
   };
 
+  const handleFirstWeightStep = (newWeight: number) => {
+    if (newWeight < WEIGHT_MIN || newWeight > WEIGHT_MAX) return;
+    setFirstWeightPct(String(newWeight));
+  };
+
   const handleTermClick = (type: "short" | "long") => {
     if (taxType === type) {
       setTaxType("custom");
+      setTaxRate("0");
       return;
     }
     setTaxType(type);
@@ -562,7 +534,7 @@ export function DcaDownCalculator() {
     setTaxRate("0");
     setTaxType("custom");
     setWeightEnabled(false);
-    setFirstWeightPct("10");
+    setFirstWeightPct("50");
     setForceFirstShare(true);
   };
 
@@ -794,18 +766,23 @@ export function DcaDownCalculator() {
                 {t.firstWeightLabel}
               </Label>
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                <Input
+                <NumberStepper
                   id="dca-first-weight"
-                  type="number"
-                  step="any"
+                  value={firstWeightPct}
+                  onInputChange={setFirstWeightPct}
+                  onStep={handleFirstWeightStep}
+                  min={WEIGHT_MIN}
+                  max={WEIGHT_MAX}
+                  smallStep={1}
+                  bigStep={10}
                   inputMode="decimal"
                   placeholder={t.firstWeightPlaceholder}
-                  value={firstWeightPct}
-                  onChange={(e) => setFirstWeightPct(e.target.value)}
-                  className="tnum max-w-24"
+                  aria-label={t.firstWeightLabel}
+                  maxReachedMessage={t.stepperWeightMax}
+                  className="max-w-40"
                 />
                 <span className="text-xs text-muted-foreground">
-                  ({t.weightEqualBenchmark} = {equalBenchmark.toFixed(2)}%)
+                  {t.weightEqualBenchmark}
                 </span>
               </div>
             </div>
