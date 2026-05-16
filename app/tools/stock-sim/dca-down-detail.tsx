@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { RotateCcw } from "lucide-react";
+import { Download, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,11 +32,13 @@ type Props = {
   lastCompletedRound: number;
   onRoundClick: (n: number) => void;
   onReset: () => void;
+  onExportCsv: () => void;
   targetReturnPct: number;
   tableTitle: string;
   legendCompleted: string;
   legendNextBuy: string;
   legendReset: string;
+  exportCsvLabel: string;
   colRound: string;
   colPrice: string;
   colDropPct: string;
@@ -49,7 +51,6 @@ type Props = {
   colTargetPrice: string;
 };
 
-// Hardcoded row tints. Independent of the gain/loss color scheme.
 const COMPLETED_BG = "color-mix(in oklch, #facc15 15%, transparent)";
 const NEXT_BG = "color-mix(in oklch, #22c55e 15%, transparent)";
 const COMPLETED_SWATCH = "color-mix(in oklch, #facc15 30%, transparent)";
@@ -63,11 +64,13 @@ export function DcaDownDetail({
   lastCompletedRound,
   onRoundClick,
   onReset,
+  onExportCsv,
   targetReturnPct,
   tableTitle,
   legendCompleted,
   legendNextBuy,
   legendReset,
+  exportCsvLabel,
   colRound,
   colPrice,
   colDropPct,
@@ -103,6 +106,10 @@ export function DcaDownDetail({
           <Button variant="outline" size="sm" onClick={onReset}>
             <RotateCcw className="size-3" />
             {legendReset}
+          </Button>
+          <Button variant="outline" size="sm" onClick={onExportCsv}>
+            <Download className="size-3" />
+            {exportCsvLabel}
           </Button>
         </div>
         <div className="overflow-x-auto">

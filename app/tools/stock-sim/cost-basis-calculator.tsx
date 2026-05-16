@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +19,11 @@ import {
 } from "@/components/ui/card";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { useCurrency } from "@/components/currency-provider";
-import { formatCurrency } from "@/lib/format/currency";
+import {
+  formatCurrency,
+  parseCurrency,
+  type Currency,
+} from "@/lib/format/currency";
 import { cn } from "@/lib/utils";
 
 type Row = { id: string; price: string; qty: string };
@@ -44,10 +54,11 @@ function parseNum(s: string): number {
 export function CostBasisCalculator() {
   const t = useMessages().stockSim.costBasis;
   const { locale } = useLocale();
-  const { currency } = useCurrency();
+  const { currency, rate } = useCurrency();
   const [rows, setRows] = useState<Row[]>(() => [emptyRow()]);
   const [currentPrice, setCurrentPrice] = useState("");
   const [hydrated, setHydrated] = useState(false);
+  const prevCurrencyRef = useRef<Currency | null>(null);
 
   useEffect(() => {
     try {
@@ -75,28 +86,57 @@ export function CostBasisCalculator() {
         JSON.stringify({ rows, currentPrice } satisfies StoredState),
       );
     } catch {
-      // quota / private mode — selection still applies in-session
+      // quota / private mode
     }
   }, [rows, currentPrice, hydrated]);
+
+  // Currency toggle: convert raw monetary inputs (row prices, currentPrice).
+  useEffect(() => {
+    if (!hydrated) return;
+    if (prevCurrencyRef.current === null) {
+      prevCurrencyRef.current = currency;
+      return;
+    }
+    if (prevCurrencyRef.current === currency) return;
+
+    const oldCurrency = prevCurrencyRef.current;
+    const convert = (raw: string): string => {
+      if (!raw) return raw;
+      const n = parseFloat(raw);
+      if (!Number.isFinite(n) || n === 0) return raw;
+      const usd = oldCurrency === "usd" ? n : n / rate;
+      const newVal = currency === "usd" ? usd : usd * rate;
+      return currency === "usd"
+        ? newVal.toFixed(2)
+        : Math.round(newVal).toString();
+    };
+
+    setRows((prev) =>
+      prev.map((r) => ({ ...r, price: convert(r.price) })),
+    );
+    setCurrentPrice(convert(currentPrice));
+    prevCurrencyRef.current = currency;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currency, rate, hydrated]);
 
   const totals = useMemo(() => {
     let totalQty = 0;
     let totalInvest = 0;
     for (const r of rows) {
-      const p = parseNum(r.price);
+      const p = parseCurrency(r.price, currency, rate);
       const q = parseNum(r.qty);
       totalQty += q;
       totalInvest += p * q;
     }
     const avgPrice = totalQty > 0 ? totalInvest / totalQty : 0;
-    const cp = parseNum(currentPrice);
+    const cp = parseCurrency(currentPrice, currency, rate);
     const hasCurrent = currentPrice.trim() !== "" && cp > 0;
     const currentValue = hasCurrent ? cp * totalQty : null;
     const pnl = currentValue !== null ? currentValue - totalInvest : null;
     const pnlPercent =
       pnl !== null && totalInvest > 0 ? (pnl / totalInvest) * 100 : null;
     return { totalQty, totalInvest, avgPrice, currentValue, pnl, pnlPercent };
-  }, [rows, currentPrice]);
+  }, [rows, currentPrice, currency, rate]);
 
   const fmt = useMemo(
     () =>
@@ -110,7 +150,7 @@ export function CostBasisCalculator() {
     n === null ? "—" : fmt.format(n);
 
   const fmtCurrency = (n: number | null): string =>
-    n === null ? "—" : formatCurrency(n, currency);
+    n === null ? "—" : formatCurrency(n, currency, rate);
 
   const updateRow = (id: string, patch: Partial<Row>) => {
     setRows((prev) =>

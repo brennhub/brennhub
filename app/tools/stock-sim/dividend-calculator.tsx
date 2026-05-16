@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Download, Info, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +20,11 @@ import {
 } from "@/components/ui/card";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { useCurrency } from "@/components/currency-provider";
-import { formatCurrency } from "@/lib/format/currency";
+import {
+  formatCurrency,
+  parseCurrency,
+  type Currency,
+} from "@/lib/format/currency";
 import { cn } from "@/lib/utils";
 import {
   CHART_PALETTE,
@@ -122,7 +132,7 @@ function migrateRow(raw: unknown): Row {
 export function DividendCalculator() {
   const t = useMessages().stockSim.dividend;
   const { locale } = useLocale();
-  const { currency } = useCurrency();
+  const { currency, rate } = useCurrency();
   const [rows, setRows] = useState<Row[]>(() => [emptyRow()]);
   const [months, setMonths] = useState<string>(DEFAULT_MONTHS);
   const [periodInputStr, setPeriodInputStr] = useState<string>(() =>
@@ -130,6 +140,7 @@ export function DividendCalculator() {
   );
   const [dripEnabled, setDripEnabled] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
+  const prevCurrencyRef = useRef<Currency | null>(null);
 
   useEffect(() => {
     try {
@@ -172,6 +183,38 @@ export function DividendCalculator() {
     }
   }, [rows, months, dripEnabled, hydrated]);
 
+  // Currency toggle: convert raw monetary inputs (row.equity, row.currentPrice).
+  useEffect(() => {
+    if (!hydrated) return;
+    if (prevCurrencyRef.current === null) {
+      prevCurrencyRef.current = currency;
+      return;
+    }
+    if (prevCurrencyRef.current === currency) return;
+
+    const oldCurrency = prevCurrencyRef.current;
+    const convert = (raw: string): string => {
+      if (!raw) return raw;
+      const n = parseFloat(raw);
+      if (!Number.isFinite(n) || n === 0) return raw;
+      const usd = oldCurrency === "usd" ? n : n / rate;
+      const newVal = currency === "usd" ? usd : usd * rate;
+      return currency === "usd"
+        ? newVal.toFixed(2)
+        : Math.round(newVal).toString();
+    };
+
+    setRows((prev) =>
+      prev.map((r) => ({
+        ...r,
+        equity: convert(r.equity),
+        currentPrice: convert(r.currentPrice),
+      })),
+    );
+    prevCurrencyRef.current = currency;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currency, rate, hydrated]);
+
   // Initial-state metrics for the Results card. These are a t=0 snapshot;
   // they intentionally do not reflect DRIP compounding (the chart + summary do).
   const computed = useMemo(() => {
@@ -183,7 +226,7 @@ export function DividendCalculator() {
       contributing: boolean;
     };
     const per: Per[] = rows.map((r) => {
-      const equity = parseNum(r.equity);
+      const equity = parseCurrency(r.equity, currency, rate);
       const yieldPct = parseNum(r.yieldPercent);
       const contributing = equity > 0 && yieldPct > 0;
       const annual = contributing ? (equity * yieldPct) / 100 : 0;
@@ -194,7 +237,7 @@ export function DividendCalculator() {
     const totalAnnual = contributingPer.reduce((sum, p) => sum + p.annual, 0);
     const totalMonthly = totalAnnual / 12;
     const totalEquity = contributingPer.reduce(
-      (sum, p) => sum + parseNum(p.row.equity),
+      (sum, p) => sum + parseCurrency(p.row.equity, currency, rate),
       0,
     );
     const portfolioYield =
@@ -208,7 +251,7 @@ export function DividendCalculator() {
       portfolioYield,
       totalInitialEquity: totalEquity,
     };
-  }, [rows]);
+  }, [rows, currency, rate]);
 
   const fmt = useMemo(
     () =>
@@ -222,8 +265,8 @@ export function DividendCalculator() {
   const formatNum = (n: number): string => fmt.format(n);
 
   const fmtCurrency = useMemo(
-    () => (n: number) => formatCurrency(n, currency),
-    [currency],
+    () => (n: number) => formatCurrency(n, currency, rate),
+    [currency, rate],
   );
 
   const monthsNum = useMemo(() => {
@@ -245,9 +288,9 @@ export function DividendCalculator() {
       contributing: boolean;
     };
     const runtime: RT[] = rows.map((r) => {
-      const equity = parseNum(r.equity);
+      const equity = parseCurrency(r.equity, currency, rate);
       const yieldPct = parseNum(r.yieldPercent);
-      const cp = parseNum(r.currentPrice);
+      const cp = parseCurrency(r.currentPrice, currency, rate);
       const multiplier = FREQ_MULTIPLIER[r.frequency];
       const step = 12 / multiplier;
       const contributing = equity > 0 && yieldPct > 0;
@@ -315,7 +358,7 @@ export function DividendCalculator() {
       });
     }
     return points;
-  }, [rows, monthsNum, dripEnabled, computed.totalInitialEquity]);
+  }, [rows, monthsNum, dripEnabled, computed.totalInitialEquity, currency, rate]);
 
   const summary = useMemo(() => {
     const last = series[series.length - 1];
@@ -347,7 +390,9 @@ export function DividendCalculator() {
     const lastEquities = series[series.length - 1]?.equities ?? {};
     return contributingBars.map((bar, idx) => {
       const per = computed.per.find((p) => p.row.id === bar.id);
-      const initialEquity = per ? parseNum(per.row.equity) : 0;
+      const initialEquity = per
+        ? parseCurrency(per.row.equity, currency, rate)
+        : 0;
       return {
         id: bar.id,
         label: bar.label,
@@ -361,7 +406,7 @@ export function DividendCalculator() {
           : null,
       };
     });
-  }, [contributingBars, computed.per, series, dripEnabled]);
+  }, [contributingBars, computed.per, series, dripEnabled, currency, rate]);
 
   const referenceLinks = useMemo(() => {
     const seen = new Set<string>();

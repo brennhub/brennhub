@@ -72,6 +72,7 @@ export type Messages = {
     currencyLabel: string;
     currencyUsd: string;
     currencyKrw: string;
+    exchangeRateTooltip: string;
     tabs: { costBasis: string; dividend: string; dcaDown: string };
     costBasis: {
       inputTitle: string;
@@ -199,6 +200,9 @@ export type Messages = {
       stepperGenericMax: string;
       forceFirstShareLabel: string;
       forceFirstShareTooltip: string;
+      taxRateLabel: string;
+      afterTaxProfitLabel: string;
+      exportCsvLabel: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -279,6 +283,7 @@ export const messages: Record<Locale, Messages> = {
       currencyLabel: "통화",
       currencyUsd: "USD ($)",
       currencyKrw: "KRW (₩)",
+      exchangeRateTooltip: "1 USD = {rate} KRW ({date} 갱신)",
       tabs: { costBasis: "평단가", dividend: "배당", dcaDown: "분할매수" },
       costBasis: {
         inputTitle: "매수 기록",
@@ -360,13 +365,13 @@ export const messages: Record<Locale, Messages> = {
         title: "분할매수 시뮬레이터",
         description:
           "주가 하락 시 분할 매수의 평단가와 수익 시나리오를 시뮬레이션합니다.",
-        inputTitle: "매수 계획",
+        inputTitle: "분할 매수 계획",
         emptyHint: "Budget, 시작가, 매수 횟수를 입력하면 결과가 나타납니다.",
         tickerHeader: "종목",
         tickerPlaceholder: "AAPL",
-        budgetHeader: "예산",
+        budgetHeader: "총 예산",
         budgetPlaceholder: "총 예산",
-        startPriceHeader: "시작가",
+        startPriceHeader: "현재가",
         startPricePlaceholder: "첫 매수가",
         nLabel: "매수 횟수",
         nPlaceholder: "2-50",
@@ -389,12 +394,12 @@ export const messages: Record<Locale, Messages> = {
         colCumShares: "누적 주식수",
         colCumBuyAmount: "누적 매수금",
         colAvgPrice: "평단가",
-        summaryTitle: "요약",
+        summaryTitle: "최종 결과 요약",
         totalInvestLabel: "총 투자금",
         totalSharesLabel: "총 보유 주식수",
         finalAvgLabel: "최종 평단가",
-        targetPriceLabel: "목표 매도가",
-        expectedProfitLabel: "예상 수익",
+        targetPriceLabel: "최종 목표 매도가",
+        expectedProfitLabel: "최종 예상 수익",
         colTargetPrice: "목표가",
         weightHint:
           "가중치 OFF: Martingale (2배 배수). 가중치 ON: 첫 매수 비중 % 직접 입력",
@@ -415,6 +420,9 @@ export const messages: Record<Locale, Messages> = {
         forceFirstShareLabel: "시작가 매수 보장",
         forceFirstShareTooltip:
           "1회차부터 1주 이상 매수 강제. Budget 안전 가드 유지.",
+        taxRateLabel: "세율 (%)",
+        afterTaxProfitLabel: "세후 최종 예상 수익",
+        exportCsvLabel: "CSV로 내보내기",
       },
     },
     tools: {
@@ -509,6 +517,7 @@ export const messages: Record<Locale, Messages> = {
       currencyLabel: "Currency",
       currencyUsd: "USD ($)",
       currencyKrw: "KRW (₩)",
+      exchangeRateTooltip: "1 USD = {rate} KRW (updated {date})",
       tabs: {
         costBasis: "Cost Basis",
         dividend: "Dividends",
@@ -647,6 +656,9 @@ export const messages: Record<Locale, Messages> = {
         forceFirstShareLabel: "Buy at Start Price",
         forceFirstShareTooltip:
           "Force minimum 1 share from round 1 (Budget cap protected)",
+        taxRateLabel: "Tax Rate %",
+        afterTaxProfitLabel: "After-Tax Expected Profit",
+        exportCsvLabel: "Export CSV",
       },
     },
     tools: {

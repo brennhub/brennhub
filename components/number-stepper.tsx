@@ -31,6 +31,19 @@ function roundForStep(value: number, step: number): number {
   return Number(value.toFixed(decimals));
 }
 
+// Small step: round to nearest integer first if value is non-integer, otherwise
+// step by smallStep. Big step always adds/subtracts bigStep.
+function smartSmallStep(
+  value: number,
+  smallStep: number,
+  direction: 1 | -1,
+): number {
+  if (!Number.isInteger(value)) {
+    return direction === 1 ? Math.ceil(value) : Math.floor(value);
+  }
+  return value + direction * smallStep;
+}
+
 export function NumberStepper({
   value,
   onStep,
@@ -48,26 +61,38 @@ export function NumberStepper({
   minReachedMessage,
 }: Props) {
   const current = parseFloat(value);
-  const base = Number.isFinite(current)
+  const valid = Number.isFinite(current);
+  const base = valid
     ? current
     : Number.isFinite(min)
       ? Math.max(min, 0)
       : 0;
 
-  const candidates = {
-    smallUp: base + smallStep,
-    bigUp: base + bigStep,
-    smallDown: base - smallStep,
-    bigDown: base - bigStep,
+  // Clamp-based disabled: button is enabled while there's any room left.
+  // Step clamps to min/max so users can always reach the boundary.
+  const upDisabled = base >= max;
+  const downDisabled = base <= min;
+
+  const handleSmallUp = () => {
+    if (upDisabled) return;
+    const next = smartSmallStep(base, smallStep, 1);
+    onStep(Math.min(max, roundForStep(next, smallStep)));
   };
 
-  const smallUpDisabled = candidates.smallUp > max;
-  const bigUpDisabled = candidates.bigUp > max;
-  const smallDownDisabled = candidates.smallDown < min;
-  const bigDownDisabled = candidates.bigDown < min;
+  const handleBigUp = () => {
+    if (upDisabled) return;
+    onStep(Math.min(max, roundForStep(base + bigStep, bigStep)));
+  };
 
-  const handle = (next: number, step: number) => {
-    onStep(roundForStep(next, step));
+  const handleSmallDown = () => {
+    if (downDisabled) return;
+    const next = smartSmallStep(base, smallStep, -1);
+    onStep(Math.max(min, roundForStep(next, smallStep)));
+  };
+
+  const handleBigDown = () => {
+    if (downDisabled) return;
+    onStep(Math.max(min, roundForStep(base - bigStep, bigStep)));
   };
 
   return (
@@ -91,35 +116,35 @@ export function NumberStepper({
       />
       <div className="grid shrink-0 grid-cols-2 grid-rows-2 border-l border-input">
         <StepperButton
-          onClick={() => handle(candidates.smallUp, smallStep)}
-          disabled={smallUpDisabled}
-          title={smallUpDisabled ? maxReachedMessage : undefined}
+          onClick={handleSmallUp}
+          disabled={upDisabled}
+          title={upDisabled ? maxReachedMessage : undefined}
           aria-label="Increase small"
         >
           <ChevronUp className="size-3" />
         </StepperButton>
         <StepperButton
-          onClick={() => handle(candidates.bigUp, bigStep)}
-          disabled={bigUpDisabled}
-          title={bigUpDisabled ? maxReachedMessage : undefined}
+          onClick={handleBigUp}
+          disabled={upDisabled}
+          title={upDisabled ? maxReachedMessage : undefined}
           aria-label="Increase big"
           borderLeft
         >
           <ChevronsUp className="size-3" />
         </StepperButton>
         <StepperButton
-          onClick={() => handle(candidates.smallDown, smallStep)}
-          disabled={smallDownDisabled}
-          title={smallDownDisabled ? minReachedMessage : undefined}
+          onClick={handleSmallDown}
+          disabled={downDisabled}
+          title={downDisabled ? minReachedMessage : undefined}
           aria-label="Decrease small"
           borderTop
         >
           <ChevronDown className="size-3" />
         </StepperButton>
         <StepperButton
-          onClick={() => handle(candidates.bigDown, bigStep)}
-          disabled={bigDownDisabled}
-          title={bigDownDisabled ? minReachedMessage : undefined}
+          onClick={handleBigDown}
+          disabled={downDisabled}
+          title={downDisabled ? minReachedMessage : undefined}
           aria-label="Decrease big"
           borderLeft
           borderTop
