@@ -58,7 +58,6 @@ type StoredState = {
   firstWeightPct: string;
   lastCompletedRound: number;
   forceFirstShare: boolean;
-  // Legacy
   finalDrop?: string;
   nextBuyRound?: number;
 };
@@ -279,6 +278,21 @@ export function DcaDownCalculator() {
     [startPrice, currency, rate],
   );
 
+  // Display formatter for currency inputs: when unfocused, show formatted ($/₩
+  // prefix + commas); when focused, NumberStepper shows the raw editable text.
+  const formatBudgetDisplay = (raw: string): string => {
+    if (!raw) return "";
+    const usd = parseCurrency(raw, currency, rate);
+    if (usd === 0) return raw;
+    return fmtCurrency(usd);
+  };
+  const formatStartPriceDisplay = (raw: string): string => {
+    if (!raw) return "";
+    const usd = parseCurrency(raw, currency, rate);
+    if (usd === 0) return raw;
+    return fmtCurrency(usd);
+  };
+
   const nNum = useMemo(() => {
     const n = Math.floor(parseNum(rounds));
     if (!Number.isFinite(n) || n < N_MIN) return N_DEFAULT;
@@ -291,6 +305,8 @@ export function DcaDownCalculator() {
     return Math.min(Math.ceil(100 / dn), N_MAX_HARD);
   }, [dropInterval]);
 
+  // Drop-change silent clamp: when the user lowers drop% the legal N range
+  // shrinks. This adjusts N quietly so the calculation stays valid.
   useEffect(() => {
     if (nNum > maxN && maxN >= N_MIN) {
       setRounds(String(maxN));
@@ -467,13 +483,21 @@ export function DcaDownCalculator() {
     setLastCompletedRound(n);
   };
 
-  // N input: integer-only. Strips non-digit characters.
   const handleRoundsChange = (text: string) => {
     setRounds(text.replace(/[^\d]/g, ""));
   };
 
+  // Defaults N to N_MIN on blur if empty or out of range — protects against
+  // the user clearing the field and leaving an invalid state.
+  const handleRoundsBlur = () => {
+    const n = parseInt(rounds, 10);
+    if (!rounds || !Number.isFinite(n) || n < N_MIN) {
+      setRounds(String(N_MIN));
+    }
+  };
+
   const handleRoundsStep = (newN: number) => {
-    if (newN < N_MIN || newN > N_MAX_HARD) return;
+    if (newN < N_MIN || newN > maxN) return;
     setRounds(String(newN));
   };
 
@@ -553,7 +577,9 @@ export function DcaDownCalculator() {
         fmtNum(r.targetPrice),
       ].join(","),
     );
-    const csv = [header, ...lines].join("\n");
+    // BOM (﻿) so Excel reads the file as UTF-8 instead of falling back
+    // to CP949 and corrupting Korean column headers.
+    const csv = "﻿" + [header, ...lines].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const today = new Date().toISOString().slice(0, 10);
@@ -590,6 +616,7 @@ export function DcaDownCalculator() {
                 value={budget}
                 onInputChange={setBudget}
                 onStep={handleBudgetStep}
+                displayFormatter={formatBudgetDisplay}
                 min={0}
                 smallStep={budgetSteps.small}
                 bigStep={budgetSteps.big}
@@ -604,6 +631,7 @@ export function DcaDownCalculator() {
                 value={startPrice}
                 onInputChange={setStartPrice}
                 onStep={handleStartPriceStep}
+                displayFormatter={formatStartPriceDisplay}
                 min={0}
                 smallStep={startPriceSteps.small}
                 bigStep={startPriceSteps.big}
@@ -614,62 +642,102 @@ export function DcaDownCalculator() {
             </Field>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Field label={t.nLabel} htmlFor="dca-rounds">
-                <NumberStepper
-                  id="dca-rounds"
-                  value={rounds}
-                  onInputChange={handleRoundsChange}
-                  onStep={handleRoundsStep}
-                  min={N_MIN}
-                  max={N_MAX_HARD}
-                  smallStep={1}
-                  bigStep={10}
-                  inputMode="numeric"
-                  placeholder={t.nPlaceholder}
-                  aria-label={t.nLabel}
-                  maxReachedMessage={nMaxMessage}
-                  minReachedMessage={t.stepperNMin}
-                />
+                <div className="flex items-center gap-1">
+                  <div className="min-w-0 flex-1">
+                    <NumberStepper
+                      id="dca-rounds"
+                      value={rounds}
+                      onInputChange={handleRoundsChange}
+                      onInputBlur={handleRoundsBlur}
+                      onStep={handleRoundsStep}
+                      min={N_MIN}
+                      max={maxN}
+                      smallStep={1}
+                      bigStep={10}
+                      inputMode="numeric"
+                      placeholder={t.nPlaceholder}
+                      aria-label={t.nLabel}
+                      maxReachedMessage={nMaxMessage}
+                      minReachedMessage={t.stepperNMin}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {t.unitN}
+                  </span>
+                </div>
               </Field>
               <Field label={t.dropIntervalLabel} htmlFor="dca-drop">
-                <NumberStepper
-                  id="dca-drop"
-                  value={dropInterval}
-                  onInputChange={setDropInterval}
-                  onStep={handleDropStep}
-                  min={DROP_MIN}
-                  max={DROP_MAX}
-                  smallStep={1}
-                  bigStep={5}
-                  inputMode="decimal"
-                  placeholder={t.dropIntervalPlaceholder}
-                  aria-label={t.dropIntervalLabel}
-                  maxReachedMessage={t.stepperDropMax}
-                  minReachedMessage={t.stepperDropMin}
-                />
+                <div className="flex items-center gap-1">
+                  <div className="min-w-0 flex-1">
+                    <NumberStepper
+                      id="dca-drop"
+                      value={dropInterval}
+                      onInputChange={setDropInterval}
+                      onStep={handleDropStep}
+                      min={DROP_MIN}
+                      max={DROP_MAX}
+                      smallStep={1}
+                      bigStep={5}
+                      inputMode="decimal"
+                      placeholder={t.dropIntervalPlaceholder}
+                      aria-label={t.dropIntervalLabel}
+                      maxReachedMessage={t.stepperDropMax}
+                      minReachedMessage={t.stepperDropMin}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">%</span>
+                </div>
               </Field>
               <Field label={t.targetReturnLabel} htmlFor="dca-target">
-                <NumberStepper
-                  id="dca-target"
-                  value={targetReturn}
-                  onInputChange={setTargetReturn}
-                  onStep={handleTargetStep}
-                  min={0}
-                  smallStep={1}
-                  bigStep={5}
-                  inputMode="decimal"
-                  placeholder={t.targetReturnPlaceholder}
-                  aria-label={t.targetReturnLabel}
-                />
+                <div className="flex items-center gap-1">
+                  <div className="min-w-0 flex-1">
+                    <NumberStepper
+                      id="dca-target"
+                      value={targetReturn}
+                      onInputChange={setTargetReturn}
+                      onStep={handleTargetStep}
+                      min={0}
+                      smallStep={1}
+                      bigStep={5}
+                      inputMode="decimal"
+                      placeholder={t.targetReturnPlaceholder}
+                      aria-label={t.targetReturnLabel}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">%</span>
+                </div>
               </Field>
             </div>
 
-            {/* Tax: rate stepper + Short/Long-term selector with info tooltips. */}
+            {/* Tax: label + Short/Long-term selector inline; stepper below */}
             <div className="space-y-2 border-t border-border pt-3">
-              <Label htmlFor="dca-tax-rate" className="text-sm">
-                {t.taxRateLabel}
-              </Label>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="min-w-[140px] flex-1">
+              <div className="flex flex-wrap items-center gap-3">
+                <Label htmlFor="dca-tax-rate" className="text-sm">
+                  {t.taxRateLabel}
+                </Label>
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant={taxType === "short" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => selectTaxType("short")}
+                  >
+                    {t.taxTypeShortTerm}
+                  </Button>
+                  <InfoTooltip text={t.taxTooltipShortTerm} />
+                  <Button
+                    type="button"
+                    variant={taxType === "long" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => selectTaxType("long")}
+                  >
+                    {t.taxTypeLongTerm}
+                  </Button>
+                  <InfoTooltip text={t.taxTooltipLongTerm} />
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="min-w-0 flex-1">
                   <NumberStepper
                     id="dca-tax-rate"
                     value={taxRate}
@@ -682,24 +750,7 @@ export function DcaDownCalculator() {
                     aria-label={t.taxRateLabel}
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant={taxType === "short" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => selectTaxType("short")}
-                >
-                  {t.taxTypeShortTerm}
-                </Button>
-                <InfoTooltip text={t.taxTooltipShortTerm} />
-                <Button
-                  type="button"
-                  variant={taxType === "long" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => selectTaxType("long")}
-                >
-                  {t.taxTypeLongTerm}
-                </Button>
-                <InfoTooltip text={t.taxTooltipLongTerm} />
+                <span className="text-xs text-muted-foreground">%</span>
               </div>
             </div>
 

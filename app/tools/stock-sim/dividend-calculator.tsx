@@ -440,7 +440,7 @@ export function DividendCalculator() {
         p.cumulativeYieldPct.toFixed(2),
       ].join(","),
     );
-    const csv = [header, ...dataRows].join("\n");
+    const csv = "﻿" + [header, ...dataRows].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const today = new Date().toISOString().slice(0, 10);

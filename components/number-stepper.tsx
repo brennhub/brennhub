@@ -13,6 +13,8 @@ type Props = {
   value: string;
   onStep: (newValue: number) => void;
   onInputChange: (text: string) => void;
+  onInputBlur?: () => void;
+  displayFormatter?: (raw: string) => string;
   min?: number;
   max?: number;
   smallStep: number;
@@ -43,12 +45,15 @@ function smartSmallStep(
   return value + direction * smallStep;
 }
 
-const WARNING_DURATION_MS = 3000;
+const FADE_START_MS = 2500;
+const REMOVE_MS = 3000;
 
 export function NumberStepper({
   value,
   onStep,
   onInputChange,
+  onInputBlur,
+  displayFormatter,
   min = Number.NEGATIVE_INFINITY,
   max = Number.POSITIVE_INFINITY,
   smallStep,
@@ -69,22 +74,35 @@ export function NumberStepper({
       ? Math.max(min, 0)
       : 0;
 
-  // Buttons never disable; clicking past the bound triggers a transient warning
-  // popup. Each show resets a 3-second timeout via the {key} marker.
+  const [focused, setFocused] = useState(false);
   const [warning, setWarning] = useState<{
     msg: string;
     key: number;
   } | null>(null);
+  const [closing, setClosing] = useState(false);
 
   useEffect(() => {
     if (!warning) return;
-    const id = setTimeout(() => setWarning(null), WARNING_DURATION_MS);
-    return () => clearTimeout(id);
+    setClosing(false);
+    const fadeId = setTimeout(() => setClosing(true), FADE_START_MS);
+    const removeId = setTimeout(() => {
+      setWarning(null);
+      setClosing(false);
+    }, REMOVE_MS);
+    return () => {
+      clearTimeout(fadeId);
+      clearTimeout(removeId);
+    };
   }, [warning?.key]);
 
   const showWarning = (msg: string | undefined) => {
     if (!msg) return;
     setWarning({ msg, key: Date.now() });
+  };
+
+  const dismissWarning = () => {
+    setWarning(null);
+    setClosing(false);
   };
 
   const handleSmallUp = () => {
@@ -121,6 +139,9 @@ export function NumberStepper({
     onStep(Math.max(min, roundForStep(base - bigStep, bigStep)));
   };
 
+  const displayValue =
+    focused || !displayFormatter ? value : displayFormatter(value);
+
   return (
     <div
       className={cn(
@@ -134,8 +155,13 @@ export function NumberStepper({
         id={id}
         type="text"
         inputMode={inputMode}
-        value={value}
+        value={displayValue}
         onChange={(e) => onInputChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => {
+          setFocused(false);
+          onInputBlur?.();
+        }}
         placeholder={placeholder}
         aria-label={ariaLabel}
         className="tnum w-full min-w-0 bg-transparent px-2.5 py-1 text-base text-foreground outline-none placeholder:text-muted-foreground md:text-sm"
@@ -162,7 +188,9 @@ export function NumberStepper({
       {warning && (
         <div
           role="alert"
-          className="pointer-events-none absolute bottom-full left-0 z-50 mb-1 whitespace-nowrap rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700 shadow-sm dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+          onClick={dismissWarning}
+          style={{ opacity: closing ? 0 : 1 }}
+          className="absolute bottom-full left-0 z-50 mb-1 cursor-pointer whitespace-nowrap rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700 shadow-sm transition-opacity duration-500 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
         >
           {warning.msg}
         </div>

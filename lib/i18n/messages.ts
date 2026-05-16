@@ -210,6 +210,7 @@ export type Messages = {
       taxTooltipShortTerm: string;
       taxTooltipLongTerm: string;
       taxAmountLabel: string;
+      unitN: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -292,7 +293,7 @@ export const messages: Record<Locale, Messages> = {
       currencyKrw: "KRW (₩)",
       exchangeRateTooltip: "1 USD = {rate} KRW ({date} 갱신)",
       exchangeRateTooltipManual: "1 USD = {rate} KRW (수동 설정)",
-      rateLabel: "환율",
+      rateLabel: "1 USD =",
       tabs: { costBasis: "평단가", dividend: "배당", dcaDown: "분할매수" },
       costBasis: {
         inputTitle: "매수 기록",
@@ -384,9 +385,9 @@ export const messages: Record<Locale, Messages> = {
         startPricePlaceholder: "첫 매수가",
         nLabel: "매수 횟수",
         nPlaceholder: "2-50",
-        dropIntervalLabel: "하락율 (%)",
+        dropIntervalLabel: "하락율",
         dropIntervalPlaceholder: "5",
-        targetReturnLabel: "목표 수익률 (%)",
+        targetReturnLabel: "목표 수익률",
         targetReturnPlaceholder: "30",
         weightToggle: "가중치 적용",
         weightTooltip:
@@ -429,16 +430,17 @@ export const messages: Record<Locale, Messages> = {
         forceFirstShareLabel: "시작가 매수 보장",
         forceFirstShareTooltip:
           "1회차부터 1주 이상 매수 강제. Budget 안전 가드 유지.",
-        taxRateLabel: "세율 (%)",
+        taxRateLabel: "세율",
         afterTaxProfitLabel: "세후 최종 예상 수익",
         exportCsvLabel: "CSV로 내보내기",
-        taxTypeShortTerm: "단기 (Short-term)",
-        taxTypeLongTerm: "장기 (Long-term)",
+        taxTypeShortTerm: "단기",
+        taxTypeLongTerm: "장기",
         taxTooltipShortTerm:
           "1년 미만 보유. 일반 소득세 24% 적용 (단일 신고 $103k~$197k 소득 기준, 2025)",
         taxTooltipLongTerm:
           "1년 이상 보유. 장기 자본이득세 15% 적용 (단일 신고 $48k~$533k 소득 기준, 2025)",
-        taxAmountLabel: "세금",
+        taxAmountLabel: "예상 세금",
+        unitN: "회",
       },
     },
     tools: {
@@ -535,7 +537,7 @@ export const messages: Record<Locale, Messages> = {
       currencyKrw: "KRW (₩)",
       exchangeRateTooltip: "1 USD = {rate} KRW (updated {date})",
       exchangeRateTooltipManual: "1 USD = {rate} KRW (manual)",
-      rateLabel: "Rate",
+      rateLabel: "1 USD =",
       tabs: {
         costBasis: "Cost Basis",
         dividend: "Dividends",
@@ -630,9 +632,9 @@ export const messages: Record<Locale, Messages> = {
         startPricePlaceholder: "First buy",
         nLabel: "Rounds",
         nPlaceholder: "2-50",
-        dropIntervalLabel: "Drop %",
+        dropIntervalLabel: "Drop",
         dropIntervalPlaceholder: "5",
-        targetReturnLabel: "Target Return (%)",
+        targetReturnLabel: "Target Return",
         targetReturnPlaceholder: "30",
         weightToggle: "Apply Weighting",
         weightTooltip:
@@ -674,7 +676,7 @@ export const messages: Record<Locale, Messages> = {
         forceFirstShareLabel: "Buy at Start Price",
         forceFirstShareTooltip:
           "Force minimum 1 share from round 1 (Budget cap protected)",
-        taxRateLabel: "Tax Rate %",
+        taxRateLabel: "Tax Rate",
         afterTaxProfitLabel: "After-Tax Expected Profit",
         exportCsvLabel: "Export CSV",
         taxTypeShortTerm: "Short-term",
@@ -684,6 +686,7 @@ export const messages: Record<Locale, Messages> = {
         taxTooltipLongTerm:
           "Held > 1 year. Long-term capital gains 15% (single filer $48k~$533k bracket, 2025)",
         taxAmountLabel: "Tax",
+        unitN: "rounds",
       },
     },
     tools: {

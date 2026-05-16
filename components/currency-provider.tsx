@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -32,8 +33,9 @@ type CurrencyContextValue = {
   setCurrency: (c: Currency) => void;
   rate: number; // effective: manual ?? api
   apiRate: number;
-  manualRate: number | null;
-  setManualRate: (r: number | null) => void;
+  manualRateInput: string; // raw text so decimal typing isn't lost
+  setManualRateInput: (s: string) => void;
+  manualRate: number | null; // derived numeric
   isManualRate: boolean;
   rateDate: string | null;
 };
@@ -43,10 +45,9 @@ const CurrencyContext = createContext<CurrencyContextValue | null>(null);
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<Currency>(DEFAULT_CURRENCY);
   const [apiRate, setApiRate] = useState<number>(FALLBACK_RATE);
-  const [manualRate, setManualRateState] = useState<number | null>(null);
+  const [manualRateInput, setManualRateInputState] = useState<string>("");
   const [rateDate, setRateDate] = useState<string | null>(null);
 
-  // Load currency preference + manual rate.
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_CURRENCY);
@@ -57,17 +58,13 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     try {
       const storedManual = localStorage.getItem(STORAGE_MANUAL_RATE);
       if (storedManual !== null) {
-        const n = parseFloat(storedManual);
-        if (Number.isFinite(n) && n > 0) {
-          setManualRateState(n);
-        }
+        setManualRateInputState(storedManual);
       }
     } catch {
       // unavailable
     }
   }, []);
 
-  // API rate: cache first, fetch if stale.
   useEffect(() => {
     let cancelled = false;
 
@@ -142,21 +139,26 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const setManualRate = (r: number | null) => {
-    if (r !== null && (!Number.isFinite(r) || r <= 0)) return;
-    setManualRateState(r);
+  const setManualRateInput = (s: string) => {
+    setManualRateInputState(s);
     try {
-      if (r === null) {
+      if (s === "") {
         localStorage.removeItem(STORAGE_MANUAL_RATE);
       } else {
-        localStorage.setItem(STORAGE_MANUAL_RATE, String(r));
+        localStorage.setItem(STORAGE_MANUAL_RATE, s);
       }
     } catch {
       // ignore
     }
   };
 
-  const isManualRate = manualRate !== null && manualRate > 0;
+  const manualRate = useMemo<number | null>(() => {
+    if (!manualRateInput) return null;
+    const n = parseFloat(manualRateInput);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [manualRateInput]);
+
+  const isManualRate = manualRate !== null;
   const rate = isManualRate ? (manualRate as number) : apiRate;
 
   return (
@@ -166,8 +168,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         setCurrency,
         rate,
         apiRate,
+        manualRateInput,
+        setManualRateInput,
         manualRate,
-        setManualRate,
         isManualRate,
         rateDate,
       }}
