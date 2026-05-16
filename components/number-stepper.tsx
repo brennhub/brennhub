@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   ChevronDown,
   ChevronsDown,
@@ -31,8 +32,6 @@ function roundForStep(value: number, step: number): number {
   return Number(value.toFixed(decimals));
 }
 
-// Small step: round to nearest integer first if value is non-integer, otherwise
-// step by smallStep. Big step always adds/subtracts bigStep.
 function smartSmallStep(
   value: number,
   smallStep: number,
@@ -43,6 +42,8 @@ function smartSmallStep(
   }
   return value + direction * smallStep;
 }
+
+const WARNING_DURATION_MS = 3000;
 
 export function NumberStepper({
   value,
@@ -68,37 +69,62 @@ export function NumberStepper({
       ? Math.max(min, 0)
       : 0;
 
-  // Clamp-based disabled: button is enabled while there's any room left.
-  // Step clamps to min/max so users can always reach the boundary.
-  const upDisabled = base >= max;
-  const downDisabled = base <= min;
+  // Buttons never disable; clicking past the bound triggers a transient warning
+  // popup. Each show resets a 3-second timeout via the {key} marker.
+  const [warning, setWarning] = useState<{
+    msg: string;
+    key: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!warning) return;
+    const id = setTimeout(() => setWarning(null), WARNING_DURATION_MS);
+    return () => clearTimeout(id);
+  }, [warning?.key]);
+
+  const showWarning = (msg: string | undefined) => {
+    if (!msg) return;
+    setWarning({ msg, key: Date.now() });
+  };
 
   const handleSmallUp = () => {
-    if (upDisabled) return;
+    if (base >= max) {
+      showWarning(maxReachedMessage);
+      return;
+    }
     const next = smartSmallStep(base, smallStep, 1);
     onStep(Math.min(max, roundForStep(next, smallStep)));
   };
 
   const handleBigUp = () => {
-    if (upDisabled) return;
+    if (base >= max) {
+      showWarning(maxReachedMessage);
+      return;
+    }
     onStep(Math.min(max, roundForStep(base + bigStep, bigStep)));
   };
 
   const handleSmallDown = () => {
-    if (downDisabled) return;
+    if (base <= min) {
+      showWarning(minReachedMessage);
+      return;
+    }
     const next = smartSmallStep(base, smallStep, -1);
     onStep(Math.max(min, roundForStep(next, smallStep)));
   };
 
   const handleBigDown = () => {
-    if (downDisabled) return;
+    if (base <= min) {
+      showWarning(minReachedMessage);
+      return;
+    }
     onStep(Math.max(min, roundForStep(base - bigStep, bigStep)));
   };
 
   return (
     <div
       className={cn(
-        "flex h-8 w-full min-w-0 items-stretch rounded-lg border border-input bg-transparent transition-colors",
+        "relative flex h-8 w-full min-w-0 items-stretch rounded-lg border border-input bg-transparent transition-colors",
         "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
         "dark:bg-input/30",
         className,
@@ -115,36 +141,17 @@ export function NumberStepper({
         className="tnum w-full min-w-0 bg-transparent px-2.5 py-1 text-base text-foreground outline-none placeholder:text-muted-foreground md:text-sm"
       />
       <div className="grid shrink-0 grid-cols-2 grid-rows-2 border-l border-input">
-        <StepperButton
-          onClick={handleSmallUp}
-          disabled={upDisabled}
-          title={upDisabled ? maxReachedMessage : undefined}
-          aria-label="Increase small"
-        >
+        <StepperButton onClick={handleSmallUp} aria-label="Increase small">
           <ChevronUp className="size-3" />
         </StepperButton>
-        <StepperButton
-          onClick={handleBigUp}
-          disabled={upDisabled}
-          title={upDisabled ? maxReachedMessage : undefined}
-          aria-label="Increase big"
-          borderLeft
-        >
+        <StepperButton onClick={handleBigUp} aria-label="Increase big" borderLeft>
           <ChevronsUp className="size-3" />
         </StepperButton>
-        <StepperButton
-          onClick={handleSmallDown}
-          disabled={downDisabled}
-          title={downDisabled ? minReachedMessage : undefined}
-          aria-label="Decrease small"
-          borderTop
-        >
+        <StepperButton onClick={handleSmallDown} aria-label="Decrease small" borderTop>
           <ChevronDown className="size-3" />
         </StepperButton>
         <StepperButton
           onClick={handleBigDown}
-          disabled={downDisabled}
-          title={downDisabled ? minReachedMessage : undefined}
           aria-label="Decrease big"
           borderLeft
           borderTop
@@ -152,22 +159,26 @@ export function NumberStepper({
           <ChevronsDown className="size-3" />
         </StepperButton>
       </div>
+      {warning && (
+        <div
+          role="alert"
+          className="pointer-events-none absolute bottom-full left-0 z-50 mb-1 whitespace-nowrap rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700 shadow-sm dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+        >
+          {warning.msg}
+        </div>
+      )}
     </div>
   );
 }
 
 function StepperButton({
   onClick,
-  disabled,
-  title,
   children,
   borderLeft,
   borderTop,
   "aria-label": ariaLabel,
 }: {
   onClick: () => void;
-  disabled: boolean;
-  title?: string;
   children: React.ReactNode;
   borderLeft?: boolean;
   borderTop?: boolean;
@@ -177,12 +188,10 @@ function StepperButton({
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
-      title={title}
       aria-label={ariaLabel}
       tabIndex={-1}
       className={cn(
-        "flex h-4 w-6 items-center justify-center text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40",
+        "flex h-4 w-6 items-center justify-center text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
         borderLeft && "border-l border-input",
         borderTop && "border-t border-input",
       )}

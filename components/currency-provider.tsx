@@ -11,6 +11,7 @@ import type { Currency } from "@/lib/format/currency";
 
 const STORAGE_CURRENCY = "brennhub:currency";
 const STORAGE_RATE = "brennhub:exchange-rate";
+const STORAGE_MANUAL_RATE = "brennhub:manual-rate";
 const DEFAULT_CURRENCY: Currency = "usd";
 const FALLBACK_RATE = 1387;
 const TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -29,7 +30,11 @@ function isCurrency(v: unknown): v is Currency {
 type CurrencyContextValue = {
   currency: Currency;
   setCurrency: (c: Currency) => void;
-  rate: number;
+  rate: number; // effective: manual ?? api
+  apiRate: number;
+  manualRate: number | null;
+  setManualRate: (r: number | null) => void;
+  isManualRate: boolean;
   rateDate: string | null;
 };
 
@@ -37,20 +42,32 @@ const CurrencyContext = createContext<CurrencyContextValue | null>(null);
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<Currency>(DEFAULT_CURRENCY);
-  const [rate, setRate] = useState<number>(FALLBACK_RATE);
+  const [apiRate, setApiRate] = useState<number>(FALLBACK_RATE);
+  const [manualRate, setManualRateState] = useState<number | null>(null);
   const [rateDate, setRateDate] = useState<string | null>(null);
 
-  // Load currency preference
+  // Load currency preference + manual rate.
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_CURRENCY);
       if (isCurrency(stored)) setCurrencyState(stored);
     } catch {
-      // localStorage unavailable
+      // unavailable
+    }
+    try {
+      const storedManual = localStorage.getItem(STORAGE_MANUAL_RATE);
+      if (storedManual !== null) {
+        const n = parseFloat(storedManual);
+        if (Number.isFinite(n) && n > 0) {
+          setManualRateState(n);
+        }
+      }
+    } catch {
+      // unavailable
     }
   }, []);
 
-  // Load exchange rate: cache first, fetch if stale.
+  // API rate: cache first, fetch if stale.
   useEffect(() => {
     let cancelled = false;
 
@@ -67,14 +84,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
             Date.now() - parsed.fetchedAt < TTL_MS
           ) {
             if (!cancelled) {
-              setRate(parsed.rate);
+              setApiRate(parsed.rate);
               setRateDate(parsed.date ?? null);
             }
             usingCache = true;
           }
         }
       } catch {
-        // ignore parse errors
+        // ignore
       }
 
       if (usingCache) return;
@@ -90,7 +107,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         if (typeof newRate !== "number" || newRate <= 0) return;
         const date = json.date ?? null;
         if (!cancelled) {
-          setRate(newRate);
+          setApiRate(newRate);
           setRateDate(date);
         }
         try {
@@ -103,10 +120,10 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
             } satisfies RateCache),
           );
         } catch {
-          // quota / private mode
+          // quota
         }
       } catch {
-        // Network error — keep FALLBACK_RATE
+        // network — keep FALLBACK_RATE
       }
     }
 
@@ -125,8 +142,36 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setManualRate = (r: number | null) => {
+    if (r !== null && (!Number.isFinite(r) || r <= 0)) return;
+    setManualRateState(r);
+    try {
+      if (r === null) {
+        localStorage.removeItem(STORAGE_MANUAL_RATE);
+      } else {
+        localStorage.setItem(STORAGE_MANUAL_RATE, String(r));
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const isManualRate = manualRate !== null && manualRate > 0;
+  const rate = isManualRate ? (manualRate as number) : apiRate;
+
   return (
-    <CurrencyContext.Provider value={{ currency, setCurrency, rate, rateDate }}>
+    <CurrencyContext.Provider
+      value={{
+        currency,
+        setCurrency,
+        rate,
+        apiRate,
+        manualRate,
+        setManualRate,
+        isManualRate,
+        rateDate,
+      }}
+    >
       {children}
     </CurrencyContext.Provider>
   );

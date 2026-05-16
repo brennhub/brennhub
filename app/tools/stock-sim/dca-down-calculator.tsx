@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/switch";
@@ -38,6 +39,12 @@ const WEIGHT_MAX = 95;
 const DROP_MIN = 0;
 const DROP_MAX = 50;
 
+type TaxType = "short" | "long" | "custom";
+
+function isTaxType(v: unknown): v is TaxType {
+  return v === "short" || v === "long" || v === "custom";
+}
+
 type StoredState = {
   ticker: string;
   budget: string;
@@ -46,6 +53,7 @@ type StoredState = {
   dropInterval: string;
   targetReturn: string;
   taxRate: string;
+  taxType: TaxType;
   weightEnabled: boolean;
   firstWeightPct: string;
   lastCompletedRound: number;
@@ -77,7 +85,6 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
-// Solve for r given P% (first weight as percentage of total).
 function solveR(P: number, N: number): number {
   if (N < 2) return 1;
   const target = 100 / P;
@@ -123,13 +130,13 @@ export function DcaDownCalculator() {
   const [dropInterval, setDropInterval] = useState<string>("5");
   const [targetReturn, setTargetReturn] = useState<string>("30");
   const [taxRate, setTaxRate] = useState<string>("0");
+  const [taxType, setTaxType] = useState<TaxType>("custom");
   const [weightEnabled, setWeightEnabled] = useState<boolean>(false);
   const [firstWeightPct, setFirstWeightPct] = useState<string>("10");
   const [forceFirstShare, setForceFirstShare] = useState<boolean>(true);
   const [lastCompletedRound, setLastCompletedRound] = useState<number>(0);
   const [hydrated, setHydrated] = useState(false);
 
-  // Track previous currency to detect toggles (needed for converting raw inputs).
   const prevCurrencyRef = useRef<Currency | null>(null);
 
   useEffect(() => {
@@ -157,6 +164,7 @@ export function DcaDownCalculator() {
         if (typeof parsed.targetReturn === "string")
           setTargetReturn(parsed.targetReturn);
         if (typeof parsed.taxRate === "string") setTaxRate(parsed.taxRate);
+        if (isTaxType(parsed.taxType)) setTaxType(parsed.taxType);
         if (typeof parsed.weightEnabled === "boolean")
           setWeightEnabled(parsed.weightEnabled);
         if (typeof parsed.firstWeightPct === "string")
@@ -170,7 +178,7 @@ export function DcaDownCalculator() {
         }
       }
     } catch {
-      // corrupt state — start fresh
+      // corrupt
     }
     setHydrated(true);
   }, []);
@@ -188,6 +196,7 @@ export function DcaDownCalculator() {
           dropInterval,
           targetReturn,
           taxRate,
+          taxType,
           weightEnabled,
           firstWeightPct,
           forceFirstShare,
@@ -195,7 +204,7 @@ export function DcaDownCalculator() {
         } satisfies StoredState),
       );
     } catch {
-      // quota / private mode
+      // quota
     }
   }, [
     hydrated,
@@ -206,15 +215,13 @@ export function DcaDownCalculator() {
     dropInterval,
     targetReturn,
     taxRate,
+    taxType,
     weightEnabled,
     firstWeightPct,
     forceFirstShare,
     lastCompletedRound,
   ]);
 
-  // Currency toggle: convert raw monetary inputs (budget, startPrice) so the
-  // displayed values stay equivalent across currencies. Fires only after the
-  // initial localStorage hydration so loaded values aren't double-converted.
   useEffect(() => {
     if (!hydrated) return;
     if (prevCurrencyRef.current === null) {
@@ -263,7 +270,6 @@ export function DcaDownCalculator() {
     [currency, rate],
   );
 
-  // Parse raw inputs into canonical USD for calculation.
   const budgetUSD = useMemo(
     () => parseCurrency(budget, currency, rate),
     [budget, currency, rate],
@@ -279,7 +285,6 @@ export function DcaDownCalculator() {
     return Math.min(n, N_MAX_HARD);
   }, [rounds]);
 
-  // Largest N such that round N still buys at a positive price (ceil formula).
   const maxN = useMemo(() => {
     const dn = parseNum(dropInterval);
     if (dn <= 0) return N_MAX_HARD;
@@ -315,6 +320,7 @@ export function DcaDownCalculator() {
         finalAvg: 0,
         targetSell: 0,
         expectedProfit: 0,
+        taxAmount: 0,
         afterTaxProfit: 0,
         targetReturnPct: targetReturnNum,
         taxRatePct: taxRateNum,
@@ -397,7 +403,8 @@ export function DcaDownCalculator() {
     const finalAvg = last?.avgPrice ?? 0;
     const targetSell = finalAvg * (1 + returnRatio);
     const expectedProfit = last?.profit ?? 0;
-    const afterTaxProfit = expectedProfit * (1 - taxRateNum / 100);
+    const taxAmount = expectedProfit * (taxRateNum / 100);
+    const afterTaxProfit = expectedProfit - taxAmount;
 
     return {
       valid: true,
@@ -407,6 +414,7 @@ export function DcaDownCalculator() {
       finalAvg,
       targetSell,
       expectedProfit,
+      taxAmount,
       afterTaxProfit,
       targetReturnPct: targetReturnNum,
       taxRatePct: taxRateNum,
@@ -432,12 +440,15 @@ export function DcaDownCalculator() {
         ? "text-[var(--color-gain)]"
         : "text-[var(--color-loss)]";
 
-  const afterTaxProfitColor =
+  const afterTaxColor =
     computed.afterTaxProfit === 0
       ? ""
       : computed.afterTaxProfit > 0
         ? "text-[var(--color-gain)]"
         : "text-[var(--color-loss)]";
+
+  const taxColor =
+    computed.taxAmount > 0 ? "text-[var(--color-loss)]" : "";
 
   const zeroShareWarning = useMemo(() => {
     if (!computed.valid) return null;
@@ -454,6 +465,11 @@ export function DcaDownCalculator() {
 
   const handleRowClick = (n: number) => {
     setLastCompletedRound(n);
+  };
+
+  // N input: integer-only. Strips non-digit characters.
+  const handleRoundsChange = (text: string) => {
+    setRounds(text.replace(/[^\d]/g, ""));
   };
 
   const handleRoundsStep = (newN: number) => {
@@ -473,6 +489,17 @@ export function DcaDownCalculator() {
   const handleTaxStep = (newTax: number) => {
     if (newTax < 0) return;
     setTaxRate(String(newTax));
+    setTaxType("custom");
+  };
+
+  const handleTaxRateChange = (text: string) => {
+    setTaxRate(text);
+    setTaxType("custom");
+  };
+
+  const selectTaxType = (type: "short" | "long") => {
+    setTaxType(type);
+    setTaxRate(type === "short" ? "24" : "15");
   };
 
   const handleBudgetStep = (newBudget: number) => {
@@ -485,7 +512,6 @@ export function DcaDownCalculator() {
     setStartPrice(String(newPrice));
   };
 
-  // Currency-aware stepper steps for monetary inputs.
   const budgetSteps =
     currency === "usd"
       ? { small: 100, big: 1000 }
@@ -497,8 +523,18 @@ export function DcaDownCalculator() {
 
   const handleExportCsv = () => {
     if (!computed.valid) return;
-    const header =
-      "Round,Price,Drop %,Avg Price,Shares,Cum Shares,Buy Amount,Cum Buy Amount,Profit,Target Price";
+    const header = [
+      t.colRound,
+      t.colPrice,
+      t.colDropPct,
+      t.colAvgPrice,
+      t.colShares,
+      t.colCumShares,
+      t.colBuyAmount,
+      t.colCumBuyAmount,
+      t.colProfit,
+      t.colTargetPrice,
+    ].join(",");
     const fmtNum = (usdValue: number): string => {
       const display = currency === "usd" ? usdValue : usdValue * rate;
       return display.toFixed(currency === "usd" ? 2 : 0);
@@ -529,6 +565,8 @@ export function DcaDownCalculator() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
+  const nMaxMessage = t.stepperNMax.replace("{max}", String(maxN));
 
   return (
     <div className="space-y-6">
@@ -579,7 +617,7 @@ export function DcaDownCalculator() {
                 <NumberStepper
                   id="dca-rounds"
                   value={rounds}
-                  onInputChange={setRounds}
+                  onInputChange={handleRoundsChange}
                   onStep={handleRoundsStep}
                   min={N_MIN}
                   max={N_MAX_HARD}
@@ -588,7 +626,7 @@ export function DcaDownCalculator() {
                   inputMode="numeric"
                   placeholder={t.nPlaceholder}
                   aria-label={t.nLabel}
-                  maxReachedMessage={t.stepperNMax}
+                  maxReachedMessage={nMaxMessage}
                   minReachedMessage={t.stepperNMin}
                 />
               </Field>
@@ -625,6 +663,46 @@ export function DcaDownCalculator() {
               </Field>
             </div>
 
+            {/* Tax: rate stepper + Short/Long-term selector with info tooltips. */}
+            <div className="space-y-2 border-t border-border pt-3">
+              <Label htmlFor="dca-tax-rate" className="text-sm">
+                {t.taxRateLabel}
+              </Label>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="min-w-[140px] flex-1">
+                  <NumberStepper
+                    id="dca-tax-rate"
+                    value={taxRate}
+                    onInputChange={handleTaxRateChange}
+                    onStep={handleTaxStep}
+                    min={0}
+                    smallStep={1}
+                    bigStep={5}
+                    inputMode="decimal"
+                    aria-label={t.taxRateLabel}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant={taxType === "short" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => selectTaxType("short")}
+                >
+                  {t.taxTypeShortTerm}
+                </Button>
+                <InfoTooltip text={t.taxTooltipShortTerm} />
+                <Button
+                  type="button"
+                  variant={taxType === "long" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => selectTaxType("long")}
+                >
+                  {t.taxTypeLongTerm}
+                </Button>
+                <InfoTooltip text={t.taxTooltipLongTerm} />
+              </div>
+            </div>
+
             <div className="space-y-2 border-t border-border pt-3">
               <div className="flex items-center gap-2">
                 <Switch
@@ -639,16 +717,7 @@ export function DcaDownCalculator() {
                 >
                   {t.weightToggle}
                 </Label>
-                <button
-                  type="button"
-                  className="group relative inline-flex"
-                  aria-label={t.weightTooltip}
-                >
-                  <Info className="size-3.5 cursor-help text-muted-foreground" />
-                  <span className="pointer-events-none invisible absolute left-1/2 top-full z-50 mt-2 w-72 max-w-[80vw] -translate-x-1/2 rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100">
-                    {t.weightTooltip}
-                  </span>
-                </button>
+                <InfoTooltip text={t.weightTooltip} />
               </div>
               <p className="text-xs text-muted-foreground">{t.weightHint}</p>
               {weightEnabled && (
@@ -688,31 +757,8 @@ export function DcaDownCalculator() {
               >
                 {t.forceFirstShareLabel}
               </Label>
-              <button
-                type="button"
-                className="group relative inline-flex"
-                aria-label={t.forceFirstShareTooltip}
-              >
-                <Info className="size-3.5 cursor-help text-muted-foreground" />
-                <span className="pointer-events-none invisible absolute left-1/2 top-full z-50 mt-2 w-72 max-w-[80vw] -translate-x-1/2 rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100">
-                  {t.forceFirstShareTooltip}
-                </span>
-              </button>
+              <InfoTooltip text={t.forceFirstShareTooltip} />
             </div>
-
-            <Field label={t.taxRateLabel} htmlFor="dca-tax-rate">
-              <NumberStepper
-                id="dca-tax-rate"
-                value={taxRate}
-                onInputChange={setTaxRate}
-                onStep={handleTaxStep}
-                min={0}
-                smallStep={1}
-                bigStep={5}
-                inputMode="decimal"
-                aria-label={t.taxRateLabel}
-              />
-            </Field>
 
             {zeroShareWarning && (
               <p className="border-t border-border pt-3 text-sm text-amber-600 dark:text-amber-400">
@@ -772,17 +818,24 @@ export function DcaDownCalculator() {
                     </span>
                   }
                 />
-                {computed.taxRatePct > 0 && (
-                  <SummaryRow
-                    label={t.afterTaxProfitLabel}
-                    value={
-                      <span className={cn(afterTaxProfitColor)}>
-                        {computed.afterTaxProfit > 0 ? "+" : ""}
-                        {fmtCurrency(computed.afterTaxProfit)}
-                      </span>
-                    }
-                  />
-                )}
+                <SummaryRow
+                  label={t.taxAmountLabel}
+                  value={
+                    <span className={cn(taxColor)}>
+                      {computed.taxAmount > 0 ? "−" : ""}
+                      {fmtCurrency(computed.taxAmount)}
+                    </span>
+                  }
+                />
+                <SummaryRow
+                  label={t.afterTaxProfitLabel}
+                  value={
+                    <span className={cn(afterTaxColor)}>
+                      {computed.afterTaxProfit > 0 ? "+" : ""}
+                      {fmtCurrency(computed.afterTaxProfit)}
+                    </span>
+                  }
+                />
               </dl>
             )}
           </CardContent>
@@ -852,5 +905,20 @@ function SummaryRow({
       <dt className="text-sm text-muted-foreground">{label}</dt>
       <dd className="tnum text-lg font-medium">{value}</dd>
     </div>
+  );
+}
+
+function InfoTooltip({ text }: { text: string }) {
+  return (
+    <button
+      type="button"
+      className="group relative inline-flex"
+      aria-label={text}
+    >
+      <Info className="size-3.5 cursor-help text-muted-foreground" />
+      <span className="pointer-events-none invisible absolute left-1/2 top-full z-50 mt-2 w-72 max-w-[80vw] -translate-x-1/2 rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-foreground opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100">
+        {text}
+      </span>
+    </button>
   );
 }

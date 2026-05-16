@@ -88,25 +88,27 @@ export function DcaDownDetail({
         <CardTitle>{tableTitle}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <span
-              className="inline-block size-3 rounded"
-              style={{ backgroundColor: COMPLETED_SWATCH }}
-            />
-            <span>{legendCompleted}</span>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block size-3 rounded"
+                style={{ backgroundColor: COMPLETED_SWATCH }}
+              />
+              <span>{legendCompleted}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block size-3 rounded"
+                style={{ backgroundColor: NEXT_SWATCH }}
+              />
+              <span>{legendNextBuy}</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={onReset}>
+              <RotateCcw className="size-3" />
+              {legendReset}
+            </Button>
           </div>
-          <div className="flex items-center gap-2">
-            <span
-              className="inline-block size-3 rounded"
-              style={{ backgroundColor: NEXT_SWATCH }}
-            />
-            <span>{legendNextBuy}</span>
-          </div>
-          <Button variant="outline" size="sm" onClick={onReset}>
-            <RotateCcw className="size-3" />
-            {legendReset}
-          </Button>
           <Button variant="outline" size="sm" onClick={onExportCsv}>
             <Download className="size-3" />
             {exportCsvLabel}

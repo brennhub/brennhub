@@ -4,16 +4,17 @@ import { useCurrency } from "@/components/currency-provider";
 import { useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
-// KRW first, matching the color-scheme toggle's "한국식 → 미국식" order.
 const CURRENCIES = ["krw", "usd"] as const;
 
 export function CurrencyToggle() {
-  const { currency, setCurrency, rate, rateDate } = useCurrency();
+  const { currency, setCurrency, rate, rateDate, isManualRate } = useCurrency();
   const t = useMessages().stockSim;
 
-  const tooltipText = t.exchangeRateTooltip
-    .replace("{rate}", rate.toFixed(2))
-    .replace("{date}", rateDate ?? "—");
+  const tooltipText = isManualRate
+    ? t.exchangeRateTooltipManual.replace("{rate}", rate.toFixed(2))
+    : t.exchangeRateTooltip
+        .replace("{rate}", rate.toFixed(2))
+        .replace("{date}", rateDate ?? "—");
 
   return (
     <div className="flex items-center gap-2">

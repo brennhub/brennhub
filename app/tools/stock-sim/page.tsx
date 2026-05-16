@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/tabs";
 import { ColorSchemeToggle } from "@/components/color-scheme-toggle";
 import { CurrencyToggle } from "@/components/currency-toggle";
+import { ManualRateInput } from "@/components/manual-rate-input";
 import { useMessages } from "@/lib/i18n/provider";
 import { CostBasisCalculator } from "./cost-basis-calculator";
 import { DividendCalculator } from "./dividend-calculator";
@@ -38,9 +39,12 @@ export default function StockSimPage() {
               {t.stockSim.tabs.dcaDown}
             </TabsTrigger>
           </TabsList>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-start gap-3">
             <ColorSchemeToggle />
-            <CurrencyToggle />
+            <div className="flex flex-col items-end gap-1">
+              <CurrencyToggle />
+              <ManualRateInput />
+            </div>
           </div>
         </div>
         <TabsContent value="cost-basis" className="mt-6">

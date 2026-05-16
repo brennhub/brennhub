@@ -73,6 +73,8 @@ export type Messages = {
     currencyUsd: string;
     currencyKrw: string;
     exchangeRateTooltip: string;
+    exchangeRateTooltipManual: string;
+    rateLabel: string;
     tabs: { costBasis: string; dividend: string; dcaDown: string };
     costBasis: {
       inputTitle: string;
@@ -203,6 +205,11 @@ export type Messages = {
       taxRateLabel: string;
       afterTaxProfitLabel: string;
       exportCsvLabel: string;
+      taxTypeShortTerm: string;
+      taxTypeLongTerm: string;
+      taxTooltipShortTerm: string;
+      taxTooltipLongTerm: string;
+      taxAmountLabel: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -284,6 +291,8 @@ export const messages: Record<Locale, Messages> = {
       currencyUsd: "USD ($)",
       currencyKrw: "KRW (₩)",
       exchangeRateTooltip: "1 USD = {rate} KRW ({date} 갱신)",
+      exchangeRateTooltipManual: "1 USD = {rate} KRW (수동 설정)",
+      rateLabel: "환율",
       tabs: { costBasis: "평단가", dividend: "배당", dcaDown: "분할매수" },
       costBasis: {
         inputTitle: "매수 기록",
@@ -414,7 +423,7 @@ export const messages: Record<Locale, Messages> = {
         legendReset: "리셋",
         stepperDropMax: "하락율은 최대 50% 입니다",
         stepperDropMin: "하락율은 최소 0.1% 입니다",
-        stepperNMax: "매수 횟수는 최대 100 입니다",
+        stepperNMax: "매수 횟수는 최대 {max}회입니다 (현재 하락율 기준)",
         stepperNMin: "최소 2회 매수 필요",
         stepperGenericMax: "최대값 도달",
         forceFirstShareLabel: "시작가 매수 보장",
@@ -423,6 +432,13 @@ export const messages: Record<Locale, Messages> = {
         taxRateLabel: "세율 (%)",
         afterTaxProfitLabel: "세후 최종 예상 수익",
         exportCsvLabel: "CSV로 내보내기",
+        taxTypeShortTerm: "단기 (Short-term)",
+        taxTypeLongTerm: "장기 (Long-term)",
+        taxTooltipShortTerm:
+          "1년 미만 보유. 일반 소득세 24% 적용 (단일 신고 $103k~$197k 소득 기준, 2025)",
+        taxTooltipLongTerm:
+          "1년 이상 보유. 장기 자본이득세 15% 적용 (단일 신고 $48k~$533k 소득 기준, 2025)",
+        taxAmountLabel: "세금",
       },
     },
     tools: {
@@ -518,6 +534,8 @@ export const messages: Record<Locale, Messages> = {
       currencyUsd: "USD ($)",
       currencyKrw: "KRW (₩)",
       exchangeRateTooltip: "1 USD = {rate} KRW (updated {date})",
+      exchangeRateTooltipManual: "1 USD = {rate} KRW (manual)",
+      rateLabel: "Rate",
       tabs: {
         costBasis: "Cost Basis",
         dividend: "Dividends",
@@ -650,7 +668,7 @@ export const messages: Record<Locale, Messages> = {
         legendReset: "Reset",
         stepperDropMax: "Drop max is 50%",
         stepperDropMin: "Drop min is 0.1%",
-        stepperNMax: "Max rounds is 100",
+        stepperNMax: "Max rounds is {max} (at current drop %)",
         stepperNMin: "Minimum 2 rounds",
         stepperGenericMax: "Max reached",
         forceFirstShareLabel: "Buy at Start Price",
@@ -659,6 +677,13 @@ export const messages: Record<Locale, Messages> = {
         taxRateLabel: "Tax Rate %",
         afterTaxProfitLabel: "After-Tax Expected Profit",
         exportCsvLabel: "Export CSV",
+        taxTypeShortTerm: "Short-term",
+        taxTypeLongTerm: "Long-term",
+        taxTooltipShortTerm:
+          "Held < 1 year. Ordinary income tax 24% (single filer $103k~$197k bracket, 2025)",
+        taxTooltipLongTerm:
+          "Held > 1 year. Long-term capital gains 15% (single filer $48k~$533k bracket, 2025)",
+        taxAmountLabel: "Tax",
       },
     },
     tools: {
