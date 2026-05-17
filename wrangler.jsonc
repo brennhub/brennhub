@@ -1,39 +1,94 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "main": ".open-next/worker.js",
-  "name": "brennhub",
-  "compatibility_date": "2025-12-01",
-  "compatibility_flags": [
-    "nodejs_compat",
-    "global_fetch_strictly_public"
-  ],
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS"
-  },
-  "services": [
-    {
-      "binding": "WORKER_SELF_REFERENCE",
-      "service": "brennhub"
-    }
-  ],
-  "images": {
-    "binding": "IMAGES"
-  },
-  "ai": {
-    "binding": "AI"
-  },
-  "vars": {
-    "AI_PROVIDER": "workers-ai"
-  },
-  "observability": {
-    "enabled": true,
-    "head_sampling_rate": 1
-  }
-  // "r2_buckets": [
-  //   {
-  //     "binding": "NEXT_INC_CACHE_R2_BUCKET",
-  //     "bucket_name": "<BUCKET_NAME>"
-  //   }
-  // ]
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "brennhub",
+	"compatibility_date": "2025-12-01",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "brennhub"
+		}
+	],
+	"images": {
+		"binding": "IMAGES"
+	},
+	"ai": {
+		"binding": "AI"
+	},
+	"vars": {
+		"AI_PROVIDER": "workers-ai"
+	},
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "brennhub-feedback",
+			"database_id": "7ac97135-f3e9-4c0a-949a-c7f874ceaec0"
+		}
+	],
+	// env.preview = dev.brennhub.com (brennhub-dev worker). Deploy: npm run deploy:preview
+	"env": {
+		"preview": {
+			"name": "brennhub-dev",
+			"main": ".open-next/worker.js",
+			"compatibility_date": "2025-12-01",
+			"compatibility_flags": [
+				"nodejs_compat",
+				"global_fetch_strictly_public"
+			],
+			"routes": [
+				{
+					"pattern": "dev.brennhub.com",
+					"custom_domain": true
+				}
+			],
+			"assets": {
+				"directory": ".open-next/assets",
+				"binding": "ASSETS"
+			},
+			"services": [
+				{
+					"binding": "WORKER_SELF_REFERENCE",
+					"service": "brennhub-dev"
+				}
+			],
+			"images": {
+				"binding": "IMAGES"
+			},
+			"ai": {
+				"binding": "AI"
+			},
+			"vars": {
+				"AI_PROVIDER": "workers-ai"
+			},
+			"observability": {
+				"enabled": true,
+				"head_sampling_rate": 1
+			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "brennhub-feedback-dev",
+					"database_id": "1117f8ee-6b78-4ff6-af43-85dfad4b1626"
+				}
+			]
+		}
+	}
+	// "r2_buckets": [
+	//   {
+	//     "binding": "NEXT_INC_CACHE_R2_BUCKET",
+	//     "bucket_name": "<BUCKET_NAME>"
+	//   }
+	// ]
 }
