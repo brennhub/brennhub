@@ -1,11 +1,15 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { LOCALE_NAMES, LOCALES } from "@/lib/i18n/types";
 import { useLocale } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 export function LocaleToggle() {
+  const pathname = usePathname();
   const { locale, setLocale } = useLocale();
+
+  if (pathname?.startsWith("/admin")) return null;
 
   return (
     <div
