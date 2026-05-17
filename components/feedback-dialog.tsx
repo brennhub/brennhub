@@ -12,7 +12,8 @@ export type FeedbackTool =
   | "site"
   | "email-diag"
   | "cron-trans"
-  | "stock-sim";
+  | "stock-sim"
+  | "supp-plan";
 
 type Category = "feature" | "improvement" | "complaint" | "other";
 
@@ -125,6 +126,7 @@ export function FeedbackDialog({ open, onOpenChange, defaultTool }: Props) {
     { value: "email-diag", label: t.toolEmailDiag },
     { value: "cron-trans", label: t.toolCronTrans },
     { value: "stock-sim", label: t.toolStockSim },
+    { value: "supp-plan", label: t.toolSuppPlan },
   ];
   const categoryOptions: { value: Category; label: string }[] = [
     { value: "feature", label: t.categoryFeature },

@@ -24,6 +24,18 @@
 - Patterns: NumberStepper, Currency/ColorScheme providers, localStorage hydrate+persist, validity guard summary. See [PATTERNS.md](./PATTERNS.md).
 - Status: production
 
+## Supplement Planner — `/tools/supp-plan`
+- Purpose: 약동학 기반 개인 영양제 스케줄링 (라이브러리 + 시간순 뷰 + 호환성 경고)
+- Main: `app/tools/supp-plan/page.tsx` (Server, D1 fetch) → `client-shell.tsx`
+- Subs: `components/supp-plan/{library-view,schedule-form,schedule-view}.tsx`
+- API: `app/api/supp-plan/library/route.ts` (GET, library + rules)
+- Storage: Cloudflare D1 — `brennhub-supp-plan` / `brennhub-supp-plan-dev` (binding `SUPP_DB`). 라이브러리는 공유, 개인 스케줄은 **localStorage** (`brennhub-supp-plan-schedule`)
+- Types: `lib/supp-plan/types.ts`. Storage abstraction: `lib/supp-plan/storage/{types,localStorage}.ts` (미래 D1 마이그레이션 대비)
+- Schema/seed: `schema/supp-plan/{schema,seed}.sql`
+- i18n: `suppPlan.*`
+- Compat warnings: 같은 `state` + 시간 ±60분 윈도우 entries 짝짓기 → `compatibility_rules` 매칭
+- Status: production (MVP)
+
 ## Feedback — universal
 - Purpose: 사용자 피드백 수집 (모든 페이지 floating + 대시보드 카드 아이콘)
 - API: `app/api/feedback/route.ts` (D1 INSERT, IP-hashed rate limit)

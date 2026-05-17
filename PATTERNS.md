@@ -46,6 +46,13 @@
 #### ManualRateInput — `components/manual-rate-input.tsx`
 - 환율 수동 입력 (currency-toggle 옆). X 버튼으로 reset → API rate fallback.
 
+### Supp-plan shared
+
+#### LibraryView / ScheduleForm / ScheduleView — `components/supp-plan/*.tsx`
+- Server-rendered library (D1) → props로 client에 전달. State는 client-shell.tsx에서 관리.
+- ScheduleForm: 모달, 라이브러리 select 또는 custom name. State/time/days/dosage/notes.
+- ScheduleView: state별 그룹 카드. 호환성 경고는 entry 카드에 inline.
+
 ## Internal Patterns
 
 도구 안에서만 재사용. 다른 도구로 복제 시 참고.
@@ -80,6 +87,14 @@
 
 ### Color-scheme aware gain/loss
 - 값 양수/음수에 따라 `text-[var(--color-gain)]` / `text-[var(--color-loss)]` 적용. ColorSchemeProvider가 CSS 변수 swap.
+
+### Storage abstraction (supp-plan)
+- Interface `PersonalScheduleStorage` (`lib/supp-plan/storage/types.ts`) + `LocalStorageScheduleStorage` impl. Singleton `scheduleStorage` export.
+- 미래 로그인 도입 시 `D1ScheduleStorage` 새로 만들고 export 한 줄만 교체. 모든 사용처는 interface로 접근.
+
+### Compatibility-window matcher (supp-plan)
+- 같은 `state` (예: with-meal) + 시간 ±60분 entries 짝짓기 → `compatibility_rules` (DB) 순회로 룰 매칭. 위장 흡수 1시간 기준.
+- 결과는 entry id별로 grouped — view에서 inline 경고 표시.
 
 ## Hooks
 

@@ -1,0 +1,30 @@
+[
+  {
+    "supplement_a": "lipo-flavonoid",
+    "supplement_b": "vitamin-b-complex",
+    "rule_type": "avoid",
+    "notes": "리포 플라보노이드에 B 복합체 성분 포함 — 중복 복용 시 일부 비타민 B 과다 위험",
+    "source": "user-curated"
+  },
+  {
+    "supplement_a": "calcium",
+    "supplement_b": "magnesium",
+    "rule_type": "ratio-recommend",
+    "notes": "칼슘:마그네슘 = 2:1 비율 권장 (뼈 건강, 신경 안정 최적화)",
+    "source": "user-curated"
+  },
+  {
+    "supplement_a": "glucosamine",
+    "supplement_b": "chondroitin",
+    "rule_type": "synergy",
+    "notes": "관절 건강을 위해 함께 복용 시 시너지",
+    "source": "user-curated"
+  },
+  {
+    "supplement_a": "vitamin-c",
+    "supplement_b": "collagen",
+    "rule_type": "synergy",
+    "notes": "비타민 C가 콜라겐 합성 보조 — 함께 복용 시 흡수율 ↑",
+    "source": "user-curated"
+  }
+]

@@ -218,6 +218,83 @@ export type Messages = {
       tableEmptyHint: string;
     };
   };
+  suppPlan: {
+    title: string;
+    description: string;
+    local: string;
+    disclaimer: string;
+    library: string;
+    mySchedule: string;
+    addToSchedule: string;
+    custom: string;
+    category: string;
+    solubility: string;
+    state: string;
+    metabolism: string;
+    excretion: string;
+    dailyRecommended: string;
+    effects: string;
+    notes: string;
+    time: string;
+    timeEnd: string;
+    days: string;
+    dosage: string;
+    capsules: string;
+    amount: string;
+    save: string;
+    cancel: string;
+    delete: string;
+    edit: string;
+    emptySchedule: string;
+    emptyLibrary: string;
+    compatibilityWarning: string;
+    selectSupplement: string;
+    customNamePlaceholder: string;
+    filterAll: string;
+    addEntryTitle: string;
+    editEntryTitle: string;
+    sol_water: string;
+    sol_fat: string;
+    "sol_semi-fat": string;
+    sol_special: string;
+    state_fasting: string;
+    "state_with-meal": string;
+    "state_before-meal": string;
+    state_bedtime: string;
+    "state_pre-workout": string;
+    cat_vitamin: string;
+    cat_mineral: string;
+    "cat_amino-acid": string;
+    cat_antioxidant: string;
+    cat_structural: string;
+    cat_herbal: string;
+    "cat_fatty-acid": string;
+    cat_probiotic: string;
+    cat_fermented: string;
+    cat_other: string;
+    day_all: string;
+    day_workout: string;
+    day_rest: string;
+    day_weekday: string;
+    day_weekend: string;
+    day_custom: string;
+    day_mon: string;
+    day_tue: string;
+    day_wed: string;
+    day_thu: string;
+    day_fri: string;
+    day_sat: string;
+    day_sun: string;
+    rule_avoid: string;
+    rule_synergy: string;
+    "rule_ratio-recommend": string;
+    organ_liver: string;
+    organ_kidney: string;
+    organ_bile: string;
+    organ_gut: string;
+    "organ_small-intestine": string;
+    organ_skin: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -227,6 +304,7 @@ export type Messages = {
     toolEmailDiag: string;
     toolCronTrans: string;
     toolStockSim: string;
+    toolSuppPlan: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -482,6 +560,85 @@ export const messages: Record<Locale, Messages> = {
         tableEmptyHint: "결과 없음",
       },
     },
+    suppPlan: {
+      title: "영양제 플래너",
+      description: "약동학 기반 개인 영양제 스케줄링",
+      local: "로컬 저장",
+      disclaimer:
+        "의학적 조언 아님. 자가 책임으로 사용하세요. 영양제 복용 전 의료진 상담을 권장합니다.",
+      library: "영양제 라이브러리",
+      mySchedule: "내 스케줄",
+      addToSchedule: "내 스케줄에 추가",
+      custom: "커스텀 입력",
+      category: "카테고리",
+      solubility: "용해성",
+      state: "상태",
+      metabolism: "대사",
+      excretion: "배설",
+      dailyRecommended: "1일 권장량",
+      effects: "효과",
+      notes: "참고",
+      time: "시간",
+      timeEnd: "종료 (선택)",
+      days: "요일",
+      dosage: "용량",
+      capsules: "캡슐",
+      amount: "함량",
+      save: "저장",
+      cancel: "취소",
+      delete: "삭제",
+      edit: "편집",
+      emptySchedule:
+        "아직 스케줄이 없습니다. 라이브러리에서 영양제를 추가하세요.",
+      emptyLibrary: "라이브러리가 비어있습니다.",
+      compatibilityWarning: "복용 충돌 주의",
+      selectSupplement: "영양제 선택",
+      customNamePlaceholder: "영양제 이름",
+      filterAll: "전체",
+      addEntryTitle: "스케줄 추가",
+      editEntryTitle: "스케줄 편집",
+      sol_water: "수용성",
+      sol_fat: "지용성",
+      "sol_semi-fat": "반지용성",
+      sol_special: "예외",
+      state_fasting: "공복",
+      "state_with-meal": "식후",
+      "state_before-meal": "식전",
+      state_bedtime: "취침 전",
+      "state_pre-workout": "운동 전",
+      cat_vitamin: "비타민",
+      cat_mineral: "미네랄",
+      "cat_amino-acid": "아미노산",
+      cat_antioxidant: "항산화",
+      cat_structural: "결합조직",
+      cat_herbal: "허브",
+      "cat_fatty-acid": "지방산",
+      cat_probiotic: "프로바이오틱",
+      cat_fermented: "발효",
+      cat_other: "기타",
+      day_all: "매일",
+      day_workout: "운동일",
+      day_rest: "휴식일",
+      day_weekday: "주중",
+      day_weekend: "주말",
+      day_custom: "맞춤",
+      day_mon: "월",
+      day_tue: "화",
+      day_wed: "수",
+      day_thu: "목",
+      day_fri: "금",
+      day_sat: "토",
+      day_sun: "일",
+      rule_avoid: "중복 복용 금지",
+      rule_synergy: "함께 복용 시너지",
+      "rule_ratio-recommend": "비율 권장",
+      organ_liver: "간",
+      organ_kidney: "신장",
+      organ_bile: "담즙",
+      organ_gut: "장",
+      "organ_small-intestine": "소장",
+      organ_skin: "피부",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -491,6 +648,7 @@ export const messages: Record<Locale, Messages> = {
       toolEmailDiag: "이메일 발송 진단기",
       toolCronTrans: "Cron 변환기",
       toolStockSim: "주식 시뮬레이터",
+      toolSuppPlan: "영양제 플래너",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -523,6 +681,10 @@ export const messages: Record<Locale, Messages> = {
       "stock-sim": {
         name: "주식 시뮬레이터",
         description: "투자 결정에 필요한 계산을 한 곳에서",
+      },
+      "supp-plan": {
+        name: "영양제 플래너",
+        description: "약동학 기반 개인 영양제 스케줄링",
       },
     },
   },
@@ -763,6 +925,84 @@ export const messages: Record<Locale, Messages> = {
         tableEmptyHint: "No data",
       },
     },
+    suppPlan: {
+      title: "Supplement Planner",
+      description: "Pharmacokinetics-aware personal supplement scheduling",
+      local: "Local only",
+      disclaimer:
+        "Not medical advice. Use at your own discretion. Consult a healthcare professional before starting any supplement regimen.",
+      library: "Supplement Library",
+      mySchedule: "My Schedule",
+      addToSchedule: "Add to schedule",
+      custom: "Custom entry",
+      category: "Category",
+      solubility: "Solubility",
+      state: "State",
+      metabolism: "Metabolism",
+      excretion: "Excretion",
+      dailyRecommended: "Daily recommended",
+      effects: "Effects",
+      notes: "Notes",
+      time: "Time",
+      timeEnd: "End (optional)",
+      days: "Days",
+      dosage: "Dosage",
+      capsules: "Capsules",
+      amount: "Amount",
+      save: "Save",
+      cancel: "Cancel",
+      delete: "Delete",
+      edit: "Edit",
+      emptySchedule: "No schedule yet. Add supplements from the library.",
+      emptyLibrary: "Library is empty.",
+      compatibilityWarning: "Compatibility warning",
+      selectSupplement: "Select supplement",
+      customNamePlaceholder: "Supplement name",
+      filterAll: "All",
+      addEntryTitle: "Add entry",
+      editEntryTitle: "Edit entry",
+      sol_water: "Water-soluble",
+      sol_fat: "Fat-soluble",
+      "sol_semi-fat": "Semi-fat-soluble",
+      sol_special: "Special",
+      state_fasting: "Fasting",
+      "state_with-meal": "After meal",
+      "state_before-meal": "Before meal",
+      state_bedtime: "Before bed",
+      "state_pre-workout": "Pre-workout",
+      cat_vitamin: "Vitamin",
+      cat_mineral: "Mineral",
+      "cat_amino-acid": "Amino acid",
+      cat_antioxidant: "Antioxidant",
+      cat_structural: "Structural",
+      cat_herbal: "Herbal",
+      "cat_fatty-acid": "Fatty acid",
+      cat_probiotic: "Probiotic",
+      cat_fermented: "Fermented",
+      cat_other: "Other",
+      day_all: "Every day",
+      day_workout: "Workout days",
+      day_rest: "Rest days",
+      day_weekday: "Weekdays",
+      day_weekend: "Weekend",
+      day_custom: "Custom",
+      day_mon: "Mon",
+      day_tue: "Tue",
+      day_wed: "Wed",
+      day_thu: "Thu",
+      day_fri: "Fri",
+      day_sat: "Sat",
+      day_sun: "Sun",
+      rule_avoid: "Avoid combining",
+      rule_synergy: "Synergy when combined",
+      "rule_ratio-recommend": "Recommended ratio",
+      organ_liver: "Liver",
+      organ_kidney: "Kidney",
+      organ_bile: "Bile",
+      organ_gut: "Gut",
+      "organ_small-intestine": "Small intestine",
+      organ_skin: "Skin",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -772,6 +1012,7 @@ export const messages: Record<Locale, Messages> = {
       toolEmailDiag: "Email Diagnostic",
       toolCronTrans: "Cron Translator",
       toolStockSim: "Stock Simulator",
+      toolSuppPlan: "Supplement Planner",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -803,6 +1044,10 @@ export const messages: Record<Locale, Messages> = {
       "stock-sim": {
         name: "Stock Simulator",
         description: "Investment math in one place",
+      },
+      "supp-plan": {
+        name: "Supplement Planner",
+        description: "Pharmacokinetics-aware personal supplement scheduling",
       },
     },
   },

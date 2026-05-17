@@ -2,7 +2,13 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { isLocale, DEFAULT_LOCALE, type Locale } from "@/lib/i18n/types";
 import { messages } from "@/lib/i18n/messages";
 
-const TOOLS = ["site", "email-diag", "cron-trans", "stock-sim"] as const;
+const TOOLS = [
+  "site",
+  "email-diag",
+  "cron-trans",
+  "stock-sim",
+  "supp-plan",
+] as const;
 const CATEGORIES = ["feature", "improvement", "complaint", "other"] as const;
 
 type Tool = (typeof TOOLS)[number];

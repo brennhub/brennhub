@@ -35,6 +35,11 @@
 			"binding": "DB",
 			"database_name": "brennhub-feedback",
 			"database_id": "7ac97135-f3e9-4c0a-949a-c7f874ceaec0"
+		},
+		{
+			"binding": "SUPP_DB",
+			"database_name": "brennhub-supp-plan",
+			"database_id": "93d273de-f46e-4a2d-aac0-2a64f5dcb2ea"
 		}
 	],
 	// env.preview = dev.brennhub.com (brennhub-dev worker). Deploy: npm run deploy:preview
@@ -81,6 +86,11 @@
 					"binding": "DB",
 					"database_name": "brennhub-feedback-dev",
 					"database_id": "1117f8ee-6b78-4ff6-af43-85dfad4b1626"
+				},
+				{
+					"binding": "SUPP_DB",
+					"database_name": "brennhub-supp-plan-dev",
+					"database_id": "d3c06a8c-72d6-4d12-8de0-06de6426cee3"
 				}
 			]
 		}

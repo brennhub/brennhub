@@ -1,0 +1,462 @@
+[
+  {
+    "id": "l-arginine-capsule",
+    "name_kr": "아르기닌 (캡슐)",
+    "name_en": "L-Arginine (Capsule)",
+    "category": "amino-acid",
+    "solubility": "water",
+    "metabolism": [
+      "liver",
+      "kidney"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "3g (일반) / 6g (운동) / 9g (단기 최대)",
+    "recommended_state": "fasting",
+    "effects": "산화질소(NO) 생성 촉진, 혈관 확장, 혈류 개선, 아침 활력",
+    "notes": "기상 시 공복 복용 권장"
+  },
+  {
+    "id": "l-arginine-powder",
+    "name_kr": "아르기닌 (분말)",
+    "name_en": "L-Arginine (Powder)",
+    "category": "amino-acid",
+    "solubility": "water",
+    "metabolism": [
+      "liver",
+      "kidney"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "3-6g",
+    "recommended_state": "pre-workout",
+    "effects": "산화질소(NO) 생성 촉진, 혈관 확장, 혈류 개선, 운동 퍼포먼스 향상",
+    "notes": "운동 전 공복 권장"
+  },
+  {
+    "id": "postbiotics",
+    "name_kr": "포스트바이오틱스",
+    "name_en": "Postbiotics",
+    "category": "probiotic",
+    "solubility": "water",
+    "metabolism": [],
+    "excretion": [
+      "gut",
+      "kidney"
+    ],
+    "daily_recommended": "500mg",
+    "recommended_state": "fasting",
+    "effects": "장 건강. 유산균 Tributyrin (Butyrate + Glycerol) Postbiotic.",
+    "notes": null
+  },
+  {
+    "id": "vitamin-c",
+    "name_kr": "비타민 C (Liposomal)",
+    "name_en": "Liposomal Vitamin C",
+    "category": "vitamin",
+    "solubility": "water",
+    "metabolism": [
+      "kidney"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "1000-2000mg",
+    "recommended_state": "with-meal",
+    "effects": "항산화제, 면역 강화, 조직 재생",
+    "notes": "1일 2회 분할 복용 가능 (아침/저녁)"
+  },
+  {
+    "id": "vitamin-d",
+    "name_kr": "비타민 D",
+    "name_en": "Vitamin D",
+    "category": "vitamin",
+    "solubility": "fat",
+    "metabolism": [
+      "skin",
+      "liver",
+      "kidney"
+    ],
+    "excretion": [
+      "bile"
+    ],
+    "daily_recommended": "2000 IU",
+    "recommended_state": "with-meal",
+    "effects": "뼈 건강, 면역 조절, 칼슘 흡수 보조",
+    "notes": "지용성 — 식후 복용 필수"
+  },
+  {
+    "id": "vitamin-e",
+    "name_kr": "비타민 E",
+    "name_en": "Vitamin E",
+    "category": "vitamin",
+    "solubility": "fat",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "bile"
+    ],
+    "daily_recommended": "15mg (22.4 IU)",
+    "recommended_state": "with-meal",
+    "effects": "지용성 항산화제, 세포막 보호",
+    "notes": "격일 복용 권장"
+  },
+  {
+    "id": "vitamin-b-complex",
+    "name_kr": "비타민 B 복합체",
+    "name_en": "Vitamin B Complex",
+    "category": "vitamin",
+    "solubility": "water",
+    "metabolism": [
+      "kidney"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "B1: 1.2mg / B2: 1.3mg / B3: 16mg / B5: 5mg / B6: 1.3mg / B7: 30mcg / B9: 400mcg / B12: 2.4mcg (남자 성인)",
+    "recommended_state": "with-meal",
+    "effects": "에너지 생산, 신경계 건강, 적혈구 형성, 피부/머리카락, 스트레스/기분 개선, 면역",
+    "notes": "리포 플라보노이드와 중복 금지. 격일 복용 권장."
+  },
+  {
+    "id": "coq10",
+    "name_kr": "코엔자임Q10",
+    "name_en": "Coenzyme Q10",
+    "category": "antioxidant",
+    "solubility": "fat",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "bile"
+    ],
+    "daily_recommended": "100mg",
+    "recommended_state": "with-meal",
+    "effects": "항산화제, 신진대사, 지방 소화 및 흡수, 미토콘드리아 에너지",
+    "notes": null
+  },
+  {
+    "id": "omega-3",
+    "name_kr": "오메가3",
+    "name_en": "Omega 3",
+    "category": "fatty-acid",
+    "solubility": "fat",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "bile"
+    ],
+    "daily_recommended": "EPA+DHA 1g 이상 (심혈관 1g / 항염 2-4g)",
+    "recommended_state": "with-meal",
+    "effects": "항산화제, 노화 방지, 세포 손상 치료, 심혈관 보호",
+    "notes": null
+  },
+  {
+    "id": "zinc",
+    "name_kr": "아연",
+    "name_en": "Zinc Picolinate",
+    "category": "mineral",
+    "solubility": "water",
+    "metabolism": [
+      "kidney"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "10-15mg",
+    "recommended_state": "with-meal",
+    "effects": "체내 효소 작용, 면역 체계 발달, 상처 회복",
+    "notes": "격일 복용 권장. 과다 복용 시 구리 흡수 저해."
+  },
+  {
+    "id": "lutein",
+    "name_kr": "루테인",
+    "name_en": "Lutein",
+    "category": "antioxidant",
+    "solubility": "fat",
+    "metabolism": [],
+    "excretion": [],
+    "daily_recommended": "10-20mg",
+    "recommended_state": "with-meal",
+    "effects": "눈 건강, 청색광 차단, 황반 보호",
+    "notes": "지용성 — 식후 복용"
+  },
+  {
+    "id": "nac",
+    "name_kr": "NAC",
+    "name_en": "N-Acetyl Cysteine",
+    "category": "amino-acid",
+    "solubility": "water",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "600-1800mg",
+    "recommended_state": "bedtime",
+    "effects": "글루타치온 생성 촉진, 흡수율 높고 시스테인 전환됨, 항산화",
+    "notes": "취침 전 권장 (수면 영향 X)"
+  },
+  {
+    "id": "collagen",
+    "name_kr": "콜라겐",
+    "name_en": "Collagen",
+    "category": "structural",
+    "solubility": "water",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "2.5-15g",
+    "recommended_state": "bedtime",
+    "effects": "피부 회복, 관절 건강, 결합조직 보강",
+    "notes": "비타민 C와 함께 복용 시 흡수율 ↑"
+  },
+  {
+    "id": "l-ornithine",
+    "name_kr": "오르니틴",
+    "name_en": "L-Ornithine",
+    "category": "amino-acid",
+    "solubility": "water",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "2-6g",
+    "recommended_state": "bedtime",
+    "effects": "암모니아 제거, 피로 회복, 수면 보조",
+    "notes": "운동 한 날은 1000mg 권장"
+  },
+  {
+    "id": "acv",
+    "name_kr": "애플 사이다 비니거 (ACV)",
+    "name_en": "Apple Cider Vinegar",
+    "category": "fermented",
+    "solubility": "water",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "kidney",
+      "gut"
+    ],
+    "daily_recommended": "15,000-30,000mg (액체 기준, 1-2 스푼)",
+    "recommended_state": "fasting",
+    "effects": "팩틴, 소화 보조, 혈당 조절",
+    "notes": "Gummies 형태도 가능. 기상 시 공복 복용."
+  },
+  {
+    "id": "calcium",
+    "name_kr": "칼슘",
+    "name_en": "Calcium",
+    "category": "mineral",
+    "solubility": "special",
+    "metabolism": [
+      "small-intestine"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "700-1000mg",
+    "recommended_state": "with-meal",
+    "effects": "뼈 건강, 신경/근육 기능, 스트레스 관리, 숙면",
+    "notes": "마그네슘과 2:1 비율 권장. 식전 30분 또는 식사 중 복용."
+  },
+  {
+    "id": "garcinia-cambogia",
+    "name_kr": "가르시니아 캄보지아",
+    "name_en": "Garcinia Cambogia",
+    "category": "herbal",
+    "solubility": "water",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "750-2800mg",
+    "recommended_state": "before-meal",
+    "effects": "지방 축적 방지, 식욕 억제",
+    "notes": "분할 복용 (식전 30-60분). 사이클링: 6주 복용 + 2주 휴지 또는 4주 + 1주."
+  },
+  {
+    "id": "magnesium",
+    "name_kr": "마그네슘",
+    "name_en": "Magnesium",
+    "category": "mineral",
+    "solubility": "water",
+    "metabolism": [],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "400mg",
+    "recommended_state": "with-meal",
+    "effects": "근육 이완, 신경 안정, 스트레스 관리, 숙면 효과",
+    "notes": "칼슘과 1:2 비율 권장."
+  },
+  {
+    "id": "glucosamine",
+    "name_kr": "글루코사민",
+    "name_en": "Glucosamine Sulfate",
+    "category": "structural",
+    "solubility": "water",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "1500mg",
+    "recommended_state": "with-meal",
+    "effects": "관절 건강, 연골 회복",
+    "notes": "콘드로이친과 함께 복용 시 시너지"
+  },
+  {
+    "id": "chondroitin",
+    "name_kr": "콘드로이친",
+    "name_en": "Chondroitin Sulfate",
+    "category": "structural",
+    "solubility": "water",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "800-1200mg",
+    "recommended_state": "with-meal",
+    "effects": "연골 수분 유지, 통증 완화",
+    "notes": "글루코사민과 함께 복용 권장"
+  },
+  {
+    "id": "lipo-flavonoid",
+    "name_kr": "리포 플라보노이드",
+    "name_en": "Lipo-Flavonoid",
+    "category": "herbal",
+    "solubility": "water",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "50-200mg (레몬 플라보노이드 순수 함량 기준)",
+    "recommended_state": "with-meal",
+    "effects": "이명 완화, 귀 혈류 개선, 플라보노이드 항산화, 비타민 B 복합 포함",
+    "notes": "비타민 B 복합체와 중복 복용 금지. 격일 복용."
+  },
+  {
+    "id": "citrulline-malate",
+    "name_kr": "시트룰린 말레이트",
+    "name_en": "Citrulline Malate",
+    "category": "amino-acid",
+    "solubility": "water",
+    "metabolism": [
+      "kidney"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "6-8g",
+    "recommended_state": "pre-workout",
+    "effects": "체내 아르기닌 전환 후 지속적 NO 생성, 에너지 생산, 피로 감소",
+    "notes": "운동 30-60분 전 복용 권장"
+  },
+  {
+    "id": "l-aspartic-acid",
+    "name_kr": "아스파르트산",
+    "name_en": "L-Aspartic Acid",
+    "category": "amino-acid",
+    "solubility": "water",
+    "metabolism": [],
+    "excretion": [],
+    "daily_recommended": "3-6g",
+    "recommended_state": "pre-workout",
+    "effects": "에너지 대사, 신경 전달, 운동 중 에너지 생산 지원, 호르몬",
+    "notes": null
+  },
+  {
+    "id": "l-glutathione",
+    "name_kr": "글루타치온 (Liposomal)",
+    "name_en": "Liposomal Glutathione",
+    "category": "antioxidant",
+    "solubility": "water",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "kidney"
+    ],
+    "daily_recommended": "250-500mg",
+    "recommended_state": "bedtime",
+    "effects": "피부 미백, 간 건강, 강력한 항산화",
+    "notes": "수면 영향 X"
+  },
+  {
+    "id": "mct-oil",
+    "name_kr": "MCT Oil",
+    "name_en": "MCT Oil",
+    "category": "fatty-acid",
+    "solubility": "fat",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [],
+    "daily_recommended": "15-30g",
+    "recommended_state": "with-meal",
+    "effects": "빠른 에너지원, 케토시스 보조",
+    "notes": null
+  },
+  {
+    "id": "milk-thistle",
+    "name_kr": "밀크씨슬",
+    "name_en": "Milk Thistle",
+    "category": "herbal",
+    "solubility": "semi-fat",
+    "metabolism": [
+      "liver"
+    ],
+    "excretion": [
+      "bile"
+    ],
+    "daily_recommended": "420mg (실리마린 기준)",
+    "recommended_state": "with-meal",
+    "effects": "소화 촉진, 간 건강, 피로 회복",
+    "notes": "격일 복용 권장"
+  },
+  {
+    "id": "selenium",
+    "name_kr": "셀레늄",
+    "name_en": "Selenium",
+    "category": "mineral",
+    "solubility": "water",
+    "metabolism": [],
+    "excretion": [],
+    "daily_recommended": "55mcg",
+    "recommended_state": "bedtime",
+    "effects": "항산화제, 면역 향상, 항염",
+    "notes": "수면 영향 X"
+  },
+  {
+    "id": "multi-vitamin",
+    "name_kr": "멀티 비타민",
+    "name_en": "Multivitamin",
+    "category": "vitamin",
+    "solubility": "special",
+    "metabolism": [],
+    "excretion": [],
+    "daily_recommended": "제품별 권장량",
+    "recommended_state": "with-meal",
+    "effects": "복합 비타민/미네랄 보충",
+    "notes": "지용성/수용성 비타민 모두 포함 — 식후 복용"
+  }
+]
