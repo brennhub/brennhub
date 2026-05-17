@@ -1,11 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { MessageSquare } from "lucide-react";
 import { tools } from "@/lib/tools-registry";
 import { useMessages } from "@/lib/i18n/provider";
+import {
+  FeedbackDialog,
+  type FeedbackTool,
+} from "@/components/feedback-dialog";
 
 export default function Home() {
   const t = useMessages();
+  const [feedbackTool, setFeedbackTool] = useState<FeedbackTool | undefined>(
+    undefined,
+  );
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const openFeedback = (tool: FeedbackTool) => {
+    setFeedbackTool(tool);
+    setDialogOpen(true);
+  };
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 pt-10 pb-20">
@@ -34,7 +49,7 @@ export default function Home() {
               <li key={tool.id}>
                 <Link
                   href={`/tools/${tool.slug}`}
-                  className="group block h-full rounded-lg border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+                  className="group relative block h-full rounded-lg border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
@@ -53,12 +68,31 @@ export default function Home() {
                   <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                     {display.description}
                   </p>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openFeedback(tool.slug as FeedbackTool);
+                    }}
+                    title={t.feedback.cardIconTooltip}
+                    aria-label={t.feedback.cardIconTooltip}
+                    className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                  >
+                    <MessageSquare className="size-4" />
+                  </button>
                 </Link>
               </li>
             );
           })}
         </ul>
       )}
+
+      <FeedbackDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        defaultTool={feedbackTool}
+      />
     </main>
   );
 }

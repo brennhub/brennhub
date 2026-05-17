@@ -218,6 +218,34 @@ export type Messages = {
       tableEmptyHint: string;
     };
   };
+  feedback: {
+    button: string;
+    dialogTitle: string;
+    dialogDescription: string;
+    toolLabel: string;
+    toolSite: string;
+    toolEmailDiag: string;
+    toolCronTrans: string;
+    toolStockSim: string;
+    categoryLabel: string;
+    categoryFeature: string;
+    categoryImprovement: string;
+    categoryComplaint: string;
+    categoryOther: string;
+    messageLabel: string;
+    messagePlaceholder: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    submit: string;
+    submitting: string;
+    success: string;
+    cancel: string;
+    errorGeneric: string;
+    errorTooShort: string;
+    errorTooLong: string;
+    errorRateLimit: string;
+    cardIconTooltip: string;
+  };
   tools: Record<string, { name: string; description: string }>;
 };
 
@@ -453,6 +481,35 @@ export const messages: Record<Locale, Messages> = {
           "분할매수 시뮬레이션을 위해 모든 입력값(총 예산, 현재가, 매수 횟수, 하락율)이 0보다 큰 값이어야 합니다.",
         tableEmptyHint: "결과 없음",
       },
+    },
+    feedback: {
+      button: "피드백",
+      dialogTitle: "피드백 보내기",
+      dialogDescription: "사이트 개선에 도움이 됩니다",
+      toolLabel: "어떤 기능에 대한 피드백인가요?",
+      toolSite: "사이트 전체",
+      toolEmailDiag: "이메일 발송 진단기",
+      toolCronTrans: "Cron 변환기",
+      toolStockSim: "주식 시뮬레이터",
+      categoryLabel: "종류",
+      categoryFeature: "기능 추가",
+      categoryImprovement: "기능 개선",
+      categoryComplaint: "불만 사항",
+      categoryOther: "그 외",
+      messageLabel: "내용",
+      messagePlaceholder:
+        "어떤 점이 좋았나요? 어떤 점을 개선했으면 하나요?",
+      emailLabel: "이메일 (선택)",
+      emailPlaceholder: "답변 받고 싶다면 입력하세요",
+      submit: "제출",
+      submitting: "보내는 중...",
+      success: "감사합니다! 피드백이 전달되었습니다.",
+      cancel: "취소",
+      errorGeneric: "오류가 발생했습니다. 다시 시도해주세요.",
+      errorTooShort: "메시지가 너무 짧습니다 (최소 5자)",
+      errorTooLong: "메시지가 너무 깁니다 (최대 2000자)",
+      errorRateLimit: "잠시 후 다시 시도해주세요",
+      cardIconTooltip: "이 도구 피드백",
     },
     tools: {
       "email-diag": {
@@ -705,6 +762,34 @@ export const messages: Record<Locale, Messages> = {
           "All inputs (Total Budget, Current Price, Rounds, Drop %) must be greater than 0 for DCA simulation.",
         tableEmptyHint: "No data",
       },
+    },
+    feedback: {
+      button: "Feedback",
+      dialogTitle: "Send Feedback",
+      dialogDescription: "Help us improve",
+      toolLabel: "Which feature?",
+      toolSite: "Site overall",
+      toolEmailDiag: "Email Diagnostic",
+      toolCronTrans: "Cron Translator",
+      toolStockSim: "Stock Simulator",
+      categoryLabel: "Category",
+      categoryFeature: "Feature Request",
+      categoryImprovement: "Improvement",
+      categoryComplaint: "Complaint",
+      categoryOther: "Other",
+      messageLabel: "Message",
+      messagePlaceholder: "What did you like? What could be improved?",
+      emailLabel: "Email (optional)",
+      emailPlaceholder: "Enter to receive a response",
+      submit: "Submit",
+      submitting: "Sending...",
+      success: "Thanks! Your feedback has been received.",
+      cancel: "Cancel",
+      errorGeneric: "An error occurred. Please try again.",
+      errorTooShort: "Message too short (min 5 chars)",
+      errorTooLong: "Message too long (max 2000 chars)",
+      errorRateLimit: "Please try again shortly",
+      cardIconTooltip: "Feedback for this tool",
     },
     tools: {
       "email-diag": {

@@ -6,6 +6,7 @@
 ## Cross-cutting (인프라/패턴)
 
 - **Pretendard: next/font/local + 자체호스팅 woff2로 마이그레이션 검토** — CDN `@import`는 render-blocking이라 트래픽 의미 있게 늘면 LCP 개선용으로 도입.
+- **도구 즐겨찾기 기능 (로그인/유저 관리 시스템 도입 시)** — 사용자별 즐겨찾기 도구 저장, 대시보드 상단 노출.
 
 ## 도구별
 

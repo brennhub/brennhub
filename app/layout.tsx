@@ -5,6 +5,7 @@ import { LocaleProvider } from "@/lib/i18n/provider";
 import { LocaleToggle } from "@/components/locale-toggle";
 import { ColorSchemeProvider } from "@/components/color-scheme-provider";
 import { CurrencyProvider } from "@/components/currency-provider";
+import { FeedbackButton } from "@/components/feedback-button";
 import { DEFAULT_LOCALE } from "@/lib/i18n/types";
 
 const geistSans = Geist({
@@ -48,6 +49,7 @@ export default function RootLayout({
                 <LocaleToggle />
               </header>
               {children}
+              <FeedbackButton />
             </CurrencyProvider>
           </ColorSchemeProvider>
         </LocaleProvider>
