@@ -1,0 +1,21 @@
+# Run on dev/main push: lint + build (build includes TypeScript check).
+# Detects regressions before deploy (preview or prod).
+
+name: Check
+
+on:
+  push:
+    branches: [dev, main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
