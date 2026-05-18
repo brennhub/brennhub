@@ -6,7 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Context maps
 
-새 task 전: 관련 도구·컴포넌트가 있으면 `TOOLS.md`와 `PATTERNS.md`를 먼저 보세요. 기존 패턴 재사용 우선.
+도구 작업 시 먼저 읽기: `app/tools/<tool>/{README,BACKLOG,CHANGELOG}.md`. 공유 패턴: 루트 `PATTERNS.md`. 인프라 변경 이력: 루트 `CHANGELOG.md`. 도구 목록 인덱스: 루트 `TOOLS.md`. 기존 패턴 재사용 우선.
 
 # Push policy
 

@@ -1,50 +1,21 @@
 # Tools
 
-도구 인벤토리. 도구당 ~10줄. 코드 detail은 파일을 보고, 재사용 패턴은 [PATTERNS.md](./PATTERNS.md).
+도구 목록 인덱스. 각 도구의 상세는 해당 폴더의 `README.md`로.
 
-## Email Diagnostics — `/tools/email-diag`
-- Purpose: 도메인의 SPF / DMARC / MX / PTR 진단 + AI 요약
-- Main: `app/tools/email-diag/page.tsx`
-- API: `app/api/email-diag/route.ts` (Cloudflare Workers AI 또는 Anthropic)
-- i18n: `emailDiag.*`
-- Status: production
+## 도구 목록
 
-## Cron Converter — `/tools/cron-trans`
-- Purpose: cron 식 ↔ 자연어 양방향 변환
-- Main: `app/tools/cron-trans/page.tsx`
-- API: `app/api/cron-trans/route.ts` (`cron-parser` + AI)
-- i18n: `cronTrans.*`
-- Status: production
+- **이메일 발송 진단기** `/tools/email-diag` — SPF/DMARC/MX/PTR 진단 + AI 요약. [상세](app/tools/email-diag/README.md)
+- **Cron 변환기** `/tools/cron-trans` — cron 식 ↔ 자연어 양방향 변환. [상세](app/tools/cron-trans/README.md)
+- **주식 시뮬레이터** `/tools/stock-sim` — 평단가 / 배당 / 분할매수 시뮬레이션 (3 탭). [상세](app/tools/stock-sim/README.md)
+- **영양제 플래너** `/tools/supp-plan` — 약동학 기반 개인 영양제 스케줄링. [상세](app/tools/supp-plan/README.md)
 
-## Stock Simulator — `/tools/stock-sim`
-- Purpose: 평단가 / 배당 / 분할매수 시뮬레이션 (3 탭)
-- Main: `app/tools/stock-sim/page.tsx` (탭 라우터)
-- Subs: `cost-basis-calculator.tsx`, `dca-down-calculator.tsx` (+ `dca-down-detail.tsx`), `dividend-calculator.tsx` (+ `dividend-monthly-detail.tsx`, `dividend-per-ticker.tsx`, `dividend-cash-flow-chart.tsx`)
-- i18n: `stockSim.*` (largest namespace, 탭별 nested: `stockSim.dcaDown.*` etc.)
-- Patterns: NumberStepper, Currency/ColorScheme providers, localStorage hydrate+persist, validity guard summary. See [PATTERNS.md](./PATTERNS.md).
-- Status: production
+## 유니버설
 
-## Supplement Planner — `/tools/supp-plan`
-- Purpose: 약동학 기반 개인 영양제 스케줄링 (라이브러리 + 시간순 뷰 + 호환성 경고)
-- Main: `app/tools/supp-plan/page.tsx` (Server, D1 fetch) → `client-shell.tsx`
-- Subs: `components/supp-plan/{library-view,schedule-form,schedule-view}.tsx`
-- API: `app/api/supp-plan/library/route.ts` (GET, library + rules)
-- Storage: Cloudflare D1 — `brennhub-supp-plan` / `brennhub-supp-plan-dev` (binding `SUPP_DB`). 라이브러리는 공유, 개인 스케줄은 **localStorage** (`brennhub-supp-plan-schedule`)
-- Types: `lib/supp-plan/types.ts`. Storage abstraction: `lib/supp-plan/storage/{types,localStorage}.ts` (미래 D1 마이그레이션 대비)
-- Schema/seed: `schema/supp-plan/{schema,seed}.sql`
-- i18n: `suppPlan.*`
-- Compat warnings: 같은 `state` + 시간 ±60분 윈도우 entries 짝짓기 → `compatibility_rules` 매칭
-- Status: production (MVP)
-
-## Feedback — universal
-- Purpose: 사용자 피드백 수집 (모든 페이지 floating + 대시보드 카드 아이콘)
-- API: `app/api/feedback/route.ts` (D1 INSERT, IP-hashed rate limit)
-- UI: `components/feedback-button.tsx` (layout 마운트), `components/feedback-dialog.tsx`
-- Storage: Cloudflare D1 — `brennhub-feedback` (prod) / `brennhub-feedback-dev` (preview), schema `schema/feedback.sql`
-- i18n: `feedback.*`
-- Status: production
+- **피드백 시스템** — 모든 페이지 우하단 floating 버튼 + 대시보드 카드 아이콘. 자세한 사항은 루트 [CHANGELOG.md](./CHANGELOG.md)와 [PATTERNS.md](./PATTERNS.md).
+- **관리자** `/admin/feedback` — Basic Auth gated 피드백 보드.
 
 ## `[slug]` fallback — `/tools/[slug]`
+
 - Purpose: 미공개 도구 슬러그 진입 시 "coming soon" 안내
 - Files: `app/tools/[slug]/page.tsx` + `client-page.tsx`
 - Registry: `lib/tools-registry.ts`
