@@ -236,7 +236,6 @@ export type Messages = {
     effects: string;
     notes: string;
     time: string;
-    timeEnd: string;
     days: string;
     dosage: string;
     capsules: string;
@@ -258,10 +257,28 @@ export type Messages = {
     "sol_semi-fat": string;
     sol_special: string;
     state_fasting: string;
+    "state_after-waking": string;
     "state_with-meal": string;
     "state_before-meal": string;
     state_bedtime: string;
     "state_pre-workout": string;
+    "state_post-workout": string;
+    meal: string;
+    meal_breakfast: string;
+    meal_lunch: string;
+    meal_dinner: string;
+    mealNotSet: string;
+    product: string;
+    productPrice: string;
+    productLink: string;
+    pricePlaceholder: string;
+    linkPlaceholder: string;
+    recommendedAmountHint: string;
+    searchPlaceholder: string;
+    timeHour: string;
+    timeMinute: string;
+    timeAM: string;
+    timePM: string;
     cat_vitamin: string;
     cat_mineral: string;
     "cat_amino-acid": string;
@@ -579,7 +596,6 @@ export const messages: Record<Locale, Messages> = {
       effects: "효과",
       notes: "참고",
       time: "시간",
-      timeEnd: "종료 (선택)",
       days: "요일",
       dosage: "용량",
       capsules: "캡슐",
@@ -602,10 +618,28 @@ export const messages: Record<Locale, Messages> = {
       "sol_semi-fat": "반지용성",
       sol_special: "예외",
       state_fasting: "공복",
+      "state_after-waking": "기상 후",
       "state_with-meal": "식후",
       "state_before-meal": "식전",
       state_bedtime: "취침 전",
       "state_pre-workout": "운동 전",
+      "state_post-workout": "운동 후",
+      meal: "식사",
+      meal_breakfast: "아침",
+      meal_lunch: "점심",
+      meal_dinner: "저녁",
+      mealNotSet: "식사 시점 미설정",
+      product: "제품 정보 (선택)",
+      productPrice: "가격",
+      productLink: "링크",
+      pricePlaceholder: "예: ₩25,000 또는 $24.99",
+      linkPlaceholder: "https://...",
+      recommendedAmountHint: "1일 권장량",
+      searchPlaceholder: "검색…",
+      timeHour: "시",
+      timeMinute: "분",
+      timeAM: "오전",
+      timePM: "오후",
       cat_vitamin: "비타민",
       cat_mineral: "미네랄",
       "cat_amino-acid": "아미노산",
@@ -944,7 +978,6 @@ export const messages: Record<Locale, Messages> = {
       effects: "Effects",
       notes: "Notes",
       time: "Time",
-      timeEnd: "End (optional)",
       days: "Days",
       dosage: "Dosage",
       capsules: "Capsules",
@@ -966,10 +999,28 @@ export const messages: Record<Locale, Messages> = {
       "sol_semi-fat": "Semi-fat-soluble",
       sol_special: "Special",
       state_fasting: "Fasting",
+      "state_after-waking": "After waking",
       "state_with-meal": "After meal",
       "state_before-meal": "Before meal",
       state_bedtime: "Before bed",
       "state_pre-workout": "Pre-workout",
+      "state_post-workout": "Post-workout",
+      meal: "Meal",
+      meal_breakfast: "Breakfast",
+      meal_lunch: "Lunch",
+      meal_dinner: "Dinner",
+      mealNotSet: "Meal not set",
+      product: "Product info (optional)",
+      productPrice: "Price",
+      productLink: "Link",
+      pricePlaceholder: "e.g. $24.99",
+      linkPlaceholder: "https://...",
+      recommendedAmountHint: "Daily recommended",
+      searchPlaceholder: "Search…",
+      timeHour: "Hour",
+      timeMinute: "Min",
+      timeAM: "AM",
+      timePM: "PM",
       cat_vitamin: "Vitamin",
       cat_mineral: "Mineral",
       "cat_amino-acid": "Amino acid",

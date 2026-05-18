@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
-import { useLocale, useMessages } from "@/lib/i18n/provider";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Info, X } from "lucide-react";
+import { useMessages } from "@/lib/i18n/provider";
+import { NumberStepper } from "@/components/number-stepper";
 import {
   DAYS_OF_WEEK,
   DAY_PRESETS,
   INTAKE_STATES,
+  MEALS,
+  stateRequiresMeal,
   type DayOfWeek,
   type DayPreset,
   type IntakeState,
+  type Meal,
   type ScheduleEntry,
   type Supplement,
 } from "@/lib/supp-plan/types";
+import { SearchableSelect } from "./searchable-select";
+import { TimeStepper } from "./time-stepper";
 
 type Props = {
   open: boolean;
@@ -43,19 +49,28 @@ export function ScheduleForm({
   onSave,
 }: Props) {
   const tp = useMessages().suppPlan;
-  const { locale } = useLocale();
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const [supplementId, setSupplementId] = useState<string>("");
   const [customName, setCustomName] = useState<string>("");
   const [state, setState] = useState<IntakeState>("with-meal");
+  const [meal, setMeal] = useState<Meal | null>(null);
   const [time, setTime] = useState<string>("08:00");
-  const [timeEnd, setTimeEnd] = useState<string>("");
   const [daysKind, setDaysKind] = useState<DayPreset>("all");
   const [customDays, setCustomDays] = useState<DayOfWeek[]>([]);
   const [capsules, setCapsules] = useState<string>("1");
   const [amount, setAmount] = useState<string>("");
+  const [price, setPrice] = useState<string>("");
+  const [link, setLink] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+
+  const selectedSupp = useMemo(
+    () =>
+      supplementId
+        ? (supplements.find((s) => s.id === supplementId) ?? null)
+        : null,
+    [supplementId, supplements],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -63,8 +78,8 @@ export function ScheduleForm({
       setSupplementId(initial.supplementId ?? "");
       setCustomName(initial.customName ?? "");
       setState(initial.timing.state);
+      setMeal(initial.timing.meal ?? null);
       setTime(initial.timing.time);
-      setTimeEnd(initial.timing.timeEnd ?? "");
       if (isDayArray(initial.days)) {
         setDaysKind("custom");
         setCustomDays(initial.days);
@@ -76,18 +91,22 @@ export function ScheduleForm({
         initial.dosage.capsules === null ? "" : String(initial.dosage.capsules),
       );
       setAmount(initial.dosage.amount ?? "");
+      setPrice(initial.product?.price ?? "");
+      setLink(initial.product?.link ?? "");
       setNotes(initial.notes ?? "");
     } else {
       const supp = prefillSupplement;
       setSupplementId(supp?.id ?? "");
       setCustomName("");
       setState(supp?.recommended_state ?? "with-meal");
+      setMeal(null);
       setTime("08:00");
-      setTimeEnd("");
       setDaysKind("all");
       setCustomDays([]);
       setCapsules("1");
       setAmount(supp?.daily_recommended ?? "");
+      setPrice("");
+      setLink("");
       setNotes("");
     }
   }, [open, initial, prefillSupplement]);
@@ -106,6 +125,13 @@ export function ScheduleForm({
     };
   }, [open, onOpenChange]);
 
+  // Auto-clear meal if state no longer requires it.
+  useEffect(() => {
+    if (!stateRequiresMeal(state) && meal !== null) {
+      setMeal(null);
+    }
+  }, [state, meal]);
+
   if (!open) return null;
 
   const isCustom = supplementId === "";
@@ -115,6 +141,8 @@ export function ScheduleForm({
     if (!canSave) return;
     const days: DayOfWeek[] | DayPreset =
       daysKind === "custom" ? customDays : daysKind;
+    const trimmedPrice = price.trim();
+    const trimmedLink = link.trim();
     const entry: ScheduleEntry = {
       id: initial?.id ?? makeId(),
       supplementId: isCustom ? null : supplementId,
@@ -122,14 +150,18 @@ export function ScheduleForm({
       customMeta: null,
       timing: {
         state,
+        meal: stateRequiresMeal(state) ? meal : null,
         time,
-        timeEnd: timeEnd || null,
       },
       days,
       dosage: {
         capsules: capsules.trim() === "" ? null : parseFloat(capsules) || null,
         amount: amount.trim() || null,
       },
+      product:
+        trimmedPrice || trimmedLink
+          ? { price: trimmedPrice || null, link: trimmedLink || null }
+          : null,
       notes: notes.trim() || null,
       active: true,
       cycle: initial?.cycle ?? null,
@@ -164,18 +196,11 @@ export function ScheduleForm({
 
         <div className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4">
           <Field label={tp.selectSupplement}>
-            <select
+            <SearchableSelect
+              supplements={supplements}
               value={supplementId}
-              onChange={(e) => setSupplementId(e.target.value)}
-              className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-            >
-              <option value="">{tp.custom}</option>
-              {supplements.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {locale === "ko" ? s.name_kr : s.name_en || s.name_kr}
-                </option>
-              ))}
-            </select>
+              onChange={setSupplementId}
+            />
             {isCustom && (
               <input
                 type="text"
@@ -202,24 +227,26 @@ export function ScheduleForm({
             </div>
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={tp.time}>
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-              />
+          {stateRequiresMeal(state) && (
+            <Field label={tp.meal}>
+              <div className="flex flex-wrap gap-1.5">
+                {MEALS.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMeal(m)}
+                    className={chipCls(meal === m)}
+                  >
+                    {tp[`meal_${m}` as keyof typeof tp] as string}
+                  </button>
+                ))}
+              </div>
             </Field>
-            <Field label={tp.timeEnd}>
-              <input
-                type="time"
-                value={timeEnd}
-                onChange={(e) => setTimeEnd(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-              />
-            </Field>
-          </div>
+          )}
+
+          <Field label={tp.time}>
+            <TimeStepper value={time} onChange={setTime} />
+          </Field>
 
           <Field label={tp.days}>
             <div className="flex flex-wrap gap-1.5">
@@ -259,16 +286,27 @@ export function ScheduleForm({
 
           <div className="grid grid-cols-2 gap-3">
             <Field label={tp.capsules}>
-              <input
-                type="number"
-                step="any"
-                min="0"
+              <NumberStepper
                 value={capsules}
-                onChange={(e) => setCapsules(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                onStep={(n) => setCapsules(String(n))}
+                onInputChange={(text) =>
+                  setCapsules(text.replace(/[^\d.]/g, ""))
+                }
+                min={0}
+                smallStep={1}
+                bigStep={5}
+                inputMode="decimal"
+                aria-label={tp.capsules}
               />
             </Field>
-            <Field label={tp.amount}>
+            <Field
+              label={tp.amount}
+              hint={
+                selectedSupp?.daily_recommended
+                  ? `${tp.recommendedAmountHint}: ${selectedSupp.daily_recommended}`
+                  : null
+              }
+            >
               <input
                 type="text"
                 value={amount}
@@ -278,6 +316,35 @@ export function ScheduleForm({
               />
             </Field>
           </div>
+
+          <details
+            className="rounded-md border border-zinc-200 px-3 py-2 dark:border-zinc-800"
+            open={Boolean(price || link)}
+          >
+            <summary className="cursor-pointer text-xs font-medium text-zinc-600 select-none dark:text-zinc-400">
+              {tp.product}
+            </summary>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Field label={tp.productPrice}>
+                <input
+                  type="text"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder={tp.pricePlaceholder}
+                  className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                />
+              </Field>
+              <Field label={tp.productLink}>
+                <input
+                  type="url"
+                  value={link}
+                  onChange={(e) => setLink(e.target.value)}
+                  placeholder={tp.linkPlaceholder}
+                  className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                />
+              </Field>
+            </div>
+          </details>
 
           <Field label={tp.notes}>
             <textarea
@@ -313,15 +380,25 @@ export function ScheduleForm({
 
 function Field({
   label,
+  hint,
   children,
 }: {
   label: string;
+  hint?: string | null;
   children: React.ReactNode;
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+      <span className="mb-1 flex items-center gap-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
         {label}
+        {hint && (
+          <span className="group/hint relative inline-flex">
+            <Info className="size-3 cursor-help text-zinc-400" />
+            <span className="pointer-events-none invisible absolute left-1/2 top-full z-50 mt-1 w-48 -translate-x-1/2 rounded-md border border-zinc-200 bg-white px-2 py-1 text-[0.7rem] font-normal text-zinc-700 opacity-0 shadow-md transition-opacity group-hover/hint:visible group-hover/hint:opacity-100 group-focus/hint:visible group-focus/hint:opacity-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+              {hint}
+            </span>
+          </span>
+        )}
       </span>
       {children}
     </label>
@@ -336,3 +413,4 @@ function chipCls(active: boolean): string {
       : "border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800",
   ].join(" ");
 }
+

@@ -22,10 +22,14 @@ export type SupplementCategory =
 
 export type IntakeState =
   | "fasting"
-  | "with-meal"
+  | "after-waking"
   | "before-meal"
+  | "with-meal"
   | "bedtime"
-  | "pre-workout";
+  | "pre-workout"
+  | "post-workout";
+
+export type Meal = "breakfast" | "lunch" | "dinner";
 
 export type DayOfWeek = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
@@ -52,11 +56,19 @@ export const CATEGORIES: SupplementCategory[] = [
 ];
 export const INTAKE_STATES: IntakeState[] = [
   "fasting",
-  "with-meal",
+  "after-waking",
   "before-meal",
+  "with-meal",
   "bedtime",
   "pre-workout",
+  "post-workout",
 ];
+export const MEALS: Meal[] = ["breakfast", "lunch", "dinner"];
+
+export function stateRequiresMeal(state: IntakeState): boolean {
+  return state === "before-meal" || state === "with-meal";
+}
+
 export const DAY_PRESETS: DayPreset[] = [
   "all",
   "workout",
@@ -107,14 +119,18 @@ export interface ScheduleEntry {
   customMeta: Partial<Supplement> | null;
   timing: {
     state: IntakeState;
+    meal: Meal | null;
     time: string;
-    timeEnd: string | null;
   };
   days: DayOfWeek[] | DayPreset;
   dosage: {
     capsules: number | null;
     amount: string | null;
   };
+  product: {
+    price: string | null;
+    link: string | null;
+  } | null;
   notes: string | null;
   active: boolean;
   cycle: {
@@ -124,12 +140,18 @@ export interface ScheduleEntry {
   } | null;
 }
 
+export const SCHEMA_VERSION = 2 as const;
+
 export interface PersonalSchedule {
-  schemaVersion: 1;
+  schemaVersion: typeof SCHEMA_VERSION;
   entries: ScheduleEntry[];
   lastModified: number;
 }
 
 export function emptySchedule(): PersonalSchedule {
-  return { schemaVersion: 1, entries: [], lastModified: Date.now() };
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    entries: [],
+    lastModified: Date.now(),
+  };
 }

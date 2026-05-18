@@ -11,6 +11,15 @@
 
 ## 도구별
 
+### supp-plan
+
+- **사진 업로드 (성분표 등)** — 영양제 라벨/성분표 사진을 entry에 첨부. 파일 저장(R2)/용량 관리/썸네일 처리 필요.
+- **추가 성분 구조화** — 현재 `effects`/`notes`는 free text. 미네랄 종류, 효능 카테고리 등을 structured fields로 분리.
+- **격주 복용 패턴** — `cycle.{onWeeks, offWeeks, startDate}` 타입은 이미 정의됨 (현재 null 유지). UI/실행 로직 미구현. 격일은 요일 custom 선택으로 처리 가능.
+- **시간 범위 입력 (timeEnd)** — "오전 8–10시" 같은 유연한 시간 표현. v1엔 있었으나 v2에서 UI 제거. 필요 시 재도입.
+- **영양제 별칭(alias) 검색** — "유산균"으로 포스트바이오틱스/프로바이오틱스 찾기. supplements 테이블에 aliases JSON 컬럼 또는 별도 table.
+- **영양제 추가/편집** — 라이브러리는 현재 read-only. 관리자 UI (admin) 또는 사용자 제안 → 승인 흐름.
+
 ### email-diag
 
 - **Locale 토글 시 분석 재생성 + 캐시 (A+D 조합)**

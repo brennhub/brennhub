@@ -1,8 +1,8 @@
 [
   {
     "id": "l-arginine-capsule",
-    "name_kr": "아르기닌 (캡슐)",
-    "name_en": "L-Arginine (Capsule)",
+    "name_kr": "아르기닌 캡슐",
+    "name_en": "L-Arginine Capsule",
     "category": "amino-acid",
     "solubility": "water",
     "metabolism": [
@@ -19,8 +19,8 @@
   },
   {
     "id": "l-arginine-powder",
-    "name_kr": "아르기닌 (분말)",
-    "name_en": "L-Arginine (Powder)",
+    "name_kr": "아르기닌 분말",
+    "name_en": "L-Arginine Powder",
     "category": "amino-acid",
     "solubility": "water",
     "metabolism": [
@@ -53,7 +53,7 @@
   },
   {
     "id": "vitamin-c",
-    "name_kr": "비타민 C (Liposomal)",
+    "name_kr": "리포소말 비타민 C",
     "name_en": "Liposomal Vitamin C",
     "category": "vitamin",
     "solubility": "water",
@@ -123,7 +123,7 @@
   },
   {
     "id": "coq10",
-    "name_kr": "코엔자임Q10",
+    "name_kr": "코엔자임 Q10",
     "name_en": "Coenzyme Q10",
     "category": "antioxidant",
     "solubility": "fat",
@@ -158,7 +158,7 @@
   {
     "id": "zinc",
     "name_kr": "아연",
-    "name_en": "Zinc Picolinate",
+    "name_en": "Zinc",
     "category": "mineral",
     "solubility": "water",
     "metabolism": [
@@ -238,7 +238,7 @@
   },
   {
     "id": "acv",
-    "name_kr": "애플 사이다 비니거 (ACV)",
+    "name_kr": "애플 사이다 비니거",
     "name_en": "Apple Cider Vinegar",
     "category": "fermented",
     "solubility": "water",
@@ -306,7 +306,7 @@
   {
     "id": "glucosamine",
     "name_kr": "글루코사민",
-    "name_en": "Glucosamine Sulfate",
+    "name_en": "Glucosamine",
     "category": "structural",
     "solubility": "water",
     "metabolism": [
@@ -323,7 +323,7 @@
   {
     "id": "chondroitin",
     "name_kr": "콘드로이친",
-    "name_en": "Chondroitin Sulfate",
+    "name_en": "Chondroitin",
     "category": "structural",
     "solubility": "water",
     "metabolism": [
@@ -386,7 +386,7 @@
   },
   {
     "id": "l-glutathione",
-    "name_kr": "글루타치온 (Liposomal)",
+    "name_kr": "리포소말 글루타치온",
     "name_en": "Liposomal Glutathione",
     "category": "antioxidant",
     "solubility": "water",
@@ -404,7 +404,7 @@
   {
     "id": "mct-oil",
     "name_kr": "MCT Oil",
-    "name_en": "MCT Oil",
+    "name_en": null,
     "category": "fatty-acid",
     "solubility": "fat",
     "metabolism": [

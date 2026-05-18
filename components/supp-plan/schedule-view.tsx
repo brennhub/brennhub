@@ -1,10 +1,17 @@
 "use client";
 
 import { useMemo } from "react";
-import { AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ExternalLink,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import {
   INTAKE_STATES,
+  stateRequiresMeal,
   type CompatibilityRule,
   type DayOfWeek,
   type DayPreset,
@@ -13,6 +20,7 @@ import {
   type ScheduleEntry,
   type Supplement,
 } from "@/lib/supp-plan/types";
+import { supplementDisplayName } from "@/lib/supp-plan/utils";
 
 type Props = {
   schedule: PersonalSchedule | null;
@@ -50,7 +58,7 @@ function entryName(
 ): string {
   if (e.supplementId) {
     const s = supplements.find((x) => x.id === e.supplementId);
-    if (s) return locale === "ko" ? s.name_kr : s.name_en || s.name_kr;
+    if (s) return supplementDisplayName(s, locale);
     return e.supplementId;
   }
   return e.customName || "—";
@@ -95,6 +103,17 @@ function computeWarnings(
     }
   }
   return warnings;
+}
+
+function formatTime12(hhmm: string, tp: ReturnType<typeof useMessages>["suppPlan"]): string {
+  const [hStr, mStr] = hhmm.split(":");
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return hhmm;
+  const pm = h >= 12;
+  let h12 = h % 12;
+  if (h12 === 0) h12 = 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${pm ? tp.timePM : tp.timeAM}`;
 }
 
 export function ScheduleView({
@@ -195,6 +214,8 @@ export function ScheduleView({
               <ul className="space-y-2">
                 {entries.map((e) => {
                   const warns = warningsByEntry.get(e.id) ?? [];
+                  const mealMissing =
+                    stateRequiresMeal(e.timing.state) && !e.timing.meal;
                   return (
                     <li
                       key={e.id}
@@ -202,16 +223,18 @@ export function ScheduleView({
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-baseline gap-2">
+                          <div className="flex flex-wrap items-baseline gap-2">
                             <span className="font-medium text-zinc-900 dark:text-zinc-50">
                               {entryName(e, supplements, locale)}
                             </span>
                             <span className="tnum text-xs text-zinc-500 dark:text-zinc-400">
-                              {e.timing.time}
-                              {e.timing.timeEnd
-                                ? `–${e.timing.timeEnd}`
-                                : ""}
+                              {formatTime12(e.timing.time, tp)}
                             </span>
+                            {e.timing.meal && (
+                              <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                                {tp[`meal_${e.timing.meal}` as keyof typeof tp] as string}
+                              </span>
+                            )}
                           </div>
                           <div className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">
                             {[
@@ -224,9 +247,33 @@ export function ScheduleView({
                               .filter(Boolean)
                               .join(" · ")}
                           </div>
+                          {e.product && (e.product.price || e.product.link) && (
+                            <div className="mt-0.5 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                              {e.product.price && (
+                                <span>{e.product.price}</span>
+                              )}
+                              {e.product.link && (
+                                <a
+                                  href={e.product.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-0.5 text-blue-600 hover:underline dark:text-blue-400"
+                                >
+                                  {tp.productLink}
+                                  <ExternalLink className="size-3" />
+                                </a>
+                              )}
+                            </div>
+                          )}
                           {e.notes && (
                             <div className="mt-0.5 text-xs text-zinc-500 italic dark:text-zinc-500">
                               {e.notes}
+                            </div>
+                          )}
+                          {mealMissing && (
+                            <div className="mt-1.5 flex items-start gap-1 rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[0.7rem] text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+                              <AlertTriangle className="mt-0.5 size-3 shrink-0" />
+                              <span>{tp.mealNotSet}</span>
                             </div>
                           )}
                           {warns.length > 0 && (

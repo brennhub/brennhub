@@ -6,6 +6,7 @@ import { useMessages } from "@/lib/i18n/provider";
 import { scheduleStorage } from "@/lib/supp-plan/storage/localStorage";
 import {
   emptySchedule,
+  SCHEMA_VERSION,
   type CompatibilityRule,
   type PersonalSchedule,
   type ScheduleEntry,
@@ -35,7 +36,7 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
     let cancelled = false;
     scheduleStorage.getSchedule().then((stored) => {
       if (cancelled) return;
-      if (stored && stored.schemaVersion === 1) {
+      if (stored) {
         setSchedule(stored);
       }
       setHydrated(true);
@@ -58,7 +59,7 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
           ? schedule.entries.map((e, i) => (i === existing ? entry : e))
           : [...schedule.entries, entry];
       await persist({
-        schemaVersion: 1,
+        schemaVersion: SCHEMA_VERSION,
         entries,
         lastModified: Date.now(),
       });
@@ -72,7 +73,7 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
   const handleDelete = useCallback(
     async (id: string) => {
       await persist({
-        schemaVersion: 1,
+        schemaVersion: SCHEMA_VERSION,
         entries: schedule.entries.filter((e) => e.id !== id),
         lastModified: Date.now(),
       });

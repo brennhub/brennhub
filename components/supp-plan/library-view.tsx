@@ -9,6 +9,7 @@ import {
   SOLUBILITIES,
   type Supplement,
 } from "@/lib/supp-plan/types";
+import { supplementDisplayName } from "@/lib/supp-plan/utils";
 
 type Props = {
   supplements: Supplement[];
@@ -84,8 +85,7 @@ export function LibraryView({ supplements, onAdd }: Props) {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((s) => {
-          const name = locale === "ko" ? s.name_kr : s.name_en || s.name_kr;
-          const sub = locale === "ko" ? s.name_en : s.name_kr;
+          const name = supplementDisplayName(s, locale);
           return (
             <article
               key={s.id}
@@ -96,11 +96,6 @@ export function LibraryView({ supplements, onAdd }: Props) {
                   <h3 className="truncate font-medium text-zinc-900 dark:text-zinc-50">
                     {name}
                   </h3>
-                  {sub && sub !== name && (
-                    <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
-                      {sub}
-                    </p>
-                  )}
                 </div>
                 <button
                   type="button"
