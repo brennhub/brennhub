@@ -2,21 +2,25 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Info, X } from "lucide-react";
-import { useMessages } from "@/lib/i18n/provider";
+import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { NumberStepper } from "@/components/number-stepper";
 import {
+  CURRENCIES,
   DAYS_OF_WEEK,
   DAY_PRESETS,
   INTAKE_STATES,
   MEALS,
   stateRequiresMeal,
+  type Currency,
   type DayOfWeek,
   type DayPreset,
+  type EntryStatus,
   type IntakeState,
   type Meal,
   type ScheduleEntry,
   type Supplement,
 } from "@/lib/supp-plan/types";
+import { defaultCurrencyForLocale } from "@/lib/supp-plan/utils";
 import { SearchableSelect } from "./searchable-select";
 import { TimeStepper } from "./time-stepper";
 
@@ -49,6 +53,7 @@ export function ScheduleForm({
   onSave,
 }: Props) {
   const tp = useMessages().suppPlan;
+  const { locale } = useLocale();
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const [supplementId, setSupplementId] = useState<string>("");
@@ -61,8 +66,12 @@ export function ScheduleForm({
   const [capsules, setCapsules] = useState<string>("1");
   const [amount, setAmount] = useState<string>("");
   const [price, setPrice] = useState<string>("");
+  const [currency, setCurrency] = useState<Currency>(
+    defaultCurrencyForLocale(locale),
+  );
   const [link, setLink] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [status, setStatus] = useState<EntryStatus>("confirmed");
 
   const selectedSupp = useMemo(
     () =>
@@ -92,8 +101,12 @@ export function ScheduleForm({
       );
       setAmount(initial.dosage.amount ?? "");
       setPrice(initial.product?.price ?? "");
+      setCurrency(
+        initial.product?.currency ?? defaultCurrencyForLocale(locale),
+      );
       setLink(initial.product?.link ?? "");
       setNotes(initial.notes ?? "");
+      setStatus(initial.status);
     } else {
       const supp = prefillSupplement;
       setSupplementId(supp?.id ?? "");
@@ -104,12 +117,14 @@ export function ScheduleForm({
       setDaysKind("all");
       setCustomDays([]);
       setCapsules("1");
-      setAmount(supp?.daily_recommended ?? "");
+      setAmount("");
       setPrice("");
+      setCurrency(defaultCurrencyForLocale(locale));
       setLink("");
       setNotes("");
+      setStatus("confirmed");
     }
-  }, [open, initial, prefillSupplement]);
+  }, [open, initial, prefillSupplement, locale]);
 
   useEffect(() => {
     if (!open) return;
@@ -160,8 +175,13 @@ export function ScheduleForm({
       },
       product:
         trimmedPrice || trimmedLink
-          ? { price: trimmedPrice || null, link: trimmedLink || null }
+          ? {
+              price: trimmedPrice || null,
+              currency: trimmedPrice ? currency : null,
+              link: trimmedLink || null,
+            }
           : null,
+      status,
       notes: notes.trim() || null,
       active: true,
       cycle: initial?.cycle ?? null,
@@ -295,6 +315,7 @@ export function ScheduleForm({
                 min={0}
                 smallStep={1}
                 bigStep={5}
+                showBigStep={false}
                 inputMode="decimal"
                 aria-label={tp.capsules}
               />
@@ -324,16 +345,33 @@ export function ScheduleForm({
             <summary className="cursor-pointer text-xs font-medium text-zinc-600 select-none dark:text-zinc-400">
               {tp.product}
             </summary>
-            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <Field label={tp.productPrice}>
-                <input
-                  type="text"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder={tp.pricePlaceholder}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-                />
-              </Field>
+            <div className="mt-2 grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <Field label={tp.productPrice}>
+                    <input
+                      type="number"
+                      step="any"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                    />
+                  </Field>
+                </div>
+                <Field label={tp.productCurrency}>
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value as Currency)}
+                    className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                  >
+                    {CURRENCIES.map((c) => (
+                      <option key={c} value={c}>
+                        {tp[`currency_${c}` as keyof typeof tp] as string}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
               <Field label={tp.productLink}>
                 <input
                   type="url"
@@ -345,6 +383,21 @@ export function ScheduleForm({
               </Field>
             </div>
           </details>
+
+          <Field label={tp.status}>
+            <div className="flex flex-wrap gap-1.5">
+              {(["candidate", "confirmed"] as EntryStatus[]).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setStatus(s)}
+                  className={chipCls(status === s)}
+                >
+                  {tp[`status_${s}` as keyof typeof tp] as string}
+                </button>
+              ))}
+            </div>
+          </Field>
 
           <Field label={tp.notes}>
             <textarea

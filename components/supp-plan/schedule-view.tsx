@@ -20,12 +20,17 @@ import {
   type ScheduleEntry,
   type Supplement,
 } from "@/lib/supp-plan/types";
-import { supplementDisplayName } from "@/lib/supp-plan/utils";
+import { formatPrice, supplementDisplayName } from "@/lib/supp-plan/utils";
+import { ScheduleTable } from "./schedule-table";
+
+export type ScheduleViewMode = "card" | "table";
 
 type Props = {
   schedule: PersonalSchedule | null;
   supplements: Supplement[];
   rules: CompatibilityRule[];
+  viewMode: ScheduleViewMode;
+  onChangeViewMode: (mode: ScheduleViewMode) => void;
   onEdit: (entry: ScheduleEntry) => void;
   onDelete: (id: string) => void;
   onAddCustom: () => void;
@@ -120,6 +125,8 @@ export function ScheduleView({
   schedule,
   supplements,
   rules,
+  viewMode,
+  onChangeViewMode,
   onEdit,
   onDelete,
   onAddCustom,
@@ -127,11 +134,15 @@ export function ScheduleView({
   const tp = useMessages().suppPlan;
   const { locale } = useLocale();
 
+  const confirmedEntries = useMemo(
+    () => (schedule?.entries ?? []).filter((e) => e.status === "confirmed"),
+    [schedule],
+  );
+
   const grouped = useMemo(() => {
     const map = new Map<IntakeState, ScheduleEntry[]>();
-    if (!schedule) return map;
     for (const s of INTAKE_STATES) map.set(s, []);
-    const sorted = [...schedule.entries].sort((a, b) =>
+    const sorted = [...confirmedEntries].sort((a, b) =>
       a.timing.time.localeCompare(b.timing.time),
     );
     for (const e of sorted) {
@@ -139,11 +150,11 @@ export function ScheduleView({
       if (arr) arr.push(e);
     }
     return map;
-  }, [schedule]);
+  }, [confirmedEntries]);
 
   const warnings = useMemo(
-    () => (schedule ? computeWarnings(schedule.entries, rules) : []),
-    [schedule, rules],
+    () => computeWarnings(confirmedEntries, rules),
+    [confirmedEntries, rules],
   );
   const warningsByEntry = useMemo(() => {
     const m = new Map<string, Warning[]>();
@@ -165,34 +176,65 @@ export function ScheduleView({
     );
   }
 
-  if (schedule.entries.length === 0) {
+  const Toolbar = (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="inline-flex rounded-md border border-zinc-200 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-950">
+        {(["card", "table"] as ScheduleViewMode[]).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => onChangeViewMode(m)}
+            className={[
+              "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+              viewMode === m
+                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50",
+            ].join(" ")}
+            aria-pressed={viewMode === m}
+          >
+            {m === "card" ? tp.viewByCard : tp.viewByTable}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={onAddCustom}
+        className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+      >
+        <Plus className="size-3.5" />
+        {tp.addEntryTitle}
+      </button>
+    </div>
+  );
+
+  if (confirmedEntries.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-800">
-        <p className="text-zinc-500 dark:text-zinc-400">{tp.emptySchedule}</p>
-        <button
-          type="button"
-          onClick={onAddCustom}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
-          <Plus className="size-3.5" />
-          {tp.addEntryTitle}
-        </button>
+      <div className="space-y-4">
+        {Toolbar}
+        <div className="rounded-lg border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-800">
+          <p className="text-zinc-500 dark:text-zinc-400">{tp.emptySchedule}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (viewMode === "table") {
+    return (
+      <div className="space-y-4">
+        {Toolbar}
+        <ScheduleTable
+          entries={confirmedEntries}
+          supplements={supplements}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={onAddCustom}
-          className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
-          <Plus className="size-3.5" />
-          {tp.addEntryTitle}
-        </button>
-      </div>
+      {Toolbar}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         {INTAKE_STATES.map((s) => {
@@ -250,7 +292,13 @@ export function ScheduleView({
                           {e.product && (e.product.price || e.product.link) && (
                             <div className="mt-0.5 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                               {e.product.price && (
-                                <span>{e.product.price}</span>
+                                <span>
+                                  {formatPrice(
+                                    e.product.price,
+                                    e.product.currency,
+                                    locale,
+                                  )}
+                                </span>
                               )}
                               {e.product.link && (
                                 <a

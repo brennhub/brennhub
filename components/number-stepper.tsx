@@ -19,6 +19,7 @@ type Props = {
   max?: number;
   smallStep: number;
   bigStep: number;
+  showBigStep?: boolean;
   id?: string;
   className?: string;
   placeholder?: string;
@@ -58,6 +59,7 @@ export function NumberStepper({
   max = Number.POSITIVE_INFINITY,
   smallStep,
   bigStep,
+  showBigStep = true,
   id,
   className,
   placeholder,
@@ -166,25 +168,36 @@ export function NumberStepper({
         aria-label={ariaLabel}
         className="tnum w-full min-w-0 bg-transparent px-2.5 py-1 text-base text-foreground outline-none placeholder:text-muted-foreground md:text-sm"
       />
-      <div className="grid shrink-0 grid-cols-2 grid-rows-2 border-l border-input">
-        <StepperButton onClick={handleSmallUp} aria-label="Increase small">
-          <ChevronUp className="size-3" />
-        </StepperButton>
-        <StepperButton onClick={handleBigUp} aria-label="Increase big" borderLeft>
-          <ChevronsUp className="size-3" />
-        </StepperButton>
-        <StepperButton onClick={handleSmallDown} aria-label="Decrease small" borderTop>
-          <ChevronDown className="size-3" />
-        </StepperButton>
-        <StepperButton
-          onClick={handleBigDown}
-          aria-label="Decrease big"
-          borderLeft
-          borderTop
-        >
-          <ChevronsDown className="size-3" />
-        </StepperButton>
-      </div>
+      {showBigStep ? (
+        <div className="grid shrink-0 grid-cols-2 grid-rows-2 border-l border-input">
+          <StepperButton onClick={handleSmallUp} aria-label="Increase small">
+            <ChevronUp className="size-3" />
+          </StepperButton>
+          <StepperButton onClick={handleBigUp} aria-label="Increase big" borderLeft>
+            <ChevronsUp className="size-3" />
+          </StepperButton>
+          <StepperButton onClick={handleSmallDown} aria-label="Decrease small" borderTop>
+            <ChevronDown className="size-3" />
+          </StepperButton>
+          <StepperButton
+            onClick={handleBigDown}
+            aria-label="Decrease big"
+            borderLeft
+            borderTop
+          >
+            <ChevronsDown className="size-3" />
+          </StepperButton>
+        </div>
+      ) : (
+        <div className="flex shrink-0 flex-col border-l border-input">
+          <StepperButton onClick={handleSmallUp} aria-label="Increase">
+            <ChevronUp className="size-3" />
+          </StepperButton>
+          <StepperButton onClick={handleSmallDown} aria-label="Decrease" borderTop>
+            <ChevronDown className="size-3" />
+          </StepperButton>
+        </div>
+      )}
       {warning && (
         <div
           role="alert"

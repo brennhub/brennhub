@@ -70,6 +70,7 @@ export function TimeStepper({ value, onChange }: Props) {
           max={12}
           smallStep={1}
           bigStep={3}
+          showBigStep={false}
           inputMode="numeric"
           aria-label={tp.timeHour}
           className="w-20"
@@ -89,6 +90,7 @@ export function TimeStepper({ value, onChange }: Props) {
           max={55}
           smallStep={5}
           bigStep={15}
+          showBigStep={false}
           inputMode="numeric"
           aria-label={tp.timeMinute}
           className="w-20"

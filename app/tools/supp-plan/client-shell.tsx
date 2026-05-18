@@ -7,6 +7,7 @@ import { scheduleStorage } from "@/lib/supp-plan/storage/localStorage";
 import {
   emptySchedule,
   SCHEMA_VERSION,
+  stateRequiresMeal,
   type CompatibilityRule,
   type PersonalSchedule,
   type ScheduleEntry,
@@ -14,13 +15,48 @@ import {
 } from "@/lib/supp-plan/types";
 import { LibraryView } from "@/components/supp-plan/library-view";
 import { ScheduleForm } from "@/components/supp-plan/schedule-form";
-import { ScheduleView } from "@/components/supp-plan/schedule-view";
+import {
+  ScheduleView,
+  type ScheduleViewMode,
+} from "@/components/supp-plan/schedule-view";
+import { CandidatesView } from "@/components/supp-plan/candidates-view";
+
+const VIEW_MODE_KEY = "brennhub-supp-plan-view-mode";
 
 type Props = {
   supplements: Supplement[];
   rules: CompatibilityRule[];
   dbError: string | null;
 };
+
+function makeId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `e_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function makeCandidate(supp: Supplement): ScheduleEntry {
+  const state = supp.recommended_state ?? "with-meal";
+  return {
+    id: makeId(),
+    supplementId: supp.id,
+    customName: null,
+    customMeta: null,
+    timing: {
+      state,
+      meal: stateRequiresMeal(state) ? "breakfast" : null,
+      time: "09:00",
+    },
+    days: "all",
+    dosage: { capsules: 1, amount: null },
+    product: null,
+    status: "candidate",
+    notes: null,
+    active: true,
+    cycle: null,
+  };
+}
 
 export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
   const t = useMessages();
@@ -31,6 +67,7 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
   const [editTarget, setEditTarget] = useState<ScheduleEntry | null>(null);
   const [prefillSupp, setPrefillSupp] = useState<Supplement | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ScheduleViewMode>("card");
 
   useEffect(() => {
     let cancelled = false;
@@ -41,6 +78,12 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
       }
       setHydrated(true);
     });
+    try {
+      const stored = localStorage.getItem(VIEW_MODE_KEY);
+      if (stored === "table" || stored === "card") setViewMode(stored);
+    } catch {
+      // ignore
+    }
     return () => {
       cancelled = true;
     };
@@ -81,6 +124,19 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
     [schedule, persist],
   );
 
+  const handleConfirm = useCallback(
+    async (id: string) => {
+      await persist({
+        schemaVersion: SCHEMA_VERSION,
+        entries: schedule.entries.map((e) =>
+          e.id === id ? { ...e, status: "confirmed" } : e,
+        ),
+        lastModified: Date.now(),
+      });
+    },
+    [schedule, persist],
+  );
+
   const handleEdit = useCallback((entry: ScheduleEntry) => {
     setEditTarget(entry);
     setPrefillSupp(null);
@@ -93,11 +149,36 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
     setFormOpen(true);
   }, []);
 
+  const handleQuickAdd = useCallback(
+    async (supp: Supplement) => {
+      const candidate = makeCandidate(supp);
+      await persist({
+        schemaVersion: SCHEMA_VERSION,
+        entries: [...schedule.entries, candidate],
+        lastModified: Date.now(),
+      });
+    },
+    [schedule, persist],
+  );
+
   const handleAddCustom = useCallback(() => {
     setEditTarget(null);
     setPrefillSupp(null);
     setFormOpen(true);
   }, []);
+
+  const handleChangeViewMode = useCallback((mode: ScheduleViewMode) => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem(VIEW_MODE_KEY, mode);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const candidates = hydrated
+    ? schedule.entries.filter((e) => e.status === "candidate")
+    : [];
 
   return (
     <main className="mx-auto w-full max-w-6xl px-6 pt-6 pb-20">
@@ -130,6 +211,18 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
         </div>
       )}
 
+      {candidates.length > 0 && (
+        <section className="mb-6">
+          <CandidatesView
+            entries={candidates}
+            supplements={supplements}
+            onConfirm={handleConfirm}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </section>
+      )}
+
       <section className="mb-10">
         <h2 className="mb-3 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
           {tp.mySchedule}
@@ -138,6 +231,8 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
           schedule={hydrated ? schedule : null}
           supplements={supplements}
           rules={rules}
+          viewMode={viewMode}
+          onChangeViewMode={handleChangeViewMode}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onAddCustom={handleAddCustom}
@@ -151,6 +246,7 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
         <LibraryView
           supplements={supplements}
           onAdd={handleAddFromLibrary}
+          onQuickAdd={handleQuickAdd}
         />
       </section>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Search, Zap } from "lucide-react";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import {
   CATEGORIES,
@@ -9,22 +9,27 @@ import {
   SOLUBILITIES,
   type Supplement,
 } from "@/lib/supp-plan/types";
-import { supplementDisplayName } from "@/lib/supp-plan/utils";
+import {
+  supplementDisplayName,
+  supplementMatches,
+} from "@/lib/supp-plan/utils";
 
 type Props = {
   supplements: Supplement[];
   onAdd: (supp: Supplement) => void;
+  onQuickAdd: (supp: Supplement) => void;
 };
 
 const ALL = "all";
 
-export function LibraryView({ supplements, onAdd }: Props) {
+export function LibraryView({ supplements, onAdd, onQuickAdd }: Props) {
   const tp = useMessages().suppPlan;
   const { locale } = useLocale();
 
   const [filterCategory, setFilterCategory] = useState<string>(ALL);
   const [filterSolubility, setFilterSolubility] = useState<string>(ALL);
   const [filterState, setFilterState] = useState<string>(ALL);
+  const [query, setQuery] = useState<string>("");
 
   const filtered = useMemo(() => {
     return supplements.filter((s) => {
@@ -33,9 +38,10 @@ export function LibraryView({ supplements, onAdd }: Props) {
         return false;
       if (filterState !== ALL && s.recommended_state !== filterState)
         return false;
+      if (!supplementMatches(s, query)) return false;
       return true;
     });
-  }, [supplements, filterCategory, filterSolubility, filterState]);
+  }, [supplements, filterCategory, filterSolubility, filterState, query]);
 
   if (supplements.length === 0) {
     return (
@@ -47,7 +53,22 @@ export function LibraryView({ supplements, onAdd }: Props) {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+        <label className="flex flex-1 min-w-[180px] flex-col gap-1 text-xs">
+          <span className="text-zinc-600 dark:text-zinc-400">
+            {tp.searchPlaceholder}
+          </span>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={tp.searchPlaceholder}
+              className="w-full rounded-md border border-zinc-300 bg-white py-1 pl-7 pr-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+            />
+          </div>
+        </label>
         <FilterSelect
           label={tp.category}
           value={filterCategory}
@@ -97,15 +118,26 @@ export function LibraryView({ supplements, onAdd }: Props) {
                     {name}
                   </h3>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onAdd(s)}
-                  aria-label={tp.addToSchedule}
-                  title={tp.addToSchedule}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
-                >
-                  <Plus className="size-3.5" />
-                </button>
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onQuickAdd(s)}
+                    aria-label={tp.quickAdd}
+                    title={tp.quickAdd}
+                    className="flex h-7 w-7 items-center justify-center rounded-md border border-amber-300 bg-amber-50 text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300 dark:hover:bg-amber-900"
+                  >
+                    <Zap className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onAdd(s)}
+                    aria-label={tp.addToSchedule}
+                    title={tp.addToSchedule}
+                    className="flex h-7 w-7 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+                  >
+                    <Plus className="size-3.5" />
+                  </button>
+                </div>
               </div>
 
               <div className="mt-2 flex flex-wrap gap-1">

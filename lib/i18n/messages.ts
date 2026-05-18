@@ -279,6 +279,21 @@ export type Messages = {
     timeMinute: string;
     timeAM: string;
     timePM: string;
+    candidates: string;
+    candidatesEmpty: string;
+    quickAdd: string;
+    confirm: string;
+    status: string;
+    status_candidate: string;
+    status_confirmed: string;
+    notSet: string;
+    viewByCard: string;
+    viewByTable: string;
+    productCurrency: string;
+    currency_KRW: string;
+    currency_USD: string;
+    currency_EUR: string;
+    currency_JPY: string;
     cat_vitamin: string;
     cat_mineral: string;
     "cat_amino-acid": string;
@@ -290,6 +305,8 @@ export type Messages = {
     cat_fermented: string;
     cat_other: string;
     day_all: string;
+    "day_biweekly-mwf": string;
+    "day_biweekly-tts": string;
     day_workout: string;
     day_rest: string;
     day_weekday: string;
@@ -640,6 +657,21 @@ export const messages: Record<Locale, Messages> = {
       timeMinute: "분",
       timeAM: "오전",
       timePM: "오후",
+      candidates: "영양제 후보",
+      candidatesEmpty: "후보 없음",
+      quickAdd: "후보로",
+      confirm: "확정",
+      status: "상태",
+      status_candidate: "후보",
+      status_confirmed: "확정",
+      notSet: "미설정",
+      viewByCard: "카드",
+      viewByTable: "표",
+      productCurrency: "통화",
+      currency_KRW: "원 (KRW)",
+      currency_USD: "달러 (USD)",
+      currency_EUR: "유로 (EUR)",
+      currency_JPY: "엔 (JPY)",
       cat_vitamin: "비타민",
       cat_mineral: "미네랄",
       "cat_amino-acid": "아미노산",
@@ -651,6 +683,8 @@ export const messages: Record<Locale, Messages> = {
       cat_fermented: "발효",
       cat_other: "기타",
       day_all: "매일",
+      "day_biweekly-mwf": "격일 (월수금)",
+      "day_biweekly-tts": "격일 (화목토)",
       day_workout: "운동일",
       day_rest: "휴식일",
       day_weekday: "주중",
@@ -1021,6 +1055,21 @@ export const messages: Record<Locale, Messages> = {
       timeMinute: "Min",
       timeAM: "AM",
       timePM: "PM",
+      candidates: "Candidates",
+      candidatesEmpty: "No candidates",
+      quickAdd: "Quick add",
+      confirm: "Confirm",
+      status: "Status",
+      status_candidate: "Candidate",
+      status_confirmed: "Confirmed",
+      notSet: "Not set",
+      viewByCard: "Cards",
+      viewByTable: "Table",
+      productCurrency: "Currency",
+      currency_KRW: "Won (KRW)",
+      currency_USD: "Dollar (USD)",
+      currency_EUR: "Euro (EUR)",
+      currency_JPY: "Yen (JPY)",
       cat_vitamin: "Vitamin",
       cat_mineral: "Mineral",
       "cat_amino-acid": "Amino acid",
@@ -1032,6 +1081,8 @@ export const messages: Record<Locale, Messages> = {
       cat_fermented: "Fermented",
       cat_other: "Other",
       day_all: "Every day",
+      "day_biweekly-mwf": "Every other day (M/W/F)",
+      "day_biweekly-tts": "Every other day (T/Th/Sat)",
       day_workout: "Workout days",
       day_rest: "Rest days",
       day_weekday: "Weekdays",

@@ -20,6 +20,46 @@ type LegacyV1Entry = {
   cycle: unknown;
 };
 
+type LegacyV2Entry = Omit<ScheduleEntry, "status" | "product"> & {
+  product?: {
+    price: string | null;
+    link: string | null;
+  } | null;
+};
+
+function v1ToV2Entry(e: LegacyV1Entry): LegacyV2Entry {
+  return {
+    id: e.id,
+    supplementId: e.supplementId,
+    customName: e.customName,
+    customMeta: null,
+    timing: {
+      state: e.timing.state as ScheduleEntry["timing"]["state"],
+      meal: null,
+      time: e.timing.time,
+    },
+    days: e.days as ScheduleEntry["days"],
+    dosage: {
+      capsules: e.dosage?.capsules ?? null,
+      amount: e.dosage?.amount ?? null,
+    },
+    product: null,
+    notes: e.notes ?? null,
+    active: e.active ?? true,
+    cycle: null,
+  };
+}
+
+function v2ToV3Entry(e: LegacyV2Entry): ScheduleEntry {
+  return {
+    ...e,
+    product: e.product
+      ? { price: e.product.price, currency: null, link: e.product.link }
+      : null,
+    status: "confirmed",
+  };
+}
+
 function migrate(raw: unknown): PersonalSchedule {
   if (!raw || typeof raw !== "object") {
     return {
@@ -29,47 +69,36 @@ function migrate(raw: unknown): PersonalSchedule {
     };
   }
   const data = raw as { schemaVersion?: number; entries?: unknown };
-  const version = typeof data.schemaVersion === "number" ? data.schemaVersion : 1;
+  const version =
+    typeof data.schemaVersion === "number" ? data.schemaVersion : 1;
 
   if (version === SCHEMA_VERSION) {
     return raw as PersonalSchedule;
   }
 
+  let v2Entries: LegacyV2Entry[];
   if (version === 1) {
     const v1Entries = Array.isArray(data.entries)
       ? (data.entries as LegacyV1Entry[])
       : [];
-    const entries: ScheduleEntry[] = v1Entries.map((e) => ({
-      id: e.id,
-      supplementId: e.supplementId,
-      customName: e.customName,
-      customMeta: null,
-      timing: {
-        state: e.timing.state as ScheduleEntry["timing"]["state"],
-        meal: null,
-        time: e.timing.time,
-      },
-      days: e.days as ScheduleEntry["days"],
-      dosage: {
-        capsules: e.dosage?.capsules ?? null,
-        amount: e.dosage?.amount ?? null,
-      },
-      product: null,
-      notes: e.notes ?? null,
-      active: e.active ?? true,
-      cycle: null,
-    }));
+    v2Entries = v1Entries.map(v1ToV2Entry);
+  } else if (version === 2) {
+    v2Entries = Array.isArray(data.entries)
+      ? (data.entries as LegacyV2Entry[])
+      : [];
+  } else {
+    // Unknown/newer schema: discard for safety.
     return {
       schemaVersion: SCHEMA_VERSION,
-      entries,
+      entries: [],
       lastModified: Date.now(),
     };
   }
 
-  // Unknown/newer schema: discard for safety.
+  const entries: ScheduleEntry[] = v2Entries.map(v2ToV3Entry);
   return {
     schemaVersion: SCHEMA_VERSION,
-    entries: [],
+    entries,
     lastModified: Date.now(),
   };
 }

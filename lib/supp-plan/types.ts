@@ -35,11 +35,19 @@ export type DayOfWeek = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
 export type DayPreset =
   | "all"
+  | "biweekly-mwf"
+  | "biweekly-tts"
   | "workout"
   | "rest"
   | "weekday"
   | "weekend"
   | "custom";
+
+export type Currency = "KRW" | "USD" | "EUR" | "JPY";
+
+export const CURRENCIES: Currency[] = ["KRW", "USD", "EUR", "JPY"];
+
+export type EntryStatus = "candidate" | "confirmed";
 
 export const SOLUBILITIES: Solubility[] = ["water", "fat", "semi-fat", "special"];
 export const CATEGORIES: SupplementCategory[] = [
@@ -71,12 +79,33 @@ export function stateRequiresMeal(state: IntakeState): boolean {
 
 export const DAY_PRESETS: DayPreset[] = [
   "all",
-  "workout",
-  "rest",
+  "biweekly-mwf",
+  "biweekly-tts",
   "weekday",
   "weekend",
+  "workout",
+  "rest",
   "custom",
 ];
+
+export function expandDayPreset(preset: DayPreset): DayOfWeek[] {
+  switch (preset) {
+    case "all":
+      return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+    case "biweekly-mwf":
+      return ["mon", "wed", "fri"];
+    case "biweekly-tts":
+      return ["tue", "thu", "sat"];
+    case "weekday":
+      return ["mon", "tue", "wed", "thu", "fri"];
+    case "weekend":
+      return ["sat", "sun"];
+    case "workout":
+    case "rest":
+    case "custom":
+      return [];
+  }
+}
 export const DAYS_OF_WEEK: DayOfWeek[] = [
   "mon",
   "tue",
@@ -129,8 +158,10 @@ export interface ScheduleEntry {
   };
   product: {
     price: string | null;
+    currency: Currency | null;
     link: string | null;
   } | null;
+  status: EntryStatus;
   notes: string | null;
   active: boolean;
   cycle: {
@@ -140,7 +171,7 @@ export interface ScheduleEntry {
   } | null;
 }
 
-export const SCHEMA_VERSION = 2 as const;
+export const SCHEMA_VERSION = 3 as const;
 
 export interface PersonalSchedule {
   schemaVersion: typeof SCHEMA_VERSION;
