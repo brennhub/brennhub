@@ -211,18 +211,6 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
         </div>
       )}
 
-      {candidates.length > 0 && (
-        <section className="mb-6">
-          <CandidatesView
-            entries={candidates}
-            supplements={supplements}
-            onConfirm={handleConfirm}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        </section>
-      )}
-
       <section className="mb-10">
         <h2 className="mb-3 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
           {tp.mySchedule}
@@ -238,6 +226,18 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
           onAddCustom={handleAddCustom}
         />
       </section>
+
+      {candidates.length > 0 && (
+        <section className="mb-10">
+          <CandidatesView
+            entries={candidates}
+            supplements={supplements}
+            onConfirm={handleConfirm}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </section>
+      )}
 
       <section>
         <h2 className="mb-3 text-xl font-semibold text-zinc-900 dark:text-zinc-50">

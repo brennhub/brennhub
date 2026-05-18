@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Plus, Search, Zap } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Plus, Search, X, Zap } from "lucide-react";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import {
   CATEGORIES,
@@ -30,6 +30,7 @@ export function LibraryView({ supplements, onAdd, onQuickAdd }: Props) {
   const [filterSolubility, setFilterSolubility] = useState<string>(ALL);
   const [filterState, setFilterState] = useState<string>(ALL);
   const [query, setQuery] = useState<string>("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const filtered = useMemo(() => {
     return supplements.filter((s) => {
@@ -61,12 +62,26 @@ export function LibraryView({ supplements, onAdd, onQuickAdd }: Props) {
           <div className="relative">
             <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400" />
             <input
+              ref={searchInputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={tp.searchPlaceholder}
-              className="w-full rounded-md border border-zinc-300 bg-white py-1 pl-7 pr-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+              className="w-full rounded-md border border-zinc-300 bg-white py-1 pl-7 pr-7 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
             />
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  searchInputRef.current?.focus();
+                }}
+                aria-label="clear"
+                className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              >
+                <X className="size-3" />
+              </button>
+            )}
           </div>
         </label>
         <FilterSelect

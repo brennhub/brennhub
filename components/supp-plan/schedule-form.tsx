@@ -350,8 +350,8 @@ export function ScheduleForm({
                 <div className="col-span-2">
                   <Field label={tp.productPrice}>
                     <input
-                      type="number"
-                      step="any"
+                      type="text"
+                      inputMode="decimal"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
                       className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
