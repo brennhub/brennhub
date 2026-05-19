@@ -23,7 +23,7 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 - [x] D1 스키마 설계 + 마이그레이션 파일 (`migrations/001_hanja.sql`) — 39-A
 - [x] 시드 데이터 25자 (오행별 5자, `migrations/002_hanja_seed.sql`) — 39-A
 - [ ] **39-B**: 대법원 인명용 한자 **9,389자 (2024-06-11 시행, 대법원규칙 제3151호)** 풀 데이터 적재 (소스 확보 + 변환 스크립트 + bulk INSERT)
-- [ ] D1 binding `NAMING_DB` (wrangler.jsonc, prod + preview)
+- [x] D1 binding `NAMING_DB` (wrangler.jsonc, prod + preview) — `0.4.0` (prod `2b4853be...`, preview `48fce286...`). migrations apply는 Brenn 수동 후속.
 - [ ] 음 → 한자 후보 조회 API
 - [ ] 한자 → 의미/오행 조회
 

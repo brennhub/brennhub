@@ -2,6 +2,18 @@
 
 주요 결정 / 이정표.
 
+## [0.4.0] — 2026-05-19
+
+### Added
+- D1 binding `NAMING_DB` 등록 (`wrangler.jsonc` top-level + env.preview 양쪽).
+  - prod: `brennhub-saju-naming` (id `2b4853be-...`)
+  - preview: `brennhub-saju-naming-dev` (id `48fce286-...`)
+- 다음 Phase: Brenn 수동 `wrangler d1 execute ... --file=app/tools/saju-naming/migrations/{001,002}*.sql --remote` (dev/prod 각 2회).
+
+### Notes
+- supp-plan 컨벤션 일관 — binding 이름 도구 단위(`NAMING_DB`), `-dev` 접미사 database_name으로 환경 분리, `--env preview` 미사용.
+- `cloudflare-env.d.ts`는 본 commit에 미포함. Brenn `npm run cf-typegen` 실행 시 자동 갱신.
+
 ## [0.3.0] — 2026-05-19
 
 ### Added
