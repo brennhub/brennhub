@@ -12,6 +12,7 @@ function toolFromPath(pathname: string | null): FeedbackTool | undefined {
   if (pathname.startsWith("/tools/cron-trans")) return "cron-trans";
   if (pathname.startsWith("/tools/stock-sim")) return "stock-sim";
   if (pathname.startsWith("/tools/supp-plan")) return "supp-plan";
+  if (pathname.startsWith("/tools/saju-naming") || pathname.startsWith("/naming")) return "saju-naming";
   if (pathname === "/" || pathname === "") return undefined;
   return "site";
 }

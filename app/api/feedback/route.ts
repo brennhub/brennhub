@@ -8,6 +8,7 @@ const TOOLS = [
   "cron-trans",
   "stock-sim",
   "supp-plan",
+  "saju-naming",
 ] as const;
 const CATEGORIES = ["feature", "improvement", "complaint", "other"] as const;
 

@@ -329,6 +329,10 @@ export type Messages = {
     "organ_small-intestine": string;
     organ_skin: string;
   };
+  sajuNaming: {
+    name: string;
+    description: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -339,6 +343,7 @@ export type Messages = {
     toolCronTrans: string;
     toolStockSim: string;
     toolSuppPlan: string;
+    toolSajuNaming: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -707,6 +712,10 @@ export const messages: Record<Locale, Messages> = {
       "organ_small-intestine": "소장",
       organ_skin: "피부",
     },
+    sajuNaming: {
+      name: "사주 작명",
+      description: "사주팔자 + 성명학 기반 작명",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -717,6 +726,7 @@ export const messages: Record<Locale, Messages> = {
       toolCronTrans: "Cron 변환기",
       toolStockSim: "주식 시뮬레이터",
       toolSuppPlan: "영양제 플래너",
+      toolSajuNaming: "사주 작명",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -753,6 +763,10 @@ export const messages: Record<Locale, Messages> = {
       "supp-plan": {
         name: "영양제 플래너",
         description: "약동학 기반 개인 영양제 스케줄링",
+      },
+      "saju-naming": {
+        name: "사주 작명",
+        description: "사주팔자 + 성명학 기반 작명",
       },
     },
   },
@@ -1105,6 +1119,11 @@ export const messages: Record<Locale, Messages> = {
       "organ_small-intestine": "Small intestine",
       organ_skin: "Skin",
     },
+    sajuNaming: {
+      name: "Saju Naming",
+      description:
+        "Name recommendations based on Saju and Korean naming principles",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -1115,6 +1134,7 @@ export const messages: Record<Locale, Messages> = {
       toolCronTrans: "Cron Translator",
       toolStockSim: "Stock Simulator",
       toolSuppPlan: "Supplement Planner",
+      toolSajuNaming: "Saju Naming",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -1150,6 +1170,11 @@ export const messages: Record<Locale, Messages> = {
       "supp-plan": {
         name: "Supplement Planner",
         description: "Pharmacokinetics-aware personal supplement scheduling",
+      },
+      "saju-naming": {
+        name: "Saju Naming",
+        description:
+          "Name recommendations based on Saju and Korean naming principles",
       },
     },
   },

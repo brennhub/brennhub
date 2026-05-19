@@ -19,6 +19,7 @@ const TOOL_LABEL: Record<string, string> = {
   "cron-trans": "Cron 변환기",
   "stock-sim": "주식 시뮬레이터",
   "supp-plan": "영양제 플래너",
+  "saju-naming": "사주 작명",
 };
 
 const CATEGORY_LABEL: Record<string, string> = {

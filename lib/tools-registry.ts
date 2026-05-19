@@ -32,4 +32,10 @@ export const tools: Tool[] = [
     status: "live",
     createdAt: "2026-05-17",
   },
+  {
+    id: "saju-naming",
+    slug: "saju-naming",
+    status: "coming-soon",
+    createdAt: "2026-05-19",
+  },
 ];
