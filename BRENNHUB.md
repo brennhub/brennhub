@@ -1,0 +1,111 @@
+# BrennHub — 정체성·이념·원칙
+
+이 문서는 brennhub의 정신·미션·원칙을 repo 기록 + git history에서 추출한 단일 reference. 새 Claude thread 인수인계용. **추측 없음, 사실 기반만.** 출처 표기는 각 항목 옆.
+
+---
+
+## 1. 정체성
+
+- **이름**: `brennhub` (소문자, 인프라/패키지) / **BrennHub** (대문자 혼합, UI 브랜드). 출처: [README.md:1](README.md), [git `cb20fad chore: rebrand UI to BrennHub (mixed case)`].
+- **소유자**: brenn (Brenn). 출처: [README.md:3] "Indie tools by brenn".
+- **본질**: 단일 Next.js 앱 안에 도구 카탈로그가 자라는 **팩토리**. 출처: [README.md:3,30-32], [git `7c1ef5e chore: bootstrap brennhub factory`].
+- **표어**: "Indie tools by brenn — **small, sharp, opinionated**. A single Next.js app that hosts a growing collection of tools under one roof." 출처: [README.md:3].
+
+## 2. 설립 이념 / 미션
+
+- **팩토리 모델**: 허브 페이지가 모든 도구를 나열, 각 도구는 `/tools/<slug>`, 카탈로그는 단일 registry로 구동. 한 파일 + 한 페이지 추가로 새 도구 출시. 라우팅 설정·메뉴 배선 X. 출처: [README.md:30-32].
+- **Build-in-public, 정직**: 만들었다가 retire한 도구도 archived 섹션에 남김. 출처: [README.md:158-162] (ssl-check retire 기록), [git `610d591 chore: remove ssl-check tool (upstream CT logs unreliable, low differentiation)`].
+- **명시적 미션 선언문**: repo 기록 상 한 문장으로 정리된 미션 선언은 **없음**. 위 표어가 가장 근접.
+
+## 3. 핵심 가치 (의사결정 기준)
+
+- **Small, sharp, opinionated**: 도구는 작고 명확하고 의견이 있는 것. 출처: [README.md:3].
+- **차별점 없으면 retire**: 상류 신뢰성 + 시장 대안 다수 → 손절. 출처: [README.md:162] (ssl-check 사례: "차별점 부족(ssllabs, openssl, 브라우저 등 대안 많음)").
+- **결정론적 계산을 AI보다 우선** (saju-naming): "환각 없는 계산 — 사주/오행/획수는 결정론적 알고리즘. AI는 의미·어감 보조만." 출처: [app/tools/saju-naming/README.md:7].
+- **말 아닌 시스템 강제**: 규칙은 prompt만으로는 신뢰 불가. CI/hook으로 자동화. 출처: [CHANGELOG.md:18] "Husky + lint-staged — pre-commit hook에서 staged 파일 자동 lint. '말 아닌 시스템 강제'".
+- **"효능감" 등 추가 가치어**: repo 기록에서 **명시적 언급 없음**.
+
+## 4. 디자인 원칙
+
+- **"AI" 단어를 사용자 UI에 노출하지 말 것**: 라벨·헤딩·설명·버튼·푸터·툴팁 어디에도. AI는 구현 디테일, user-facing 가치 아님. 산출물 기준으로 명명 (`종합 분석`, `결과 요약`, `Summary`, `Verdict`). 출처: [README.md:69-80], [git `3ccf3de refactor: remove 'AI' branding from tool UI`].
+- **다크/라이트 모드 + 토글**: 기본 light, localStorage 영속, zinc 베이스 eye-friendly 팔레트, FOUC 방지 inline script. 출처: [CHANGELOG.md:22] "다크모드".
+- **한국어/영어 이중언어**: 모든 user-facing 문자열은 `lib/i18n/messages.ts`에 `Messages` 타입 등록 + ko/en 둘 다 정의. Namespace는 도구별 nested. 출처: [PATTERNS.md:113-116], [README.md:84-132] "Adding a new language".
+- **상승·하락 색 컨벤션 분리**: KR (빨 상승 / 파 하락) vs US (그 반대). `<html data-color-scheme>` + CSS 변수. 사용자 토글. 출처: [PATTERNS.md:42-44].
+- **광고**: repo 기록 상 광고 도입/금지 **명시적 언급 없음**. (현재 시점 사실: 광고 코드/스크립트 부재.)
+
+## 5. 기술 원칙
+
+- **스택**: Next.js 16 (App Router, TS, Turbopack) + Tailwind v4 (CSS-first) + Cloudflare Workers (OpenNext adapter) + D1 + Workers AI/Anthropic. 출처: [package.json:17-46], [README.md:5-10].
+- **Server Component 우선**: D1 fetch는 `page.tsx` server에서, 인터랙티브 부분만 client wrapper. 출처: [app/tools/supp-plan/README.md:4] "Server, D1 fetch → client-shell".
+- **동일 스택 통일 (별도 백엔드 운영 X)**: 모든 신규 도구도 Workers + D1로. 출처: [app/tools/saju-naming/README.md:11-20] "다른 도구와 동일 스택 (피드백/영양제 플래너). 별도 백엔드 운영 X."
+- **Storage abstraction (미래 마이그레이션 대비)**: interface + impl 분리. supp-plan의 `PersonalScheduleStorage` 패턴 — 로그인 도입 시 `D1ScheduleStorage` 새로 만들고 export 한 줄 교체. 출처: [PATTERNS.md:91-93].
+- **localStorage hydrate + persist + schemaVersion 마이그레이션**: stock-sim/supp-plan 모두. 의미 변경 시 한 줄 주석으로 의도 명시. 출처: [PATTERNS.md:69-73].
+- **D1 binding 구조**: top-level (prod) + `env.preview` 블록 (전체 binding 명시, 상속 X). 출처: [PATTERNS.md:118-122].
+- **CI/CD 정책**:
+  - `dev` 브랜치 push → Cloudflare 자동 배포 (dev.brennhub.com). 출처: [CHANGELOG.md:12].
+  - `dev/main` push → lint + build 자동 검증. 출처: [CHANGELOG.md:16].
+  - pre-commit hook은 staged 파일에 `eslint --fix`. 출처: [package.json:47-49].
+- **OpenNext + Windows 빌드 호환성 우회**: GH Actions Linux에서 빌드. 출처: [CHANGELOG.md:12].
+- **next.js의 새 버전 가정 무시 금지**: "This is NOT the Next.js you know" — APIs/conventions/structure 학습 데이터와 다를 수 있음. 코드 전 `node_modules/next/dist/docs/` 읽기. 출처: [AGENTS.md:1-5].
+
+## 6. 도구 추가 필수 절차
+
+신규 도구 출시 시 빠뜨리면 안 되는 단계:
+
+1. **Registry 등록 + 페이지 둘 다**: [README.md:34-67]. 둘 중 하나만 하면 라우팅 충돌 또는 404.
+   - placeholder: `lib/tools-registry.ts`에 `status: "coming-soon"`만 추가 → `[slug]`가 자동 처리.
+   - live: `app/tools/<slug>/page.tsx` 생성 + registry에 `status: "live"`. `npm run build` 출력에 `/tools/<slug>`가 별도 row인지 확인.
+2. **문서 colocate**: `app/tools/<slug>/{README,BACKLOG,CHANGELOG}.md` 3개 파일. 루트 `TOOLS.md`/`BACKLOG.md`는 인덱스. 출처: [AGENTS.md:9], [git `54e29c5 docs: split tool docs`].
+3. **i18n 추가**: `lib/i18n/messages.ts`의 `Messages` 타입에 새 namespace 등록 + ko/en 둘 다 정의 + `tools` 객체에 `<slug>.{name, description}` 추가. 출처: [PATTERNS.md:113-116], [README.md:84-132].
+4. **피드백 통합**: 신규 도구는 `FeedbackTool` 타입 + `feedbackButton.tsx`의 pathname 매핑 + `feedback-dialog.tsx` toolOptions + `api/feedback/route.ts`의 TOOLS enum + admin page 라벨 매핑 + i18n `feedback.toolXxx`. 출처: [Task 31 supp-plan integration, 사용자 명세].
+5. **공유 패턴 재사용**: 새로 만들기 전에 `PATTERNS.md` 확인. NumberStepper / SearchableSelect / Switch / Currency·ColorScheme provider 등. 출처: [AGENTS.md:9], [PATTERNS.md].
+
+## 7. 금기사항 (Don'ts)
+
+- **"AI" 단어 user-facing 노출**: 라벨/헤딩/설명/버튼/푸터/툴팁 어디에도. 출처: [README.md:69-80].
+- **registry 우회한 app/page.tsx 직접 카드 추가**: 대시보드 카드는 `lib/tools-registry.ts` map으로 자동 노출. registry에 entry만 추가하면 됨. 출처: [README.md:30-67], [Task 31 변경 — "app/page.tsx는 registry 기반이라 변경 없음"].
+- **registry에 entry만 두고 페이지 안 만들기 (또는 그 반대)**: 라우팅 충돌 또는 404. 출처: [README.md:48-54] (route collision 표).
+- **route collision 무시**: 도구 페이지가 있는데 status가 여전히 `"coming-soon"`이면 빌드 시점에 `[slug]`와 정적 페이지가 둘 다 `/tools/<slug>` 라우트를 emit → prod 404. 출처: [README.md:50], [git `7f25d5d fix: prevent route collision between [slug] and dedicated tool pages`].
+- **별도 백엔드 운영**: 신규 도구도 Workers + D1로 통일. 출처: [app/tools/saju-naming/README.md:20].
+- **OpenNext 미지원 Next.js 기능 사용**: 예 — `proxy.ts`는 Node.js runtime 강제 → OpenNext 미지원. `middleware.ts` (edge) 사용 필수. 출처: [CHANGELOG.md:20] (admin Basic Auth fix), [git `458a7c8 fix(admin): use process.env for basic auth (edge runtime compat)`].
+- **현재 단계에서 결제/Pro 티어 도입 (`/naming` 제외)**: saju-naming만 Stripe $29/$49 예정. 다른 도구는 무료. 출처: [app/tools/saju-naming/README.md:22-28]. (광고/결제 일반 금지에 대한 **명시적 언급은 기록 없음** — 위는 사실 기반.)
+- **.tscn / project.godot**: brennhub은 Next.js 프로젝트로 **해당 없음** (사용자 task 명세의 예시는 다른 프로젝트인 Magic Survivor 룰).
+
+## 8. 작업 규칙 (Claude Code와 협업 시)
+
+- **언어**: 한국어. 출처: [AGENTS.md 본문 한국어 + 모든 commit 메시지/문서 한국어].
+- **Plan 먼저, 승인 후 실행**: 거의 모든 task에서 사용자가 명시. 출처: 사용자 task 명세 반복 패턴.
+- **Push policy** (출처: [AGENTS.md:11-19]):
+  - 기본: 빌드 통과 + commit 완료 후 **자동 push**.
+  - 예외 (push 직전 정지):
+    - 파일/디렉토리 대량 삭제
+    - git history 재작성 (rebase, force push, filter-repo)
+    - 큰 리팩토링 (대략 5+ 파일 동시 수정 또는 의미 있는 동작 변경)
+    - 프롬프트에 명시적으로 "push 직전 정지" 표기된 경우
+  - 출처: [git `ed79f07 chore: update push policy to auto-push by default`].
+- **Context maps** (출처: [AGENTS.md:7-9]):
+  - 도구 작업 시: `app/tools/<tool>/{README,BACKLOG,CHANGELOG}.md` 먼저.
+  - 공유 패턴: 루트 `PATTERNS.md`.
+  - 인프라 변경 이력: 루트 `CHANGELOG.md`.
+  - 도구 목록 인덱스: 루트 `TOOLS.md`.
+- **기존 패턴 재사용 우선**: 새 의존성 추가보다 자체 구현 (FeedbackDialog가 shadcn Dialog 대신 자체 modal로 간 사례). 출처: [PATTERNS.md:17-21], 여러 commit.
+- **Pre-commit hook**: `.husky/pre-commit` → `lint-staged` → `eslint --fix` (staged ts/tsx/js/jsx/mjs). 출처: [package.json:15,47-49].
+- **검증 흐름 표준**: 변경 → `npm run build` (TS + Next 검증) → pre-commit hook 자동 lint → commit → push (정책 따라). 출처: 반복 작업 패턴 + [CHANGELOG.md].
+- **`Co-Authored-By: Claude Opus 4.7 ...` trailer**: 모든 협업 commit에 포함. 출처: 모든 협업 commit 메시지 history.
+
+---
+
+## 부록: 핵심 출처 파일
+
+| 파일 | 역할 |
+|---|---|
+| `README.md` | 팩토리 모델, 도구 추가 절차, i18n 추가, "AI" 미노출 원칙, archived 도구 |
+| `AGENTS.md` | Next.js 경고, context maps, push policy |
+| `PATTERNS.md` | 공유 컴포넌트 + 내부 패턴 + hooks + i18n 규칙 + D1 규칙 |
+| `CHANGELOG.md` | 인프라/전역 변경 이력 (피드백 시스템, CI/CD, 다크모드 등) |
+| `TOOLS.md` | 도구 목록 인덱스 |
+| `BACKLOG.md` | 미완 항목 인덱스 (도구별 + 전역) |
+| `app/tools/<tool>/{README,BACKLOG,CHANGELOG}.md` | 도구별 상세 |
+| `lib/tools-registry.ts` | 도구 자동 노출 single source of truth |
+| `package.json`, `wrangler.jsonc` | 스택 + 인프라 binding |
+| `git log` | 결정의 사실적 흔적 |

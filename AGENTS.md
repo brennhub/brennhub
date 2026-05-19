@@ -1,3 +1,5 @@
+**먼저 읽기**: [`BRENNHUB.md`](./BRENNHUB.md) (정체성/이념/원칙)
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
