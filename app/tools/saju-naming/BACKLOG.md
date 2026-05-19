@@ -46,9 +46,9 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 - [ ] iteration UX: "이 후보 마음에 안 듦" → 다른 후보로
 
 ### Task 42 — API 엔드포인트
-- [x] `app/api/saju-naming/saju/route.ts` — POST: 생년월일시 → 사주 + 오행 분석 (D1 의존 없음, edge runtime)
-- [x] `app/api/saju-naming/recommend/route.ts` — POST: 성씨 + 용신/기신 → 후보 리스트 (`0.5.0`, NAMING_DB 의존)
-- [x] `app/api/saju-naming/hanja-search/route.ts` — GET: 한자 검색 (`0.5.0` 추가, `0.6.0`에서 경로 평탄화 — OpenNext edge runtime 제약 우회. NAMING_DB 의존, 페이지네이션)
+- [x] `app/api/saju-naming/saju/route.ts` — POST: 생년월일시 → 사주 + 오행 분석 (D1 의존 없음). 0.3.0 추가. 0.6.1에서 `runtime = "edge"` 제거 (OpenNext 미지원).
+- [x] `app/api/saju-naming/recommend/route.ts` — POST: 성씨 + 용신/기신 → 후보 리스트 (NAMING_DB 의존). 0.5.0 추가, 0.6.1 runtime 제거.
+- [x] `app/api/saju-naming/hanja-search/route.ts` — GET: 한자 검색 (NAMING_DB 의존, 페이지네이션). 0.5.0 추가, 0.6.0 경로 평탄화, 0.6.1 runtime 제거.
 - [ ] Rate limit (IP 해시, 무료 티어 보호)
 - [ ] Mock D1 검증 패턴 도입 (현재는 사후 curl로 happy path 검증) — 모든 API 회귀 자동화 시 한 번에 패턴 정립
 

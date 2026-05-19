@@ -2,6 +2,24 @@
 
 주요 결정 / 이정표.
 
+## [0.6.1] — 2026-05-19
+
+### Fixed (진짜 진짜 root cause)
+- `0.6.0` 경로 평탄화 후에도 Deploy Preview 빌드 동일 에러:
+  > `app/api/saju-naming/hanja-search/route cannot use the edge runtime. OpenNext requires edge runtime function to be defined in a separate function.`
+- 2단 중첩 vs 단일 segment는 root cause 아니었음. **`export const runtime = "edge"` 명시 자체**가 OpenNext + Cloudflare adapter의 `separate function` 제약 발동.
+- 정찰: `runtime = "edge"` 명시는 **saju-naming 3개 route만**. 다른 도구 (cron-trans/email-diag/feedback/supp-plan/library/admin) 모두 0건. middleware.ts도 Task 25-A-fix(0.5.4)에서 같은 이유로 제거됨.
+- OpenNext source 확증: `@opennextjs/cloudflare` migrate.js 메시지 "The edge runtime is not supported yet with @opennextjs/cloudflare". 에러 출처 `@opennextjs/aws/dist/build/copyTracedFiles.js:130-132`.
+- **fix**: 3개 saju-naming route에서 `export const runtime = "edge";` 라인 제거. 다른 도구 컨벤션 정렬.
+
+### Kept
+- `0.6.0` 경로 평탄화 (`hanja/search` → `hanja-search`) 유지 — 단일 segment 컨벤션은 다른 도구 (supp-plan/library) 일관성 + 향후 `/api/saju-naming/hanja-search?character=美` 같은 single-resource 확장 자연.
+- `0.5.3` vendor named export, `0.5.2` vendoring, `0.5.4` Turbopack OFF 모두 유지 — 각 단계가 미래에 같은 함정 막는 안전망.
+
+### Notes
+- Turbopack 복귀는 별도 task. 본 fix 검증 후.
+- 0.5.x ~ 0.6.0 시도 매듭: import 형태/위치는 모두 부차였고 `runtime = "edge"` 명시가 진짜 root cause. 진단 비용 ↑ — Turbopack의 silent fail이 5번의 잘못된 가설을 유도.
+
 ## [0.6.0] — 2026-05-19
 
 ### Fixed (진짜 root cause)

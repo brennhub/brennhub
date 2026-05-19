@@ -11,7 +11,8 @@
 import { calculateSaju, type SajuResult } from "@/app/tools/saju-naming/lib/saju";
 import { analyzeOhaeng } from "@/app/tools/saju-naming/lib/ohaeng";
 
-export const runtime = "edge";
+// runtime 명시 없음 — OpenNext + Cloudflare adapter는 edge runtime 미지원
+// (다른 도구 패턴 일관). 자세한 경위는 CHANGELOG 0.6.1.
 
 // ───────────────────────── 입력 검증 ─────────────────────────
 

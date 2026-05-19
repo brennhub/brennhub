@@ -11,7 +11,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { HanjaEntry } from "@/app/tools/saju-naming/lib/names";
 
-export const runtime = "edge";
+// runtime 명시 없음 (다른 도구 패턴 일관 / CHANGELOG 0.6.1).
 
 // ───────────────────────── 입력 검증 ─────────────────────────
 
