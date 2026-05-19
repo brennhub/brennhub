@@ -2,6 +2,12 @@
 
 주요 결정 / 이정표.
 
+## [0.4.1] — 2026-05-19
+
+### Changed
+- `lib/surie.ts` + `lib/names.ts` inline `process.exit` 검증 블록을 `poc/surie-poc.test.ts` / `poc/names-poc.test.ts`로 분리. ohaeng.ts(`0.3.0`)와 동일 패턴.
+- 동기: 향후 `/api/recommend` 가 `names.ts` import 시 Edge runtime 위반 사전 차단. 기능 동등 (출력 + assertion 동일).
+
 ## [0.4.0] — 2026-05-19
 
 ### Added
