@@ -768,6 +768,11 @@ export const messages: Record<Locale, Messages> = {
         name: "사주 작명",
         description: "사주팔자 + 성명학 기반 작명",
       },
+      "lineup-builder": {
+        name: "라인업 빌더",
+        description:
+          "포메이션, 선수 명단, 등번호를 시각적으로 구성하고 PNG로 다운로드",
+      },
     },
   },
   en: {
@@ -1175,6 +1180,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Saju Naming",
         description:
           "Name recommendations based on Saju and Korean naming principles",
+      },
+      "lineup-builder": {
+        name: "Lineup Builder",
+        description:
+          "Visually compose your football starting eleven (formation, names, numbers) and download as PNG",
       },
     },
   },
