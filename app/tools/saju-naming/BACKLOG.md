@@ -84,6 +84,9 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 ### Task 48 — MCP 선택
 - [ ] 사주 계산을 외부 MCP 노출할지 결정 (B2B 가능성)
 
+### 별도 Task: surie/names inline 블록 분리
+- [ ] `lib/surie.ts` + `lib/names.ts` inline `process.exit` 검증 블록을 `poc/*-poc.test.ts` 로 분리 (Edge runtime 호환성 — `/api/recommend` 진입 전 필수). `ohaeng.ts`와 동일 패턴 (`0.3.0`에서 분리됨).
+
 ### 별도 Task: ts-node → tsx 환경 통일
 - [ ] poc/ 테스트 파일 실행 환경 tsx로 통일
 - [ ] `package.json` scripts에 `"test:saju": "tsx app/tools/saju-naming/poc/saju-poc.test.ts"` 추가
