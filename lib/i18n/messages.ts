@@ -524,6 +524,11 @@ export const messages: Record<Locale, Messages> = {
         name: "주식 시뮬레이터",
         description: "투자 결정에 필요한 계산을 한 곳에서",
       },
+      "lineup-builder": {
+        name: "라인업 빌더",
+        description:
+          "포메이션, 선수 명단, 등번호를 시각적으로 구성하고 PNG로 다운로드",
+      },
     },
   },
   en: {
@@ -803,6 +808,11 @@ export const messages: Record<Locale, Messages> = {
       "stock-sim": {
         name: "Stock Simulator",
         description: "Investment math in one place",
+      },
+      "lineup-builder": {
+        name: "Lineup Builder",
+        description:
+          "Visually compose your football starting eleven (formation, names, numbers) and download as PNG",
       },
     },
   },
