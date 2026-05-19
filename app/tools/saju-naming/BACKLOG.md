@@ -22,7 +22,7 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 ### Task 39 — 한자 DB
 - [x] D1 스키마 설계 + 마이그레이션 파일 (`migrations/001_hanja.sql`) — 39-A
 - [x] 시드 데이터 25자 (오행별 5자, `migrations/002_hanja_seed.sql`) — 39-A
-- [ ] **39-B**: 대법원 인명용 한자 8,142자 풀 데이터 적재 (소스 확보 + 변환 스크립트 + bulk INSERT)
+- [ ] **39-B**: 대법원 인명용 한자 **9,389자 (2024-06-11 시행, 대법원규칙 제3151호)** 풀 데이터 적재 (소스 확보 + 변환 스크립트 + bulk INSERT)
 - [ ] D1 binding `NAMING_DB` (wrangler.jsonc, prod + preview)
 - [ ] 음 → 한자 후보 조회 API
 - [ ] 한자 → 의미/오행 조회
@@ -46,9 +46,9 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 - [ ] iteration UX: "이 후보 마음에 안 듦" → 다른 후보로
 
 ### Task 42 — API 엔드포인트
-- [ ] `app/api/saju-naming/saju/route.ts` — POST: 생년월일시 → 사주 + 오행 분석
-- [ ] `app/api/saju-naming/candidates/route.ts` — POST: 성씨 + 사주 + 의도 → 후보 리스트
-- [ ] `app/api/saju-naming/hanja/route.ts` — GET: 음 → 후보 한자 / 한자 → 정보
+- [x] `app/api/saju-naming/saju/route.ts` — POST: 생년월일시 → 사주 + 오행 분석 (D1 의존 없음, edge runtime)
+- [ ] `app/api/saju-naming/recommend/route.ts` — POST: 성씨 + 사주 + 의도 → 후보 리스트 (T39-B 의존)
+- [ ] `app/api/saju-naming/hanja/route.ts` — GET: 음 → 후보 한자 / 한자 → 정보 (T39-B 의존)
 - [ ] Rate limit (IP 해시, 무료 티어 보호)
 
 ## Step 4 — 웹 UI + 결제 + 출시

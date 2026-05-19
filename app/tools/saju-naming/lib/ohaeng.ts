@@ -104,48 +104,4 @@ export function analyzeOhaeng(balance: OhaengBalance): OhaengAnalysis {
   };
 }
 
-// ───────────────────────── 검증 (파일 직접 실행 시) ─────────────────────────
-
-if (
-  typeof process !== "undefined" &&
-  process.argv[1]?.replace(/\\/g, "/").includes("ohaeng")
-) {
-  // 외숙모 사주 케이스: 기미년 경오월 병신일 신묘시
-  const balance: OhaengBalance = { 목: 1, 화: 2, 토: 2, 금: 3, 수: 0 };
-  const result = analyzeOhaeng(balance);
-
-  const failures: string[] = [];
-  function check<T>(label: string, actual: T, expected: T) {
-    const ok = JSON.stringify(actual) === JSON.stringify(expected);
-    if (!ok) {
-      failures.push(
-        `${label}: 기대 ${JSON.stringify(expected)}, 실제 ${JSON.stringify(actual)}`,
-      );
-    }
-  }
-
-  check("deficient", result.deficient, ["수"]);
-  check("excessive", result.excessive, ["금"]);
-
-  if (!result.yongsin.includes("수")) {
-    failures.push("yongsin에 '수' 미포함 (기대: 포함)");
-  }
-  if (result.yongsin.includes("금")) {
-    failures.push("yongsin에 '금' 포함 (기대: 미포함)");
-  }
-
-  console.log("balance:", balance);
-  console.log("deficient:", result.deficient);
-  console.log("excessive:", result.excessive);
-  console.log("yongsin:", result.yongsin);
-  console.log("gisin:", result.gisin);
-  console.log("nameDirection:", result.nameDirection);
-
-  if (failures.length === 0) {
-    console.log("\n✅ 검증 통과");
-  } else {
-    console.error("\n❌ 검증 실패");
-    for (const f of failures) console.error(`  - ${f}`);
-    process.exit(1);
-  }
-}
+// 검증은 `poc/ohaeng-poc.test.ts`로 분리됨 (Edge runtime 호환).

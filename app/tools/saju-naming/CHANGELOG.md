@@ -2,6 +2,16 @@
 
 주요 결정 / 이정표.
 
+## [0.3.0] — 2026-05-19
+
+### Added
+- `app/api/saju-naming/saju/route.ts` — POST endpoint, edge runtime. 입력 `{year, month, day, hour, isLunar}` → 응답 `{saju, ohaeng}`. D1 의존 없음. 자체 type guard 검증 + 범위 체크 (year 1000-2050 외 등).
+- `poc/saju-api.test.ts` — route handler 직접 호출 통합 검증 (POC 동등 결과 + 잘못된 JSON / 범위 위반 / 타입 불일치 케이스 포함).
+
+### Notes
+- 응답 schema는 lib `SajuResult`와 분리. `toApiSaju` 매퍼로 4기둥 + lunarDate만 노출. 오행 정보는 `analyzeOhaeng` 결과(`ohaeng` 객체)에만.
+- `/api/saju-naming/recommend`, `/api/saju-naming/hanja`는 한자 DB 풀 적재 (T39-B) 후 별도.
+
 ## [0.2.0] — 2026-05-19
 
 ### Added
