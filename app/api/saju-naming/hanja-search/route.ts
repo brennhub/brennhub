@@ -1,5 +1,5 @@
 /**
- * GET /api/saju-naming/hanja/search
+ * GET /api/saju-naming/hanja-search
  *
  * Query: hangeul?, ohaeng?, strokeMin?, strokeMax?, limit?, offset?
  * 응답: { results: HanjaEntry[], total: number }

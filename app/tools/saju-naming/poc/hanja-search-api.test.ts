@@ -1,5 +1,5 @@
 /**
- * /api/saju-naming/hanja/search 입력 검증.
+ * /api/saju-naming/hanja-search 입력 검증.
  *
  * 실행: npx tsx app/tools/saju-naming/poc/hanja-search-api.test.ts
  *
@@ -7,13 +7,13 @@
  * 실 D1 흐름은 dev.brennhub.com 배포 후 curl로 사후 검증.
  */
 
-import { GET } from "../../../api/saju-naming/hanja/search/route";
+import { GET } from "../../../api/saju-naming/hanja-search/route";
 
 async function callApi(queryString: string): Promise<{
   status: number;
   data: { code?: string; field?: string; error?: string };
 }> {
-  const url = `http://localhost/api/saju-naming/hanja/search${queryString ? `?${queryString}` : ""}`;
+  const url = `http://localhost/api/saju-naming/hanja-search${queryString ? `?${queryString}` : ""}`;
   const req = new Request(url, { method: "GET" });
   const res = await GET(req);
   const data = (await res.json()) as {
@@ -51,7 +51,7 @@ async function run() {
   check("400 OUT_OF_RANGE strokeMin>strokeMax", r5.status === 400 && r5.data.code === "OUT_OF_RANGE" && r5.data.field === "strokeMin", `code=${r5.data.code} field=${r5.data.field}`);
 
   if (failures.length === 0) {
-    console.log("✅ /api/hanja/search 입력 검증 5/5 통과");
+    console.log("✅ /api/hanja-search 입력 검증 5/5 통과");
     console.log("  실 D1 happy path는 dev.brennhub.com 배포 후 curl로 검증.");
   } else {
     console.error("❌ 검증 실패");

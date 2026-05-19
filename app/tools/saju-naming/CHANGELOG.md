@@ -2,6 +2,23 @@
 
 주요 결정 / 이정표.
 
+## [0.6.0] — 2026-05-19
+
+### Fixed (진짜 root cause)
+- Turbopack OFF (`0.5.4` 진단)로 Webpack 빌드 시 노출된 명시적 에러:
+  > `app/api/saju-naming/hanja/search/route cannot use the edge runtime. OpenNext requires edge runtime function to be defined in a separate function.`
+- **진짜 root cause**: `/api/saju-naming/hanja/search` 2단 중첩 route가 OpenNext의 edge runtime 함수 정의 제약 위반. Turbopack은 이 위반을 silent하게 무시 + broken bundle 출력 → 런타임 `Cannot read properties of undefined (reading 'default')` throw. 옵션 A/D-2/E (`0.5.1/0.5.2/0.5.3`)는 모두 이 진짜 원인을 모른 채 import 형태만 수정 시도해서 동일 fingerprint(`ee32c12c...`) 재현.
+- **fix**: `app/api/saju-naming/hanja/search/route.ts` → `app/api/saju-naming/hanja-search/route.ts` (경로 평탄화). supp-plan/cron-trans 등 정상 동작 도구의 단일 segment 패턴 일관.
+
+### Changed
+- `poc/hanja-search-api.test.ts`: import path + 테스트 URL + 출력 메시지 갱신 (`/hanja/search` → `/hanja-search`).
+- `BACKLOG.md` T42 hanja entry 경로 갱신.
+
+### Notes
+- **외부 URL 변경**: `https://*/api/saju-naming/hanja/search` → `/hanja-search`. 호출 측 0건 (도구 UI coming-soon)이라 무손실.
+- Turbopack OFF (`0.5.4`) 유지 — 본 fix가 효과 있는지 확인 후 별도 task에서 복귀 검증.
+- vendor의 default → named export 변형(`0.5.3`)도 유지 — 정상 도구 named import 컨벤션 일관.
+
 ## [0.5.4] — 2026-05-19
 
 ### Changed (진단용 임시)
