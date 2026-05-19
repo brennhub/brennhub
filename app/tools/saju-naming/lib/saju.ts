@@ -6,11 +6,11 @@
  * 본 모듈은 한글 사용.
  */
 
-// npm 패키지의 `exports` 필드가 `"import"` 조건을 정의하지 않아 Workers Edge
-// runtime의 모든 import 형태 (default/namespace/internal path)가 실패.
-// → ESM bundle을 도구 내 `vendor/`로 복사 + relative path. 자세한 경위는
-// `lib/vendor/README.md`. CHANGELOG `0.5.1`/`0.5.2`.
-import KoreanLunarCalendar from "./vendor/korean-lunar-calendar.js";
+// vendor된 ESM bundle을 named import로 가져옴. default export 형태는
+// OpenNext + Workers Edge runtime의 esbuild interop에서 module evaluation
+// 실패. vendor 파일을 named export로 변형 후 named import.
+// 경위: vendor/README.md + CHANGELOG 0.5.1 / 0.5.2 / 0.5.3.
+import { KoreanLunarCalendar } from "./vendor/korean-lunar-calendar.js";
 
 // ───────────────────────── 상수 ─────────────────────────
 

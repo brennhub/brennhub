@@ -2,6 +2,24 @@
 
 주요 결정 / 이정표.
 
+## [0.5.3] — 2026-05-19
+
+### Fixed
+- `0.5.2` 옵션 D-2 (vendoring + default import) 실패. dev 재배포 후 동일 500 + 동일 fingerprint (`ee32c12c...`) — vendor 위치 무관 default import 자체가 문제.
+- 진단 (D-4):
+  - `x-opennext: 1` 헤더 + `Content-Type: text/plain` 응답 → 우리 try/catch 미진입, OpenNext wrapper의 generic 500. → **module evaluation 단계 throw**
+  - saju-naming만 500, supp-plan/cron-trans/email-diag 등 모두 200. 공통: 정상 도구는 **모두 named import**.
+  - 결론: `export { ... as default }` ESM 패턴이 OpenNext + Workers Edge runtime esbuild interop의 `.default` 액세스에서 실패.
+- **옵션 E 채택**: vendor 파일의 default export 라인을 named로 변형. import 측도 named로.
+  - `vendor/korean-lunar-calendar.js` 마지막 줄: `export { KoreanLunarCalendar as default };` → `export { KoreanLunarCalendar };`
+  - `vendor/korean-lunar-calendar.d.ts`: 동일 패턴
+  - `lib/saju.ts` + `poc/saju-poc.ts`: `import KoreanLunarCalendar from "..."` → `import { KoreanLunarCalendar } from "..."`
+- `vendor/README.md`: 변형 사실 명시 + 패키지 sync 시 같은 변형 재적용 절차 추가.
+
+### Notes
+- saju-naming 전체 import 중 default 형태 0건. 정상 도구 컨벤션 (named) 일관.
+- 옵션 E도 실패 시 D-3 (자체 lunar conversion 구현) 또는 GH Actions workflow에 `upload-artifact` 추가해 .open-next bundle 다운로드 진단.
+
 ## [0.5.2] — 2026-05-19
 
 ### Fixed

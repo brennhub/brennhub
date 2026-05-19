@@ -14,9 +14,30 @@
 
 | 파일 | 출처 |
 |---|---|
-| `korean-lunar-calendar.js` | `node_modules/korean-lunar-calendar/dist/esm/korean-lunar-calendar.js` (ESM bundle) |
-| `korean-lunar-calendar.d.ts` | `node_modules/korean-lunar-calendar/dist/korean-lunar-calendar.d.ts` (타입) |
+| `korean-lunar-calendar.js` | `node_modules/korean-lunar-calendar/dist/esm/korean-lunar-calendar.js` (ESM bundle) — **brennhub 변형**: 마지막 export 라인 `default` 제거 (아래 참고) |
+| `korean-lunar-calendar.d.ts` | `node_modules/korean-lunar-calendar/dist/korean-lunar-calendar.d.ts` (타입) — **brennhub 변형**: 동일 |
 | `LICENSE` | `node_modules/korean-lunar-calendar/LICENSE` (MIT) |
+
+## brennhub 변형 (default → named export)
+
+원본 vendor 파일은 마지막 줄이:
+```js
+export { KoreanLunarCalendar as default };
+```
+
+이 default export 패턴이 **OpenNext + Workers Edge runtime의 esbuild interop**에서 `Cannot read properties of undefined (reading 'default')`로 module evaluation 실패. (옵션 A/D-2 둘 다 실패, 동일 fingerprint.)
+
+brennhub은 default 제거 + named export로 변형:
+```js
+export { KoreanLunarCalendar };
+```
+
+import 측도 named로 사용:
+```ts
+import { KoreanLunarCalendar } from "./vendor/korean-lunar-calendar.js";
+```
+
+CHANGELOG `0.5.3` 참고.
 
 ## 왜 vendoring?
 
@@ -40,7 +61,11 @@ cp node_modules/korean-lunar-calendar/dist/korean-lunar-calendar.d.ts \
 # LICENSE/README는 변경 없으면 유지
 ```
 
-이후 `poc/saju-poc.test.ts` 재실행으로 회귀 확인 + 본 README의 버전 갱신.
+**⚠ 복사 후 brennhub 변형 재적용 필수:**
+- `korean-lunar-calendar.js` 마지막 줄: `export { KoreanLunarCalendar as default };` → `export { KoreanLunarCalendar };`
+- `korean-lunar-calendar.d.ts` 마지막 줄: `... KoreanLunarCalendar as default };` → `... KoreanLunarCalendar };`
+
+이후 `npm run build` + 7 PoC 회귀 (saju-naming/poc/*-poc.test.ts, saju-api.test.ts 등) → 본 README의 버전 갱신.
 
 ## 사용처
 

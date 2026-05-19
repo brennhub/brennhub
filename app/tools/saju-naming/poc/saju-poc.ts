@@ -9,7 +9,7 @@
  * 또는 Workers route에서 import해서 호출.
  */
 
-import KoreanLunarCalendar from "../lib/vendor/korean-lunar-calendar.js";
+import { KoreanLunarCalendar } from "../lib/vendor/korean-lunar-calendar.js";
 
 // ───────────────────────── 상수 ─────────────────────────
 

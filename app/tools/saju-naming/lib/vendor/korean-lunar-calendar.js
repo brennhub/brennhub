@@ -496,5 +496,7 @@ var KoreanLunarCalendar = /** @class */ (function () {
     return KoreanLunarCalendar;
 }());
 
-export { KoreanLunarCalendar as default };
+// brennhub 변형: default → named export (OpenNext + Workers Edge esbuild
+// interop의 `.default` 처리 회피). 자세한 경위는 vendor/README.md + CHANGELOG 0.5.3.
+export { KoreanLunarCalendar };
 //# sourceMappingURL=korean-lunar-calendar.js.map

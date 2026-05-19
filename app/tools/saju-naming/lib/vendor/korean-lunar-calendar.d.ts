@@ -55,4 +55,5 @@ declare class KoreanLunarCalendar {
     getSolarCalendar(): CalendarData;
 }
 
-export { CalendarData, GapJaData, KoreanLunarCalendar as default };
+// brennhub 변형: KoreanLunarCalendar as default → named. README + CHANGELOG 0.5.3 참고.
+export { CalendarData, GapJaData, KoreanLunarCalendar };
