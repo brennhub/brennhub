@@ -2,6 +2,30 @@
 
 주요 결정 / 이정표.
 
+## [0.6.2] — 2026-05-19
+
+### Reverted (진단 매듭)
+- `0.5.4` 진단성 변경 (`--webpack` flag) 원복. `package.json` scripts.build: `next build --webpack` → `next build` (Next.js 16 default = Turbopack).
+- 동기: `0.6.1`에서 진짜 root cause(`runtime = "edge"`)가 제거됐으므로 Turbopack silent fail 대상 없음. CI 빌드 시간 회복 (~1m 12s → ~30s, Deploy Preview 8-12분 → 5-7분).
+- 사후 검증: dev 재배포 후 3개 curl 200 확인 필수. 1개라도 500이면 새 Turbopack silent fail 가능성 → 다시 Webpack로 복귀 + 진단.
+
+### 0.5.x ~ 0.6.x 매듭 요약
+
+| 버전 | 시도 / 결과 |
+|---|---|
+| 0.5.0 | T42 첫 D1 API 추가 (recommend, hanja/search). dev 배포 후 500 발견 |
+| 0.5.1 | 옵션 A: namespace + unwrap. dev 재배포 후 동일 fingerprint(`ee32c12c...`) |
+| 0.5.2 | 옵션 D-2: vendoring. 동일 fingerprint |
+| 0.5.3 | 옵션 E: vendor named export. 동일 fingerprint |
+| 0.5.4 | 진단성: Turbopack OFF (--webpack). Webpack 빌드가 진짜 에러 노출 |
+| 0.6.0 | 옵션 평탄화: hanja/search → hanja-search. 부차 fix (컨벤션 정렬은 유지) |
+| **0.6.1** | **진짜 root cause**: `runtime = "edge"` 명시 제거. dev 3 curl 200 확인 ✓ |
+| **0.6.2** | 진단 매듭: Turbopack 복귀 |
+
+교훈:
+- `runtime = "edge"` 명시는 OpenNext + Cloudflare adapter에서 미지원. 다른 도구처럼 명시 생략이 default.
+- Turbopack의 silent fail이 5번의 잘못된 가설 유도. Webpack 빌드로 명시적 에러 받아내는 게 진단의 핵심.
+
 ## [0.6.1] — 2026-05-19
 
 ### Fixed (진짜 진짜 root cause)
