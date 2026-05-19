@@ -2,6 +2,14 @@
 
 주요 결정 / 이정표.
 
+## [0.5.4] — 2026-05-19
+
+### Changed (진단용 임시)
+- `package.json` scripts.build: `next build` → `next build --webpack`. Next.js 16의 Turbopack default 비활성화.
+- 동기: 옵션 A/D-2/E (0.5.1/0.5.2/0.5.3) 모두 같은 fingerprint(`ee32c12c...`)로 실패. import 형태/위치 무관 → **Turbopack의 chunk wrapper가 vendor bundle (IIFE 등 오래된 모듈 패턴) 트랜스파일 단계에서 module shape 손상** 가설 검증.
+- 사후 분기: dev 재배포 후 curl 결과 — 200이면 Turbopack root cause 확정 (영구 fix 별도 task), 500이면 D-3 또는 D-4 escalate.
+- 빌드 시간 ↑ 예상 (Webpack > Turbopack). 검증 후 결정.
+
 ## [0.5.3] — 2026-05-19
 
 ### Fixed
