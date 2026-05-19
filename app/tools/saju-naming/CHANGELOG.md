@@ -2,6 +2,21 @@
 
 주요 결정 / 이정표.
 
+## [0.5.2] — 2026-05-19
+
+### Fixed
+- `0.5.1` 옵션 A 실패 (dev 재배포 후에도 동일 500 throw). namespace import도 root path module resolution을 거쳐 같은 결과.
+- 옵션 C (`/dist/esm/` internal path) 시도 → Next.js Edge bundler가 패키지 `exports` 필드 gating을 엄격 적용해 빌드 단계 실패 (`Module not found`). 옵션 B도 같은 이유로 시도 X.
+- **옵션 D-2 (vendoring) 채택**: ESM bundle을 `app/tools/saju-naming/lib/vendor/`로 복사. `lib/saju.ts`/`poc/saju-poc.ts`는 relative path import. npm 패키지 의존성 제거.
+- 라이센스 (MIT) + 출처 문서 (`vendor/README.md`) 동봉. 업데이트 sync 방법 README 명시.
+
+### Removed
+- `package.json` `dependencies`에서 `korean-lunar-calendar` 제거 (vendor 채택으로 dead dep).
+
+### Notes
+- `eslint.config.mjs` `globalIgnores`에 `app/tools/*/lib/vendor/**` 추가 — vendored bundle은 lint 대상 외.
+- `cloudflare-env.d.ts`에 `NAMING_DB: D1Database` 타입 등록 — `0.4.0` binding의 typegen 결과 (관련 작업 매듭).
+
 ## [0.5.1] — 2026-05-19
 
 ### Fixed

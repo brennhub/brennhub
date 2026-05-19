@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     ".open-next/**",
     // Wrangler temp/state (generated, not source).
     ".wrangler/**",
+    // Vendored npm packages (도구별 vendor 폴더 — 패키지 bundle 그대로).
+    "app/tools/*/lib/vendor/**",
   ]),
   {
     rules: {

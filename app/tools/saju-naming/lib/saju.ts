@@ -6,39 +6,11 @@
  * 본 모듈은 한글 사용.
  */
 
-// korean-lunar-calendar 패키지의 `exports` 필드에 `"import"` 조건이 없어,
-// Workers Edge runtime에서 default import가 CJS-to-ESM interop을 거치며
-// `Cannot read properties of undefined (reading 'default')`로 깨짐.
-// namespace import + 안전 unwrap으로 모든 환경(Node tsx / Workers / Browser) 호환.
-import * as KLCModule from "korean-lunar-calendar";
-
-type KLCConstructor = new () => {
-  setLunarDate: (y: number, m: number, d: number, intercalation: boolean) => void;
-  setSolarDate: (y: number, m: number, d: number) => void;
-  getKoreanGapja: () => {
-    year: string;
-    month: string;
-    day: string;
-    intercalation: string;
-  };
-  getChineseGapja: () => {
-    year: string;
-    month: string;
-    day: string;
-    intercalation: string;
-  };
-  getLunarCalendar: () => {
-    year: number;
-    month: number;
-    day: number;
-    intercalation: boolean;
-  };
-  getSolarCalendar: () => { year: number; month: number; day: number };
-};
-
-const KoreanLunarCalendar: KLCConstructor =
-  (KLCModule as unknown as { default?: KLCConstructor }).default ??
-  (KLCModule as unknown as KLCConstructor);
+// npm 패키지의 `exports` 필드가 `"import"` 조건을 정의하지 않아 Workers Edge
+// runtime의 모든 import 형태 (default/namespace/internal path)가 실패.
+// → ESM bundle을 도구 내 `vendor/`로 복사 + relative path. 자세한 경위는
+// `lib/vendor/README.md`. CHANGELOG `0.5.1`/`0.5.2`.
+import KoreanLunarCalendar from "./vendor/korean-lunar-calendar.js";
 
 // ───────────────────────── 상수 ─────────────────────────
 
