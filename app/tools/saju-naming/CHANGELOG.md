@@ -2,6 +2,18 @@
 
 주요 결정 / 이정표.
 
+## [0.5.0] — 2026-05-19
+
+### Added
+- `app/api/saju-naming/recommend/route.ts` — POST, edge runtime. D1 `NAMING_DB.hanja` (inname_ok=1) 풀 fetch → `recommendNames()` 적용 → `{candidates}` 반환. 입력: `{sungHanja, sungStroke, yongsin, gisin, nameLength, topN?, excludeChars?}`.
+- `app/api/saju-naming/hanja/search/route.ts` — GET, edge. 동적 WHERE (hangeul/ohaeng/strokeMin/strokeMax) + 페이지네이션 (limit/offset). 정렬 `frequency DESC, stroke ASC, character`. 응답 `{results, total}`.
+- `poc/recommend-api.test.ts`, `poc/hanja-search-api.test.ts` — 입력 검증 PoC (각 5 케이스). D1 happy path는 사후 Brenn curl 검증 (supp-plan 패턴 일관).
+
+### Notes
+- 두 endpoint 모두 saju-naming의 **첫 D1 사용 API**. NAMING_DB binding `0.4.0`에서 등록 + 시드 25자 적용 (Phase 3 완료) 전제.
+- 에러 처리: 400 (`INVALID_JSON/INVALID_INPUT/OUT_OF_RANGE`) + 500 (`DB_UNAVAILABLE/DB_ERROR/SERVER_ERROR`).
+- 빈 결과는 200 + empty array (REST 컨벤션).
+
 ## [0.4.1] — 2026-05-19
 
 ### Changed
