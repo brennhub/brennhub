@@ -2,6 +2,13 @@
 
 주요 결정 / 이정표.
 
+## [0.5.1] — 2026-05-19
+
+### Fixed
+- `lib/saju.ts`의 `korean-lunar-calendar` default import → namespace import + 안전 unwrap. Workers Edge runtime에서 `Cannot read properties of undefined (reading 'default')`로 모든 saju-naming endpoint 500 반환하던 문제 해결.
+- 원인: 패키지 `exports` 필드에 `"import"` 조건 부재 → CJS-to-ESM interop wrap 실패. tsx (Node ESM) 환경은 동작했지만 Workers는 실패. PoC 회귀로는 감지 불가했던 환경 차이.
+- 호환: `(KLCModule as ...).default ?? KLCModule` 패턴으로 모든 환경 (Node/Workers/Browser) 동작.
+
 ## [0.5.0] — 2026-05-19
 
 ### Added
