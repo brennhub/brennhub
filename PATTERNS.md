@@ -120,3 +120,4 @@
 - D1 binding: `env.DB` (production) / preview env `env.preview.DB`.
 - wrangler.jsonc 구조: top-level prod + `env.preview` 블록 (전체 binding 명시 — top-level 상속 안 됨).
 - API에서 D1 접근: `getCloudflareContext()` (sync) → `env.DB`. 패턴은 `app/api/feedback/route.ts` 참고.
+- API route 파일에 `export const runtime = "edge"` 명시 X — OpenNext 미지원 (Turbopack에서 silent broken bundle). runtime 미명시 = Workers 자동 처리. 상세: BRENNHUB.md § 7.

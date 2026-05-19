@@ -122,7 +122,10 @@ brennhub은 게임 / SaaS / 사이드 프로젝트 전부의 **우산 브랜드*
 - **registry에 entry만 두고 페이지 안 만들기 (또는 그 반대)**: 라우팅 충돌 또는 404. 출처: [README.md:48-54] (route collision 표).
 - **route collision 무시**: 도구 페이지가 있는데 status가 여전히 `"coming-soon"`이면 빌드 시점에 `[slug]`와 정적 페이지가 둘 다 `/tools/<slug>` 라우트를 emit → prod 404. 출처: [README.md:50], [git `7f25d5d fix: prevent route collision between [slug] and dedicated tool pages`].
 - **별도 백엔드 운영**: 신규 도구도 Workers + D1로 통일. 출처: [app/tools/saju-naming/README.md:20].
-- **OpenNext 미지원 Next.js 기능 사용**: 예 — `proxy.ts`는 Node.js runtime 강제 → OpenNext 미지원. `middleware.ts` (edge) 사용 필수. 출처: [CHANGELOG.md:20], [git `458a7c8 fix(admin): use process.env for basic auth (edge runtime compat)`].
+- **OpenNext 미지원 Next.js 기능 사용**:
+  - (1) `proxy.ts`는 Node.js runtime 강제 → 미지원. `middleware.ts` (edge) 사용 필수.
+  - (2) **API route 파일에 `export const runtime = "edge"` 명시 금지** — OpenNext + Cloudflare adapter 미지원. Webpack 빌드에서 명시 에러 ("edge runtime function must be defined in a separate function"), Turbopack에서는 silent broken bundle 생성. runtime 미명시가 정상 (Workers 환경 default 처리).
+  - 출처: [CHANGELOG.md:20], [git `458a7c8 fix(admin): use process.env for basic auth (edge runtime compat)`, `f7fb99c fix(saju-naming): remove export const runtime = "edge" (real fix)`], [app/tools/saju-naming/CHANGELOG.md 0.5.0~0.6.2 진단 시리즈].
 - **.tscn / project.godot**: brennhub은 Next.js 프로젝트로 **해당 없음** (다른 repo `brennhub/magic-survivor` 규칙).
 
 ### 명시적 금기 (chat 기반)

@@ -20,3 +20,6 @@
 - (fix) Admin Basic Auth — `getCloudflareContext` 제거 + `process.env` 사용 (edge runtime 호환). `proxy.ts` 시도 후 OpenNext 미지원 발견 → `middleware.ts`로 복귀.
 - **Admin polish** — 필터링 (도구/카테고리/상태), 상태 cycle 토글 (new → read → resolved), LocaleToggle `/admin` 숨김.
 - **다크모드** — `ThemeProvider` + 토글 (Sun/Moon, `/admin` 숨김). FOUC 방지 inline script. zinc 베이스 eye-friendly 팔레트. 기본 light, localStorage 영속.
+
+## 2026-05-19
+- **컨벤션 명문화 (OpenNext runtime)** — API route 파일에 `export const runtime = "edge"` 금지. BRENNHUB.md § 7 + PATTERNS.md § D1/Cloudflare 명시. 근거: saju-naming Task 39 진단 시리즈 (0.5.0~0.6.2, 5+1 시도 후 매듭, `f7fb99c`).
