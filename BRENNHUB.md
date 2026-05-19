@@ -11,6 +11,19 @@
 - **본질**: 단일 Next.js 앱 안에 도구 카탈로그가 자라는 **팩토리**. 출처: [README.md:3,30-32], [git `7c1ef5e chore: bootstrap brennhub factory`].
 - **표어**: "Indie tools by brenn — **small, sharp, opinionated**. A single Next.js app that hosts a growing collection of tools under one roof." 출처: [README.md:3].
 
+### brennhub 우산 (umbrella) 정의
+
+brennhub은 게임 / SaaS / 사이드 프로젝트 전부의 **우산 브랜드**.
+
+세 repo:
+- `brennhub/brennhub` — 통합 개발 사이트 (brennhub.com)
+- `brennhub/dojo` — 언어 결투장 서비스 (별도 도메인 또는 brennhub.com 산하)
+- `brennhub/magic-survivor` — 게임 (Godot)
+
+**본 문서의 원칙들은 `brennhub/brennhub` (이 repo) 기준.** dojo / magic-survivor에 적용 여부는 별개 판단.
+
+출처: 과거 대화 (2026-05-16, magic-survivor 마이그레이션).
+
 ## 2. 설립 이념 / 미션
 
 - **팩토리 모델**: 허브 페이지가 모든 도구를 나열, 각 도구는 `/tools/<slug>`, 카탈로그는 단일 registry로 구동. 한 파일 + 한 페이지 추가로 새 도구 출시. 라우팅 설정·메뉴 배선 X. 출처: [README.md:30-32].
@@ -23,7 +36,33 @@
 - **차별점 없으면 retire**: 상류 신뢰성 + 시장 대안 다수 → 손절. 출처: [README.md:162] (ssl-check 사례: "차별점 부족(ssllabs, openssl, 브라우저 등 대안 많음)").
 - **결정론적 계산을 AI보다 우선** (saju-naming): "환각 없는 계산 — 사주/오행/획수는 결정론적 알고리즘. AI는 의미·어감 보조만." 출처: [app/tools/saju-naming/README.md:7].
 - **말 아닌 시스템 강제**: 규칙은 prompt만으로는 신뢰 불가. CI/hook으로 자동화. 출처: [CHANGELOG.md:18] "Husky + lint-staged — pre-commit hook에서 staged 파일 자동 lint. '말 아닌 시스템 강제'".
-- **"효능감" 등 추가 가치어**: repo 기록에서 **명시적 언급 없음**.
+
+### 유지보수성 (Maintainability) — 최상위 기술 원칙
+
+사용자 본인 명시: **"서비스가 지속적으로 유지보수가 잘 되는 방향으로 해야해. 내가 이것만 보고 있을 수 없기 때문이야."**
+
+적용 규칙:
+- 새 도구 추가 시 기존 스택 유지 (Cloudflare Workers + D1). 별도 인프라(FastAPI/Supabase/Vercel 등) 추가 금지.
+- 단일 배포 파이프라인 유지. 마이크로서비스 분리 금지.
+- 관리 포인트가 늘어나는 기술 결정은 강한 정당성 필요.
+- "지금 잘 돌아감"보다 "**6개월 후에도 손 안 가도 돌아감**"이 더 중요.
+
+배경: 솔로 빌더 + 풀타임 본업 동시 진행.
+
+출처: 과거 대화 (2026-05-19, saju-naming 스택 결정).
+
+### 효능감 (Real Usefulness) — UX 평가 기준
+
+시각적 완성도 ≠ 실사용 효용. 도구는 "보기 좋음"이 아니라 "**실제로 얼마나 유용한가**"로 평가.
+
+사용자 본인 평가 예시: 영양제 플래너 MVP 3차 iteration 후 "효능감 30%" 자가 평가. → 시각적/기능적 완성도와 별개로 일상 사용 시 효용은 아직 부족하다는 의미. 지속적 사용 피드백 기반 튜닝 필요.
+
+적용 규칙:
+- 사용자가 일상에서 실제로 쓸 것인가를 가장 먼저 묻는다.
+- 멋있어 보이는 기능보다 매일 사용하게 되는 기능 우선.
+- "완성"이 아니라 "**지속적 개선**" 모드.
+
+출처: 본 thread (2026-05-17, supp-plan 검증).
 
 ## 4. 디자인 원칙
 
@@ -50,26 +89,50 @@
 
 ## 6. 도구 추가 필수 절차
 
-신규 도구 출시 시 빠뜨리면 안 되는 단계:
+### 외부 기획서 필터 (도구 신규 plan 검토 시 반드시 확인)
+
+외부 기획서를 받았더라도 brennhub 적용 시 다음 필터 적용:
+
+1. **가격 페이지 / 결제 UI**가 기획서에 있으면 → **제외**
+2. **별도 백엔드 스택** (FastAPI, Python, Supabase 등)이 있으면 → **brennhub 스택(Workers + D1)으로 재설계**
+3. **광고 슬롯**이 있으면 → **제외**
+4. **tools-registry 등록** 누락되면 → **필수 추가**
+5. **feedback-dialog / feedback-button 통합** 누락되면 → **필수 추가**
+6. **i18n (ko/en)** 누락되면 → **필수 추가**
+7. **도구 폴더 안 README/BACKLOG/CHANGELOG** 없으면 → **필수 생성**
+
+**외부 기획서를 무비판적으로 따라가는 것이 가장 흔한 사고 원인.**
+
+### 통합 체크리스트 (구현 단계)
 
 1. **Registry 등록 + 페이지 둘 다**: [README.md:34-67]. 둘 중 하나만 하면 라우팅 충돌 또는 404.
    - placeholder: `lib/tools-registry.ts`에 `status: "coming-soon"`만 추가 → `[slug]`가 자동 처리.
    - live: `app/tools/<slug>/page.tsx` 생성 + registry에 `status: "live"`. `npm run build` 출력에 `/tools/<slug>`가 별도 row인지 확인.
 2. **문서 colocate**: `app/tools/<slug>/{README,BACKLOG,CHANGELOG}.md` 3개 파일. 루트 `TOOLS.md`/`BACKLOG.md`는 인덱스. 출처: [AGENTS.md:9], [git `54e29c5 docs: split tool docs`].
 3. **i18n 추가**: `lib/i18n/messages.ts`의 `Messages` 타입에 새 namespace 등록 + ko/en 둘 다 정의 + `tools` 객체에 `<slug>.{name, description}` 추가. 출처: [PATTERNS.md:113-116], [README.md:84-132].
-4. **피드백 통합**: 신규 도구는 `FeedbackTool` 타입 + `feedbackButton.tsx`의 pathname 매핑 + `feedback-dialog.tsx` toolOptions + `api/feedback/route.ts`의 TOOLS enum + admin page 라벨 매핑 + i18n `feedback.toolXxx`. 출처: [Task 31 supp-plan integration, 사용자 명세].
+4. **피드백 통합**: 신규 도구는 `FeedbackTool` 타입 + `feedback-button.tsx`의 pathname 매핑 + `feedback-dialog.tsx` toolOptions + `api/feedback/route.ts`의 TOOLS enum + admin page 라벨 매핑 + i18n `feedback.toolXxx`. 출처: [Task 31 supp-plan integration].
 5. **공유 패턴 재사용**: 새로 만들기 전에 `PATTERNS.md` 확인. NumberStepper / SearchableSelect / Switch / Currency·ColorScheme provider 등. 출처: [AGENTS.md:9], [PATTERNS.md].
 
 ## 7. 금기사항 (Don'ts)
 
+### Repo/코드 기반
+
 - **"AI" 단어 user-facing 노출**: 라벨/헤딩/설명/버튼/푸터/툴팁 어디에도. 출처: [README.md:69-80].
-- **registry 우회한 app/page.tsx 직접 카드 추가**: 대시보드 카드는 `lib/tools-registry.ts` map으로 자동 노출. registry에 entry만 추가하면 됨. 출처: [README.md:30-67], [Task 31 변경 — "app/page.tsx는 registry 기반이라 변경 없음"].
+- **registry 우회한 app/page.tsx 직접 카드 추가**: 대시보드 카드는 `lib/tools-registry.ts` map으로 자동 노출. registry에 entry만 추가하면 됨. 출처: [README.md:30-67].
 - **registry에 entry만 두고 페이지 안 만들기 (또는 그 반대)**: 라우팅 충돌 또는 404. 출처: [README.md:48-54] (route collision 표).
 - **route collision 무시**: 도구 페이지가 있는데 status가 여전히 `"coming-soon"`이면 빌드 시점에 `[slug]`와 정적 페이지가 둘 다 `/tools/<slug>` 라우트를 emit → prod 404. 출처: [README.md:50], [git `7f25d5d fix: prevent route collision between [slug] and dedicated tool pages`].
 - **별도 백엔드 운영**: 신규 도구도 Workers + D1로 통일. 출처: [app/tools/saju-naming/README.md:20].
-- **OpenNext 미지원 Next.js 기능 사용**: 예 — `proxy.ts`는 Node.js runtime 강제 → OpenNext 미지원. `middleware.ts` (edge) 사용 필수. 출처: [CHANGELOG.md:20] (admin Basic Auth fix), [git `458a7c8 fix(admin): use process.env for basic auth (edge runtime compat)`].
-- **현재 단계에서 결제/Pro 티어 도입 (`/naming` 제외)**: saju-naming만 Stripe $29/$49 예정. 다른 도구는 무료. 출처: [app/tools/saju-naming/README.md:22-28]. (광고/결제 일반 금지에 대한 **명시적 언급은 기록 없음** — 위는 사실 기반.)
-- **.tscn / project.godot**: brennhub은 Next.js 프로젝트로 **해당 없음** (사용자 task 명세의 예시는 다른 프로젝트인 Magic Survivor 룰).
+- **OpenNext 미지원 Next.js 기능 사용**: 예 — `proxy.ts`는 Node.js runtime 강제 → OpenNext 미지원. `middleware.ts` (edge) 사용 필수. 출처: [CHANGELOG.md:20], [git `458a7c8 fix(admin): use process.env for basic auth (edge runtime compat)`].
+- **.tscn / project.godot**: brennhub은 Next.js 프로젝트로 **해당 없음** (다른 repo `brennhub/magic-survivor` 규칙).
+
+### 명시적 금기 (chat 기반)
+
+- **가격 페이지 / 결제 / Pro 티어 생성 금지** (현 단계). 도구 신규 추가 시 기획서에 가격 정보 있더라도 brennhub 컨텍스트에 맞춰 제외. 수익화는 12개월+ 후 별도 결정.
+- **광고 도입 금지**. brennhub 인디 미학과 양립 불가.
+- **별도 인프라/서비스 추가 금지** (Python 백엔드, 외부 DB 등). 유지보수성 원칙.
+- **app/page.tsx 카드 수동 추가 금지**. `lib/tools-registry.ts` entry로 자동 노출.
+
+출처: 본 thread (2026-05-17, 수익화/카피 방어 자문).
 
 ## 8. 작업 규칙 (Claude Code와 협업 시)
 
