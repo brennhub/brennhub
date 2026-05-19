@@ -6,7 +6,6 @@
  * 본 모듈은 한글 사용.
  */
 
-// @ts-expect-error — korean-lunar-calendar는 타입 정의 없음
 import KoreanLunarCalendar from "korean-lunar-calendar";
 
 // ───────────────────────── 상수 ─────────────────────────

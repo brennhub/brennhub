@@ -9,7 +9,6 @@
  * 또는 Workers route에서 import해서 호출.
  */
 
-// @ts-expect-error — korean-lunar-calendar는 타입 정의 없음 (런타임 검증 PoC)
 import KoreanLunarCalendar from "korean-lunar-calendar";
 
 // ───────────────────────── 상수 ─────────────────────────
@@ -173,12 +172,25 @@ export function calculateSaju(
     cal.setSolarDate(year, month, day);
   }
 
-  const gapja = cal.getKoreanGapja();
-  // korean-lunar-calendar의 getKoreanGapja()는
-  // { yearGapja, monthGapja, dayGapja, ... } 형태로 반환.
-  const yearPillar = parseGapja(gapja.yearGapja);
-  const monthPillar = parseGapja(gapja.monthGapja);
-  const dayPillar = parseGapja(gapja.dayGapja);
+  const gapja = cal.getKoreanGapja() as {
+    year: string;
+    month: string;
+    day: string;
+    intercalation: string;
+  };
+  // getKoreanGapja() 반환은 한글 갑자 (예: "기미년"). 첫 두 글자가 천간+지지.
+  // 다만 saju-poc.ts는 한자 기반 (CHEONGAN/JIJI 한자 상수)이므로
+  // 한자 갑자로 받기 위해 getChineseGapja() 사용.
+  const chineseGapja = cal.getChineseGapja() as {
+    year: string;
+    month: string;
+    day: string;
+    intercalation: string;
+  };
+  void gapja; // 한글 형태는 lib/saju.ts에서 사용
+  const yearPillar = parseGapja(chineseGapja.year);
+  const monthPillar = parseGapja(chineseGapja.month);
+  const dayPillar = parseGapja(chineseGapja.day);
   const hourPillar = calcHourPillar(dayPillar.stem, hour);
 
   const pillars = [yearPillar, monthPillar, dayPillar, hourPillar];
