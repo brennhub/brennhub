@@ -17,6 +17,12 @@
 - migration apply는 Brenn 수동 (dev `--env preview --remote` / prod `--remote`).
 - partial/복합 index 및 consonant 컬럼은 C-5-7 (recommend WHERE 재설계) 시점에 별도 migration으로 검토.
 
+### Decided (C-5-2 (α) quick check 결과)
+- (α) 1차 시도 가능성 = 낮음. fallback 채택. 상세: `docs/learnings/2026-05-20-saju-naming-efamily-scout.md` (commit 79281c5).
+- C-5-2 추정 0.5d 유지. 9,460 전량 적재 + inname_ok=1 임시.
+- 71자 reconcile + inname_ok 정확화는 C-5-8 (critical) 전담. 우선순위: (a) law.go.kr 별표 / (b) efamily PDF / (c) efamily 조회 순회.
+- efamily 라이센스 발견: "Copyright©Supreme Court of Korea. All Rights reserved." — KOGL/공공누리/CC 없음. C-5-8 진행 시 라이센스 risk 인지 필수.
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)

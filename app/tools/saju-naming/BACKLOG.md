@@ -117,7 +117,7 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 | **C-5-5** | 원획법(C-4-B) 코드화 — `lib/saju-naming/won-stroke.ts`. 14부수 환원표 + 숫자 한자 룰 | C-5-3 | 0.5d | C-4-B 확정표 그대로. PoC 검증 |
 | **C-5-6** | 별도 bulk INSERT 마이그레이션 생성 (파일명은 C-5-6 진입 시 확정 — `002_hanja_seed.sql` 네이밍과 일관) — 5-way join 결과 bulk INSERT, 배치 분할 | C-5-1~5 | 0.5d | D1 제약: statement 크기 / 변수 수 한도 → 배치 (~수백 row/INSERT). 003은 C-5-1에서 스키마 전용 확정 |
 | **C-5-7** | dev 적재 + 검증 — `wrangler d1 execute`, COUNT 9,460, spot-check, hanja-search/recommend API 회귀 | C-5-6 | 0.5d→1d? | Brenn 수동 apply 가능성. 적재 후 39-C(점수 base) 진입 가능. ⚠️ recommend WHERE 재설계 필요 — 상세 ↓ §C-5-7 보류 |
-| **C-5-8** (critical) | efamily.scourt.go.kr 공식 9,389 인명용 한자 리스트 확보 → 71자 초과 reconcile → inname_ok 정확화 UPDATE | C-5-2 (또는 병렬 시도) | 0.5d | 호적 등록 risk 정확화. 44 UI live 출시 전 필수. quick check 결과에 따라 C-5-2 fallback 분기 결정 |
+| **C-5-8** (critical) | efamily.scourt.go.kr 공식 9,389 인명용 한자 리스트 확보 → 71자 초과 reconcile → inname_ok 정확화 UPDATE 우선순위: (a) law.go.kr 「가족관계의 등록 등에 관한 규칙」 제37조 별표1/2 [법령=저작권 비대상, 추출성 선확인] / (b) efamily PDF [현행이나 'All Rights Reserved' 라이센스 제약] / (c) efamily 조회 485 한글음 순회 [최후수단] | C-5-2 (또는 병렬 시도) | 0.5d | 호적 등록 risk 정확화. 44 UI live 출시 전 필수. quick check 결과에 따라 C-5-2 fallback 분기 결정 |
 
 ##### C-5-1 결과 — hanja 신 스키마 확정 [완료 2026-05-19]
 
