@@ -2,6 +2,26 @@
 
 주요 결정 / 이정표.
 
+## [0.3.0] — 2026-05-19
+
+### Added (Task B — 인터랙션 + 캡처)
+
+- **드래그** — Pointer Events 통일(`pointerdown/move/up/cancel` + `setPointerCapture`, `touch-action:none`)로 mouse·touch·pen 한 코드 처리. 5px 임계값으로 드래그 vs 클릭 구분. 바운더리는 마커 반지름 % 환산해 clamp.
+- **편집 모달** — `edit-dialog.tsx` (feedback-dialog 자체 modal 패턴 재사용: backdrop blur·ESC·backdrop 클릭·취소 3종 닫기). 등번호는 `NumberStepper` 재사용.
+- **컨트롤 패널** — `control-panel.tsx` (포메이션 select 활성 + 다운로드 + 초기화). 포메이션 전환 시 players 전체 reset + CSS transition.
+- **팀명 + 캡처** — 팀명 input(헤더). `captureRef`는 팀명 헤더 + 핏치를 감싼 카드 div만 대상(컨트롤·모달 제외). dynamic `import("html2canvas")` → `toBlob` → `${팀명}-squad.png` 다운로드. 팀명 빈 값이면 헤더 미렌더.
+- **i18n** — `lineupBuilder` 네임스페이스에 팀명/버튼/편집/포메이션명 키 추가. 포메이션 표시명을 데이터(`formations.ts` `label`)에서 i18n `formations` nested로 이동 → `Formation` 타입에서 `label` 제거.
+
+### Changed
+
+- **캡처 호환** — 캡처 대상 subtree(핏치·라인·마커·헤더 카드) 색상을 hex/rgba()로 고정 (Tailwind v4 oklch 토큰·`color-mix` 투명도·CSS 변수 회피 — html2canvas 1.4.1 미파싱). 잔디는 `bg-[#059669] dark:bg-[#065f46]`로 light/dark 두 톤 유지(변수 없이 hex 직접). 화면 = PNG 일치.
+- **레이아웃** — Task A의 grid를 `flex md:flex-row` + `order`로 교체 (데스크톱 좌측 컨트롤/우측 핏치, 모바일 팀명→핏치→컨트롤 stack).
+
+### Notes
+
+- 빌드 검증: TS 에러 0, `/tools/lineup-builder` 정적 route emit, prerender HTML에 팀명 input·셀렉트·11 마커·버튼 확인. **드래그/캡처/모달 실동작 시각 검증은 환경 제약으로 미수행 — dev 배포 후 사용자 확인 단계.**
+- feedback 통합은 범위 외(Task C). localStorage 히스토리도 2단계 확장.
+
 ## [0.2.0] — 2026-05-19
 
 ### Added (Task A — 골격 + 정적 렌더링 + registry live)

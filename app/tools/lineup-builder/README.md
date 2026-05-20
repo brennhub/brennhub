@@ -45,34 +45,37 @@ type Player = {
   number: number;
 };
 
+type FormationId = "4-4-2" | "4-3-3" | "3-5-2" | "4-2-3-1";
+
 type Formation = {
-  id: "4-4-2" | "4-3-3" | "3-5-2" | "4-2-3-1";
-  label: string;
-  players: Player[];   // 11명
+  id: FormationId;
+  players: Player[];   // 11명. 표시명은 i18n lineupBuilder.formations[id]
 };
 ```
 
-좌표 값:
-- **4-4-2, 4-3-3** — 외부 기획서 § 4.1 inline. MVP task에서 `lib/formations.ts`에 그대로 transcribe.
-- **3-5-2, 4-2-3-1** — 도메인 정찰 후 결정. BACKLOG "도메인 결정 필요" 항목 참조.
+좌표 값: 4종(4-4-2 / 4-3-3 / 3-5-2 / 4-2-3-1) 모두 Task A 지시서에서 확정 수령, `lib/lineup-builder/formations.ts`에 transcribe 완료.
 
-## 파일 구조 (예정)
+## 파일 구조
 
 ```
 app/tools/lineup-builder/
   README.md             # 본 문서
-  BACKLOG.md            # MVP 작업 계획 + 확장 항목
+  BACKLOG.md            # 작업 계획 + 확장 항목
   CHANGELOG.md
   page.tsx              # Server Component shell
-  client-shell.tsx      # Client wrapper (드래그 + 편집 + 캡처)
-  lib/
-    formations.ts       # 포메이션 4종 좌표
-  components/
-    pitch.tsx           # 경기장 + 마커 컨테이너
-    player-marker.tsx   # 단일 선수 마커
-    formation-select.tsx
-    edit-dialog.tsx     # 이름·등번호 편집
+  client-shell.tsx      # Client wrapper (상태·레이아웃·캡처)
+lib/lineup-builder/
+  types.ts              # Role / FormationId / Player / Formation
+  formations.ts         # 포메이션 4종 좌표
+components/lineup-builder/
+  pitch.tsx             # 경기장 + 마커 컨테이너
+  player-marker.tsx     # 단일 선수 마커 (pointer 드래그)
+  formation-select.tsx  # 포메이션 셀렉트
+  control-panel.tsx     # 포메이션 + 다운로드 + 초기화
+  edit-dialog.tsx       # 이름·등번호 편집 모달
 ```
+
+> `lib/`·`components/`는 루트 하위 (`lib/supp-plan/` 패턴과 일관). 도구 폴더 안에는 문서 3종 + page/client-shell만.
 
 상세 체크리스트: [BACKLOG.md](./BACKLOG.md). 변경 이력: [CHANGELOG.md](./CHANGELOG.md).
 
