@@ -5,31 +5,48 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/switch";
 import { NumberStepper } from "@/components/number-stepper";
 import { useMessages } from "@/lib/i18n/provider";
-import type { Player } from "@/lib/lineup-builder/types";
+import {
+  POSITION_CODES,
+  type Player,
+  type PositionCode,
+} from "@/lib/lineup-builder/types";
 
 const MIN_NUMBER = 1;
 const MAX_NUMBER = 99;
 
-type Props = {
-  player: Player | null;
-  onClose: () => void;
-  onSave: (id: number, name: string, number: number) => void;
+export type EditPayload = {
+  name: string;
+  number: number;
+  position: PositionCode;
+  isCaptain: boolean;
 };
 
-export function EditDialog({ player, onClose, onSave }: Props) {
+type Props = {
+  player: Player | null;
+  isCaptain: boolean;
+  onClose: () => void;
+  onSave: (id: number, patch: EditPayload) => void;
+};
+
+export function EditDialog({ player, isCaptain, onClose, onSave }: Props) {
   const t = useMessages().lineupBuilder;
   const [name, setName] = useState("");
   const [numberDraft, setNumberDraft] = useState("1");
+  const [position, setPosition] = useState<PositionCode>("GK");
+  const [captainDraft, setCaptainDraft] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (player) {
       setName(player.name);
       setNumberDraft(String(player.number));
+      setPosition(player.position);
+      setCaptainDraft(isCaptain);
     }
-  }, [player]);
+  }, [player, isCaptain]);
 
   useEffect(() => {
     if (!player) return;
@@ -56,7 +73,12 @@ export function EditDialog({ player, onClose, onSave }: Props) {
 
   const handleSave = () => {
     if (!canSave) return;
-    onSave(player.id, name.trim(), parsedNumber);
+    onSave(player.id, {
+      name: name.trim(),
+      number: parsedNumber,
+      position,
+      isCaptain: captainDraft,
+    });
   };
 
   return (
@@ -117,6 +139,34 @@ export function EditDialog({ player, onClose, onSave }: Props) {
               max={MAX_NUMBER}
               inputMode="numeric"
               aria-label={t.editNumberLabel}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="lineup-edit-position" className="text-sm">
+              {t.positionLabel}
+            </Label>
+            <select
+              id="lineup-edit-position"
+              value={position}
+              onChange={(e) => setPosition(e.target.value as PositionCode)}
+              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+            >
+              {POSITION_CODES.map((code) => (
+                <option key={code} value={code}>
+                  {code}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="lineup-edit-captain" className="text-sm">
+              {t.captainToggle}
+            </Label>
+            <Switch
+              id="lineup-edit-captain"
+              checked={captainDraft}
+              onCheckedChange={setCaptainDraft}
+              aria-label={t.captainToggle}
             />
           </div>
         </div>

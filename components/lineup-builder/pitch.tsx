@@ -5,6 +5,7 @@ import { PlayerMarker } from "./player-marker";
 type Props = {
   players: Player[];
   teamColor: string;
+  captainId: number | null;
   pitchRef: RefObject<HTMLDivElement | null>;
   onMove: (id: number, top: number, left: number) => void;
   onEdit: (id: number) => void;
@@ -13,7 +14,14 @@ type Props = {
 // 캡처 호환: 색상은 hex / rgba()만 (oklch 토큰·color-mix·CSS 변수 미사용 — html2canvas 1.4.1 한계).
 const LINE = "rgba(255,255,255,0.72)";
 
-export function Pitch({ players, teamColor, pitchRef, onMove, onEdit }: Props) {
+export function Pitch({
+  players,
+  teamColor,
+  captainId,
+  pitchRef,
+  onMove,
+  onEdit,
+}: Props) {
   return (
     <div
       ref={pitchRef}
@@ -72,6 +80,7 @@ export function Pitch({ players, teamColor, pitchRef, onMove, onEdit }: Props) {
           key={p.id}
           player={p}
           teamColor={teamColor}
+          isCaptain={p.id === captainId}
           pitchRef={pitchRef}
           onMove={onMove}
           onEdit={onEdit}

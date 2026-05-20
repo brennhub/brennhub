@@ -60,6 +60,15 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동. 본 
 - [x] **등번호 단일 꺽쇠** — EditDialog NumberStepper에 기존 `showBigStep={false}` prop 적용 (공유 컴포넌트 수정 0).
 - [x] **서비스 제목 변경** — "축구 베스트 일레븐 만들기" / "Football Best XI Builder" (식별자 불변, UI 문자열만).
 
+## Task E — 세부 포지션 + 감독 + 주장 (완료)
+
+- [x] **세부 포지션 15종** — `PositionCode` 유니온 + `Player.position` (Role 4종과 공존). `mkPlayer(id, role, position, top, left)`로 8포메이션 88명 매핑. 마커에 등번호 위 작은 글씨로 포지션 코드 표시.
+- [x] **마커 크기 48/52px** — 포지션 + 등번호 2단 적재 공간 확보 (Task A 원안 44px+/48~52px 범위 내).
+- [x] **편집 모달 확장** — 포지션 select(15옵션) + 주장 토글(공유 `Switch` 재사용).
+- [x] **감독 입력** — 팀명과 2칸 grid. 캡처 헤더 4케이스 분기(`capture-header.tsx`). 다운로드 파일명은 팀명 기준 유지.
+- [x] **주장 선택** — `captainId` state(배타적 1명), 마커 우상단 노랑 "C" 배지. 포메이션 변경 시 유지, 초기화 시 해제.
+- [x] **i18n** — `positionLabel` / `managerLabel` / `managerPlaceholder` / `captainToggle` (ko/en).
+
 ## 2단계 확장 (MVP 검증 후 별도 task)
 
 - [ ] **6.1 localStorage 스쿼드 히스토리** — `PersonalScheduleStorage` 패턴 일관 (supp-plan `lib/supp-plan/storage/types.ts` 참고). interface + impl 분리로 미래 D1 마이그레이션 대비.

@@ -11,6 +11,7 @@ const DRAG_THRESHOLD_PX = 5;
 type Props = {
   player: Player;
   teamColor: string;
+  isCaptain: boolean;
   pitchRef: RefObject<HTMLDivElement | null>;
   onMove: (id: number, top: number, left: number) => void;
   onEdit: (id: number) => void;
@@ -23,6 +24,7 @@ function clamp(value: number, lo: number, hi: number): number {
 export function PlayerMarker({
   player,
   teamColor,
+  isCaptain,
   pitchRef,
   onMove,
   onEdit,
@@ -47,7 +49,7 @@ export function PlayerMarker({
   const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
     const rect = pitchRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const half = (circleRef.current?.offsetWidth ?? 48) / 2;
+    const half = (circleRef.current?.offsetWidth ?? 52) / 2;
     drag.current = {
       startX: e.clientX,
       startY: e.clientY,
@@ -118,7 +120,7 @@ export function PlayerMarker({
       <div
         ref={circleRef}
         className={cn(
-          "flex h-11 w-11 items-center justify-center rounded-full border-2 transition-transform sm:h-12 sm:w-12",
+          "flex h-12 w-12 flex-col items-center justify-center gap-0.5 rounded-full border-2 leading-none transition-transform sm:h-[3.25rem] sm:w-[3.25rem]",
           dragging && "scale-105",
         )}
         style={{
@@ -130,10 +132,25 @@ export function PlayerMarker({
             : "0 2px 6px rgba(0,0,0,0.25)",
         }}
       >
-        <span className="text-base font-bold tabular-nums sm:text-lg">
+        <span className="text-[9px] font-semibold sm:text-[10px]">
+          {player.position}
+        </span>
+        <span className="text-sm font-bold tabular-nums sm:text-base">
           {player.number}
         </span>
       </div>
+      {isCaptain && (
+        <span
+          className="absolute -top-0.5 -right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border text-[11px] font-bold"
+          style={{
+            backgroundColor: "#eab308",
+            color: "#171717",
+            borderColor: "#171717",
+          }}
+        >
+          C
+        </span>
+      )}
       <span
         className="absolute left-1/2 top-full mt-1 max-w-[5.5rem] -translate-x-1/2 truncate rounded px-1.5 py-0.5 text-center text-[10px] font-medium sm:text-xs"
         style={{ backgroundColor: teamColor, color: textColor }}
