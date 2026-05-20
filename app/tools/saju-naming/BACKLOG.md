@@ -29,21 +29,40 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 #### 39-B — 인명용 한자 풀 데이터 적재 (9,389자, 2024-06-11 대법원규칙 제3151호)
 
 5단계: C-1~C-3 데이터/조사, C-4 도메인 결정, C-5 코드.
-진행: C-1 DONE / C-4-B 확정 / C-4-A 데이터셋 방향 결정 / 다음: C-2~3 정찰.
+진행: C-1~C-4 DONE / C-5 7단계 분해 완료 → 진입 가능.
 
 - [x] **C-1 자수 정정** — 8,142자(인수인계 오류) → 9,389자 확정. BACKLOG/문서 반영 완료.
-- [ ] **C-2 데이터 소스 정찰** (read-only) — 후보 평가:
-  - rutopio gov 데이터셋 (9,444 unique / 9,389 cover) — 인명용 한자 코드포인트
-  - naver 한자사전 — 의미(meaning)
-  - rycont 한자 데이터 — 부수 / 획수
-  - Unihan database (Unicode) — fallback 부수 / 획수 / 음
-- [ ] **C-3 라이센스 + join 가능성 검증** — 각 소스 라이센스 + join key(코드포인트) 일치율:
-  - rutopio: MIT 확인됨
-  - rycont: 라이센스 확인 필요
-  - Unihan: Unicode 라이센스 (재배포 허용)
-- [ ] **C-4-A 자원오행 매핑 룰** [데이터셋 확보 — C-2/C-3 통합]
+- [x] **C-2 데이터 소스 정찰** [DONE] — 채택: rutopio gov(MIT) + rutopio naver(MIT) + Unihan(Unicode ToU). rycont는 Unihan으로 대체 (부수 `kRSUnicode` / 획수 `kTotalStrokes` / 영어정의 `kDefinition`로 충분).
+- [x] **C-3 라이센스 + join 검증** [DONE] — 전 소스 라이센스 안전 (재배포 허용). Join key = Unicode 코드포인트. 정규화(코드포인트 문자열 → 실제 글자) 후 join.
+- [x] **C-4-A 자원오행 매핑 룰** [표준 매핑 자체 구축]
 - [x] **C-4-B 원획법 변환 룰** [도메인 결정 완료]
-- [ ] **C-5 5-way join + bulk insert + `migrations/003_hanja_full.sql`** [BLOCKED — C-1~4 완료 후] — 변환 스크립트 + 배치 분할 INSERT + D1 apply
+- [ ] **C-5 5-way join + bulk insert + `migrations/003_hanja_full.sql`** — 7단계 분해 (아래). [진입 가능]
+
+##### C-2/C-3 정찰 결과 — cover율 (정규화 일관 실측)
+
+| 항목 | 값 |
+|---|---|
+| rutopio gov 고유 한자 | 9,443 (10,163 entries) |
+| 공식 인명용 한자 | 9,389 (54자 차이 → C-5-2 reconcile) |
+| rutopio naver 고유 한자 | 8,095 |
+| 교집합 (한국어 의미 보유) | 7,945 |
+| gov-only (한국어 의미 없음) | 1,498 = 비표준 코드포인트 406 + 실제 CJK 1,092 |
+| gov-only 중 영어(Unihan `kDefinition`) 보유 | 612 |
+| 의미 전무 (한·영 모두 없음) | 886 |
+
+검산: 교집합 7,945 + gov-only 1,498 = 9,443 (gov 고유) ✓
+
+**이전 thread 리포트 정정** ⚠️ — "1,294자 영어 fallback, 100% cover"는 부정확.
+- "1,294"는 `9,389 − 8,095` 단순 뺄셈. naver에 gov에 없는 870자가 있어 단순 뺄셈 불성립. 실제 집합차 = 1,498자.
+- 영어 fallback도 612자만 가능 (100% 아님). 886자는 한·영 의미 모두 없음.
+- 상세: `docs/learnings/2026-05-19-saju-naming-task-39b-recon.md`.
+
+##### D안 — 적재 정책 [확정]
+
+- 9,443자 (공식 9,389) **전부 D1 적재** — 데이터 보존.
+- 추천 알고리즘은 **의미 보유 8,557자** (한국어 7,945 + 영어전용 612)만 사용 — `is_recommendable=1`.
+- 886 의미 전무 벽자: 적재하되 `is_recommendable=0` → 추천 후보 제외.
+- 근거: 효능감 우선. Part 1에서 1,498 누락분이 압도적 벽자 (교육용 1.5%, 작명 실무 가치 ≈ 0)로 판명 → 추가 데이터 소스 정찰(Part 2)은 비용 대비 효용 낮아 skip.
 
 ##### C-4-B 원획법 변환 룰 [확정]
 
@@ -70,20 +89,32 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
 적용: C-5 단계의 `stroke_count` 컬럼 계산 시 위 룰을 부수 매핑으로 적용.
 
-##### C-4-A 자원오행 매핑 룰 [데이터셋 확보 방향 — C-2/C-3 통합]
+##### C-4-A 자원오행 매핑 룰 [표준 매핑 자체 구축]
 
-결정: 부수 단위 통상 매핑 (옵션 i) 대신 인명용 한자 분류 데이터셋 (옵션 ii) 채택.
+결정: C-2/C-3 정찰 결과 라이센스 안전한 자원오행 분류 데이터셋을 찾지 못함 → **부수 → 오행 표준 매핑표를 자체 구축**.
 
-근거:
-- 자원오행은 2단계 결정 (부수 → 오행 + 부수가 오행 아닐 경우 의미 기반). 룰 100% 자동화 어려움.
-- 표준화된 단일 부수 → 오행 표 없음 (명리학 유파별 차이).
-- 김기승 "자원오행 성명학" (632쪽, 대법원 인명용 한자 자원오행 분류)이 권위서.
-- clien.net 등에 인명용 한자 자원오행 엑셀 공유 자료 존재. 라이센스 확인 필요.
+방식:
+- Unihan `kRSUnicode` 부수 정보 사용 → 214 부수 × 5행(목·화·토·금·수) 매핑표 자체 작성.
+- 작명소 통용 표준 매핑 (예: 木/竹/艸→목, 火/日→화, 土/石/山→토, 金/玉→금, 水/氵/雨→수). 출처는 매핑표 docstring에 명기.
+- C-5-4 단계에서 web_search 정찰 + 통용 매핑 정리.
 
-진행 방향:
-- C-2/C-3 정찰 단계에서 자원오행 분류 데이터셋 후보 식별 + 라이센스 검증.
-- 초기 적재는 통용 데이터셋 사용 (정확도 ~95%).
-- 향후 개선: 사용 피드백 + 김기승 책 직접 참조 등으로 분류 정정 (build-in-public).
+한계 + 개선:
+- 자원오행은 본래 부수+의미 2단계 결정이라 부수 단일 매핑은 근사치. 학파별 차이 존재.
+- build-in-public: 사용 피드백 + 김기승 "자원오행 성명학"(632쪽) 등 권위서 참조로 점진 정정.
+
+##### C-5 — 5-way join + 적재 (7단계 분해)
+
+임계 경로: C-5-1 → C-5-2 → C-5-6 → C-5-7. C-5-3 / C-5-4는 C-5-1과 독립 (병렬 가능).
+
+| 단계 | 내용 | 의존 | 추정 | 주의점 |
+|---|---|---|---|---|
+| **C-5-1** | D1 스키마 설계 — 컬럼: character/codepoint/hangeul/consonant/meaning_ko/meaning_en/radical/stroke_count/won_stroke/ja_ohaeng/is_recommendable | — | 0.5d | 기존 `001_hanja.sql` 스키마(character,hangeul,stroke,ohaeng,meaning,frequency,inname_ok)와 충돌 점검. `hanja-search`/`recommend` route.ts가 읽는 컬럼 깨지지 않게. **ALTER 확장 방향 권장** (join 단순 + 25자 시드 새 컬럼 채움 + 기존 API default 처리 + migration 단계·유지보수 부담 ↓). C-5-1 코드 정찰 시 최종 결정 |
+| **C-5-2** | rutopio gov+naver 적재 스크립트 — CSV 파싱 + 코드포인트 정규화 + join. 9,443↔9,389 reconcile | C-5-1 | 0.5d | 한 한자에 음 복수 (가/나 두음 등) → hangeul 다중값 처리 정책 |
+| **C-5-3** | Unihan 추출 스크립트 — 부수(`kRSUnicode`)/획수(`kTotalStrokes`)/영어정의(`kDefinition`). UAX #38 탭 파싱 | — (병렬) | 0.5d | Unihan 8.5MB — repo 미포함, 스크립트가 다운로드 or 캐시 |
+| **C-5-4** | 214부수×5행 자원오행 매핑표 자체 구축 — web_search 정찰 + 작명소 통용 매핑 정리 + 출처 docstring | — (병렬) | 1d | 학파 차이 → 표준안 1개 확정. C-4-A 결정 사항 |
+| **C-5-5** | 원획법(C-4-B) 코드화 — `lib/saju-naming/won-stroke.ts`. 14부수 환원표 + 숫자 한자 룰 | C-5-3 | 0.5d | C-4-B 확정표 그대로. PoC 검증 |
+| **C-5-6** | `migrations/003_hanja_full.sql` 생성 — 5-way join 결과 bulk INSERT, 배치 분할 | C-5-1~5 | 0.5d | D1 제약: statement 크기 / 변수 수 한도 → 배치 (~수백 row/INSERT) |
+| **C-5-7** | dev 적재 + 검증 — `wrangler d1 execute`, COUNT 9,443, spot-check, hanja-search/recommend API 회귀 | C-5-6 | 0.5d | Brenn 수동 apply 가능성. 적재 후 39-C(점수 base) 진입 가능 |
 
 #### 39-C — 점수 base 튜닝 (39-B 적재 후)
 

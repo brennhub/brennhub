@@ -2,6 +2,18 @@
 
 주요 결정 / 이정표.
 
+## [0.6.5] — 2026-05-19
+
+### Decided (C-2/C-3 정찰 매듭 + D안 채택)
+
+- **C-2/C-3 DONE** — 데이터 소스 확정: rutopio gov(MIT) + rutopio naver(MIT) + Unihan(Unicode ToU). rycont는 Unihan(`kRSUnicode`/`kTotalStrokes`/`kDefinition`)으로 대체. 전 소스 라이센스 안전, join key = 코드포인트.
+- **cover율 실측 정정** ⚠️ — 이전 리포트 "1,294자 영어 fallback 100% cover" 부정확. 실측 (정규화 일관): gov 9,443 / naver 8,095 / 교집합 7,945 / gov-only 1,498 (비표준 406 + 실제CJK 1,092) / 영어 cover 612 / 의미 전무 886. "1,294"는 단순 뺄셈 오류.
+- **Part 1 — 누락 1,498자 성격 분석** — 압도적 벽자 (강희자전 100% 등재, 교육용 한자 1.5%, 작명 실무 가치 ≈ 0). 2024 신규 추가 아님 (전부 고전 한자). 상세: `docs/learnings/2026-05-19-saju-naming-task-39b-recon.md`.
+- **D안 채택** — 9,443자(공식 9,389) 전부 D1 적재 + 추천은 의미 보유 8,557자만 (`is_recommendable`). Part 2(추가 소스 정찰) skip — 효능감 우선.
+- **C-4-A 방향 전환** — 라이센스 안전 데이터셋 미발견 → 214부수×5행 표준 매핑표 자체 구축.
+- **C-5 7단계 분해** — C-5-1(스키마)~C-5-7(dev 적재·검증). BACKLOG에 의존·추정·주의점 표.
+- 코드 변경 없음 (문서만).
+
 ## [0.6.4] — 2026-05-19
 
 ### Decided (C-4 도메인 결정 매듭 시작)
