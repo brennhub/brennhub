@@ -108,13 +108,33 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
 | 단계 | 내용 | 의존 | 추정 | 주의점 |
 |---|---|---|---|---|
-| **C-5-1** | D1 스키마 설계 — 컬럼: character/codepoint/hangeul/consonant/meaning_ko/meaning_en/radical/stroke_count/won_stroke/ja_ohaeng/is_recommendable | — | 0.5d | 기존 `001_hanja.sql` 스키마(character,hangeul,stroke,ohaeng,meaning,frequency,inname_ok)와 충돌 점검. `hanja-search`/`recommend` route.ts가 읽는 컬럼 깨지지 않게. **ALTER 확장 방향 권장** (join 단순 + 25자 시드 새 컬럼 채움 + 기존 API default 처리 + migration 단계·유지보수 부담 ↓). C-5-1 코드 정찰 시 최종 결정 |
+| **C-5-1** ✅ | D1 스키마 설계 — `migrations/003_hanja_full.sql` (DROP + CREATE 신 테이블, 컬럼 12 / index 5) | — | 완료 | 신 테이블 확정 (ALTER 아님 — SQLite NOT NULL 완화 불가). 상세 ↓ §C-5-1 결과 |
 | **C-5-2** | rutopio gov+naver 적재 스크립트 — CSV 파싱 + 코드포인트 정규화 + join. 9,443↔9,389 reconcile | C-5-1 | 0.5d | 한 한자에 음 복수 (가/나 두음 등) → hangeul 다중값 처리 정책 |
 | **C-5-3** | Unihan 추출 스크립트 — 부수(`kRSUnicode`)/획수(`kTotalStrokes`)/영어정의(`kDefinition`). UAX #38 탭 파싱 | — (병렬) | 0.5d | Unihan 8.5MB — repo 미포함, 스크립트가 다운로드 or 캐시 |
 | **C-5-4** | 214부수×5행 자원오행 매핑표 자체 구축 — web_search 정찰 + 작명소 통용 매핑 정리 + 출처 docstring | — (병렬) | 1d | 학파 차이 → 표준안 1개 확정. C-4-A 결정 사항 |
 | **C-5-5** | 원획법(C-4-B) 코드화 — `lib/saju-naming/won-stroke.ts`. 14부수 환원표 + 숫자 한자 룰 | C-5-3 | 0.5d | C-4-B 확정표 그대로. PoC 검증 |
 | **C-5-6** | `migrations/003_hanja_full.sql` 생성 — 5-way join 결과 bulk INSERT, 배치 분할 | C-5-1~5 | 0.5d | D1 제약: statement 크기 / 변수 수 한도 → 배치 (~수백 row/INSERT) |
-| **C-5-7** | dev 적재 + 검증 — `wrangler d1 execute`, COUNT 9,443, spot-check, hanja-search/recommend API 회귀 | C-5-6 | 0.5d | Brenn 수동 apply 가능성. 적재 후 39-C(점수 base) 진입 가능 |
+| **C-5-7** | dev 적재 + 검증 — `wrangler d1 execute`, COUNT 9,443, spot-check, hanja-search/recommend API 회귀 | C-5-6 | 0.5d→1d? | Brenn 수동 apply 가능성. 적재 후 39-C(점수 base) 진입 가능. ⚠️ recommend WHERE 재설계 필요 — 상세 ↓ §C-5-7 보류 |
+
+##### C-5-1 결과 — hanja 신 스키마 확정 [완료 2026-05-19]
+
+- 결정: 신 테이블 (DROP + CREATE), 테이블 이름 `hanja` 유지.
+- 근거: SQLite NOT NULL 완화 불가 + 기존 25자 손실 비용 0.
+- 컬럼: 기존 7 보존 + 신규 5 (codepoint, won_stroke, ja_ohaeng, radical, meaning_en) = 12.
+- `meaning` NOT NULL → NULL 허용 (D안 886자 의미 전무 수용).
+- `is_recommendable` 컬럼 X — query time 판정 (C-5-7).
+- `consonant` 컬럼 X — 현재 활용 case 0, 향후 ADD COLUMN 가능.
+- index: 기존 3 + 신규 2 (radical, ja_ohaeng) = 5.
+- partial index 보류 — C-5-7 진입 시 별도 migration.
+- 정찰 record: `docs/learnings/2026-05-19-saju-naming-c5-1-recon.md`.
+- migration apply: Brenn 수동 (dev `--env preview --remote` / prod `--remote`).
+
+##### C-5-7 보류 — C-5-1 정찰 발견
+
+- ⚠️ recommend route 현재 `WHERE inname_ok = 1`만 — 전 row 메모리 필터 패턴. 9,389자 적재 후 latency 위험.
+- 작업 범위가 단순 query 수정 + index 추가가 아닐 가능성 (WHERE 재설계 + LIMIT + ORDER BY 도입 필수).
+- 진입 시 0.5d → 1d 재추정 또는 분리 검토 (적재 검증 / WHERE 재설계).
+- partial/복합 index 및 `consonant` 컬럼은 본 단계에서 별도 migration으로 추가 검토.
 
 #### 39-C — 점수 base 튜닝 (39-B 적재 후)
 

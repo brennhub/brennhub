@@ -2,6 +2,20 @@
 
 주요 결정 / 이정표.
 
+## [Unreleased]
+
+### Added
+- `migrations/003_hanja_full.sql` — hanja 테이블 신 스키마. 신규 5컬럼 (codepoint/won_stroke/ja_ohaeng/radical/meaning_en) + 신규 2 index (radical/ja_ohaeng). (C-5-1)
+
+### Changed
+- hanja 테이블 재생성 (DROP + CREATE). SQLite NOT NULL 제거 불가 → ALTER 불가능.
+- `meaning` NOT NULL → NULL 허용 (D안 886자 의미 전무 수용).
+
+### Notes
+- `002_hanja_seed.sql`의 25자는 003 apply 시 소실. 9,389자 적재는 C-5-2 ~ C-5-6에서 진행. 002 파일은 historical migration으로 보존 (삭제 X).
+- migration apply는 Brenn 수동 (dev `--env preview --remote` / prod `--remote`).
+- partial/복합 index 및 consonant 컬럼은 C-5-7 (recommend WHERE 재설계) 시점에 별도 migration으로 검토.
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)
