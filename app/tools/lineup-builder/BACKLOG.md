@@ -9,7 +9,7 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동. 본 
 - [x] `html2canvas` npm 패키지 설치 (Task A — 설치만. import + 캡처 호출은 Task B)
 - [x] 페이지 파일 생성: `app/tools/lineup-builder/page.tsx` (Server Component shell, client-shell 패턴)
 - [x] Client wrapper: `app/tools/lineup-builder/client-shell.tsx` (`"use client"`. Task A는 정적 렌더만, 인터랙션 진입점은 Task B)
-- [x] tools-registry status `"coming-soon"` → `"live"` 전환 (page.tsx 생성과 동일 commit. route collision 없음 — 빌드 출력에서 `[slug]`가 saju-naming만 emit 확인)
+- [x] tools-registry status `"coming-soon"` → `"live"` 전환 (page.tsx 생성과 동일 commit. route collision 없음 — 빌드 출력에서 `/tools/lineup-builder`가 별도 정적 route로 emit 확인)
 
 ### 데이터
 

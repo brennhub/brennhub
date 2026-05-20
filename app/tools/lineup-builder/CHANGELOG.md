@@ -61,7 +61,7 @@
 
 ### Added (Task C — feedback 통합)
 
-- **feedback 5단계 통합** (BRENNHUB.md §6 통합 체크리스트, saju-naming 패턴 그대로):
+- **feedback 5단계 통합** (BRENNHUB.md §6 통합 체크리스트, 기존 도구 통합 패턴 그대로):
   - `app/api/feedback/route.ts` — `TOOLS` enum에 `"lineup-builder"`.
   - `components/feedback-dialog.tsx` — `FeedbackTool` 타입 유니온 + `toolOptions`에 entry.
   - `components/feedback-button.tsx` — `toolFromPath`에 `/tools/lineup-builder` → `lineup-builder` 매핑.
@@ -108,7 +108,7 @@
 ### Notes
 
 - i18n은 이 repo에서 client-side 전용 (`useMessages()` = client hook). 서버 fetch 불가 → page.tsx는 순수 Server shell, 텍스트는 client-shell에서 처리.
-- 빌드 검증: `/tools/lineup-builder` 별도 정적 route emit, `[slug]`는 saju-naming만 emit (route collision 없음). 정적 prerender HTML에 11명 마커 확인. 브라우저 시각 검증은 미수행 (환경 제약).
+- 빌드 검증: `/tools/lineup-builder` 별도 정적 route emit, route collision 없음. 정적 prerender HTML에 11명 마커 확인. 브라우저 시각 검증은 미수행 (환경 제약).
 
 ### Next
 
