@@ -48,3 +48,6 @@ next-env.d.ts
 .open-next/
 .wrangler/
 .dev.vars
+
+# saju-naming 빌드 캐시 (rutopio CSV 다운로드)
+app/tools/saju-naming/scripts/data/.cache/
