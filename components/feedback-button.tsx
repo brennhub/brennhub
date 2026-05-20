@@ -11,6 +11,7 @@ function toolFromPath(pathname: string | null): FeedbackTool | undefined {
   if (pathname.startsWith("/tools/email-diag")) return "email-diag";
   if (pathname.startsWith("/tools/cron-trans")) return "cron-trans";
   if (pathname.startsWith("/tools/stock-sim")) return "stock-sim";
+  if (pathname.startsWith("/tools/lineup-builder")) return "lineup-builder";
   if (pathname === "/" || pathname === "") return undefined;
   return "site";
 }

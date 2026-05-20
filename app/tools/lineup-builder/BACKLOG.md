@@ -41,11 +41,11 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동. 본 
 
 ### feedback 통합 (필수 — BRENNHUB.md § 6 통합 체크리스트)
 
-- [ ] `app/api/feedback/route.ts` TOOLS enum에 `"lineup-builder"` 추가
-- [ ] `components/feedback-dialog.tsx` toolOptions에 lineup-builder 추가
-- [ ] `components/feedback-button.tsx` pathname 매핑에 추가 (`/tools/lineup-builder` → defaultTool)
-- [ ] `lib/i18n/messages.ts` `feedback.toolLineupBuilder` ko/en 추가
-- [ ] `app/admin/feedback` 라벨 매핑 추가
+- [x] `app/api/feedback/route.ts` TOOLS enum에 `"lineup-builder"` 추가
+- [x] `components/feedback-dialog.tsx` `FeedbackTool` 타입 + toolOptions에 lineup-builder 추가
+- [x] `components/feedback-button.tsx` pathname 매핑에 추가 (`/tools/lineup-builder` → defaultTool)
+- [x] `lib/i18n/messages.ts` `feedback.toolLineupBuilder` ko/en 추가
+- [x] `app/admin/feedback` `TOOL_LABEL` 매핑 추가
 
 ### 검증
 

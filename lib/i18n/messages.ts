@@ -248,6 +248,7 @@ export type Messages = {
     toolEmailDiag: string;
     toolCronTrans: string;
     toolStockSim: string;
+    toolLineupBuilder: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -534,6 +535,7 @@ export const messages: Record<Locale, Messages> = {
       toolEmailDiag: "이메일 발송 진단기",
       toolCronTrans: "Cron 변환기",
       toolStockSim: "주식 시뮬레이터",
+      toolLineupBuilder: "라인업 빌더",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -842,6 +844,7 @@ export const messages: Record<Locale, Messages> = {
       toolEmailDiag: "Email Diagnostic",
       toolCronTrans: "Cron Translator",
       toolStockSim: "Stock Simulator",
+      toolLineupBuilder: "Lineup Builder",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",

@@ -2,6 +2,23 @@
 
 주요 결정 / 이정표.
 
+## [0.4.0] — 2026-05-19
+
+### Added (Task C — feedback 통합)
+
+- **feedback 5단계 통합** (BRENNHUB.md §6 통합 체크리스트, saju-naming 패턴 그대로):
+  - `app/api/feedback/route.ts` — `TOOLS` enum에 `"lineup-builder"`.
+  - `components/feedback-dialog.tsx` — `FeedbackTool` 타입 유니온 + `toolOptions`에 entry.
+  - `components/feedback-button.tsx` — `toolFromPath`에 `/tools/lineup-builder` → `lineup-builder` 매핑.
+  - `lib/i18n/messages.ts` — `feedback.toolLineupBuilder` (type + ko "라인업 빌더" / en "Lineup Builder").
+  - `app/admin/feedback/page.tsx` — `TOOL_LABEL`에 `"lineup-builder": "라인업 빌더"`.
+
+### Notes
+
+- 빌드 검증: TS 에러 0, 라우트 테이블 변동 없음 (feedback 통합은 라우트 추가 아님).
+- 시각 검증(우하단 feedback 버튼 / default tool 선택 / admin 라벨)은 dev 배포 후 사용자 확인.
+- 이로써 lineup-builder MVP 통합 체크리스트 완료. 남은 항목은 2단계 확장(localStorage 히스토리 / 평점·스탯 / 테마·유니폼)뿐.
+
 ## [0.3.0] — 2026-05-19
 
 ### Added (Task B — 인터랙션 + 캡처)

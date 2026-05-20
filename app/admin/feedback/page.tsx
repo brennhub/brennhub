@@ -18,6 +18,7 @@ const TOOL_LABEL: Record<string, string> = {
   "email-diag": "이메일 진단기",
   "cron-trans": "Cron 변환기",
   "stock-sim": "주식 시뮬레이터",
+  "lineup-builder": "라인업 빌더",
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
