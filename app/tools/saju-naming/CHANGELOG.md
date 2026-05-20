@@ -23,6 +23,18 @@
 - 71자 reconcile + inname_ok 정확화는 C-5-8 (critical) 전담. 우선순위: (a) law.go.kr 별표 / (b) efamily PDF / (c) efamily 조회 순회.
 - efamily 라이센스 발견: "Copyright©Supreme Court of Korea. All Rights reserved." — KOGL/공공누리/CC 없음. C-5-8 진행 시 라이센스 risk 인지 필수.
 
+### Added (C-5-2 본 적재)
+- `app/tools/saju-naming/scripts/build-staged-hanja.ts` — rutopio gov+naver CSV → staged JSON 빌드 스크립트.
+- `app/tools/saju-naming/scripts/data/staged-hanja.json` — 9,460자 staged 데이터 (음 복수 primary + alternatives 메타 보존, meaning_en null → C-5-3에서 채움).
+- 의존성: csv-parse (devDependency, MIT).
+
+### Decided (C-5-2 본 적재)
+- hangeul/hangeul_all 소스 = gov hangul (대법원 인명용 지정 발음 authority). naver 발음은 인명용 비허용 가능성 있어 hangeul 후보로 부적합 → 도메인상 gov만 채택.
+- hangeul/hangeul_all gov authority 원칙 + naver fallback (gov 발음 gap 시 한정, 현재 𥡴 1자). gov는 데이터 제공 시 authority — gap에서는 authority 없음 + naver 의미가 인명용 명시 (예: "사람 이름 계") → fallback 자연.
+- meaning/meaning_all = naver verbatim "훈 음" 형식 (예: "아름다울 미"). 훈-음 분리는 C-5-6.
+- 9,460 전량 inname_ok=1 (fallback). 71자 미구분 → C-5-8 reconcile.
+- Join key = Unicode 코드포인트 정수.
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)
