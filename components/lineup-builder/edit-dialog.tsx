@@ -149,7 +149,7 @@ export function EditDialog({ player, isCaptain, onClose, onSave }: Props) {
               id="lineup-edit-position"
               value={position}
               onChange={(e) => setPosition(e.target.value as PositionCode)}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 transition-colors hover:border-zinc-400 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600"
             >
               {POSITION_CODES.map((code) => (
                 <option key={code} value={code}>

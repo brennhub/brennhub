@@ -69,6 +69,12 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동. 본 
 - [x] **주장 선택** — `captainId` state(배타적 1명), 마커 우상단 노랑 "C" 배지. 포메이션 변경 시 유지, 초기화 시 해제.
 - [x] **i18n** — `positionLabel` / `managerLabel` / `managerPlaceholder` / `captainToggle` (ko/en).
 
+## Task F — 빠른 수정 (완료)
+
+- [x] **다크모드 포지션 select fix** — `edit-dialog.tsx`의 포지션 select가 투명 배경(`bg-transparent`)이라 다크모드 option 팝업이 흰 배경+흰 글자로 안 보임. 앱 전체 표준인 불투명 패턴(`formation-select.tsx`와 동일 className: `bg-white dark:bg-zinc-900` + `text-zinc-900 dark:text-zinc-100`)으로 교체.
+- [x] **핏치 간격 압축** — `top' = round((top-50)*0.85+50)`로 8포메이션 88명 top 직접 갱신. GK 92→86 등 위아래 마진 확보, 라인 비율 유지. left 불변.
+- [x] **핏치 내 포메이션 라벨** — 핏치 우상단(`top-2 right-2`)에 raw FormationId 표시. 반투명 검정 박스 + 흰 글자(inline rgba/hex), captureRef 안이라 PNG 자동 반영.
+
 ## 2단계 확장 (MVP 검증 후 별도 task)
 
 - [ ] **6.1 localStorage 스쿼드 히스토리** — `PersonalScheduleStorage` 패턴 일관 (supp-plan `lib/supp-plan/storage/types.ts` 참고). interface + impl 분리로 미래 D1 마이그레이션 대비.
