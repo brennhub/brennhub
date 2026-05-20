@@ -95,18 +95,22 @@ brennhub은 게임 / SaaS / 사이드 프로젝트 전부의 **우산 브랜드*
 
 ### 표준 개발 흐름 (브랜치 정책)
 
-모든 도구 작업은 feat 브랜치에서 시작한다. (2026-05-20 도입)
+도구마다 long-lived feat 브랜치 1개. (2026-05-20 도입 → long-lived 전환)
 
-1. **main에서 feat 브랜치 분기**: `git checkout -b feat/<tool>-<task> main`
-2. feat에서 작업 + commit
-3. **중간 확인**: feat → `dev` 머지 + push → dev.brennhub.com에서 확인 (필요 시 반복)
-4. **완성 + 최종 확인**: feat → `main` 머지 + push → brennhub.com 자동 배포
-5. feat 브랜치 삭제 (로컬 + 원격)
+- **도구당 브랜치 1개**: `feat/<tool>` (예: `feat/saju-naming`, `feat/lineup-builder`). task별 분기·삭제 X — 도구가 살아있는 한 유지.
+- **신규 도구**: `git checkout -b feat/<tool> main` (최초 1회).
+- **기존 도구 새 task 시작**: `git checkout feat/<tool>` → `git merge main` (main 최신 변경 sync).
+- 작업 + commit.
+- **중간 확인**: feat → `dev` 머지 + push → dev.brennhub.com에서 확인 (필요 시 반복).
+- **완성 + 최종 확인**: feat → `main` 머지 + push → brennhub.com 자동 배포.
+- main 머지 후 feat 브랜치는 **유지** (삭제 X). 다음 task는 `git merge main` 재실행으로 시작.
 
 핵심 원칙:
-- **feat 분기는 항상 `main`에서** (dev에서 분기 X). main에서 분기하면 feat는 main 외 변경이 0이라 main 머지가 깨끗. dev에서 분기하면 다른 도구의 미완성 commit이 따라옴.
+- **feat 분기는 항상 `main`에서** (신규 도구 최초 1회). main 기준이라 main 머지가 깨끗.
+- **task 시작 전 `git merge main` 필수** — feat가 stale하면 충돌·낡은 베이스 위험.
 - **분기와 머지는 독립** — feat는 어디서 시작했든 dev·main 양쪽 다 머지 가능.
 - `dev` = 통합 테스트 staging (여러 feat 머지 가능, 모래사장). `main` = prod 직결 (Cloudflare 자동 배포).
+- 사유: 솔로 빌더 관리 부담 ↓ + 도구별 격리는 long-lived로도 충족 + 도구당 작업 공간 상존.
 
 ### 외부 기획서 필터 (도구 신규 plan 검토 시 반드시 확인)
 
@@ -149,6 +153,8 @@ brennhub은 게임 / SaaS / 사이드 프로젝트 전부의 **우산 브랜드*
 - **dev → main 직접 머지 금지**: dev는 여러 도구의 미완성 commit이 섞인 staging. dev를 main에 통째로 머지하면 미완성이 prod로 샘 (2026-05-20 lineup-builder 사고 직접 원인). main에는 feat 브랜치만 머지.
 - **feat 브랜치 안에서 재분기 금지**: 관리 복잡도 ↑. feat는 단일 task 단위로 평면 유지.
 - **`main` / `dev`에 직접 commit 금지**: 모든 변경은 feat 브랜치를 거쳐 머지. (2026-05-20 정책 도입 — 본 정책 명문화 commit 자체는 시행 전 마지막 예외.)
+- **동일 도구 내 동시 task 작업 금지**: 한 `feat/<tool>`에 여러 미완 task commit이 누적되면 main 머지 시 미완성 혼입. 직렬 진행. 예외: 동시 진행 불가피 시 short-lived sub-feat (`feat/<tool>-<hotfix>`, main에서 분기) 허용 — main 머지 후 삭제.
+- **새 task 시작 전 `git merge main` 누락 금지**: stale feat는 머지 충돌·낡은 베이스 위험.
 - **Claude Code 세션의 수동 deploy 명령 자동 실행 금지**: `npm run deploy` / `wrangler deploy` 등은 사용자 명시 지시 없이 실행 X. (2026-05-20 wrangler logout 조치 + 본 정책 명문화.)
 
 ### 명시적 금기 (chat 기반)
