@@ -6,28 +6,25 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동. 본 
 
 ### 인프라
 
-- [ ] `html2canvas` npm 패키지 설치 (v1.4.1 또는 최신 stable)
-- [ ] 페이지 파일 생성: `app/tools/lineup-builder/page.tsx` (Server Component shell, client-shell 패턴)
-- [ ] Client wrapper: `app/tools/lineup-builder/client-shell.tsx` (`"use client"`, 모든 인터랙션·캡처 진입점)
-- [ ] tools-registry status `"coming-soon"` → `"live"` 전환 (page.tsx 생성과 같은 commit. README.md:48-54 route collision 표 준수 — placeholder는 [slug] fallback이라 live 전환 시 정적 페이지가 우선)
+- [x] `html2canvas` npm 패키지 설치 (Task A — 설치만. import + 캡처 호출은 Task B)
+- [x] 페이지 파일 생성: `app/tools/lineup-builder/page.tsx` (Server Component shell, client-shell 패턴)
+- [x] Client wrapper: `app/tools/lineup-builder/client-shell.tsx` (`"use client"`. Task A는 정적 렌더만, 인터랙션 진입점은 Task B)
+- [x] tools-registry status `"coming-soon"` → `"live"` 전환 (page.tsx 생성과 동일 commit. route collision 없음 — 빌드 출력에서 `[slug]`가 saju-naming만 emit 확인)
 
 ### 데이터
 
-- [ ] `app/tools/lineup-builder/lib/formations.ts` — 포메이션 4종 좌표
-  - 4-4-2 (외부 기획서 § 4.1 transcribe)
-  - 4-3-3 (외부 기획서 § 4.1 transcribe)
-  - 3-5-2 (도메인 정찰 후 결정)
-  - 4-2-3-1 (도메인 정찰 후 결정)
-- [ ] `Player` / `Formation` 타입 정의 (README "데이터 구조" 섹션 참조)
+- [x] `lib/lineup-builder/formations.ts` — 포메이션 4종 좌표 (경로: 루트 `lib/`, `lib/supp-plan/`과 일관. 4종 좌표 모두 Task A 지시서에서 확정 수령)
+  - 4-4-2 / 4-3-3 / 3-5-2 / 4-2-3-1 — `mkPlayer` 헬퍼로 name `선수 N` / number N 자동 채움
+- [x] `lib/lineup-builder/types.ts` — `Role` / `FormationId` / `Player` / `Formation` 타입
 
 ### UI 컴포넌트
 
-- [ ] 경기장 컴포넌트 (`components/pitch.tsx`) — aspect-ratio 3/4, Tailwind, 잔디 패턴 + 라인 (순수 CSS)
-- [ ] 선수 마커 (`components/player-marker.tsx`) — absolute + `translate -50%`, 원형, 등번호 + 이름
-- [ ] 포메이션 선택 (`components/formation-select.tsx`) — 좌측 패널
-- [ ] 인라인 편집 UI (`components/edit-dialog.tsx`) — 마커 클릭 → 모달 또는 우측 패널 폼 (이름 + 등번호)
-- [ ] 컨트롤 패널 — 포메이션 선택 + 다운로드 + 초기화 버튼
-- [ ] 반응형 레이아웃 — 데스크톱: 분할 (Tailwind grid). 모바일: 스택.
+- [x] 경기장 컴포넌트 (`components/lineup-builder/pitch.tsx`) — aspect-ratio 3/4, 잔디 stripe + 라인 (외곽선/하프라인/센터서클/페널티·골 박스), 순수 CSS
+- [x] 선수 마커 (`components/lineup-builder/player-marker.tsx`) — absolute + `translate -50%`, 원형 44/48px, 등번호 굵게 + 이름 (잔디 위 가독성 위해 반투명 배경)
+- [x] 포메이션 선택 (`components/lineup-builder/formation-select.tsx`) — 좌측 패널. Task A는 정적(`onChange` 미전달 → disabled), 선택 핸들러는 Task B
+- [ ] 인라인 편집 UI (`components/lineup-builder/edit-dialog.tsx`) — 마커 클릭 → 모달 또는 우측 패널 폼 (이름 + 등번호) — Task B
+- [ ] 컨트롤 패널 — 포메이션 선택 + 다운로드 + 초기화 버튼 — Task B
+- [x] 반응형 레이아웃 — 데스크톱: 분할 (`grid md:grid-cols-[200px_1fr]`). 모바일: 스택.
 
 ### 인터랙션
 

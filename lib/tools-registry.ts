@@ -29,7 +29,7 @@ export const tools: Tool[] = [
   {
     id: "lineup-builder",
     slug: "lineup-builder",
-    status: "coming-soon",
+    status: "live",
     createdAt: "2026-05-19",
   },
 ];

@@ -218,6 +218,11 @@ export type Messages = {
       tableEmptyHint: string;
     };
   };
+  lineupBuilder: {
+    title: string;
+    description: string;
+    formationLabel: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -481,6 +486,12 @@ export const messages: Record<Locale, Messages> = {
           "분할매수 시뮬레이션을 위해 모든 입력값(총 예산, 현재가, 매수 횟수, 하락율)이 0보다 큰 값이어야 합니다.",
         tableEmptyHint: "결과 없음",
       },
+    },
+    lineupBuilder: {
+      title: "라인업 빌더",
+      description:
+        "축구 베스트 일레븐을 시각적으로 구성하고 이미지로 저장하세요.",
+      formationLabel: "포메이션",
     },
     feedback: {
       button: "피드백",
@@ -767,6 +778,12 @@ export const messages: Record<Locale, Messages> = {
           "All inputs (Total Budget, Current Price, Rounds, Drop %) must be greater than 0 for DCA simulation.",
         tableEmptyHint: "No data",
       },
+    },
+    lineupBuilder: {
+      title: "Lineup Builder",
+      description:
+        "Build your starting eleven visually and save it as an image.",
+      formationLabel: "Formation",
     },
     feedback: {
       button: "Feedback",
