@@ -9,6 +9,7 @@ const TOOLS = [
   "stock-sim",
   "supp-plan",
   "saju-naming",
+  "lineup-builder",
 ] as const;
 const CATEGORIES = ["feature", "improvement", "complaint", "other"] as const;
 

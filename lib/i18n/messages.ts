@@ -365,6 +365,7 @@ export type Messages = {
     toolStockSim: string;
     toolSuppPlan: string;
     toolSajuNaming: string;
+    toolLineupBuilder: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -770,6 +771,7 @@ export const messages: Record<Locale, Messages> = {
       toolStockSim: "주식 시뮬레이터",
       toolSuppPlan: "영양제 플래너",
       toolSajuNaming: "사주 작명",
+      toolLineupBuilder: "라인업 빌더",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -1205,6 +1207,7 @@ export const messages: Record<Locale, Messages> = {
       toolStockSim: "Stock Simulator",
       toolSuppPlan: "Supplement Planner",
       toolSajuNaming: "Saju Naming",
+      toolLineupBuilder: "Lineup Builder",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",

@@ -20,6 +20,7 @@ const TOOL_LABEL: Record<string, string> = {
   "stock-sim": "주식 시뮬레이터",
   "supp-plan": "영양제 플래너",
   "saju-naming": "사주 작명",
+  "lineup-builder": "라인업 빌더",
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
