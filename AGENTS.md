@@ -24,6 +24,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 배포는 브랜치 push로만 (Cloudflare Git Integration): `main` push → brennhub.com / `dev` push → dev.brennhub.com.
 
-- 도구 작업 first step: `git checkout -b feat/<tool>-<task> main` (feat 분기는 항상 main에서).
+- 도구 작업 first step: 기존 도구 `git checkout feat/<tool>` + `git merge main` / 신규 도구 `git checkout -b feat/<tool> main`. feat는 도구당 long-lived 1개 (task별 분기·삭제 X).
 - 수동 deploy 명령 (`npm run deploy` / `wrangler deploy` / `opennextjs-cloudflare deploy`) 은 어떤 경우에도 자동 실행 금지 — 사용자가 명시적으로 지시한 경우에만.
 - 시행 시점: 2026-05-20 dev → main reset 이후. 상세: BRENNHUB.md § 5/6/7.

@@ -26,3 +26,4 @@
 
 ## 2026-05-20
 - **개발 체계 명문화** — feat 브랜치 정책 도입 (feat 분기는 항상 main에서 → `dev` 통합 staging / `main` prod 직결), Cloudflare Git Integration 자동 배포 메커니즘 명문화 (`main` → brennhub.com / `dev` → dev.brennhub.com), 수동 deploy 명령 (`npm run deploy` / `wrangler deploy`) 금지. 계기: 2026-05-20 lineup-builder prod 배포 사고 (dev → main 직접 머지로 미완성 혼입 + Cloudflare 자동 배포). BRENNHUB.md § 5/6/7 + AGENTS.md 반영.
+- **(보강) feat 브랜치 long-lived 전환** — feat 패턴 short-lived(`feat/<tool>-<task>`, task별 분기·삭제) → long-lived(`feat/<tool>`, 도구당 1개 유지)로 정정. 솔로 빌더 관리 부담 ↓. BRENNHUB.md § 6/7 + AGENTS.md 반영.
