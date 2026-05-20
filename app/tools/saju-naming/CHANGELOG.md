@@ -35,6 +35,18 @@
 - 9,460 전량 inname_ok=1 (fallback). 71자 미구분 → C-5-8 reconcile.
 - Join key = Unicode 코드포인트 정수.
 
+### Added (C-5-3 Unihan 추출)
+- `app/tools/saju-naming/scripts/build-staged-unihan.ts` — Unihan kRSUnicode/kTotalStrokes/kDefinition 추출 스크립트.
+- `app/tools/saju-naming/scripts/data/staged-unihan.json` — 9,460 한자 부수/획수/영어 의미 (비표준 405자는 null).
+- 의존성: adm-zip + @types/adm-zip (devDependency, MIT).
+
+### Decided (C-5-3 Unihan 추출)
+- 부수 표준 = kRSUnicode (부수번호 1~214 = 강희 214부수). kRSKangXi는 Unicode 15.1에서 withdrawn → kRSUnicode 채택 (강희사전 부수 표준 의도 동일 유지).
+- 다중값 (kRSUnicode/kTotalStrokes) → 첫 값 사용 + 다중값 한자 수 콘솔 record.
+- meaning_en = kDefinition verbatim (raw 보존, 향후 가공은 별도 task).
+- Scope = staged-hanja.json codepoint set 한정 (Unihan 전체 over-scope).
+- 비표준 405자 (plane 10/15) Unihan join 불가 — staged JSON에 null 정직 기록. 003 NOT NULL 충돌은 C-5-6 진입 시 nullable patch로 해소.
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)
