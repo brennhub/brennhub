@@ -4,10 +4,10 @@
 --   2) meaning NOT NULL → NULL 허용 (D안 886자 의미 전무 수용).
 --   3) SQLite는 NOT NULL 완화를 ALTER로 지원 X → DROP + CREATE 재생성.
 -- 영향:
---   - 002_hanja_seed.sql의 25자는 본 migration apply 시 소실. 9,389자 재적재는 C-5-2 ~ C-5-6에서.
+--   - 002_hanja_seed.sql의 25자는 본 migration apply 시 소실. 9,460자(rutopio gov 고유, 공식 인명용 9,389 + 71자 초과) 재적재는 C-5-2 ~ C-5-6에서.
 --   - API 영향 X (id 미사용 + 기존 7컬럼 보존).
 -- 보류 (C-5-7에서 결정):
---   - recommend route WHERE 재설계 (현재 'inname_ok=1만 → 전 row 메모리 필터' 패턴, 9,389자 적재 후 latency 위험).
+--   - recommend route WHERE 재설계 (현재 'inname_ok=1만 → 전 row 메모리 필터' 패턴, 9,460자 적재 후 latency 위험).
 --   - 재설계 후 의미 보유 + ohaeng/stroke 등 partial/복합 index 별도 migration 추가.
 --   - consonant 컬럼 — 초성 검색 UI 도입 시 ADD COLUMN으로 추가.
 

@@ -12,7 +12,8 @@
 - `meaning` NOT NULL → NULL 허용 (D안 886자 의미 전무 수용).
 
 ### Notes
-- `002_hanja_seed.sql`의 25자는 003 apply 시 소실. 9,389자 적재는 C-5-2 ~ C-5-6에서 진행. 002 파일은 historical migration으로 보존 (삭제 X).
+- `002_hanja_seed.sql`의 25자는 003 apply 시 소실. 9,460자(공식 9,389 + 71 초과) 적재는 C-5-2 ~ C-5-6에서 진행. 002 파일은 historical migration으로 보존 (삭제 X).
+- 71자 reconcile은 C-5-8에서 efamily 권위 리스트 확보 후 처리.
 - migration apply는 Brenn 수동 (dev `--env preview --remote` / prod `--remote`).
 - partial/복합 index 및 consonant 컬럼은 C-5-7 (recommend WHERE 재설계) 시점에 별도 migration으로 검토.
 

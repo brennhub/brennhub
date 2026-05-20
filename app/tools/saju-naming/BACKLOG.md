@@ -57,6 +57,8 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 - 영어 fallback도 612자만 가능 (100% 아님). 886자는 한·영 의미 모두 없음.
 - 상세: `docs/learnings/2026-05-19-saju-naming-task-39b-recon.md`.
 
+> **정정 (C-5-2 정찰, 본 표 수치는 0.6.5 정찰 매듭 당시 보존)**: gov 9,460 / 교집합 7,960 / gov-only 1,500 / 영어 cover 613 / 의미 전무 887 / 추천 8,573 / 공식 대비 초과 71자. 적재 구현은 정정값 사용. 상세 `2026-05-19-saju-naming-c5-2-recon.md` 항목 1.
+
 ##### D안 — 적재 정책 [확정]
 
 - 9,443자 (공식 9,389) **전부 D1 적재** — 데이터 보존.
@@ -104,17 +106,18 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
 ##### C-5 — 5-way join + 적재 (7단계 분해)
 
-임계 경로: C-5-1 → C-5-2 → C-5-6 → C-5-7. C-5-3 / C-5-4는 C-5-1과 독립 (병렬 가능).
+임계 경로: C-5-1 → C-5-2 → C-5-6 → C-5-7. C-5-3 / C-5-4는 C-5-1과 독립 (병렬 가능). C-5-3 / C-5-4 외에 C-5-8도 C-5-2와 병렬 시도 가능.
 
 | 단계 | 내용 | 의존 | 추정 | 주의점 |
 |---|---|---|---|---|
 | **C-5-1** ✅ | D1 스키마 설계 — `migrations/003_hanja_full.sql` (DROP + CREATE 신 테이블, 컬럼 12 / index 5) | — | 완료 | 신 테이블 확정 (ALTER 아님 — SQLite NOT NULL 완화 불가). 상세 ↓ §C-5-1 결과 |
-| **C-5-2** | rutopio gov+naver 적재 스크립트 — CSV 파싱 + 코드포인트 정규화 + join. 9,443↔9,389 reconcile | C-5-1 | 0.5d | 한 한자에 음 복수 (가/나 두음 등) → hangeul 다중값 처리 정책 |
+| **C-5-2** | rutopio gov+naver 적재 스크립트 — CSV 파싱 + 코드포인트 정규화 + join. 9,460↔9,389 reconcile (71자 초과, efamily 매칭 필요) | C-5-1 | 0.5d | 한 한자에 음 복수 (가/나 두음 등) → hangeul 다중값 처리 정책 |
 | **C-5-3** | Unihan 추출 스크립트 — 부수(`kRSUnicode`)/획수(`kTotalStrokes`)/영어정의(`kDefinition`). UAX #38 탭 파싱 | — (병렬) | 0.5d | Unihan 8.5MB — repo 미포함, 스크립트가 다운로드 or 캐시 |
 | **C-5-4** | 214부수×5행 자원오행 매핑표 자체 구축 — web_search 정찰 + 작명소 통용 매핑 정리 + 출처 docstring | — (병렬) | 1d | 학파 차이 → 표준안 1개 확정. C-4-A 결정 사항 |
 | **C-5-5** | 원획법(C-4-B) 코드화 — `lib/saju-naming/won-stroke.ts`. 14부수 환원표 + 숫자 한자 룰 | C-5-3 | 0.5d | C-4-B 확정표 그대로. PoC 검증 |
 | **C-5-6** | 별도 bulk INSERT 마이그레이션 생성 (파일명은 C-5-6 진입 시 확정 — `002_hanja_seed.sql` 네이밍과 일관) — 5-way join 결과 bulk INSERT, 배치 분할 | C-5-1~5 | 0.5d | D1 제약: statement 크기 / 변수 수 한도 → 배치 (~수백 row/INSERT). 003은 C-5-1에서 스키마 전용 확정 |
-| **C-5-7** | dev 적재 + 검증 — `wrangler d1 execute`, COUNT 9,443, spot-check, hanja-search/recommend API 회귀 | C-5-6 | 0.5d→1d? | Brenn 수동 apply 가능성. 적재 후 39-C(점수 base) 진입 가능. ⚠️ recommend WHERE 재설계 필요 — 상세 ↓ §C-5-7 보류 |
+| **C-5-7** | dev 적재 + 검증 — `wrangler d1 execute`, COUNT 9,460, spot-check, hanja-search/recommend API 회귀 | C-5-6 | 0.5d→1d? | Brenn 수동 apply 가능성. 적재 후 39-C(점수 base) 진입 가능. ⚠️ recommend WHERE 재설계 필요 — 상세 ↓ §C-5-7 보류 |
+| **C-5-8** (critical) | efamily.scourt.go.kr 공식 9,389 인명용 한자 리스트 확보 → 71자 초과 reconcile → inname_ok 정확화 UPDATE | C-5-2 (또는 병렬 시도) | 0.5d | 호적 등록 risk 정확화. 44 UI live 출시 전 필수. quick check 결과에 따라 C-5-2 fallback 분기 결정 |
 
 ##### C-5-1 결과 — hanja 신 스키마 확정 [완료 2026-05-19]
 
