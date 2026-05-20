@@ -333,6 +333,11 @@ export type Messages = {
     name: string;
     description: string;
   };
+  lineupBuilder: {
+    title: string;
+    description: string;
+    formationLabel: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -715,6 +720,12 @@ export const messages: Record<Locale, Messages> = {
     sajuNaming: {
       name: "사주 작명",
       description: "사주팔자 + 성명학 기반 작명",
+    },
+    lineupBuilder: {
+      title: "라인업 빌더",
+      description:
+        "축구 베스트 일레븐을 시각적으로 구성하고 이미지로 저장하세요.",
+      formationLabel: "포메이션",
     },
     feedback: {
       button: "피드백",
@@ -1128,6 +1139,12 @@ export const messages: Record<Locale, Messages> = {
       name: "Saju Naming",
       description:
         "Name recommendations based on Saju and Korean naming principles",
+    },
+    lineupBuilder: {
+      title: "Lineup Builder",
+      description:
+        "Build your starting eleven visually and save it as an image.",
+      formationLabel: "Formation",
     },
     feedback: {
       button: "Feedback",
