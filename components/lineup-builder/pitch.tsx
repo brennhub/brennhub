@@ -1,9 +1,10 @@
 import type { RefObject } from "react";
-import type { Player } from "@/lib/lineup-builder/types";
+import type { FormationId, Player } from "@/lib/lineup-builder/types";
 import { PlayerMarker } from "./player-marker";
 
 type Props = {
   players: Player[];
+  formationId: FormationId;
   teamColor: string;
   captainId: number | null;
   pitchRef: RefObject<HTMLDivElement | null>;
@@ -16,6 +17,7 @@ const LINE = "rgba(255,255,255,0.72)";
 
 export function Pitch({
   players,
+  formationId,
   teamColor,
   captainId,
   pitchRef,
@@ -86,6 +88,12 @@ export function Pitch({
           onEdit={onEdit}
         />
       ))}
+      <div
+        className="absolute top-2 right-2 rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums sm:text-sm"
+        style={{ backgroundColor: "rgba(0,0,0,0.4)", color: "#ffffff" }}
+      >
+        {formationId}
+      </div>
     </div>
   );
 }

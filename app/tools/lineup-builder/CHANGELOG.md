@@ -2,6 +2,24 @@
 
 주요 결정 / 이정표.
 
+## [0.6.1] — 2026-05-19
+
+### Fixed
+
+- **다크모드 포지션 select 가독성** — 편집 모달의 포지션 select가 `bg-transparent`라 다크모드에서 native `<option>` 팝업이 흰 배경 + (상속된) 흰 글자로 안 보였음. 앱 전체 다른 select가 모두 쓰는 불투명 패턴(`formation-select.tsx`와 동일: `bg-white dark:bg-zinc-900` + `text-zinc-900 dark:text-zinc-100`)으로 교체.
+
+### Changed
+
+- **핏치 간격 압축** — `formations.ts` 8포메이션 88명의 top을 `round((top-50)*0.85+50)`로 직접 갱신. GK(92→86) 하단 잘림 해소 + 위아래 마진 확보, 라인 간 비율 유지. left% 불변.
+
+### Added
+
+- **핏치 내 포메이션 라벨** — 핏치 우상단에 현재 FormationId(raw, 예 "4-3-3") 표시. 반투명 검정 박스 + 흰 글자(inline rgba/hex). `pitch.tsx`에 `formationId` prop 추가, captureRef 안이라 PNG에도 자동 반영.
+
+### Notes
+
+- 빌드 검증: TS 에러 0, 라우트 변동 없음. 시각 검증(다크 select, GK 잘림 해소, 8포메이션 라벨, PNG 라벨 포함)은 dev 배포 후 사용자 확인.
+
 ## [0.6.0] — 2026-05-19
 
 ### Added (Task E — 세부 포지션 + 감독 + 주장)

@@ -183,6 +183,7 @@ export function LineupBuilderClientShell() {
             />
             <Pitch
               players={players}
+              formationId={formationId}
               teamColor={teamColor}
               captainId={captainId}
               pitchRef={pitchRef}
