@@ -47,6 +47,20 @@
 - Scope = staged-hanja.json codepoint set 한정 (Unihan 전체 over-scope).
 - 비표준 405자 (plane 10/15) Unihan join 불가 — staged JSON에 null 정직 기록. 003 NOT NULL 충돌은 C-5-6 진입 시 nullable patch로 해소.
 
+### Added (C-5-5 원획법 코드화)
+- `app/tools/saju-naming/lib/won-stroke.ts` — 원획법 계산 라이브러리 (C-4-B 14부수 환원표 + 숫자 한자 13자).
+- `app/tools/saju-naming/scripts/build-staged-won-stroke.ts` — won_stroke 빌드 스크립트.
+- `app/tools/saju-naming/scripts/data/staged-won-stroke.json` — 9,460 한자 원획 데이터.
+- `app/tools/saju-naming/poc/won-stroke.poc.ts` — PoC 검증 (환원표 + 숫자 한자 룰 + 시드 25자 비교).
+
+### Decided (C-5-5 원획법 코드화)
+- 원획법 공식 = additional_strokes(kRSUnicode 잔여획) + 원획[radical_number] (14부수 한정). residual 기반 → variant detection·필획 불필요, Unihan 부수 획수 계산 방식과 무관.
+- 변형 부수 환원: C-4-B 확정 14부수 표 그대로 (commit 2c3eb17 정찰 결과 인용).
+- 숫자 한자 룰: 一-十 = 1-10, 百6·千3·萬15 (표면 획수 무시, 13자).
+- 비표준 405자 won_stroke = null (정직 기록, C-5-6 nullable 처리).
+- base 획수 = Unihan kTotalStrokes 채택. 명리학 작명 획수와 ~12% 표본 델타는 알려진 한계 (C-2/C-3 정찰에서 라이센스 안전 명리학 데이터셋 미발견 → 차선).
+- C-4-B 14부수 환원 + 숫자 13자 로직은 정확 (氵 5/5 + 숫자 13 + 직접 환원 5 + seed 22/25 검증). 부정확분은 base 획수 도메인 차이, C-4-B scope 밖.
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)

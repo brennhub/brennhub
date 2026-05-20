@@ -114,7 +114,7 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 | **C-5-2** ✅ | rutopio gov+naver 적재 스크립트 — CSV 파싱 + 코드포인트 정규화 + join. 9,460↔9,389 reconcile (71자 초과, efamily 매칭 필요) 결과: 9,460자 staged JSON 생성 (scripts/data/staged-hanja.json). 71자 미구분 + inname_ok=1 fallback (C-5-8 reconcile 대기). | C-5-1 | 0.5d | 한 한자에 음 복수 (가/나 두음 등) → hangeul 다중값 처리 정책 |
 | **C-5-3** ✅ | Unihan 추출 스크립트 — 부수(`kRSUnicode`)/획수(`kTotalStrokes`)/영어정의(`kDefinition`). UAX #38 탭 파싱 결과: 9,460 한자 staged-unihan.json 생성 (실제 CJK 9,055 부수/획수 100% / 비표준 405 null). kDefinition 채움 83.4%. | — (병렬) | 0.5d | Unihan 8.5MB — repo 미포함, 스크립트가 다운로드 or 캐시 |
 | **C-5-4** | 214부수×5행 자원오행 매핑표 자체 구축 — web_search 정찰 + 작명소 통용 매핑 정리 + 출처 docstring | — (병렬) | 1d | 학파 차이 → 표준안 1개 확정. C-4-A 결정 사항 |
-| **C-5-5** | 원획법(C-4-B) 코드화 — `lib/saju-naming/won-stroke.ts`. 14부수 환원표 + 숫자 한자 룰 | C-5-3 | 0.5d | C-4-B 확정표 그대로. PoC 검증 |
+| **C-5-5** ✅ | 원획법(C-4-B) 코드화 — `lib/won-stroke.ts`. 14부수 환원표 + 숫자 한자 룰 결과: C-4-B scope (14부수 + 숫자) 정확 구현. seed 22/25 통과 — 3건(城/熙/燁) base 획수 Unihan ≠ 명리학 차이 (C-4-B scope 밖 한계). | C-5-3 | 0.5d | C-4-B 확정표 그대로. PoC 검증 |
 | **C-5-6** | 별도 bulk INSERT 마이그레이션 생성 (파일명은 C-5-6 진입 시 확정 — `002_hanja_seed.sql` 네이밍과 일관) — 5-way join 결과 bulk INSERT, 배치 분할 | C-5-1~5 | 0.5d | D1 제약: statement 크기 / 변수 수 한도 → 배치 (~수백 row/INSERT). 003은 C-5-1에서 스키마 전용 확정. ⚠️ 비표준 405자 (Unihan 미수록, plane 10/15) — total_strokes/won_stroke NULL → 003 NOT NULL 충돌. 진입 시 003 nullable patch 선행 필요 (테이블 재생성, C-5-1 패턴). won_stroke도 동일 처리 (C-5-5에서 비표준 한자 계산 불가) |
 | **C-5-7** | dev 적재 + 검증 — `wrangler d1 execute`, COUNT 9,460, spot-check, hanja-search/recommend API 회귀 | C-5-6 | 0.5d→1d? | Brenn 수동 apply 가능성. 적재 후 39-C(점수 base) 진입 가능. ⚠️ recommend WHERE 재설계 필요 — 상세 ↓ §C-5-7 보류 |
 | **C-5-8** (critical) | efamily.scourt.go.kr 공식 9,389 인명용 한자 리스트 확보 → 71자 초과 reconcile → inname_ok 정확화 UPDATE 우선순위: (a) law.go.kr 「가족관계의 등록 등에 관한 규칙」 제37조 별표1/2 [법령=저작권 비대상, 추출성 선확인] / (b) efamily PDF [현행이나 'All Rights Reserved' 라이센스 제약] / (c) efamily 조회 485 한글음 순회 [최후수단] | C-5-2 (또는 병렬 시도) | 0.5d | 호적 등록 risk 정확화. 44 UI live 출시 전 필수. quick check 결과에 따라 C-5-2 fallback 분기 결정 |
@@ -143,6 +143,7 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
 - [ ] `calcOhaengScore` / `calcSoundScore` base값 재검토 — 현재 base=0. 39-B 풀 데이터 적재 후 실제 점수 분포 측정 → base 재설정.
 - 의존: 39-B C-5 완료 필수 (25자 시드로는 분포 측정 불가).
+- ⚠️ flag: 명리학 획수 정확도 보정 (Unihan kTotalStrokes ↔ 명리학 작명 ~12% 표본 델타 — C-5-5 발견) — 39-C 점수 튜닝 진입 시 또는 별도 task에서 명리학 획수 보정 데이터셋 재검토.
 
 ### Task 40 — 81수리 (수리길흉)
 - [x] `lib/surie.ts` — 원형이정 (元亨利貞) 4격 계산
