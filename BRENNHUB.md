@@ -153,7 +153,7 @@ brennhub은 게임 / SaaS / 사이드 프로젝트 전부의 **우산 브랜드*
 - **dev → main 직접 머지 금지**: dev는 여러 도구의 미완성 commit이 섞인 staging. dev를 main에 통째로 머지하면 미완성이 prod로 샘 (2026-05-20 lineup-builder 사고 직접 원인). main에는 feat 브랜치만 머지.
 - **feat 브랜치 안에서 재분기 금지**: 관리 복잡도 ↑. feat는 단일 task 단위로 평면 유지.
 - **`main` / `dev`에 직접 commit 금지**: 모든 변경은 feat 브랜치를 거쳐 머지. (2026-05-20 정책 도입 — 본 정책 명문화 commit 자체는 시행 전 마지막 예외.)
-- **동일 도구 내 동시 task 작업 금지**: 한 `feat/<tool>`에 여러 미완 task commit이 누적되면 main 머지 시 미완성 혼입. 직렬 진행. 예외: 동시 진행 불가피 시 short-lived sub-feat (`feat/<tool>-<hotfix>`, main에서 분기) 허용 — main 머지 후 삭제.
+- **동일 도구 내 동시 task 작업 금지**: 한 `feat/<tool>`에 여러 미완 task commit이 누적되면 main 머지 시 미완성 혼입. 한 번에 한 task씩 직렬 진행. (feat 분기는 도구당 1개가 끝 — 그 이상 분기 X.)
 - **새 task 시작 전 `git merge main` 누락 금지**: stale feat는 머지 충돌·낡은 베이스 위험.
 - **Claude Code 세션의 수동 deploy 명령 자동 실행 금지**: `npm run deploy` / `wrangler deploy` 등은 사용자 명시 지시 없이 실행 X. (2026-05-20 wrangler logout 조치 + 본 정책 명문화.)
 
