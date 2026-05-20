@@ -224,6 +224,8 @@ export type Messages = {
     formationLabel: string;
     teamNameLabel: string;
     teamNamePlaceholder: string;
+    managerLabel: string;
+    managerPlaceholder: string;
     downloadButton: string;
     downloadingButton: string;
     resetButton: string;
@@ -231,6 +233,8 @@ export type Messages = {
     editTitle: string;
     editNameLabel: string;
     editNumberLabel: string;
+    positionLabel: string;
+    captainToggle: string;
     editSave: string;
     editCancel: string;
     formations: {
@@ -516,6 +520,8 @@ export const messages: Record<Locale, Messages> = {
       formationLabel: "포메이션",
       teamNameLabel: "팀 이름",
       teamNamePlaceholder: "팀 이름을 입력하세요",
+      managerLabel: "감독",
+      managerPlaceholder: "감독 이름",
       downloadButton: "이미지 저장",
       downloadingButton: "저장 중…",
       resetButton: "초기화",
@@ -523,6 +529,8 @@ export const messages: Record<Locale, Messages> = {
       editTitle: "선수 편집",
       editNameLabel: "이름",
       editNumberLabel: "등번호",
+      positionLabel: "포지션",
+      captainToggle: "주장 지정",
       editSave: "저장",
       editCancel: "취소",
       formations: {
@@ -830,6 +838,8 @@ export const messages: Record<Locale, Messages> = {
       formationLabel: "Formation",
       teamNameLabel: "Team name",
       teamNamePlaceholder: "Enter your team name",
+      managerLabel: "Manager",
+      managerPlaceholder: "Manager name",
       downloadButton: "Save image",
       downloadingButton: "Saving…",
       resetButton: "Reset",
@@ -837,6 +847,8 @@ export const messages: Record<Locale, Messages> = {
       editTitle: "Edit player",
       editNameLabel: "Name",
       editNumberLabel: "Number",
+      positionLabel: "Position",
+      captainToggle: "Captain",
       editSave: "Save",
       editCancel: "Cancel",
       formations: {

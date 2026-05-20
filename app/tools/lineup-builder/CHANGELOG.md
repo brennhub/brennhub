@@ -2,6 +2,21 @@
 
 주요 결정 / 이정표.
 
+## [0.6.0] — 2026-05-19
+
+### Added (Task E — 세부 포지션 + 감독 + 주장)
+
+- **세부 포지션 15종** — `PositionCode` 유니온(`lib/lineup-builder/types.ts`) + `Player.position`. **Role 4종(GK/DF/MF/FW)은 색·그룹용으로 그대로 유지** — Position과 공존. `mkPlayer` 시그니처에 position 추가, 8포메이션 88명 매핑. 마커는 등번호 위에 포지션 코드(영어 약어, i18n 불필요)를 작게 표시.
+- **마커 크기 48/52px** — 포지션 + 등번호 2단 적재를 위해 44/48 → 48/52px 소폭 확대 (Task A 원안 범위 내).
+- **편집 모달** — 포지션 select(15) + 주장 지정 토글(공유 `Switch` 재사용). 변경은 저장 시 커밋.
+- **감독 입력** — 팀명 input과 2칸 grid. 캡처 헤더는 4케이스 분기(`capture-header.tsx`): 둘 다 빈값/팀명만/감독만/둘 다. 다운로드 파일명은 팀명 기준 유지.
+- **주장** — `captainId` state(배타적 1명만). 마커 우상단 노랑(`#eab308`) "C" 배지. 포메이션 변경 시 유지, 초기화 시 해제.
+- **i18n** — `lineupBuilder`에 `positionLabel` / `managerLabel`(헤더 "감독:" 접두 겸용) / `managerPlaceholder` / `captainToggle` (ko/en).
+
+### Notes
+
+- 빌드 검증: TS 에러 0, 라우트 변동 없음. 시각 검증(마커 빽빽함, 8포메이션 포지션 매핑, 편집 모달 포지션·주장 배타, 감독 헤더+PNG, C 배지 라이트/다크)은 dev 배포 후 사용자 확인.
+
 ## [0.5.0] — 2026-05-19
 
 ### Fixed

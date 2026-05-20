@@ -13,14 +13,13 @@
 ## 주요 기능
 
 1. **축구 경기장 시각화** — 반응형 (aspect-ratio 3/4), 잔디 패턴 + 라인, 외부 이미지 의존성 없음(순수 CSS).
-2. **포메이션 4종 자동 배치** — 4-4-2, 4-3-3, 3-5-2, 4-2-3-1.
-3. **선수 마커 드래그 + 인라인 편집** — mouse + touch 모두 지원, 클릭 시 이름·등번호 편집.
-4. **PNG 다운로드** — html2canvas로 경기장 영역 캡처 → `brennhub-squad.png`.
+2. **포메이션 8종 자동 배치** — 4-4-2 / 4-3-3 / 3-5-2 / 4-2-3-1 / 4-1-4-1 / 3-4-3 / 5-3-2 / 4-3-2-1.
+3. **선수 마커 드래그 + 인라인 편집** — Pointer Events(mouse·touch·pen), 클릭 시 이름·등번호·포지션·주장 편집.
+4. **세부 포지션 15종** — 마커에 포지션 코드 표시 (Role 4종과 별개로 공존).
+5. **팀 정보** — 팀명·감독 입력(캡처 헤더 반영), 팀 색상 8종, 주장(C 배지) 1명.
+6. **PNG 다운로드** — modern-screenshot으로 캡처 영역 → `${팀명}-squad.png` (팀명 없으면 `brennhub-squad.png`).
 
-확장 계획 (MVP 검증 후, 별도 task):
-- 6.1 localStorage 스쿼드 히스토리
-- 6.2 평점 / 스탯 오버레이
-- 6.3 테마 + 유니폼 커스텀
+확장 계획 (MVP 검증 후, 별도 task): BACKLOG.md "2단계 확장" 참조.
 
 ## 기술 스택 (brennhub 환경 재설계)
 
@@ -28,7 +27,7 @@
 |---|---|
 | Bootstrap 5.3 | Tailwind v4 (CSS-first) |
 | Vanilla JS | React Client Component (`"use client"`) |
-| html2canvas CDN | `html2canvas` npm 패키지 (v1.4.1+) |
+| html2canvas CDN | `modern-screenshot` npm (foreignObject 캡처 — Tailwind v4 모던 색 함수 호환) |
 | 단일 `index.html` | Next.js App Router (`app/tools/lineup-builder/page.tsx` + `client-shell.tsx`) |
 
 다른 도구(stock-sim, supp-plan)와 동일 스택. 별도 백엔드 운영 X — 클라이언트 사이드 only.
@@ -36,13 +35,19 @@
 ## 데이터 구조
 
 ```typescript
-type Role = "GK" | "DF" | "MF" | "FW";
+type Role = "GK" | "DF" | "MF" | "FW";   // 색·그룹용
+
+type PositionCode =                       // 세부 포지션 15종, 표시·편집용
+  | "GK" | "CB" | "LB" | "RB" | "LWB" | "RWB"
+  | "DM" | "CM" | "AM" | "LM" | "RM"
+  | "CF" | "SS" | "LW" | "RW";
 
 type Player = {
-  id: number;          // 1-11
+  id: number;            // 1-11
   role: Role;
-  top: number;         // % from top of pitch (0-100)
-  left: number;        // % from left of pitch (0-100)
+  position: PositionCode;
+  top: number;           // % from top of pitch (0-100)
+  left: number;          // % from left of pitch (0-100)
   name: string;
   number: number;
 };
