@@ -22,10 +22,38 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 ### Task 39 — 한자 DB
 - [x] D1 스키마 설계 + 마이그레이션 파일 (`migrations/001_hanja.sql`) — 39-A
 - [x] 시드 데이터 25자 (오행별 5자, `migrations/002_hanja_seed.sql`) — 39-A
-- [ ] **39-B**: 대법원 인명용 한자 **9,389자 (2024-06-11 시행, 대법원규칙 제3151호)** 풀 데이터 적재 (소스 확보 + 변환 스크립트 + bulk INSERT)
 - [x] D1 binding `NAMING_DB` (wrangler.jsonc, prod + preview) — `0.4.0` (prod `2b4853be...`, preview `48fce286...`). migrations apply는 Brenn 수동 후속.
-- [ ] 음 → 한자 후보 조회 API
+- [ ] 음 → 한자 후보 조회 API (hanja-search API로 부분 충족)
 - [ ] 한자 → 의미/오행 조회
+
+#### 39-B — 인명용 한자 풀 데이터 적재 (9,389자, 2024-06-11 대법원규칙 제3151호)
+
+5단계: C-1~C-3 데이터/조사, C-4 도메인 결정, C-5 코드.
+
+- [x] **C-1 자수 정정** — 8,142자(인수인계 오류) → 9,389자 확정. BACKLOG/문서 반영 완료.
+- [ ] **C-2 데이터 소스 정찰** (read-only) — 후보 평가:
+  - rutopio gov 데이터셋 (9,444 unique / 9,389 cover) — 인명용 한자 코드포인트
+  - naver 한자사전 — 의미(meaning)
+  - rycont 한자 데이터 — 부수 / 획수
+  - Unihan database (Unicode) — fallback 부수 / 획수 / 음
+- [ ] **C-3 라이센스 + join 가능성 검증** — 각 소스 라이센스 + join key(코드포인트) 일치율:
+  - rutopio: MIT 확인됨
+  - rycont: 라이센스 확인 필요
+  - Unihan: Unicode 라이센스 (재배포 허용)
+- [ ] **C-4-A 자원오행 매핑 룰** [도메인 결정 대기]
+- [ ] **C-4-B 원획법 변환 룰** [도메인 결정 대기]
+- [ ] **C-5 5-way join + bulk insert + `migrations/003_hanja_full.sql`** [BLOCKED — C-1~4 완료 후] — 변환 스크립트 + 배치 분할 INSERT + D1 apply
+
+##### 도메인 결정 사항 (C-4 — Brenn 자료 공유 시 채움)
+
+- **C-4-A 자원오행**: 214 부수 → 오행 5원소 매핑 표. 명리학 유파별 차이 있음 → 단일 기준 확정 필요. 예시 방향: 木/竹/艸→목, 火/日→화, 土/石/山→토, 金/玉→금, 水/氵/雨→수.
+- **C-4-B 원획법**: 81수리 계산 시 부수를 원형 의미 글자 획수로 환원. 예: 氵(3)→水(4), 艹(4)→艸(6), 月(육달월,4)→肉(6), 忄(3)→心(4). 전체 환원 대상 부수 목록 확정 필요.
+- **자료 공유 형식**: 서적 발췌 / 표(CSV·텍스트) / 직접 입력 중 Brenn 결정.
+
+#### 39-C — 점수 base 튜닝 (39-B 적재 후)
+
+- [ ] `calcOhaengScore` / `calcSoundScore` base값 재검토 — 현재 base=0. 39-B 풀 데이터 적재 후 실제 점수 분포 측정 → base 재설정.
+- 의존: 39-B C-5 완료 필수 (25자 시드로는 분포 측정 불가).
 
 ### Task 40 — 81수리 (수리길흉)
 - [x] `lib/surie.ts` — 원형이정 (元亨利貞) 4격 계산
@@ -40,7 +68,7 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 - [x] 가중 점수: 오행 40% / 81수리 35% / 발음오행 25%
 - [x] 한글 초성 추출 (`getInitialConsonant`, 쌍자음 → 평음 normalize) + 발음오행 매핑
 - [x] excludeChars로 iteration 지원 (마음에 안 드는 한자 제외)
-- [ ] `calcOhaengScore`/`calcSoundScore` base값 재검토 (39-B 적재 후, 현재 base=0)
+- [ ] `calcOhaengScore`/`calcSoundScore` base값 재검토 → **[39-C로 이관]**
 - [ ] 부모 의도 키워드 (선택) → AI 매칭 점수 (Premium)
 - [ ] 후보 30개 (Basic) / 무제한 (Premium) 생성 흐름
 - [ ] iteration UX: "이 후보 마음에 안 듦" → 다른 후보로
@@ -62,6 +90,9 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 - [ ] OG 이미지
 
 ### Task 44 — 무료 미리보기 흐름
+
+> 의존: 39-B 완료 = 추천 품질 정상화 = 효능감 정상 → 44 진입 준비 완료.
+
 - [ ] 입력 폼 (생년월일시, 성별, 음/양력, 성씨)
 - [ ] 사주 결과 시각화 (8글자 그리드 + 오행 차트)
 - [ ] 후보 3개 표시
