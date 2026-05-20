@@ -80,14 +80,33 @@ brennhub은 게임 / SaaS / 사이드 프로젝트 전부의 **우산 브랜드*
 - **Storage abstraction (미래 마이그레이션 대비)**: interface + impl 분리. supp-plan의 `PersonalScheduleStorage` 패턴 — 로그인 도입 시 `D1ScheduleStorage` 새로 만들고 export 한 줄 교체. 출처: [PATTERNS.md:91-93].
 - **localStorage hydrate + persist + schemaVersion 마이그레이션**: stock-sim/supp-plan 모두. 의미 변경 시 한 줄 주석으로 의도 명시. 출처: [PATTERNS.md:69-73].
 - **D1 binding 구조**: top-level (prod) + `env.preview` 블록 (전체 binding 명시, 상속 X). 출처: [PATTERNS.md:118-122].
-- **CI/CD 정책**:
-  - `dev` 브랜치 push → Cloudflare 자동 배포 (dev.brennhub.com). 출처: [CHANGELOG.md:12].
-  - `dev/main` push → lint + build 자동 검증. 출처: [CHANGELOG.md:16].
+- **Cloudflare Git Integration 자동 배포** (2026-05-20 정정):
+  - `main` 브랜치 push → **brennhub.com prod 자동 배포**. Cloudflare Git Integration이 Linux 환경에서 OpenNext build + deploy 수행.
+  - `dev` 브랜치 push → dev.brennhub.com preview 자동 배포.
+  - ⚠️ 정정: 이전 BRENNHUB.md는 "main push ≠ 자동 배포, `npm run deploy` 수동 필요"로 가정했으나 **오진**. Cloudflare Git Integration이 main을 prod에 자동 배포함 (2026-05-20 lineup-builder 사고에서 발견).
+- **수동 deploy 명령 금지**: `npm run deploy` / `opennextjs-cloudflare deploy` / `wrangler deploy` 를 어떤 환경·세션에서도 자동 실행 X. Cloudflare 자동 배포와 충돌 + Windows 로컬 빌드 산출물의 prod 진입 위험 (2026-05-20 사고 직접 원인). 배포는 오직 브랜치 push로만.
+- **CI/CD 검증**:
+  - `dev/main` push → lint + build 자동 검증 (GitHub Actions). 출처: [CHANGELOG.md:16].
   - pre-commit hook은 staged 파일에 `eslint --fix`. 출처: [package.json:47-49].
-- **OpenNext + Windows 빌드 호환성 우회**: GH Actions Linux에서 빌드. 출처: [CHANGELOG.md:12].
+- **OpenNext + Windows 빌드 호환성 우회**: prod/preview 빌드는 Cloudflare / GH Actions Linux 환경. 로컬 Windows 빌드 산출물은 배포 금지. 출처: [CHANGELOG.md:12].
 - **next.js의 새 버전 가정 무시 금지**: "This is NOT the Next.js you know" — APIs/conventions/structure 학습 데이터와 다를 수 있음. 코드 전 `node_modules/next/dist/docs/` 읽기. 출처: [AGENTS.md:1-5].
 
 ## 6. 도구 추가 필수 절차
+
+### 표준 개발 흐름 (브랜치 정책)
+
+모든 도구 작업은 feat 브랜치에서 시작한다. (2026-05-20 도입)
+
+1. **main에서 feat 브랜치 분기**: `git checkout -b feat/<tool>-<task> main`
+2. feat에서 작업 + commit
+3. **중간 확인**: feat → `dev` 머지 + push → dev.brennhub.com에서 확인 (필요 시 반복)
+4. **완성 + 최종 확인**: feat → `main` 머지 + push → brennhub.com 자동 배포
+5. feat 브랜치 삭제 (로컬 + 원격)
+
+핵심 원칙:
+- **feat 분기는 항상 `main`에서** (dev에서 분기 X). main에서 분기하면 feat는 main 외 변경이 0이라 main 머지가 깨끗. dev에서 분기하면 다른 도구의 미완성 commit이 따라옴.
+- **분기와 머지는 독립** — feat는 어디서 시작했든 dev·main 양쪽 다 머지 가능.
+- `dev` = 통합 테스트 staging (여러 feat 머지 가능, 모래사장). `main` = prod 직결 (Cloudflare 자동 배포).
 
 ### 외부 기획서 필터 (도구 신규 plan 검토 시 반드시 확인)
 
@@ -127,6 +146,10 @@ brennhub은 게임 / SaaS / 사이드 프로젝트 전부의 **우산 브랜드*
   - (2) **API route 파일에 `export const runtime = "edge"` 명시 금지** — OpenNext + Cloudflare adapter 미지원. Webpack 빌드에서 명시 에러 ("edge runtime function must be defined in a separate function"), Turbopack에서는 silent broken bundle 생성. runtime 미명시가 정상 (Workers 환경 default 처리).
   - 출처: [CHANGELOG.md:20], [git `458a7c8 fix(admin): use process.env for basic auth (edge runtime compat)`, `f7fb99c fix(saju-naming): remove export const runtime = "edge" (real fix)`], [app/tools/saju-naming/CHANGELOG.md 0.5.0~0.6.2 진단 시리즈].
 - **.tscn / project.godot**: brennhub은 Next.js 프로젝트로 **해당 없음** (다른 repo `brennhub/magic-survivor` 규칙).
+- **dev → main 직접 머지 금지**: dev는 여러 도구의 미완성 commit이 섞인 staging. dev를 main에 통째로 머지하면 미완성이 prod로 샘 (2026-05-20 lineup-builder 사고 직접 원인). main에는 feat 브랜치만 머지.
+- **feat 브랜치 안에서 재분기 금지**: 관리 복잡도 ↑. feat는 단일 task 단위로 평면 유지.
+- **`main` / `dev`에 직접 commit 금지**: 모든 변경은 feat 브랜치를 거쳐 머지. (2026-05-20 정책 도입 — 본 정책 명문화 commit 자체는 시행 전 마지막 예외.)
+- **Claude Code 세션의 수동 deploy 명령 자동 실행 금지**: `npm run deploy` / `wrangler deploy` 등은 사용자 명시 지시 없이 실행 X. (2026-05-20 wrangler logout 조치 + 본 정책 명문화.)
 
 ### 명시적 금기 (chat 기반)
 

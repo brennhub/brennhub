@@ -23,3 +23,6 @@
 
 ## 2026-05-19
 - **컨벤션 명문화 (OpenNext runtime)** — API route 파일에 `export const runtime = "edge"` 금지. BRENNHUB.md § 7 + PATTERNS.md § D1/Cloudflare 명시. 근거: saju-naming Task 39 진단 시리즈 (0.5.0~0.6.2, 5+1 시도 후 매듭, `f7fb99c`).
+
+## 2026-05-20
+- **개발 체계 명문화** — feat 브랜치 정책 도입 (feat 분기는 항상 main에서 → `dev` 통합 staging / `main` prod 직결), Cloudflare Git Integration 자동 배포 메커니즘 명문화 (`main` → brennhub.com / `dev` → dev.brennhub.com), 수동 deploy 명령 (`npm run deploy` / `wrangler deploy`) 금지. 계기: 2026-05-20 lineup-builder prod 배포 사고 (dev → main 직접 머지로 미완성 혼입 + Cloudflare 자동 배포). BRENNHUB.md § 5/6/7 + AGENTS.md 반영.
