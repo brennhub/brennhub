@@ -3,12 +3,14 @@
 import { useRef, useState } from "react";
 import type { PointerEvent, RefObject } from "react";
 import { cn } from "@/lib/utils";
+import { getContrastText } from "@/lib/lineup-builder/color";
 import type { Player } from "@/lib/lineup-builder/types";
 
 const DRAG_THRESHOLD_PX = 5;
 
 type Props = {
   player: Player;
+  teamColor: string;
   pitchRef: RefObject<HTMLDivElement | null>;
   onMove: (id: number, top: number, left: number) => void;
   onEdit: (id: number) => void;
@@ -18,7 +20,13 @@ function clamp(value: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, value));
 }
 
-export function PlayerMarker({ player, pitchRef, onMove, onEdit }: Props) {
+export function PlayerMarker({
+  player,
+  teamColor,
+  pitchRef,
+  onMove,
+  onEdit,
+}: Props) {
   const [dragging, setDragging] = useState(false);
   const circleRef = useRef<HTMLDivElement>(null);
   // 드래그 추적값은 re-render 불필요 → ref.
@@ -33,6 +41,8 @@ export function PlayerMarker({ player, pitchRef, onMove, onEdit }: Props) {
     radiusY: 0,
     moved: false,
   });
+
+  const textColor = getContrastText(teamColor);
 
   const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
     const rect = pitchRef.current?.getBoundingClientRect();
@@ -108,10 +118,13 @@ export function PlayerMarker({ player, pitchRef, onMove, onEdit }: Props) {
       <div
         ref={circleRef}
         className={cn(
-          "flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#cbd5e1] bg-[#ffffff] text-[#18181b] transition-transform sm:h-12 sm:w-12",
+          "flex h-11 w-11 items-center justify-center rounded-full border-2 transition-transform sm:h-12 sm:w-12",
           dragging && "scale-105",
         )}
         style={{
+          backgroundColor: teamColor,
+          color: textColor,
+          borderColor: textColor,
           boxShadow: dragging
             ? "0 6px 16px rgba(0,0,0,0.35)"
             : "0 2px 6px rgba(0,0,0,0.25)",
@@ -121,7 +134,10 @@ export function PlayerMarker({ player, pitchRef, onMove, onEdit }: Props) {
           {player.number}
         </span>
       </div>
-      <span className="absolute left-1/2 top-full mt-1 max-w-[5.5rem] -translate-x-1/2 truncate rounded bg-[rgba(0,0,0,0.6)] px-1.5 py-0.5 text-center text-[10px] font-medium text-[#ffffff] sm:text-xs">
+      <span
+        className="absolute left-1/2 top-full mt-1 max-w-[5.5rem] -translate-x-1/2 truncate rounded px-1.5 py-0.5 text-center text-[10px] font-medium sm:text-xs"
+        style={{ backgroundColor: teamColor, color: textColor }}
+      >
         {player.name}
       </span>
     </div>

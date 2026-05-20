@@ -11,6 +11,7 @@ import type { FormationId, Player } from "@/lib/lineup-builder/types";
 import { Pitch } from "@/components/lineup-builder/pitch";
 import { ControlPanel } from "@/components/lineup-builder/control-panel";
 import { EditDialog } from "@/components/lineup-builder/edit-dialog";
+import { DEFAULT_TEAM_COLOR } from "@/components/lineup-builder/color-swatches";
 
 function clonePlayers(id: FormationId): Player[] {
   return getFormation(id).players.map((p) => ({ ...p }));
@@ -34,6 +35,7 @@ export function LineupBuilderClientShell() {
     clonePlayers(DEFAULT_FORMATION_ID),
   );
   const [teamName, setTeamName] = useState("");
+  const [teamColor, setTeamColor] = useState(DEFAULT_TEAM_COLOR);
   const [editId, setEditId] = useState<number | null>(null);
   const [downloading, setDownloading] = useState(false);
 
@@ -75,11 +77,10 @@ export function LineupBuilderClientShell() {
     if (!captureRef.current || downloading) return;
     setDownloading(true);
     try {
-      const { default: html2canvas } = await import("html2canvas");
-      const canvas = await html2canvas(captureRef.current, { scale: 2 });
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png"),
-      );
+      // modern-screenshot: foreignObject 방식 → 브라우저 네이티브 렌더로
+      // lab/oklch/color-mix 등 모던 CSS를 그대로 캡처. (html2canvas 대체)
+      const { domToBlob } = await import("modern-screenshot");
+      const blob = await domToBlob(captureRef.current, { scale: 2 });
       if (blob) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -90,6 +91,8 @@ export function LineupBuilderClientShell() {
         a.remove();
         URL.revokeObjectURL(url);
       }
+    } catch (err) {
+      console.error("[lineup-builder] PNG 캡처 실패:", err);
     } finally {
       setDownloading(false);
     }
@@ -150,6 +153,7 @@ export function LineupBuilderClientShell() {
             )}
             <Pitch
               players={players}
+              teamColor={teamColor}
               pitchRef={pitchRef}
               onMove={handleMove}
               onEdit={handleEdit}
@@ -160,6 +164,8 @@ export function LineupBuilderClientShell() {
           <ControlPanel
             formationId={formationId}
             onFormationChange={handleFormationChange}
+            teamColor={teamColor}
+            onTeamColorChange={setTeamColor}
             onDownload={handleDownload}
             onReset={handleReset}
             downloading={downloading}

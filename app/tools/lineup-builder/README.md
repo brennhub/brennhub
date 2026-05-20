@@ -1,4 +1,6 @@
-# 라인업 빌더 — `/tools/lineup-builder`
+# 축구 베스트 일레븐 만들기 — `/tools/lineup-builder`
+
+> UI 표시명은 "축구 베스트 일레븐 만들기" (en "Football Best XI Builder"). 코드 식별자(slug `lineup-builder`, registry id, 파일 경로)는 불변.
 
 축구 베스트 일레븐(11명) 라인업을 시각적으로 구성하고 PNG로 다운로드하는 도구. 포메이션 자동 배치 + 드래그 미세 조정 + 인라인 편집(이름·등번호).
 
@@ -45,7 +47,9 @@ type Player = {
   number: number;
 };
 
-type FormationId = "4-4-2" | "4-3-3" | "3-5-2" | "4-2-3-1";
+type FormationId =
+  | "4-4-2" | "4-3-3" | "3-5-2" | "4-2-3-1"
+  | "4-1-4-1" | "3-4-3" | "5-3-2" | "4-3-2-1";
 
 type Formation = {
   id: FormationId;
@@ -53,7 +57,7 @@ type Formation = {
 };
 ```
 
-좌표 값: 4종(4-4-2 / 4-3-3 / 3-5-2 / 4-2-3-1) 모두 Task A 지시서에서 확정 수령, `lib/lineup-builder/formations.ts`에 transcribe 완료.
+좌표 값: 포메이션 8종 모두 작업 지시서에서 확정 수령, `lib/lineup-builder/formations.ts`에 transcribe 완료. 기본 포메이션은 `4-3-3`.
 
 ## 파일 구조
 

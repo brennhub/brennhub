@@ -71,6 +71,70 @@ export const FORMATIONS: Formation[] = [
       mkPlayer(11, "FW", 18, 50),
     ],
   },
+  {
+    id: "4-1-4-1",
+    players: [
+      mkPlayer(1, "GK", 92, 50),
+      mkPlayer(2, "DF", 75, 15),
+      mkPlayer(3, "DF", 75, 38),
+      mkPlayer(4, "DF", 75, 62),
+      mkPlayer(5, "DF", 75, 85),
+      mkPlayer(6, "MF", 60, 50), // 수비형 미드
+      mkPlayer(7, "MF", 42, 15),
+      mkPlayer(8, "MF", 42, 38),
+      mkPlayer(9, "MF", 42, 62),
+      mkPlayer(10, "MF", 42, 85),
+      mkPlayer(11, "FW", 18, 50),
+    ],
+  },
+  {
+    id: "3-4-3",
+    players: [
+      mkPlayer(1, "GK", 92, 50),
+      mkPlayer(2, "DF", 75, 25),
+      mkPlayer(3, "DF", 75, 50),
+      mkPlayer(4, "DF", 75, 75),
+      mkPlayer(5, "MF", 50, 10), // 좌측 윙백
+      mkPlayer(6, "MF", 48, 35),
+      mkPlayer(7, "MF", 48, 65),
+      mkPlayer(8, "MF", 50, 90), // 우측 윙백
+      mkPlayer(9, "FW", 22, 20),
+      mkPlayer(10, "FW", 22, 50),
+      mkPlayer(11, "FW", 22, 80),
+    ],
+  },
+  {
+    id: "5-3-2",
+    players: [
+      mkPlayer(1, "GK", 92, 50),
+      mkPlayer(2, "DF", 70, 12), // 좌측 윙백
+      mkPlayer(3, "DF", 75, 32),
+      mkPlayer(4, "DF", 75, 50),
+      mkPlayer(5, "DF", 75, 68),
+      mkPlayer(6, "DF", 70, 88), // 우측 윙백
+      mkPlayer(7, "MF", 50, 28),
+      mkPlayer(8, "MF", 50, 50),
+      mkPlayer(9, "MF", 50, 72),
+      mkPlayer(10, "FW", 22, 38),
+      mkPlayer(11, "FW", 22, 62),
+    ],
+  },
+  {
+    id: "4-3-2-1",
+    players: [
+      mkPlayer(1, "GK", 92, 50),
+      mkPlayer(2, "DF", 75, 15),
+      mkPlayer(3, "DF", 75, 38),
+      mkPlayer(4, "DF", 75, 62),
+      mkPlayer(5, "DF", 75, 85),
+      mkPlayer(6, "MF", 55, 25),
+      mkPlayer(7, "MF", 55, 50),
+      mkPlayer(8, "MF", 55, 75),
+      mkPlayer(9, "MF", 35, 35), // CAM
+      mkPlayer(10, "MF", 35, 65), // CAM
+      mkPlayer(11, "FW", 15, 50),
+    ],
+  },
 ];
 
 export const DEFAULT_FORMATION_ID: FormationId = "4-3-3";

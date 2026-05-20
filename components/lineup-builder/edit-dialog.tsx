@@ -112,6 +112,7 @@ export function EditDialog({ player, onClose, onSave }: Props) {
               onStep={(n) => setNumberDraft(String(n))}
               smallStep={1}
               bigStep={10}
+              showBigStep={false}
               min={MIN_NUMBER}
               max={MAX_NUMBER}
               inputMode="numeric"
