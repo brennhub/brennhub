@@ -9,7 +9,6 @@ function mkPlayer(id: number, role: Role, top: number, left: number): Player {
 export const FORMATIONS: Formation[] = [
   {
     id: "4-4-2",
-    label: "4-4-2 박스형",
     players: [
       mkPlayer(1, "GK", 92, 50),
       mkPlayer(2, "DF", 75, 15),
@@ -26,7 +25,6 @@ export const FORMATIONS: Formation[] = [
   },
   {
     id: "4-3-3",
-    label: "4-3-3 윙어",
     players: [
       mkPlayer(1, "GK", 92, 50),
       mkPlayer(2, "DF", 75, 15),
@@ -43,7 +41,6 @@ export const FORMATIONS: Formation[] = [
   },
   {
     id: "3-5-2",
-    label: "3-5-2 윙백",
     players: [
       mkPlayer(1, "GK", 92, 50),
       mkPlayer(2, "DF", 75, 25),
@@ -60,7 +57,6 @@ export const FORMATIONS: Formation[] = [
   },
   {
     id: "4-2-3-1",
-    label: "4-2-3-1",
     players: [
       mkPlayer(1, "GK", 92, 50),
       mkPlayer(2, "DF", 75, 15),

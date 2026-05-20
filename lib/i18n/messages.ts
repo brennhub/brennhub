@@ -337,6 +337,22 @@ export type Messages = {
     title: string;
     description: string;
     formationLabel: string;
+    teamNameLabel: string;
+    teamNamePlaceholder: string;
+    downloadButton: string;
+    downloadingButton: string;
+    resetButton: string;
+    editTitle: string;
+    editNameLabel: string;
+    editNumberLabel: string;
+    editSave: string;
+    editCancel: string;
+    formations: {
+      "4-4-2": string;
+      "4-3-3": string;
+      "3-5-2": string;
+      "4-2-3-1": string;
+    };
   };
   feedback: {
     button: string;
@@ -726,6 +742,22 @@ export const messages: Record<Locale, Messages> = {
       description:
         "축구 베스트 일레븐을 시각적으로 구성하고 이미지로 저장하세요.",
       formationLabel: "포메이션",
+      teamNameLabel: "팀 이름",
+      teamNamePlaceholder: "팀 이름을 입력하세요",
+      downloadButton: "이미지 저장",
+      downloadingButton: "저장 중…",
+      resetButton: "초기화",
+      editTitle: "선수 편집",
+      editNameLabel: "이름",
+      editNumberLabel: "등번호",
+      editSave: "저장",
+      editCancel: "취소",
+      formations: {
+        "4-4-2": "4-4-2 박스형",
+        "4-3-3": "4-3-3 윙어",
+        "3-5-2": "3-5-2 윙백",
+        "4-2-3-1": "4-2-3-1",
+      },
     },
     feedback: {
       button: "피드백",
@@ -1145,6 +1177,22 @@ export const messages: Record<Locale, Messages> = {
       description:
         "Build your starting eleven visually and save it as an image.",
       formationLabel: "Formation",
+      teamNameLabel: "Team name",
+      teamNamePlaceholder: "Enter your team name",
+      downloadButton: "Save image",
+      downloadingButton: "Saving…",
+      resetButton: "Reset",
+      editTitle: "Edit player",
+      editNameLabel: "Name",
+      editNumberLabel: "Number",
+      editSave: "Save",
+      editCancel: "Cancel",
+      formations: {
+        "4-4-2": "4-4-2 Box",
+        "4-3-3": "4-3-3 Wingers",
+        "3-5-2": "3-5-2 Wing-backs",
+        "4-2-3-1": "4-2-3-1",
+      },
     },
     feedback: {
       button: "Feedback",

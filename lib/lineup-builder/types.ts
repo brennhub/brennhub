@@ -13,6 +13,5 @@ export type Player = {
 
 export type Formation = {
   id: FormationId;
-  label: string;
-  players: Player[]; // 11명
+  players: Player[]; // 11명. 표시명은 i18n lineupBuilder.formations[id]
 };
