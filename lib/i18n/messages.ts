@@ -227,6 +227,7 @@ export type Messages = {
     downloadButton: string;
     downloadingButton: string;
     resetButton: string;
+    teamColorLabel: string;
     editTitle: string;
     editNameLabel: string;
     editNumberLabel: string;
@@ -237,6 +238,10 @@ export type Messages = {
       "4-3-3": string;
       "3-5-2": string;
       "4-2-3-1": string;
+      "4-1-4-1": string;
+      "3-4-3": string;
+      "5-3-2": string;
+      "4-3-2-1": string;
     };
   };
   feedback: {
@@ -505,7 +510,7 @@ export const messages: Record<Locale, Messages> = {
       },
     },
     lineupBuilder: {
-      title: "라인업 빌더",
+      title: "축구 베스트 일레븐 만들기",
       description:
         "축구 베스트 일레븐을 시각적으로 구성하고 이미지로 저장하세요.",
       formationLabel: "포메이션",
@@ -514,6 +519,7 @@ export const messages: Record<Locale, Messages> = {
       downloadButton: "이미지 저장",
       downloadingButton: "저장 중…",
       resetButton: "초기화",
+      teamColorLabel: "팀 색상",
       editTitle: "선수 편집",
       editNameLabel: "이름",
       editNumberLabel: "등번호",
@@ -524,6 +530,10 @@ export const messages: Record<Locale, Messages> = {
         "4-3-3": "4-3-3 윙어",
         "3-5-2": "3-5-2 윙백",
         "4-2-3-1": "4-2-3-1",
+        "4-1-4-1": "4-1-4-1 싱글 피벗",
+        "3-4-3": "3-4-3 윙백",
+        "5-3-2": "5-3-2 백5",
+        "4-3-2-1": "4-3-2-1 크리스마스 트리",
       },
     },
     feedback: {
@@ -535,7 +545,7 @@ export const messages: Record<Locale, Messages> = {
       toolEmailDiag: "이메일 발송 진단기",
       toolCronTrans: "Cron 변환기",
       toolStockSim: "주식 시뮬레이터",
-      toolLineupBuilder: "라인업 빌더",
+      toolLineupBuilder: "축구 베스트 일레븐 만들기",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -570,7 +580,7 @@ export const messages: Record<Locale, Messages> = {
         description: "투자 결정에 필요한 계산을 한 곳에서",
       },
       "lineup-builder": {
-        name: "라인업 빌더",
+        name: "축구 베스트 일레븐 만들기",
         description:
           "포메이션, 선수 명단, 등번호를 시각적으로 구성하고 PNG로 다운로드",
       },
@@ -814,7 +824,7 @@ export const messages: Record<Locale, Messages> = {
       },
     },
     lineupBuilder: {
-      title: "Lineup Builder",
+      title: "Football Best XI Builder",
       description:
         "Build your starting eleven visually and save it as an image.",
       formationLabel: "Formation",
@@ -823,6 +833,7 @@ export const messages: Record<Locale, Messages> = {
       downloadButton: "Save image",
       downloadingButton: "Saving…",
       resetButton: "Reset",
+      teamColorLabel: "Team color",
       editTitle: "Edit player",
       editNameLabel: "Name",
       editNumberLabel: "Number",
@@ -833,6 +844,10 @@ export const messages: Record<Locale, Messages> = {
         "4-3-3": "4-3-3 Wingers",
         "3-5-2": "3-5-2 Wing-backs",
         "4-2-3-1": "4-2-3-1",
+        "4-1-4-1": "4-1-4-1 Single Pivot",
+        "3-4-3": "3-4-3 Wing",
+        "5-3-2": "5-3-2 Back Five",
+        "4-3-2-1": "4-3-2-1 Christmas Tree",
       },
     },
     feedback: {
@@ -844,7 +859,7 @@ export const messages: Record<Locale, Messages> = {
       toolEmailDiag: "Email Diagnostic",
       toolCronTrans: "Cron Translator",
       toolStockSim: "Stock Simulator",
-      toolLineupBuilder: "Lineup Builder",
+      toolLineupBuilder: "Football Best XI Builder",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -878,7 +893,7 @@ export const messages: Record<Locale, Messages> = {
         description: "Investment math in one place",
       },
       "lineup-builder": {
-        name: "Lineup Builder",
+        name: "Football Best XI Builder",
         description:
           "Visually compose your football starting eleven (formation, names, numbers) and download as PNG",
       },

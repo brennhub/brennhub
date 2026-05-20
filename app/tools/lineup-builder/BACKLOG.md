@@ -52,11 +52,20 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동. 본 
 - [x] 빌드 검증 — `npm run build` TS 에러 0, `/tools/lineup-builder` 정적 route emit, prerender HTML에 인터랙티브 요소 확인
 - [ ] dev 배포 후 수동 테스트 — 드래그 + 편집 모달 + 포메이션 전환 + PNG 다운로드 (Windows / iOS / Android 각 1회). 브라우저 시각 검증은 이 단계에서 수행
 
+## Task D — 수정·확장 (완료)
+
+- [x] **PNG 캡처 fix** — html2canvas 1.4.1이 Tailwind v4 + Lightning CSS의 `lab/oklab/color-mix`(globals.css base 레이어가 전 노드에 주입) 미파싱 → 빈 PNG. `modern-screenshot`(foreignObject, 브라우저 네이티브 렌더)로 교체. `handleDownload`에 `catch` 추가.
+- [x] **팀 색상** — 컨트롤 패널에 8색 swatch (`color-swatches.tsx`). 마커 원형/이름 배경에 적용, 텍스트·테두리는 `getContrastText`(WCAG 휘도) 자동 대비. 기본 `#1e40af`.
+- [x] **포메이션 4종 추가** — 4-1-4-1 / 3-4-3 / 5-3-2 / 4-3-2-1 (총 8종). `FormationId` 유니온 확장, 기본은 `4-3-3` 유지.
+- [x] **등번호 단일 꺽쇠** — EditDialog NumberStepper에 기존 `showBigStep={false}` prop 적용 (공유 컴포넌트 수정 0).
+- [x] **서비스 제목 변경** — "축구 베스트 일레븐 만들기" / "Football Best XI Builder" (식별자 불변, UI 문자열만).
+
 ## 2단계 확장 (MVP 검증 후 별도 task)
 
 - [ ] **6.1 localStorage 스쿼드 히스토리** — `PersonalScheduleStorage` 패턴 일관 (supp-plan `lib/supp-plan/storage/types.ts` 참고). interface + impl 분리로 미래 D1 마이그레이션 대비.
 - [ ] **6.2 평점 / 스탯 오버레이** — Rating, 골 / 어시스트 아이콘. 선수당 메타데이터 확장.
 - [ ] **6.3 테마 + 유니폼 커스텀** — 잔디 색 / 라인 색 / 마커 색 변경. 다크모드 호환.
+- [ ] **6.4 freeform 포지션 + 자동 포메이션 추정 (FM/FIFA식)** — 고정 포메이션 좌표 대신 자유 배치 + 배치로부터 포메이션 자동 추정. 데이터 모델 리팩토링 필요. MVP 효능감 검증 후 진행 결정.
 
 ## 도메인 결정 (해결 완료)
 

@@ -2,6 +2,28 @@
 
 주요 결정 / 이정표.
 
+## [0.5.0] — 2026-05-19
+
+### Fixed
+
+- **PNG 캡처 빈 이미지 fix** — html2canvas 1.4.1은 `rgb/rgba/hsl/hsla`만 파싱. 이 repo는 Tailwind v4 + Lightning CSS가 색을 `lab()`·`oklab`·`color-mix()`로 컴파일하고, `globals.css`의 `@layer base { * { @apply border-border outline-ring/50 } }`가 **모든 노드**에 `border-color`/`outline-color`로 모던 색 함수를 주입 → html2canvas가 캡처 트리 전 노드에서 파싱 실패 → 빈 PNG. **`html2canvas` 제거, `modern-screenshot` 도입** (foreignObject 방식 = 브라우저 네이티브 렌더 → 모든 모던 CSS 지원). `handleDownload`에 `catch` 추가로 향후 실패 가시화.
+
+### Added
+
+- **팀 색상** — 컨트롤 패널 8색 swatch (`components/lineup-builder/color-swatches.tsx`, 빨/파/검/흰/노/초/주/보). `teamColor` state(기본 `#1e40af`). 마커 원형·이름 배경에 적용, 번호·이름·테두리는 `lib/lineup-builder/color.ts`의 `getContrastText`(WCAG 상대휘도 0.179 임계)로 자동 대비. 캡처 PNG에도 반영(inline style).
+- **포메이션 4종 추가 (총 8종)** — 4-1-4-1 / 3-4-3 / 5-3-2 / 4-3-2-1. `FormationId` 유니온 + `FORMATIONS` 확장, 기본 포메이션 `4-3-3` 유지. i18n `lineupBuilder.formations`에 4키 (ko/en).
+- **i18n** — `lineupBuilder.teamColorLabel` (ko/en).
+
+### Changed
+
+- **등번호 단일 꺽쇠** — EditDialog의 NumberStepper에 기존 `showBigStep={false}` prop 적용. 공유 컴포넌트(`number-stepper.tsx`) 수정 0 → 타 도구 영향 없음.
+- **서비스 제목 변경** — UI 표시명 "라인업 빌더" → **"축구 베스트 일레븐 만들기"** (en "Lineup Builder" → "Football Best XI Builder"). 변경 위치: `messages.ts`의 `tools["lineup-builder"].name` / `lineupBuilder.title` / `feedback.toolLineupBuilder`, `admin/feedback`의 `TOOL_LABEL`, README 제목. 코드 식별자(slug/registry id/경로) 불변.
+
+### Notes
+
+- 빌드 검증: TS 에러 0, 라우트 변동 없음. 시각 검증(PNG 라이트/다크, 색 8종 대비, 8 포메이션, 단일 꺽쇠, 제목 반영)은 dev 배포 후 사용자 확인.
+- BACKLOG 2단계 확장에 "6.4 freeform 포지션 + 자동 포메이션 추정" 후보 등록.
+
 ## [0.4.0] — 2026-05-19
 
 ### Added (Task C — feedback 통합)

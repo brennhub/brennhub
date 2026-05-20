@@ -1,13 +1,16 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useMessages } from "@/lib/i18n/provider";
 import type { FormationId } from "@/lib/lineup-builder/types";
 import { FormationSelect } from "./formation-select";
+import { ColorSwatches } from "./color-swatches";
+import { useMessages } from "@/lib/i18n/provider";
 
 type Props = {
   formationId: FormationId;
   onFormationChange: (id: FormationId) => void;
+  teamColor: string;
+  onTeamColorChange: (color: string) => void;
   onDownload: () => void;
   onReset: () => void;
   downloading: boolean;
@@ -16,6 +19,8 @@ type Props = {
 export function ControlPanel({
   formationId,
   onFormationChange,
+  teamColor,
+  onTeamColorChange,
   onDownload,
   onReset,
   downloading,
@@ -24,6 +29,7 @@ export function ControlPanel({
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
       <FormationSelect value={formationId} onChange={onFormationChange} />
+      <ColorSwatches value={teamColor} onChange={onTeamColorChange} />
       <div className="flex flex-col gap-2">
         <Button
           type="button"
