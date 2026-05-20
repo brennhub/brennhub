@@ -61,6 +61,20 @@
 - base 획수 = Unihan kTotalStrokes 채택. 명리학 작명 획수와 ~12% 표본 델타는 알려진 한계 (C-2/C-3 정찰에서 라이센스 안전 명리학 데이터셋 미발견 → 차선).
 - C-4-B 14부수 환원 + 숫자 13자 로직은 정확 (氵 5/5 + 숫자 13 + 직접 환원 5 + seed 22/25 검증). 부정확분은 base 획수 도메인 차이, C-4-B scope 밖.
 
+### Added (C-5-4 자원오행 매핑)
+- `app/tools/saju-naming/lib/radical-ohaeng.ts` — 자원오행 214부수 매핑 (학파 plug-in 구조 + ai-default).
+- `app/tools/saju-naming/scripts/build-staged-ja-ohaeng.ts` — ja_ohaeng 빌드 스크립트.
+- `app/tools/saju-naming/scripts/data/staged-ja-ohaeng.json` — 9,460 한자 자원오행 데이터.
+- `app/tools/saju-naming/poc/radical-ohaeng.poc.ts` — PoC 검증 (5행 분포 + 자명 부수 + plug-in 라우팅 + lib↔record 214 일관).
+- `docs/learnings/2026-05-20-saju-naming-c5-4-mapping.md` — 학파 정찰 + brennhub AI 학파 입장 + 214 전건 매핑 record.
+
+### Decided (C-5-4 자원오행 매핑)
+- brennhub AI 학파(ai-default) 1차 구현 — 팩트 기반 자체 구축 (환각 X, 字源 cross-reference + 작명소 다수안 + 학술 abstract 인용 검증 가능).
+- 학파 plug-in 구조 — AI 학파 + 전통 학파 Advanced 옵션 공존. 사용자 선택 가능.
+- ~90 부수 학파 차이 = 학파 간 자연스러운 차이 (한계 아님, 학파 다양성).
+- 향후 학파 추가 path: lib export 추가 + School union 확장 + SCHOOL_TABLES 등록 (3 step). 상세 learnings record §4.
+- BACKLOG 신규 task 39-D — Advanced 전통 학파 옵션 (김기승/이재승/안태옥) 추가 path.
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)
