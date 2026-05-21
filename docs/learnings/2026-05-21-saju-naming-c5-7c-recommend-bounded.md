@@ -63,7 +63,29 @@ bounded top-N로 메모리는 이미 O(topN)이라 풀 상한은 **메모리가 
 | poc case5 | 대형 합성 풀 500자 n=2 (약 25만 조합) — no-throw + 정렬 + finite | OOM 회귀 가드 |
 
 - `npm run build` TS 통과 / `poc/names-poc.test.ts` 5 case 통과.
-- dev.brennhub.com 실 HTTP 검증(n=1 200 회귀 / n=2 200 / 사주 필터 / null-stroke 0 / latency p95)은 push(dev 재배포) 후 별도.
+
+### dev HTTP 회귀 (2026-05-21 — 커밋 ce1cd09 dev 반영 후)
+
+dev.brennhub.com `/api/saju-naming/recommend` 실 HTTP — 5항목 전부 통과. verbatim:
+
+```text
+=== dev 재배포 반영 — 회귀 검증 시작 ===
+n=1: HTTP 200 (115ms) candidates=5
+  top: {"hanja":"汎","hangeul":"범","strokes":[6],"ohaengList":["수"],"soundOhaengList":["수"],"surieScore":90,"ohaengScore":50,"soundScore":50,"totalScore":64,"breakdown":"오행20+수리31+발음13=64"}
+n=2: HTTP 200 (584ms) candidates=5
+  top: {"hanja":"汎氾","hangeul":"범범","strokes":[6,5],"ohaengList":["수","수"],"soundOhaengList":["수","수"],"surieScore":90,"ohaengScore":100,"soundScore":100,"totalScore":97,"breakdown":"오행40+수리31+발음25=97"}
+사주 필터: yongsin[수] = 汎氾,汎汃,汎名,汎汶,汎汸,汎汾,汎沐,汎沒,汎沔,汎沕
+           yongsin[목] = 扛乫,扛乬,扛扱,扛朹,扛机,扛技,扛抉,扛杰,扛杲,扛果
+           필터 효과(상이): true
+null-stroke: 0건 (검사 후보 30)
+latency n=2 (20회): min=105 p50=113 p95=193 max=465 ms
+=== 회귀 통과 ===
+```
+
+- n=2 HTTP **200** — C-5-7b 메모리 503 해소 확인 (C-5-7c 핵심).
+- latency n=2 p95 **193ms** — C-5-7b가 100만 조합 ~1.9s로 추정했으나 bounded top-N + POOL_LIMIT 500(25만 조합)으로 대폭 하회. OOM 해소가 본질이고 latency도 부수 개선.
+- 정렬 순서 `汎氾→汎汃→汎名…` = stroke ASC — `frequency` 무효(§4) dev 재확인.
+- SSL: 사내 프록시 self-signed cert → 검증 스크립트 실행 시 `NODE_OPTIONS=--use-system-ca` 필요.
 
 ## 6. 한계 / 후속
 
