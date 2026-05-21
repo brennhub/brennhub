@@ -101,6 +101,18 @@
 - F3 (`calcOhaengScore`가 음령오행 채점 — `calcSoundScore`와 중복) → 점수 가중치 재설계는 39-C로 defer. C-5-7b는 "사주 SQL 필터 반영" 본질까지.
 - `hanja-search` route — `HanjaEntry` += won_stroke cascade로 won_stroke SELECT 추가 (응답에 won_stroke 노출, additive). null-stroke/yongsin 필터는 검색 endpoint라 미적용 (recommend 전용).
 
+### Added (C-5-7c recommend n=2 메모리 해결)
+- `docs/learnings/2026-05-21-saju-naming-c5-7c-recommend-bounded.md` — Workers 128MB 메모리 근본 원인 + bounded top-N + frequency 무효 발견 record.
+- `poc/names-poc.test.ts` — case4 (bounded top-N == 전체 정렬 동등성) + case5 (대형 풀 n=2 스트레스) 추가.
+
+### Fixed (C-5-7c recommend n=2 메모리 해결)
+- recommend HTTP 503 (nameLength=2) — `recommendNames`가 pool² 후보 `NameCandidate` 배열을 전량 materialize → Workers 메모리 128MB(전 플랜 고정) 초과 OOM. bounded top-N 도입 — 순회하며 상위 topN개만 정렬 유지 → 메모리 O(topN), exact top-N (근사 아님). + `POOL_LIMIT` 1000→500 (n=2 조합 100만→25만, CPU latency 여유).
+
+### Decided (C-5-7c recommend n=2 메모리 해결)
+- n=2 503 근본 원인 = **메모리 단독** (CPU 아님). Workers 메모리 128MB는 free/paid 동일 고정 — C-5-7b "LIMIT 1000으로 CPU 안전" 가정이 메모리 한도를 누락. bounded top-N으로 pool² 배열 자체를 제거.
+- `POOL_LIMIT` = 500 — n=2 조합 상한 25만 (자문 thread 200-300 권장을 500으로 정정; bounded top-N로 메모리는 이미 O(topN)이라 풀은 latency 기준으로만 결정).
+- ⚠️ flag → 39-C: `frequency` 컬럼 전 row default 3 (005 적재 시 per-한자 빈도 데이터 부재) → recommend/hanja-search의 `ORDER BY frequency DESC` 무효 (실효 정렬 = stroke ASC). 빈도 정렬·다양성·점수 가중치는 39-C에서 frequency 데이터 확보 후.
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)

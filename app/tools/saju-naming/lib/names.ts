@@ -215,26 +215,35 @@ export function recommendNames(
   const excludeSet = new Set(options.excludeChars ?? []);
   const usable = dbFiltered.filter((h) => !excludeSet.has(h.character));
 
-  // 3-4. 조합 생성
-  const candidates: NameCandidate[] = [];
+  // 3. bounded top-N — pool² 후보 배열 materialize 제거 (Workers 128MB 메모리 한도; C-5-7c).
+  //    순회하며 상위 topN개만 정렬 유지 → 메모리 O(topN). exact top-N (근사 아님).
+  const limit = options.topN;
+  const top: NameCandidate[] = [];
+  function consider(cand: NameCandidate): void {
+    if (top.length < limit) {
+      top.push(cand);
+      top.sort((a, b) => b.totalScore - a.totalScore);
+    } else if (limit > 0 && cand.totalScore > top[top.length - 1].totalScore) {
+      top[top.length - 1] = cand;
+      top.sort((a, b) => b.totalScore - a.totalScore);
+    }
+  }
+
+  // 4. 조합 생성 → consider (전체 배열 누적 없음)
   if (options.nameLength === 1) {
     for (const c of usable) {
-      candidates.push(makeCandidate([c], options));
+      consider(makeCandidate([c], options));
     }
   } else {
     for (let i = 0; i < usable.length; i++) {
       for (let j = 0; j < usable.length; j++) {
         if (i === j) continue; // 같은 글자 중복 제외
-        candidates.push(makeCandidate([usable[i], usable[j]], options));
+        consider(makeCandidate([usable[i], usable[j]], options));
       }
     }
   }
 
-  // 5-6. 정렬
-  candidates.sort((a, b) => b.totalScore - a.totalScore);
-
-  // 7. topN
-  return candidates.slice(0, options.topN);
+  return top;
 }
 
 // 검증은 `poc/names-poc.test.ts`로 분리됨 (Edge runtime 호환).

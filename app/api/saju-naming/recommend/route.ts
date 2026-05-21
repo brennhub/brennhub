@@ -25,7 +25,7 @@ import {
 
 const OHAENGS = ["목", "화", "토", "금", "수"] as const;
 const TOP_N_MAX = 50;
-const POOL_LIMIT = 1000; // recommend 풀 상한 — nameLength=2 조합 O(n²) 상한 (1000² = 100만)
+const POOL_LIMIT = 500; // recommend 풀 상한 — nameLength=2 조합 상한 (500² = 25만). C-5-7c — Workers 메모리/CPU 정합
 
 interface RecommendInput {
   sungHanja: string;
