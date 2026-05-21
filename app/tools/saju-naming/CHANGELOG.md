@@ -75,6 +75,18 @@
 - 향후 학파 추가 path: lib export 추가 + School union 확장 + SCHOOL_TABLES 등록 (3 step). 상세 learnings record §4.
 - BACKLOG 신규 task 39-D — Advanced 전통 학파 옵션 (김기승/이재승/안태옥) 추가 path.
 
+### Added (C-5-6 5-way join + bulk INSERT)
+- `app/tools/saju-naming/scripts/build-migration.ts` — staged 4종 + 음령오행 5-way join → 005 SQL 생성 스크립트.
+- `app/tools/saju-naming/migrations/004_hanja_rebuild.sql` — hanja 테이블 재생성 (stroke/won_stroke NOT NULL 제거 — 비표준 405자 수용).
+- `app/tools/saju-naming/migrations/005_hanja_seed_full.sql` — 9,460 row bulk INSERT (배치 500 row/INSERT).
+
+### Decided (C-5-6 5-way join + bulk INSERT)
+- 음령오행 자모→5행 = 기존 `lib/names.ts`의 SOUND_OHAENG/getSoundOhaeng 재사용 (신규 lib X — brennhub "기존 패턴 재사용" 원칙).
+- 학파 note: 훈민정음 제자해 원전 脣音(ㅁㅂㅍ)=土 / 喉音(ㅇㅎ)=水 vs 작명 실무 통용 다수안 ㅁㅂㅍ→수 / ㅇㅎ→토 swap. 기존 lib/names.ts는 통용 다수안 채택 — 본 task 계승 (자원오행과 동일 패턴: 통용 다수안 + 학파 차이 record).
+- 004 재생성 — 003 자체 수정 X (이미 dev 반영). stroke/won_stroke NOT NULL 제거로 비표준 405자 충돌 해소.
+- 005 bulk — 5-way join (staged-hanja + unihan + won-stroke + ja-ohaeng + 음령오행 계산), codepoint 키. node:sqlite dry-run 검증 통과.
+- migration apply(004→005)는 Brenn 수동 (본 task scope 외).
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)
