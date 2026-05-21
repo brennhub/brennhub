@@ -1,0 +1,2445 @@
+{
+  "task": "C-5-8",
+  "date": "2026-05-21",
+  "criterion": "codepoint >= 0xA0000 (655360) — plane 10(U+A0000~, Unicode 미지정) ∪ plane 15(U+F0000~, 사설영역 SPUA-A). 유효 Unicode CJK 범위 밖.",
+  "source": "BrennHub staged-hanja.json 9,460 자체 코드포인트 검사 (외부 권위 리스트 추출 불가 — 법령 별표1 인명용추가한자표는 한자가 BMP 이미지 임베드. C-5-8 정찰).",
+  "rationale": "유효 Unicode CJK가 아닌 코드포인트는 가족관계등록(출생신고) 시스템에 입력 불가 → 추천 시 등록 거부 risk. 보수적 제외(안전 방향) — inname_ok=0.",
+  "generatedBy": "scripts/build-staged-inname-ok.ts",
+  "count": 405,
+  "planeBreakdown": {
+    "plane10": 377,
+    "plane15": 28
+  },
+  "codepoints": [
+    {
+      "character": "򠀁",
+      "codepoint": 655361,
+      "plane": 10,
+      "hangeul": "관"
+    },
+    {
+      "character": "򠀂",
+      "codepoint": 655362,
+      "plane": 10,
+      "hangeul": "상"
+    },
+    {
+      "character": "򠁐",
+      "codepoint": 655440,
+      "plane": 10,
+      "hangeul": "희"
+    },
+    {
+      "character": "򠁪",
+      "codepoint": 655466,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠁲",
+      "codepoint": 655474,
+      "plane": 10,
+      "hangeul": "고"
+    },
+    {
+      "character": "򠁻",
+      "codepoint": 655483,
+      "plane": 10,
+      "hangeul": "청"
+    },
+    {
+      "character": "򠂇",
+      "codepoint": 655495,
+      "plane": 10,
+      "hangeul": "청"
+    },
+    {
+      "character": "򠂐",
+      "codepoint": 655504,
+      "plane": 10,
+      "hangeul": "강"
+    },
+    {
+      "character": "򠄆",
+      "codepoint": 655622,
+      "plane": 10,
+      "hangeul": "정"
+    },
+    {
+      "character": "򠄇",
+      "codepoint": 655623,
+      "plane": 10,
+      "hangeul": "기"
+    },
+    {
+      "character": "򠄈",
+      "codepoint": 655624,
+      "plane": 10,
+      "hangeul": "녹"
+    },
+    {
+      "character": "򠄉",
+      "codepoint": 655625,
+      "plane": 10,
+      "hangeul": "비"
+    },
+    {
+      "character": "򠄊",
+      "codepoint": 655626,
+      "plane": 10,
+      "hangeul": "사"
+    },
+    {
+      "character": "򠄋",
+      "codepoint": 655627,
+      "plane": 10,
+      "hangeul": "사"
+    },
+    {
+      "character": "򠄌",
+      "codepoint": 655628,
+      "plane": 10,
+      "hangeul": "양"
+    },
+    {
+      "character": "򠄍",
+      "codepoint": 655629,
+      "plane": 10,
+      "hangeul": "우"
+    },
+    {
+      "character": "򠄎",
+      "codepoint": 655630,
+      "plane": 10,
+      "hangeul": "우"
+    },
+    {
+      "character": "򠄏",
+      "codepoint": 655631,
+      "plane": 10,
+      "hangeul": "조"
+    },
+    {
+      "character": "򠄑",
+      "codepoint": 655633,
+      "plane": 10,
+      "hangeul": "가"
+    },
+    {
+      "character": "򠄒",
+      "codepoint": 655634,
+      "plane": 10,
+      "hangeul": "가"
+    },
+    {
+      "character": "򠄓",
+      "codepoint": 655635,
+      "plane": 10,
+      "hangeul": "갈"
+    },
+    {
+      "character": "򠄔",
+      "codepoint": 655636,
+      "plane": 10,
+      "hangeul": "강"
+    },
+    {
+      "character": "򠄕",
+      "codepoint": 655637,
+      "plane": 10,
+      "hangeul": "개"
+    },
+    {
+      "character": "򠄖",
+      "codepoint": 655638,
+      "plane": 10,
+      "hangeul": "개"
+    },
+    {
+      "character": "򠄗",
+      "codepoint": 655639,
+      "plane": 10,
+      "hangeul": "견"
+    },
+    {
+      "character": "򠄘",
+      "codepoint": 655640,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠄙",
+      "codepoint": 655641,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠄚",
+      "codepoint": 655642,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠄛",
+      "codepoint": 655643,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠄜",
+      "codepoint": 655644,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠄝",
+      "codepoint": 655645,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠄞",
+      "codepoint": 655646,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠄟",
+      "codepoint": 655647,
+      "plane": 10,
+      "hangeul": "고"
+    },
+    {
+      "character": "򠄠",
+      "codepoint": 655648,
+      "plane": 10,
+      "hangeul": "고"
+    },
+    {
+      "character": "򠄡",
+      "codepoint": 655649,
+      "plane": 10,
+      "hangeul": "고"
+    },
+    {
+      "character": "򠄢",
+      "codepoint": 655650,
+      "plane": 10,
+      "hangeul": "고"
+    },
+    {
+      "character": "򠄣",
+      "codepoint": 655651,
+      "plane": 10,
+      "hangeul": "과"
+    },
+    {
+      "character": "򠄤",
+      "codepoint": 655652,
+      "plane": 10,
+      "hangeul": "곽"
+    },
+    {
+      "character": "򠄥",
+      "codepoint": 655653,
+      "plane": 10,
+      "hangeul": "관"
+    },
+    {
+      "character": "򠄦",
+      "codepoint": 655654,
+      "plane": 10,
+      "hangeul": "관"
+    },
+    {
+      "character": "򠄧",
+      "codepoint": 655655,
+      "plane": 10,
+      "hangeul": "관"
+    },
+    {
+      "character": "򠄨",
+      "codepoint": 655656,
+      "plane": 10,
+      "hangeul": "관"
+    },
+    {
+      "character": "򠄩",
+      "codepoint": 655657,
+      "plane": 10,
+      "hangeul": "관"
+    },
+    {
+      "character": "򠄪",
+      "codepoint": 655658,
+      "plane": 10,
+      "hangeul": "교"
+    },
+    {
+      "character": "򠄫",
+      "codepoint": 655659,
+      "plane": 10,
+      "hangeul": "구"
+    },
+    {
+      "character": "򠄬",
+      "codepoint": 655660,
+      "plane": 10,
+      "hangeul": "구"
+    },
+    {
+      "character": "򠄭",
+      "codepoint": 655661,
+      "plane": 10,
+      "hangeul": "국"
+    },
+    {
+      "character": "򠄮",
+      "codepoint": 655662,
+      "plane": 10,
+      "hangeul": "궁"
+    },
+    {
+      "character": "򠄯",
+      "codepoint": 655663,
+      "plane": 10,
+      "hangeul": "권"
+    },
+    {
+      "character": "򠄰",
+      "codepoint": 655664,
+      "plane": 10,
+      "hangeul": "권"
+    },
+    {
+      "character": "򠄱",
+      "codepoint": 655665,
+      "plane": 10,
+      "hangeul": "궐"
+    },
+    {
+      "character": "򠄲",
+      "codepoint": 655666,
+      "plane": 10,
+      "hangeul": "규"
+    },
+    {
+      "character": "򠄳",
+      "codepoint": 655667,
+      "plane": 10,
+      "hangeul": "균"
+    },
+    {
+      "character": "򠄴",
+      "codepoint": 655668,
+      "plane": 10,
+      "hangeul": "근"
+    },
+    {
+      "character": "򠄵",
+      "codepoint": 655669,
+      "plane": 10,
+      "hangeul": "근"
+    },
+    {
+      "character": "򠄶",
+      "codepoint": 655670,
+      "plane": 10,
+      "hangeul": "금"
+    },
+    {
+      "character": "򠄷",
+      "codepoint": 655671,
+      "plane": 10,
+      "hangeul": "낙"
+    },
+    {
+      "character": "򠄸",
+      "codepoint": 655672,
+      "plane": 10,
+      "hangeul": "다"
+    },
+    {
+      "character": "򠄹",
+      "codepoint": 655673,
+      "plane": 10,
+      "hangeul": "담"
+    },
+    {
+      "character": "򠄺",
+      "codepoint": 655674,
+      "plane": 10,
+      "hangeul": "도"
+    },
+    {
+      "character": "򠄻",
+      "codepoint": 655675,
+      "plane": 10,
+      "hangeul": "동"
+    },
+    {
+      "character": "򠄼",
+      "codepoint": 655676,
+      "plane": 10,
+      "hangeul": "두"
+    },
+    {
+      "character": "򠄽",
+      "codepoint": 655677,
+      "plane": 10,
+      "hangeul": "둔"
+    },
+    {
+      "character": "򠄾",
+      "codepoint": 655678,
+      "plane": 10,
+      "hangeul": "등"
+    },
+    {
+      "character": "򠄿",
+      "codepoint": 655679,
+      "plane": 10,
+      "hangeul": "나"
+    },
+    {
+      "character": "򠅀",
+      "codepoint": 655680,
+      "plane": 10,
+      "hangeul": "낙"
+    },
+    {
+      "character": "򠅁",
+      "codepoint": 655681,
+      "plane": 10,
+      "hangeul": "난"
+    },
+    {
+      "character": "򠅂",
+      "codepoint": 655682,
+      "plane": 10,
+      "hangeul": "남"
+    },
+    {
+      "character": "򠅃",
+      "codepoint": 655683,
+      "plane": 10,
+      "hangeul": "내"
+    },
+    {
+      "character": "򠅄",
+      "codepoint": 655684,
+      "plane": 10,
+      "hangeul": "려"
+    },
+    {
+      "character": "򠅅",
+      "codepoint": 655685,
+      "plane": 10,
+      "hangeul": "련"
+    },
+    {
+      "character": "򠅆",
+      "codepoint": 655686,
+      "plane": 10,
+      "hangeul": "노"
+    },
+    {
+      "character": "򠅇",
+      "codepoint": 655687,
+      "plane": 10,
+      "hangeul": "녹"
+    },
+    {
+      "character": "򠅈",
+      "codepoint": 655688,
+      "plane": 10,
+      "hangeul": "료"
+    },
+    {
+      "character": "򠅉",
+      "codepoint": 655689,
+      "plane": 10,
+      "hangeul": "누"
+    },
+    {
+      "character": "򠅊",
+      "codepoint": 655690,
+      "plane": 10,
+      "hangeul": "능"
+    },
+    {
+      "character": "򠅋",
+      "codepoint": 655691,
+      "plane": 10,
+      "hangeul": "리"
+    },
+    {
+      "character": "򠅌",
+      "codepoint": 655692,
+      "plane": 10,
+      "hangeul": "린"
+    },
+    {
+      "character": "򠅍",
+      "codepoint": 655693,
+      "plane": 10,
+      "hangeul": "린"
+    },
+    {
+      "character": "򠅎",
+      "codepoint": 655694,
+      "plane": 10,
+      "hangeul": "막"
+    },
+    {
+      "character": "򠅏",
+      "codepoint": 655695,
+      "plane": 10,
+      "hangeul": "막"
+    },
+    {
+      "character": "򠅐",
+      "codepoint": 655696,
+      "plane": 10,
+      "hangeul": "막"
+    },
+    {
+      "character": "򠅑",
+      "codepoint": 655697,
+      "plane": 10,
+      "hangeul": "만"
+    },
+    {
+      "character": "򠅒",
+      "codepoint": 655698,
+      "plane": 10,
+      "hangeul": "만"
+    },
+    {
+      "character": "򠅓",
+      "codepoint": 655699,
+      "plane": 10,
+      "hangeul": "말"
+    },
+    {
+      "character": "򠅔",
+      "codepoint": 655700,
+      "plane": 10,
+      "hangeul": "말"
+    },
+    {
+      "character": "򠅕",
+      "codepoint": 655701,
+      "plane": 10,
+      "hangeul": "망"
+    },
+    {
+      "character": "򠅖",
+      "codepoint": 655702,
+      "plane": 10,
+      "hangeul": "망"
+    },
+    {
+      "character": "򠅗",
+      "codepoint": 655703,
+      "plane": 10,
+      "hangeul": "매"
+    },
+    {
+      "character": "򠅘",
+      "codepoint": 655704,
+      "plane": 10,
+      "hangeul": "맥"
+    },
+    {
+      "character": "򠅙",
+      "codepoint": 655705,
+      "plane": 10,
+      "hangeul": "맹"
+    },
+    {
+      "character": "򠅚",
+      "codepoint": 655706,
+      "plane": 10,
+      "hangeul": "멸"
+    },
+    {
+      "character": "򠅛",
+      "codepoint": 655707,
+      "plane": 10,
+      "hangeul": "명"
+    },
+    {
+      "character": "򠅜",
+      "codepoint": 655708,
+      "plane": 10,
+      "hangeul": "명"
+    },
+    {
+      "character": "򠅝",
+      "codepoint": 655709,
+      "plane": 10,
+      "hangeul": "모"
+    },
+    {
+      "character": "򠅞",
+      "codepoint": 655710,
+      "plane": 10,
+      "hangeul": "모"
+    },
+    {
+      "character": "򠅟",
+      "codepoint": 655711,
+      "plane": 10,
+      "hangeul": "모"
+    },
+    {
+      "character": "򠅠",
+      "codepoint": 655712,
+      "plane": 10,
+      "hangeul": "모"
+    },
+    {
+      "character": "򠅡",
+      "codepoint": 655713,
+      "plane": 10,
+      "hangeul": "모"
+    },
+    {
+      "character": "򠅢",
+      "codepoint": 655714,
+      "plane": 10,
+      "hangeul": "모"
+    },
+    {
+      "character": "򠅣",
+      "codepoint": 655715,
+      "plane": 10,
+      "hangeul": "모"
+    },
+    {
+      "character": "򠅤",
+      "codepoint": 655716,
+      "plane": 10,
+      "hangeul": "모"
+    },
+    {
+      "character": "򠅥",
+      "codepoint": 655717,
+      "plane": 10,
+      "hangeul": "모"
+    },
+    {
+      "character": "򠅦",
+      "codepoint": 655718,
+      "plane": 10,
+      "hangeul": "몽"
+    },
+    {
+      "character": "򠅧",
+      "codepoint": 655719,
+      "plane": 10,
+      "hangeul": "몽"
+    },
+    {
+      "character": "򠅩",
+      "codepoint": 655721,
+      "plane": 10,
+      "hangeul": "묘"
+    },
+    {
+      "character": "򠅪",
+      "codepoint": 655722,
+      "plane": 10,
+      "hangeul": "묘"
+    },
+    {
+      "character": "򠅫",
+      "codepoint": 655723,
+      "plane": 10,
+      "hangeul": "묘"
+    },
+    {
+      "character": "򠅬",
+      "codepoint": 655724,
+      "plane": 10,
+      "hangeul": "무"
+    },
+    {
+      "character": "򠅭",
+      "codepoint": 655725,
+      "plane": 10,
+      "hangeul": "무"
+    },
+    {
+      "character": "򠅮",
+      "codepoint": 655726,
+      "plane": 10,
+      "hangeul": "미"
+    },
+    {
+      "character": "򠅯",
+      "codepoint": 655727,
+      "plane": 10,
+      "hangeul": "박"
+    },
+    {
+      "character": "򠅰",
+      "codepoint": 655728,
+      "plane": 10,
+      "hangeul": "방"
+    },
+    {
+      "character": "򠅱",
+      "codepoint": 655729,
+      "plane": 10,
+      "hangeul": "방"
+    },
+    {
+      "character": "򠅲",
+      "codepoint": 655730,
+      "plane": 10,
+      "hangeul": "번"
+    },
+    {
+      "character": "򠅳",
+      "codepoint": 655731,
+      "plane": 10,
+      "hangeul": "번"
+    },
+    {
+      "character": "򠅴",
+      "codepoint": 655732,
+      "plane": 10,
+      "hangeul": "범"
+    },
+    {
+      "character": "򠅵",
+      "codepoint": 655733,
+      "plane": 10,
+      "hangeul": "벽"
+    },
+    {
+      "character": "򠅶",
+      "codepoint": 655734,
+      "plane": 10,
+      "hangeul": "보"
+    },
+    {
+      "character": "򠅷",
+      "codepoint": 655735,
+      "plane": 10,
+      "hangeul": "복"
+    },
+    {
+      "character": "򠅸",
+      "codepoint": 655736,
+      "plane": 10,
+      "hangeul": "복"
+    },
+    {
+      "character": "򠅹",
+      "codepoint": 655737,
+      "plane": 10,
+      "hangeul": "봉"
+    },
+    {
+      "character": "򠅺",
+      "codepoint": 655738,
+      "plane": 10,
+      "hangeul": "부"
+    },
+    {
+      "character": "򠅻",
+      "codepoint": 655739,
+      "plane": 10,
+      "hangeul": "부"
+    },
+    {
+      "character": "򠅼",
+      "codepoint": 655740,
+      "plane": 10,
+      "hangeul": "분"
+    },
+    {
+      "character": "򠅽",
+      "codepoint": 655741,
+      "plane": 10,
+      "hangeul": "사"
+    },
+    {
+      "character": "򠅾",
+      "codepoint": 655742,
+      "plane": 10,
+      "hangeul": "사"
+    },
+    {
+      "character": "򠅿",
+      "codepoint": 655743,
+      "plane": 10,
+      "hangeul": "산"
+    },
+    {
+      "character": "򠆀",
+      "codepoint": 655744,
+      "plane": 10,
+      "hangeul": "살"
+    },
+    {
+      "character": "򠆁",
+      "codepoint": 655745,
+      "plane": 10,
+      "hangeul": "삼"
+    },
+    {
+      "character": "򠆂",
+      "codepoint": 655746,
+      "plane": 10,
+      "hangeul": "삼"
+    },
+    {
+      "character": "򠆃",
+      "codepoint": 655747,
+      "plane": 10,
+      "hangeul": "서"
+    },
+    {
+      "character": "򠆄",
+      "codepoint": 655748,
+      "plane": 10,
+      "hangeul": "석"
+    },
+    {
+      "character": "򠆅",
+      "codepoint": 655749,
+      "plane": 10,
+      "hangeul": "선"
+    },
+    {
+      "character": "򠆆",
+      "codepoint": 655750,
+      "plane": 10,
+      "hangeul": "설"
+    },
+    {
+      "character": "򠆇",
+      "codepoint": 655751,
+      "plane": 10,
+      "hangeul": "엽"
+    },
+    {
+      "character": "򠆈",
+      "codepoint": 655752,
+      "plane": 10,
+      "hangeul": "소"
+    },
+    {
+      "character": "򠆉",
+      "codepoint": 655753,
+      "plane": 10,
+      "hangeul": "소"
+    },
+    {
+      "character": "򠆊",
+      "codepoint": 655754,
+      "plane": 10,
+      "hangeul": "소"
+    },
+    {
+      "character": "򠆋",
+      "codepoint": 655755,
+      "plane": 10,
+      "hangeul": "손"
+    },
+    {
+      "character": "򠆌",
+      "codepoint": 655756,
+      "plane": 10,
+      "hangeul": "수"
+    },
+    {
+      "character": "򠆍",
+      "codepoint": 655757,
+      "plane": 10,
+      "hangeul": "수"
+    },
+    {
+      "character": "򠆎",
+      "codepoint": 655758,
+      "plane": 10,
+      "hangeul": "수"
+    },
+    {
+      "character": "򠆏",
+      "codepoint": 655759,
+      "plane": 10,
+      "hangeul": "수"
+    },
+    {
+      "character": "򠆐",
+      "codepoint": 655760,
+      "plane": 10,
+      "hangeul": "숙"
+    },
+    {
+      "character": "򠆑",
+      "codepoint": 655761,
+      "plane": 10,
+      "hangeul": "순"
+    },
+    {
+      "character": "򠆒",
+      "codepoint": 655762,
+      "plane": 10,
+      "hangeul": "순"
+    },
+    {
+      "character": "򠆓",
+      "codepoint": 655763,
+      "plane": 10,
+      "hangeul": "순"
+    },
+    {
+      "character": "򠆔",
+      "codepoint": 655764,
+      "plane": 10,
+      "hangeul": "시"
+    },
+    {
+      "character": "򠆕",
+      "codepoint": 655765,
+      "plane": 10,
+      "hangeul": "시"
+    },
+    {
+      "character": "򠆖",
+      "codepoint": 655766,
+      "plane": 10,
+      "hangeul": "신"
+    },
+    {
+      "character": "򠆗",
+      "codepoint": 655767,
+      "plane": 10,
+      "hangeul": "신"
+    },
+    {
+      "character": "򠆘",
+      "codepoint": 655768,
+      "plane": 10,
+      "hangeul": "신"
+    },
+    {
+      "character": "򠆙",
+      "codepoint": 655769,
+      "plane": 10,
+      "hangeul": "심"
+    },
+    {
+      "character": "򠆚",
+      "codepoint": 655770,
+      "plane": 10,
+      "hangeul": "아"
+    },
+    {
+      "character": "򠆛",
+      "codepoint": 655771,
+      "plane": 10,
+      "hangeul": "아"
+    },
+    {
+      "character": "򠆜",
+      "codepoint": 655772,
+      "plane": 10,
+      "hangeul": "암"
+    },
+    {
+      "character": "򠆝",
+      "codepoint": 655773,
+      "plane": 10,
+      "hangeul": "애"
+    },
+    {
+      "character": "򠆞",
+      "codepoint": 655774,
+      "plane": 10,
+      "hangeul": "야"
+    },
+    {
+      "character": "򠆟",
+      "codepoint": 655775,
+      "plane": 10,
+      "hangeul": "야"
+    },
+    {
+      "character": "򠆠",
+      "codepoint": 655776,
+      "plane": 10,
+      "hangeul": "약"
+    },
+    {
+      "character": "򠆡",
+      "codepoint": 655777,
+      "plane": 10,
+      "hangeul": "약"
+    },
+    {
+      "character": "򠆢",
+      "codepoint": 655778,
+      "plane": 10,
+      "hangeul": "약"
+    },
+    {
+      "character": "򠆣",
+      "codepoint": 655779,
+      "plane": 10,
+      "hangeul": "얼"
+    },
+    {
+      "character": "򠆤",
+      "codepoint": 655780,
+      "plane": 10,
+      "hangeul": "여"
+    },
+    {
+      "character": "򠆥",
+      "codepoint": 655781,
+      "plane": 10,
+      "hangeul": "염"
+    },
+    {
+      "character": "򠆦",
+      "codepoint": 655782,
+      "plane": 10,
+      "hangeul": "엽"
+    },
+    {
+      "character": "򠆧",
+      "codepoint": 655783,
+      "plane": 10,
+      "hangeul": "엽"
+    },
+    {
+      "character": "򠆨",
+      "codepoint": 655784,
+      "plane": 10,
+      "hangeul": "영"
+    },
+    {
+      "character": "򠆩",
+      "codepoint": 655785,
+      "plane": 10,
+      "hangeul": "영"
+    },
+    {
+      "character": "򠆪",
+      "codepoint": 655786,
+      "plane": 10,
+      "hangeul": "영"
+    },
+    {
+      "character": "򠆫",
+      "codepoint": 655787,
+      "plane": 10,
+      "hangeul": "영"
+    },
+    {
+      "character": "򠆬",
+      "codepoint": 655788,
+      "plane": 10,
+      "hangeul": "영"
+    },
+    {
+      "character": "򠆭",
+      "codepoint": 655789,
+      "plane": 10,
+      "hangeul": "영"
+    },
+    {
+      "character": "򠆮",
+      "codepoint": 655790,
+      "plane": 10,
+      "hangeul": "예"
+    },
+    {
+      "character": "򠆯",
+      "codepoint": 655791,
+      "plane": 10,
+      "hangeul": "예"
+    },
+    {
+      "character": "򠆰",
+      "codepoint": 655792,
+      "plane": 10,
+      "hangeul": "예"
+    },
+    {
+      "character": "򠆱",
+      "codepoint": 655793,
+      "plane": 10,
+      "hangeul": "온"
+    },
+    {
+      "character": "򠆲",
+      "codepoint": 655794,
+      "plane": 10,
+      "hangeul": "완"
+    },
+    {
+      "character": "򠆳",
+      "codepoint": 655795,
+      "plane": 10,
+      "hangeul": "용"
+    },
+    {
+      "character": "򠆴",
+      "codepoint": 655796,
+      "plane": 10,
+      "hangeul": "용"
+    },
+    {
+      "character": "򠆵",
+      "codepoint": 655797,
+      "plane": 10,
+      "hangeul": "우"
+    },
+    {
+      "character": "򠆶",
+      "codepoint": 655798,
+      "plane": 10,
+      "hangeul": "우"
+    },
+    {
+      "character": "򠆷",
+      "codepoint": 655799,
+      "plane": 10,
+      "hangeul": "운"
+    },
+    {
+      "character": "򠆸",
+      "codepoint": 655800,
+      "plane": 10,
+      "hangeul": "운"
+    },
+    {
+      "character": "򠆹",
+      "codepoint": 655801,
+      "plane": 10,
+      "hangeul": "울"
+    },
+    {
+      "character": "򠆺",
+      "codepoint": 655802,
+      "plane": 10,
+      "hangeul": "원"
+    },
+    {
+      "character": "򠆻",
+      "codepoint": 655803,
+      "plane": 10,
+      "hangeul": "위"
+    },
+    {
+      "character": "򠆼",
+      "codepoint": 655804,
+      "plane": 10,
+      "hangeul": "위"
+    },
+    {
+      "character": "򠆽",
+      "codepoint": 655805,
+      "plane": 10,
+      "hangeul": "위"
+    },
+    {
+      "character": "򠆾",
+      "codepoint": 655806,
+      "plane": 10,
+      "hangeul": "유"
+    },
+    {
+      "character": "򠆿",
+      "codepoint": 655807,
+      "plane": 10,
+      "hangeul": "음"
+    },
+    {
+      "character": "򠇀",
+      "codepoint": 655808,
+      "plane": 10,
+      "hangeul": "의"
+    },
+    {
+      "character": "򠇁",
+      "codepoint": 655809,
+      "plane": 10,
+      "hangeul": "이"
+    },
+    {
+      "character": "򠇂",
+      "codepoint": 655810,
+      "plane": 10,
+      "hangeul": "이"
+    },
+    {
+      "character": "򠇃",
+      "codepoint": 655811,
+      "plane": 10,
+      "hangeul": "인"
+    },
+    {
+      "character": "򠇄",
+      "codepoint": 655812,
+      "plane": 10,
+      "hangeul": "임"
+    },
+    {
+      "character": "򠇅",
+      "codepoint": 655813,
+      "plane": 10,
+      "hangeul": "잉"
+    },
+    {
+      "character": "򠇆",
+      "codepoint": 655814,
+      "plane": 10,
+      "hangeul": "자"
+    },
+    {
+      "character": "򠇇",
+      "codepoint": 655815,
+      "plane": 10,
+      "hangeul": "자"
+    },
+    {
+      "character": "򠇈",
+      "codepoint": 655816,
+      "plane": 10,
+      "hangeul": "자"
+    },
+    {
+      "character": "򠇉",
+      "codepoint": 655817,
+      "plane": 10,
+      "hangeul": "작"
+    },
+    {
+      "character": "򠇊",
+      "codepoint": 655818,
+      "plane": 10,
+      "hangeul": "장"
+    },
+    {
+      "character": "򠇋",
+      "codepoint": 655819,
+      "plane": 10,
+      "hangeul": "장"
+    },
+    {
+      "character": "򠇌",
+      "codepoint": 655820,
+      "plane": 10,
+      "hangeul": "장"
+    },
+    {
+      "character": "򠇍",
+      "codepoint": 655821,
+      "plane": 10,
+      "hangeul": "장"
+    },
+    {
+      "character": "򠇎",
+      "codepoint": 655822,
+      "plane": 10,
+      "hangeul": "장"
+    },
+    {
+      "character": "򠇏",
+      "codepoint": 655823,
+      "plane": 10,
+      "hangeul": "장"
+    },
+    {
+      "character": "򠇐",
+      "codepoint": 655824,
+      "plane": 10,
+      "hangeul": "장"
+    },
+    {
+      "character": "򠇑",
+      "codepoint": 655825,
+      "plane": 10,
+      "hangeul": "저"
+    },
+    {
+      "character": "򠇒",
+      "codepoint": 655826,
+      "plane": 10,
+      "hangeul": "저"
+    },
+    {
+      "character": "򠇓",
+      "codepoint": 655827,
+      "plane": 10,
+      "hangeul": "저"
+    },
+    {
+      "character": "򠇔",
+      "codepoint": 655828,
+      "plane": 10,
+      "hangeul": "저"
+    },
+    {
+      "character": "򠇕",
+      "codepoint": 655829,
+      "plane": 10,
+      "hangeul": "적"
+    },
+    {
+      "character": "򠇖",
+      "codepoint": 655830,
+      "plane": 10,
+      "hangeul": "전"
+    },
+    {
+      "character": "򠇗",
+      "codepoint": 655831,
+      "plane": 10,
+      "hangeul": "제"
+    },
+    {
+      "character": "򠇘",
+      "codepoint": 655832,
+      "plane": 10,
+      "hangeul": "조"
+    },
+    {
+      "character": "򠇙",
+      "codepoint": 655833,
+      "plane": 10,
+      "hangeul": "줄"
+    },
+    {
+      "character": "򠇚",
+      "codepoint": 655834,
+      "plane": 10,
+      "hangeul": "즙"
+    },
+    {
+      "character": "򠇛",
+      "codepoint": 655835,
+      "plane": 10,
+      "hangeul": "증"
+    },
+    {
+      "character": "򠇜",
+      "codepoint": 655836,
+      "plane": 10,
+      "hangeul": "지"
+    },
+    {
+      "character": "򠇝",
+      "codepoint": 655837,
+      "plane": 10,
+      "hangeul": "지"
+    },
+    {
+      "character": "򠇞",
+      "codepoint": 655838,
+      "plane": 10,
+      "hangeul": "진"
+    },
+    {
+      "character": "򠇟",
+      "codepoint": 655839,
+      "plane": 10,
+      "hangeul": "망"
+    },
+    {
+      "character": "򠇠",
+      "codepoint": 655840,
+      "plane": 10,
+      "hangeul": "창"
+    },
+    {
+      "character": "򠇡",
+      "codepoint": 655841,
+      "plane": 10,
+      "hangeul": "창"
+    },
+    {
+      "character": "򠇢",
+      "codepoint": 655842,
+      "plane": 10,
+      "hangeul": "채"
+    },
+    {
+      "character": "򠇣",
+      "codepoint": 655843,
+      "plane": 10,
+      "hangeul": "채"
+    },
+    {
+      "character": "򠇤",
+      "codepoint": 655844,
+      "plane": 10,
+      "hangeul": "천"
+    },
+    {
+      "character": "򠇥",
+      "codepoint": 655845,
+      "plane": 10,
+      "hangeul": "청"
+    },
+    {
+      "character": "򠇦",
+      "codepoint": 655846,
+      "plane": 10,
+      "hangeul": "초"
+    },
+    {
+      "character": "򠇧",
+      "codepoint": 655847,
+      "plane": 10,
+      "hangeul": "초"
+    },
+    {
+      "character": "򠇨",
+      "codepoint": 655848,
+      "plane": 10,
+      "hangeul": "초"
+    },
+    {
+      "character": "򠇩",
+      "codepoint": 655849,
+      "plane": 10,
+      "hangeul": "총"
+    },
+    {
+      "character": "򠇪",
+      "codepoint": 655850,
+      "plane": 10,
+      "hangeul": "추"
+    },
+    {
+      "character": "򠇫",
+      "codepoint": 655851,
+      "plane": 10,
+      "hangeul": "축"
+    },
+    {
+      "character": "򠇬",
+      "codepoint": 655852,
+      "plane": 10,
+      "hangeul": "췌"
+    },
+    {
+      "character": "򠇭",
+      "codepoint": 655853,
+      "plane": 10,
+      "hangeul": "췌"
+    },
+    {
+      "character": "򠇮",
+      "codepoint": 655854,
+      "plane": 10,
+      "hangeul": "탑"
+    },
+    {
+      "character": "򠇯",
+      "codepoint": 655855,
+      "plane": 10,
+      "hangeul": "탕"
+    },
+    {
+      "character": "򠇰",
+      "codepoint": 655856,
+      "plane": 10,
+      "hangeul": "태"
+    },
+    {
+      "character": "򠇱",
+      "codepoint": 655857,
+      "plane": 10,
+      "hangeul": "파"
+    },
+    {
+      "character": "򠇲",
+      "codepoint": 655858,
+      "plane": 10,
+      "hangeul": "평"
+    },
+    {
+      "character": "򠇳",
+      "codepoint": 655859,
+      "plane": 10,
+      "hangeul": "폐"
+    },
+    {
+      "character": "򠇴",
+      "codepoint": 655860,
+      "plane": 10,
+      "hangeul": "포"
+    },
+    {
+      "character": "򠇵",
+      "codepoint": 655861,
+      "plane": 10,
+      "hangeul": "포"
+    },
+    {
+      "character": "򠇶",
+      "codepoint": 655862,
+      "plane": 10,
+      "hangeul": "포"
+    },
+    {
+      "character": "򠇷",
+      "codepoint": 655863,
+      "plane": 10,
+      "hangeul": "필"
+    },
+    {
+      "character": "򠇸",
+      "codepoint": 655864,
+      "plane": 10,
+      "hangeul": "하"
+    },
+    {
+      "character": "򠇹",
+      "codepoint": 655865,
+      "plane": 10,
+      "hangeul": "행"
+    },
+    {
+      "character": "򠇺",
+      "codepoint": 655866,
+      "plane": 10,
+      "hangeul": "협"
+    },
+    {
+      "character": "򠇻",
+      "codepoint": 655867,
+      "plane": 10,
+      "hangeul": "형"
+    },
+    {
+      "character": "򠇼",
+      "codepoint": 655868,
+      "plane": 10,
+      "hangeul": "혜"
+    },
+    {
+      "character": "򠇽",
+      "codepoint": 655869,
+      "plane": 10,
+      "hangeul": "호"
+    },
+    {
+      "character": "򠇾",
+      "codepoint": 655870,
+      "plane": 10,
+      "hangeul": "호"
+    },
+    {
+      "character": "򠇿",
+      "codepoint": 655871,
+      "plane": 10,
+      "hangeul": "호"
+    },
+    {
+      "character": "򠈀",
+      "codepoint": 655872,
+      "plane": 10,
+      "hangeul": "호"
+    },
+    {
+      "character": "򠈁",
+      "codepoint": 655873,
+      "plane": 10,
+      "hangeul": "호"
+    },
+    {
+      "character": "򠈂",
+      "codepoint": 655874,
+      "plane": 10,
+      "hangeul": "호"
+    },
+    {
+      "character": "򠈃",
+      "codepoint": 655875,
+      "plane": 10,
+      "hangeul": "화"
+    },
+    {
+      "character": "򠈄",
+      "codepoint": 655876,
+      "plane": 10,
+      "hangeul": "화"
+    },
+    {
+      "character": "򠈅",
+      "codepoint": 655877,
+      "plane": 10,
+      "hangeul": "화"
+    },
+    {
+      "character": "򠈆",
+      "codepoint": 655878,
+      "plane": 10,
+      "hangeul": "화"
+    },
+    {
+      "character": "򠈇",
+      "codepoint": 655879,
+      "plane": 10,
+      "hangeul": "화"
+    },
+    {
+      "character": "򠈈",
+      "codepoint": 655880,
+      "plane": 10,
+      "hangeul": "확"
+    },
+    {
+      "character": "򠈉",
+      "codepoint": 655881,
+      "plane": 10,
+      "hangeul": "환"
+    },
+    {
+      "character": "򠈊",
+      "codepoint": 655882,
+      "plane": 10,
+      "hangeul": "환"
+    },
+    {
+      "character": "򠈋",
+      "codepoint": 655883,
+      "plane": 10,
+      "hangeul": "황"
+    },
+    {
+      "character": "򠈌",
+      "codepoint": 655884,
+      "plane": 10,
+      "hangeul": "황"
+    },
+    {
+      "character": "򠈍",
+      "codepoint": 655885,
+      "plane": 10,
+      "hangeul": "회"
+    },
+    {
+      "character": "򠈎",
+      "codepoint": 655886,
+      "plane": 10,
+      "hangeul": "획"
+    },
+    {
+      "character": "򠈏",
+      "codepoint": 655887,
+      "plane": 10,
+      "hangeul": "훈"
+    },
+    {
+      "character": "򠈐",
+      "codepoint": 655888,
+      "plane": 10,
+      "hangeul": "훙"
+    },
+    {
+      "character": "򠈑",
+      "codepoint": 655889,
+      "plane": 10,
+      "hangeul": "훤"
+    },
+    {
+      "character": "򠈒",
+      "codepoint": 655890,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠈓",
+      "codepoint": 655891,
+      "plane": 10,
+      "hangeul": "막"
+    },
+    {
+      "character": "򠈔",
+      "codepoint": 655892,
+      "plane": 10,
+      "hangeul": "비"
+    },
+    {
+      "character": "򠈕",
+      "codepoint": 655893,
+      "plane": 10,
+      "hangeul": "거"
+    },
+    {
+      "character": "򠈖",
+      "codepoint": 655894,
+      "plane": 10,
+      "hangeul": "정"
+    },
+    {
+      "character": "򠈙",
+      "codepoint": 655897,
+      "plane": 10,
+      "hangeul": "막"
+    },
+    {
+      "character": "򠈚",
+      "codepoint": 655898,
+      "plane": 10,
+      "hangeul": "멱"
+    },
+    {
+      "character": "򠈛",
+      "codepoint": 655899,
+      "plane": 10,
+      "hangeul": "지"
+    },
+    {
+      "character": "򠈝",
+      "codepoint": 655901,
+      "plane": 10,
+      "hangeul": "서"
+    },
+    {
+      "character": "򠈞",
+      "codepoint": 655902,
+      "plane": 10,
+      "hangeul": "설"
+    },
+    {
+      "character": "򠈟",
+      "codepoint": 655903,
+      "plane": 10,
+      "hangeul": "은"
+    },
+    {
+      "character": "򠈠",
+      "codepoint": 655904,
+      "plane": 10,
+      "hangeul": "인"
+    },
+    {
+      "character": "򠈡",
+      "codepoint": 655905,
+      "plane": 10,
+      "hangeul": "준"
+    },
+    {
+      "character": "򠈢",
+      "codepoint": 655906,
+      "plane": 10,
+      "hangeul": "진"
+    },
+    {
+      "character": "򠈣",
+      "codepoint": 655907,
+      "plane": 10,
+      "hangeul": "천"
+    },
+    {
+      "character": "򠈦",
+      "codepoint": 655910,
+      "plane": 10,
+      "hangeul": "성"
+    },
+    {
+      "character": "򠈧",
+      "codepoint": 655911,
+      "plane": 10,
+      "hangeul": "미"
+    },
+    {
+      "character": "򠈨",
+      "codepoint": 655912,
+      "plane": 10,
+      "hangeul": "임"
+    },
+    {
+      "character": "򠈭",
+      "codepoint": 655917,
+      "plane": 10,
+      "hangeul": "집"
+    },
+    {
+      "character": "򠈶",
+      "codepoint": 655926,
+      "plane": 10,
+      "hangeul": "애"
+    },
+    {
+      "character": "򠈹",
+      "codepoint": 655929,
+      "plane": 10,
+      "hangeul": "성"
+    },
+    {
+      "character": "򠈺",
+      "codepoint": 655930,
+      "plane": 10,
+      "hangeul": "주"
+    },
+    {
+      "character": "򠈿",
+      "codepoint": 655935,
+      "plane": 10,
+      "hangeul": "산"
+    },
+    {
+      "character": "򠉂",
+      "codepoint": 655938,
+      "plane": 10,
+      "hangeul": "자"
+    },
+    {
+      "character": "򠉃",
+      "codepoint": 655939,
+      "plane": 10,
+      "hangeul": "매"
+    },
+    {
+      "character": "򠉄",
+      "codepoint": 655940,
+      "plane": 10,
+      "hangeul": "별"
+    },
+    {
+      "character": "򠉅",
+      "codepoint": 655941,
+      "plane": 10,
+      "hangeul": "예"
+    },
+    {
+      "character": "򠉆",
+      "codepoint": 655942,
+      "plane": 10,
+      "hangeul": "예"
+    },
+    {
+      "character": "򠉇",
+      "codepoint": 655943,
+      "plane": 10,
+      "hangeul": "윤"
+    },
+    {
+      "character": "򠉈",
+      "codepoint": 655944,
+      "plane": 10,
+      "hangeul": "연"
+    },
+    {
+      "character": "򠉋",
+      "codepoint": 655947,
+      "plane": 10,
+      "hangeul": "성"
+    },
+    {
+      "character": "򠉌",
+      "codepoint": 655948,
+      "plane": 10,
+      "hangeul": "성"
+    },
+    {
+      "character": "򠉍",
+      "codepoint": 655949,
+      "plane": 10,
+      "hangeul": "성"
+    },
+    {
+      "character": "򠉎",
+      "codepoint": 655950,
+      "plane": 10,
+      "hangeul": "능"
+    },
+    {
+      "character": "򠉐",
+      "codepoint": 655952,
+      "plane": 10,
+      "hangeul": "소"
+    },
+    {
+      "character": "򠉑",
+      "codepoint": 655953,
+      "plane": 10,
+      "hangeul": "강"
+    },
+    {
+      "character": "򠉒",
+      "codepoint": 655954,
+      "plane": 10,
+      "hangeul": "귀"
+    },
+    {
+      "character": "򠉓",
+      "codepoint": 655955,
+      "plane": 10,
+      "hangeul": "망"
+    },
+    {
+      "character": "򠉔",
+      "codepoint": 655956,
+      "plane": 10,
+      "hangeul": "병"
+    },
+    {
+      "character": "򠉕",
+      "codepoint": 655957,
+      "plane": 10,
+      "hangeul": "인"
+    },
+    {
+      "character": "򠉖",
+      "codepoint": 655958,
+      "plane": 10,
+      "hangeul": "훼"
+    },
+    {
+      "character": "򠉗",
+      "codepoint": 655959,
+      "plane": 10,
+      "hangeul": "유"
+    },
+    {
+      "character": "򠉘",
+      "codepoint": 655960,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠉙",
+      "codepoint": 655961,
+      "plane": 10,
+      "hangeul": "효"
+    },
+    {
+      "character": "򠉚",
+      "codepoint": 655962,
+      "plane": 10,
+      "hangeul": "특"
+    },
+    {
+      "character": "򠉛",
+      "codepoint": 655963,
+      "plane": 10,
+      "hangeul": "망"
+    },
+    {
+      "character": "򠉜",
+      "codepoint": 655964,
+      "plane": 10,
+      "hangeul": "얼"
+    },
+    {
+      "character": "򠉝",
+      "codepoint": 655965,
+      "plane": 10,
+      "hangeul": "영"
+    },
+    {
+      "character": "򠉞",
+      "codepoint": 655966,
+      "plane": 10,
+      "hangeul": "영"
+    },
+    {
+      "character": "򠉟",
+      "codepoint": 655967,
+      "plane": 10,
+      "hangeul": "은"
+    },
+    {
+      "character": "򠉠",
+      "codepoint": 655968,
+      "plane": 10,
+      "hangeul": "은"
+    },
+    {
+      "character": "򠉡",
+      "codepoint": 655969,
+      "plane": 10,
+      "hangeul": "예"
+    },
+    {
+      "character": "򠉢",
+      "codepoint": 655970,
+      "plane": 10,
+      "hangeul": "다"
+    },
+    {
+      "character": "򠉣",
+      "codepoint": 655971,
+      "plane": 10,
+      "hangeul": "함"
+    },
+    {
+      "character": "򠉤",
+      "codepoint": 655972,
+      "plane": 10,
+      "hangeul": "화"
+    },
+    {
+      "character": "򠉥",
+      "codepoint": 655973,
+      "plane": 10,
+      "hangeul": "백"
+    },
+    {
+      "character": "򠉦",
+      "codepoint": 655974,
+      "plane": 10,
+      "hangeul": "라"
+    },
+    {
+      "character": "򠉧",
+      "codepoint": 655975,
+      "plane": 10,
+      "hangeul": "남"
+    },
+    {
+      "character": "򠉨",
+      "codepoint": 655976,
+      "plane": 10,
+      "hangeul": "애"
+    },
+    {
+      "character": "򠉩",
+      "codepoint": 655977,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠉪",
+      "codepoint": 655978,
+      "plane": 10,
+      "hangeul": "관"
+    },
+    {
+      "character": "򠉫",
+      "codepoint": 655979,
+      "plane": 10,
+      "hangeul": "울"
+    },
+    {
+      "character": "򠉬",
+      "codepoint": 655980,
+      "plane": 10,
+      "hangeul": "훈"
+    },
+    {
+      "character": "򠉭",
+      "codepoint": 655981,
+      "plane": 10,
+      "hangeul": "호"
+    },
+    {
+      "character": "򠉮",
+      "codepoint": 655982,
+      "plane": 10,
+      "hangeul": "묘"
+    },
+    {
+      "character": "򠉯",
+      "codepoint": 655983,
+      "plane": 10,
+      "hangeul": "묘"
+    },
+    {
+      "character": "򠉰",
+      "codepoint": 655984,
+      "plane": 10,
+      "hangeul": "다"
+    },
+    {
+      "character": "򠉱",
+      "codepoint": 655985,
+      "plane": 10,
+      "hangeul": "노"
+    },
+    {
+      "character": "򠉲",
+      "codepoint": 655986,
+      "plane": 10,
+      "hangeul": "저"
+    },
+    {
+      "character": "򠉳",
+      "codepoint": 655987,
+      "plane": 10,
+      "hangeul": "기"
+    },
+    {
+      "character": "򠉴",
+      "codepoint": 655988,
+      "plane": 10,
+      "hangeul": "나"
+    },
+    {
+      "character": "򠉵",
+      "codepoint": 655989,
+      "plane": 10,
+      "hangeul": "후"
+    },
+    {
+      "character": "򠊃",
+      "codepoint": 656003,
+      "plane": 10,
+      "hangeul": "단"
+    },
+    {
+      "character": "򠊄",
+      "codepoint": 656004,
+      "plane": 10,
+      "hangeul": "도"
+    },
+    {
+      "character": "򠊊",
+      "codepoint": 656010,
+      "plane": 10,
+      "hangeul": "변"
+    },
+    {
+      "character": "򠊍",
+      "codepoint": 656013,
+      "plane": 10,
+      "hangeul": "원"
+    },
+    {
+      "character": "򠊎",
+      "codepoint": 656014,
+      "plane": 10,
+      "hangeul": "겸"
+    },
+    {
+      "character": "򠊐",
+      "codepoint": 656016,
+      "plane": 10,
+      "hangeul": "해"
+    },
+    {
+      "character": "򠊑",
+      "codepoint": 656017,
+      "plane": 10,
+      "hangeul": "례"
+    },
+    {
+      "character": "򠊒",
+      "codepoint": 656018,
+      "plane": 10,
+      "hangeul": "검"
+    },
+    {
+      "character": "򠊓",
+      "codepoint": 656019,
+      "plane": 10,
+      "hangeul": "저"
+    },
+    {
+      "character": "򠊔",
+      "codepoint": 656020,
+      "plane": 10,
+      "hangeul": "경"
+    },
+    {
+      "character": "򠊕",
+      "codepoint": 656021,
+      "plane": 10,
+      "hangeul": "영"
+    },
+    {
+      "character": "򠊖",
+      "codepoint": 656022,
+      "plane": 10,
+      "hangeul": "모"
+    },
+    {
+      "character": "򠊛",
+      "codepoint": 656027,
+      "plane": 10,
+      "hangeul": "동"
+    },
+    {
+      "character": "򠊸",
+      "codepoint": 656056,
+      "plane": 10,
+      "hangeul": "규"
+    },
+    {
+      "character": "򠊽",
+      "codepoint": 656061,
+      "plane": 10,
+      "hangeul": "도"
+    },
+    {
+      "character": "򠊿",
+      "codepoint": 656063,
+      "plane": 10,
+      "hangeul": "송"
+    },
+    {
+      "character": "򠋀",
+      "codepoint": 656064,
+      "plane": 10,
+      "hangeul": "리"
+    },
+    {
+      "character": "򠋅",
+      "codepoint": 656069,
+      "plane": 10,
+      "hangeul": "서"
+    },
+    {
+      "character": "򠋏",
+      "codepoint": 656079,
+      "plane": 10,
+      "hangeul": "려"
+    },
+    {
+      "character": "򠋑",
+      "codepoint": 656081,
+      "plane": 10,
+      "hangeul": "노"
+    },
+    {
+      "character": "򠋓",
+      "codepoint": 656083,
+      "plane": 10,
+      "hangeul": "유"
+    },
+    {
+      "character": "򠋔",
+      "codepoint": 656084,
+      "plane": 10,
+      "hangeul": "온"
+    },
+    {
+      "character": "򠋕",
+      "codepoint": 656085,
+      "plane": 10,
+      "hangeul": "호"
+    },
+    {
+      "character": "򠋖",
+      "codepoint": 656086,
+      "plane": 10,
+      "hangeul": "훈"
+    },
+    {
+      "character": "򠋗",
+      "codepoint": 656087,
+      "plane": 10,
+      "hangeul": "늠"
+    },
+    {
+      "character": "򠋘",
+      "codepoint": 656088,
+      "plane": 10,
+      "hangeul": "미"
+    },
+    {
+      "character": "򠋞",
+      "codepoint": 656094,
+      "plane": 10,
+      "hangeul": "렴"
+    },
+    {
+      "character": "򠋟",
+      "codepoint": 656095,
+      "plane": 10,
+      "hangeul": "면"
+    },
+    {
+      "character": "򠋠",
+      "codepoint": 656096,
+      "plane": 10,
+      "hangeul": "섬"
+    },
+    {
+      "character": "򠋡",
+      "codepoint": 656097,
+      "plane": 10,
+      "hangeul": "유"
+    },
+    {
+      "character": "򠋣",
+      "codepoint": 656099,
+      "plane": 10,
+      "hangeul": "유"
+    },
+    {
+      "character": "󰓄",
+      "codepoint": 984260,
+      "plane": 15,
+      "hangeul": "령"
+    },
+    {
+      "character": "󰝧",
+      "codepoint": 984935,
+      "plane": 15,
+      "hangeul": "복"
+    },
+    {
+      "character": "󰟡",
+      "codepoint": 985057,
+      "plane": 15,
+      "hangeul": "사"
+    },
+    {
+      "character": "󰢮",
+      "codepoint": 985262,
+      "plane": 15,
+      "hangeul": "선"
+    },
+    {
+      "character": "󰤊",
+      "codepoint": 985354,
+      "plane": 15,
+      "hangeul": "성"
+    },
+    {
+      "character": "󰪎",
+      "codepoint": 985742,
+      "plane": 15,
+      "hangeul": "시"
+    },
+    {
+      "character": "󰪐",
+      "codepoint": 985744,
+      "plane": 15,
+      "hangeul": "시"
+    },
+    {
+      "character": "󰪦",
+      "codepoint": 985766,
+      "plane": 15,
+      "hangeul": "신"
+    },
+    {
+      "character": "󰽴",
+      "codepoint": 986996,
+      "plane": 15,
+      "hangeul": "은"
+    },
+    {
+      "character": "󱃣",
+      "codepoint": 987363,
+      "plane": 15,
+      "hangeul": "정"
+    },
+    {
+      "character": "󱋾",
+      "codepoint": 987902,
+      "plane": 15,
+      "hangeul": "진"
+    },
+    {
+      "character": "󱔿",
+      "codepoint": 988479,
+      "plane": 15,
+      "hangeul": "항"
+    },
+    {
+      "character": "󱕃",
+      "codepoint": 988483,
+      "plane": 15,
+      "hangeul": "해"
+    },
+    {
+      "character": "󱞸",
+      "codepoint": 989112,
+      "plane": 15,
+      "hangeul": "훈"
+    },
+    {
+      "character": "󱳖",
+      "codepoint": 990422,
+      "plane": 15,
+      "hangeul": "면"
+    },
+    {
+      "character": "󲦊",
+      "codepoint": 993674,
+      "plane": 15,
+      "hangeul": "진"
+    },
+    {
+      "character": "󲭧",
+      "codepoint": 994151,
+      "plane": 15,
+      "hangeul": "해"
+    },
+    {
+      "character": "󳑐",
+      "codepoint": 996432,
+      "plane": 15,
+      "hangeul": "민"
+    },
+    {
+      "character": "󳑭",
+      "codepoint": 996461,
+      "plane": 15,
+      "hangeul": "조"
+    },
+    {
+      "character": "󳑮",
+      "codepoint": 996462,
+      "plane": 15,
+      "hangeul": "호"
+    },
+    {
+      "character": "󳑯",
+      "codepoint": 996463,
+      "plane": 15,
+      "hangeul": "축"
+    },
+    {
+      "character": "󳑴",
+      "codepoint": 996468,
+      "plane": 15,
+      "hangeul": "기"
+    },
+    {
+      "character": "󳑷",
+      "codepoint": 996471,
+      "plane": 15,
+      "hangeul": "화"
+    },
+    {
+      "character": "󳑽",
+      "codepoint": 996477,
+      "plane": 15,
+      "hangeul": "희"
+    },
+    {
+      "character": "󳒀",
+      "codepoint": 996480,
+      "plane": 15,
+      "hangeul": "도"
+    },
+    {
+      "character": "󳒴",
+      "codepoint": 996532,
+      "plane": 15,
+      "hangeul": "례"
+    },
+    {
+      "character": "󳒵",
+      "codepoint": 996533,
+      "plane": 15,
+      "hangeul": "기"
+    },
+    {
+      "character": "󳒶",
+      "codepoint": 996534,
+      "plane": 15,
+      "hangeul": "지"
+    }
+  ]
+}

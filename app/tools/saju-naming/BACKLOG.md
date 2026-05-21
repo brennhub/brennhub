@@ -119,7 +119,7 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 | **C-5-7a** ✅ | dev preview 적재 (004+005, COUNT 9,460) + API 회귀 + latency 측정 결과: hanja-search·saju ✅ 정상 / recommend ✗ 전건 실패 — n=1 HTTP 500 (null-stroke), n=2 HTTP 503/1102 (Workers CPU, O(n²) 89M). 상세 `docs/learnings/2026-05-21-saju-naming-c5-7a-api-regression.md` | C-5-6 | 0.5d | Brenn 수동 apply 완료 |
 | **C-5-7b** ◐ | recommend 재설계 — null-stroke 제외 / yongsin SQL 필터 / 81수리 won_stroke 전환 / surie defensive / hanja-search cascade. **n=1·사주필터·null-stroke·won_stroke·cascade ✅** (dev HTTP 검증). **n=2 ❌** — pool² 100만 NameCandidate 배열 materialize → Workers 메모리 503 → C-5-7c로. 상세 `docs/learnings/2026-05-21-saju-naming-c5-7b-recommend-redesign.md` | C-5-7a | 0.5d→1d | F3(calcOhaengScore 음령 중복)는 39-C defer |
 | **C-5-7c** ✅ | recommend n=2 메모리 해결 — `recommendNames` bounded top-N (pool² 배열 materialize 제거, 메모리 O(topN)) + POOL_LIMIT 1000→500 결과: Workers 128MB OOM 해소. dev HTTP 회귀 ✅ (n=1·n=2 200 / 사주 필터 효과 / null-stroke 0 / n=2 p95 193ms). 상세 `docs/learnings/2026-05-21-saju-naming-c5-7c-recommend-bounded.md` | C-5-7b | 0.5d | 근본 원인 = 메모리 단독 (128MB — paid 동일). frequency 무효 → 39-C flag |
-| **C-5-8** (critical) | efamily.scourt.go.kr 공식 9,389 인명용 한자 리스트 확보 → 71자 초과 reconcile → inname_ok 정확화 UPDATE 우선순위: (a) law.go.kr 「가족관계의 등록 등에 관한 규칙」 제37조 별표1/2 [법령=저작권 비대상, 추출성 선확인] / (b) efamily PDF [현행이나 'All Rights Reserved' 라이센스 제약] / (c) efamily 조회 485 한글음 순회 [최후수단] | C-5-2 (또는 병렬 시도) | 0.5d | 호적 등록 risk 정확화. 44 UI live 출시 전 필수. quick check 결과에 따라 C-5-2 fallback 분기 결정 |
+| **C-5-8** ✅ | inname_ok 정확화 — 비표준 405자(plane 10/15, 유효 Unicode CJK 아님 = 출생신고 입력 불가) `inname_ok=0`. 결과: 006 migration `UPDATE WHERE codepoint≥0xA0000`, inname_ok=1 9,460→9,055. 정찰: 권위 출처(법령 별표1)는 한자가 BMP 이미지 7,274개 임베드 → 추출 불가 → **Option B(데이터-검증 가능한 비표준 제외, 안전 방향)** 채택. node:sqlite dry-run 통과, dev apply는 Brenn 수동. 상세 `docs/learnings/2026-05-21-saju-naming-c5-8-inname-ok-reconcile.md` | C-5-2 | 0.5d | "71자 초과" 정정 — 표준 CJK 9,055는 공식 9,389 대비 오히려 334자 부족. 정밀 권위 reconcile → 39-C (비critical) |
 
 ##### C-5-1 결과 — hanja 신 스키마 확정 [완료 2026-05-19]
 
@@ -148,6 +148,7 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 - ⚠️ flag: 명리학 획수 정확도 보정 (Unihan kTotalStrokes ↔ 명리학 작명 ~12% 표본 델타 — C-5-5 발견) — 39-C 점수 튜닝 진입 시 또는 별도 task에서 명리학 획수 보정 데이터셋 재검토.
 - ⚠️ flag: `calcOhaengScore`가 `c.ohaeng`(음령오행) 채점 — `calcSoundScore`와 동일 축 이중 채점 (C-5-7b F3 발견). 자원오행(`ja_ohaeng`)은 C-5-7b에서 SQL 필터로 승격 → 오행 점수 축을 자원오행 기반으로 재정합 + 가중치(오행 40%/발음 25%) 재설계 필요.
 - ⚠️ flag: `frequency` 컬럼 전 row default 3 (005 적재 — per-한자 빈도 데이터 없음) → recommend/hanja-search의 `ORDER BY frequency DESC` 무효 (C-5-7c 발견). 빈도 기반 정렬·다양성·점수 가중치는 39-C에서 frequency 데이터 확보 후.
+- [ ] 정밀 권위 inname_ok reconcile (C-5-8 후속, 비critical) — 법령 별표1 「인명용추가한자표」 BMP 이미지 7,274개를 풀커버리지 CJK 폰트 렌더와 픽셀 매칭 → 코드포인트 복원, 교육용 기초한자 1,800자 합집합 = 공식 권위 셋. BrennHub 9,460과 정밀 diff. ~1.5~2d. C-5-8 Option B(비표준 405 안전 제외)가 적용돼 있어 44 UI live 비차단. 정찰 상세: `docs/learnings/2026-05-21-saju-naming-c5-8-inname-ok-reconcile.md`.
 
 #### 39-D — Advanced 전통 학파 옵션 (자원오행)
 

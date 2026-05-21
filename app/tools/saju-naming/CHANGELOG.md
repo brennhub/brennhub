@@ -113,6 +113,21 @@
 - `POOL_LIMIT` = 500 — n=2 조합 상한 25만 (자문 thread 200-300 권장을 500으로 정정; bounded top-N로 메모리는 이미 O(topN)이라 풀은 latency 기준으로만 결정).
 - ⚠️ flag → 39-C: `frequency` 컬럼 전 row default 3 (005 적재 시 per-한자 빈도 데이터 부재) → recommend/hanja-search의 `ORDER BY frequency DESC` 무효 (실효 정렬 = stroke ASC). 빈도 정렬·다양성·점수 가중치는 39-C에서 frequency 데이터 확보 후.
 
+### Added (C-5-8 inname_ok 정확화)
+- `migrations/006_hanja_inname_ok_reconcile.sql` — 비표준 405자 `inname_ok=0` UPDATE.
+- `scripts/build-staged-inname-ok.ts` + `scripts/data/staged-inname-ok-reconcile.json` — 비표준 405 식별 + staged-unihan 교차검증 + 감사 아티팩트 (405 codepoint list + criterion/출처).
+- `poc/inname-ok-reconcile.poc.ts` — count·plane·교차검증·006 시뮬레이션 자동 검증.
+- `docs/learnings/2026-05-21-saju-naming-c5-8-inname-ok-reconcile.md` — 정찰 전말(별표1 이미지 발견) + Option B 채택 근거 + 후속.
+
+### Fixed (C-5-8 inname_ok 정확화)
+- 9,460자 전부 inname_ok=1 (C-5-2 fallback) → 비표준 405자(plane 10/15, 유효 Unicode CJK 아님 = 출생신고 입력 불가) `inname_ok=0`. inname_ok=1 9,460→9,055. recommend는 이미 `stroke IS NOT NULL`로 405 제외 중 → 동작 변화 없음, 컬럼 의미 정합. hanja-search는 `inname_ok=1` 필터 → 비등록·null-stroke 405자 검색서 제외(정당).
+
+### Decided (C-5-8 inname_ok 정확화)
+- 정찰 결론: 권위 출처(법령 별표1 인명용추가한자표)는 한자가 BMP 이미지 7,274개로 임베드 → 기계 추출 불가. efamily는 열등 채널. 무료·기계가독 권위 코드포인트 리스트 부재 → 원안(전체 diff) 진행 불가.
+- **Option B 채택** — 외부 추출 없이 데이터-검증 가능한 사실로 reconcile: `codepoint ≥ 0xA0000`(plane 10 미지정 377 + plane 15 SPUA-A 28 = 405)는 유효 Unicode CJK 범위 밖 → 보수적 제외(안전 방향: 추천 풀만 좁힘, 비등록 추천 risk 제거). 범위 == staged-unihan total_strokes=null set 교차검증.
+- "9,460 vs 9,389 = 71자 초과" 정정 — 표준 CJK 9,055는 공식 9,389 대비 오히려 334자 부족, 별도로 비표준 405 보유. 71은 단순 차이일 뿐 의미 부정확.
+- 후속(비critical) → 39-C: 정밀 권위 reconcile — 별표1 BMP 7,274 폰트-렌더 픽셀 매칭 + 교육용 기초한자 1,800 합집합. ~1.5~2d. Option B 안전 제외 적용 후 44 UI live 비차단.
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)
