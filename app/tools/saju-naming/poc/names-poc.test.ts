@@ -3,9 +3,11 @@
  *
  * 실행: npx tsx app/tools/saju-naming/poc/names-poc.test.ts
  *
- * 검증 (C-5-7b 반영):
+ * 검증 (C-5-7c 반영):
  *   - 시드 25자 풀 / 사주 case 3건 (n=2, n=1, yongsin 빈 배열).
  *   - 정렬(totalScore desc) / topN 상한 / 81수리 won_stroke 기준 / no-throw.
+ *   - case4: bounded top-N 정확성 (축소 topN == 전체 정렬 상위 N 점수 동일).
+ *   - case5: 대형 풀(500자) n=2 스트레스 — Workers 메모리 OOM 회귀 가드.
  *
  * Edge runtime 호환을 위해 lib/names.ts에서 분리 (CHANGELOG 0.4.1).
  */
@@ -92,11 +94,64 @@ const r3 = recommendNames({
 });
 check("case3 yongsin 빈 — no-throw + 정렬 + topN", sortedDesc(r3) && r3.length <= 5);
 
+// case 4 — bounded top-N 정확성 (C-5-7c).
+//   recommendNames는 exact top-N (근사 아님) → topN=3 결과 점수 = topN=full 결과 상위 3개 점수.
+//   타이 시 동점 후보의 배열 순서는 다를 수 있어 totalScore 배열로만 비교.
+const smallPool = seed.slice(0, 6); // n=2 → 6×5 = 30 조합
+const c4opts = {
+  sungHanja: "林",
+  sungStroke: 8,
+  yongsin: ["수"],
+  gisin: ["금"],
+  nameLength: 2 as const,
+};
+const r4full = recommendNames({ ...c4opts, topN: 30, db: smallPool });
+const r4top3 = recommendNames({ ...c4opts, topN: 3, db: smallPool });
+check("case4 전체 정렬 30개", r4full.length === 30);
+check("case4 축소 3개", r4top3.length === 3);
+check("case4 정렬 desc (full)", sortedDesc(r4full));
+check(
+  "case4 bounded == 전체 정렬 상위 3 (점수 동일)",
+  r4top3.every((c, i) => c.totalScore === r4full[i].totalScore),
+);
+
+// case 5 — 대형 합성 풀 500자 n=2 스트레스 (약 25만 조합) — Workers 메모리 OOM 회귀 가드.
+//   합성 한자: 점수 계산은 won_stroke/ohaeng/hangeul만 사용 → character는 placeholder.
+const HANGEUL_POOL = ["가", "나", "다", "라", "마", "바", "사", "아", "자", "차"];
+const OH = ["목", "화", "토", "금", "수"];
+const bigPool: HanjaEntry[] = [];
+for (let i = 0; i < 500; i++) {
+  bigPool.push({
+    character: `합성${i}`,
+    hangeul: HANGEUL_POOL[i % HANGEUL_POOL.length],
+    stroke: (i % 25) + 1,
+    won_stroke: (i % 25) + 1,
+    ohaeng: OH[i % OH.length],
+    meaning: "합성",
+    frequency: 3,
+  });
+}
+const r5 = recommendNames({
+  sungHanja: "林",
+  sungStroke: 8,
+  yongsin: ["수"],
+  gisin: ["금"],
+  nameLength: 2,
+  topN: 30,
+  db: bigPool,
+});
+check("case5 대형풀 결과 채움 (30)", r5.length === 30);
+check("case5 대형풀 정렬 desc", sortedDesc(r5));
+check(
+  "case5 대형풀 totalScore 전부 유효",
+  r5.every((c) => Number.isFinite(c.totalScore)),
+);
+
 if (failures.length > 0) {
   console.error(`PoC 실패 ${failures.length}건:`);
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
 console.log(
-  `PoC 통과 — recommendNames 3 case (n=2 / n=1 / yongsin 빈) · 81수리 won_stroke 기준 · 정렬·topN.`,
+  `PoC 통과 — recommendNames 5 case (n=2 / n=1 / yongsin 빈 / bounded 정확성 / 대형풀 500자) · 81수리 won_stroke 기준 · 정렬·topN.`,
 );
