@@ -87,6 +87,20 @@
 - 005 bulk — 5-way join (staged-hanja + unihan + won-stroke + ja-ohaeng + 음령오행 계산), codepoint 키. node:sqlite dry-run 검증 통과.
 - migration apply(004→005)는 Brenn 수동 (본 task scope 외).
 
+### Added (C-5-7b recommend 재설계)
+- `docs/learnings/2026-05-21-saju-naming-c5-7b-recommend-redesign.md` — recommend 도메인 재설계 record (4 findings + WHERE 재설계 + fallback + F3 defer + 검증).
+
+### Fixed (C-5-7b recommend 재설계)
+- recommend HTTP 500 (nameLength=1) — 비표준 405자 null-stroke가 `calculateSurie` 충돌 (igyeok=0). SQL `stroke IS NOT NULL`로 풀 제외 + `getSurieInfo` defensive (key≤0 → 흉) 이중 안전망.
+- recommend HTTP 503/1102 (nameLength=2) — 전 9,460 풀 O(n²) 89M 조합 Workers CPU 초과. SQL 사전 필터 + `LIMIT 1000` → 최대 100만 조합 (로컬 ~1.9s).
+
+### Decided (C-5-7b recommend 재설계)
+- **도메인 본질**: recommend가 사주 결과(yongsin)를 SQL `ja_ohaeng IN (yongsin)`로 반영 — 사주 보완 자원오행 한자만 추천 (기존엔 점수 가중치만 → 전 풀 = 사주 무시 추천 가능했음). "성능 최적화"가 아닌 정확성 회복.
+- 81수리 = `won_stroke`(원획) 기준 전환 — 작명 정설 (기존 `stroke`=필획). C-5-5 won_stroke 활용. `HanjaEntry` += won_stroke. sungStroke 입력도 성씨 원획 전제.
+- fallback: yongsin 빈 배열(균형 사주) → `ja_ohaeng` 필터 생략, 의미 중심 추천 (`analyzeOhaeng` "균형" 방향 일관).
+- F3 (`calcOhaengScore`가 음령오행 채점 — `calcSoundScore`와 중복) → 점수 가중치 재설계는 39-C로 defer. C-5-7b는 "사주 SQL 필터 반영" 본질까지.
+- `hanja-search` route — `HanjaEntry` += won_stroke cascade로 won_stroke SELECT 추가 (응답에 won_stroke 노출, additive). null-stroke/yongsin 필터는 검색 endpoint라 미적용 (recommend 전용).
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)

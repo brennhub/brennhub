@@ -88,7 +88,8 @@ export function getSoundOhaeng(hangeul: string): string | null {
 export interface HanjaEntry {
   character: string;
   hangeul: string;
-  stroke: number;
+  stroke: number; // 필획 (Unihan kTotalStrokes) — display
+  won_stroke: number; // 원획 (C-4-B 환원법) — 81수리 계산용
   ohaeng: string;
   meaning: string;
   frequency: number;
@@ -160,13 +161,15 @@ function makeCandidate(
   const hanja = chars.map((c) => c.character).join("");
   const hangeul = chars.map((c) => c.hangeul).join("");
   const strokes = chars.map((c) => c.stroke);
+  const wonStrokes = chars.map((c) => c.won_stroke);
   const ohaengList = chars.map((c) => c.ohaeng);
   const soundOhaengList = chars.map((c) => getSoundOhaeng(c.hangeul) ?? "");
 
+  // 81수리는 원획(won_stroke) 기준 — 작명 정설 (sungStroke도 성씨 원획 전제).
   const surie = calculateSurie(
     options.sungStroke,
-    strokes[0],
-    strokes[1] ?? undefined,
+    wonStrokes[0],
+    wonStrokes[1] ?? undefined,
   );
   const surieScore = surie.totalScore;
 

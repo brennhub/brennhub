@@ -88,12 +88,13 @@ const GRADE_SCORE: Record<SurieGrade, number> = {
  * 예: 51→1, 52→2, ..., 81→31. (50과 그 이하는 그대로.)
  */
 export function getSurieInfo(n: number): SurieEntry {
-  const key = n <= 50 ? n : ((n - 1) % 50) + 1;
-  const entry = SURIE_TABLE[key];
-  if (!entry) {
-    throw new Error(`Surie entry not found for ${n} (mapped to ${key})`);
+  // 유효 격수는 1 이상 정수. 0/음수/NaN(획수 결측 등)은 흉 처리 — throw 대신 graceful degrade.
+  // (recommend 풀은 null-stroke 한자를 SQL에서 제외하나, 이중 안전망.)
+  if (!Number.isInteger(n) || n < 1) {
+    return { grade: "흉", desc: "유효 격수 범위 밖 (획수 결측)" };
   }
-  return entry;
+  const key = n <= 50 ? n : ((n - 1) % 50) + 1;
+  return SURIE_TABLE[key];
 }
 
 // ───────────────────────── 타입 ─────────────────────────

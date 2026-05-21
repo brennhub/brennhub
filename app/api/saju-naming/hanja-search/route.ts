@@ -104,6 +104,7 @@ type HanjaRow = {
   character: string;
   hangeul: string;
   stroke: number;
+  won_stroke: number;
   ohaeng: string;
   meaning: string;
   frequency: number;
@@ -114,6 +115,7 @@ function rowToEntry(r: HanjaRow): HanjaEntry {
     character: r.character,
     hangeul: r.hangeul,
     stroke: r.stroke,
+    won_stroke: r.won_stroke,
     ohaeng: r.ohaeng,
     meaning: r.meaning,
     frequency: r.frequency,
@@ -170,7 +172,7 @@ export async function GET(req: Request): Promise<Response> {
 
   const whereClause = `WHERE ${conditions.join(" AND ")}`;
   const countSql = `SELECT COUNT(*) AS n FROM hanja ${whereClause}`;
-  const selectSql = `SELECT character, hangeul, stroke, ohaeng, meaning, frequency FROM hanja ${whereClause} ORDER BY frequency DESC, stroke ASC, character LIMIT ? OFFSET ?`;
+  const selectSql = `SELECT character, hangeul, stroke, won_stroke, ohaeng, meaning, frequency FROM hanja ${whereClause} ORDER BY frequency DESC, stroke ASC, character LIMIT ? OFFSET ?`;
 
   try {
     const [countRes, pageRes] = await Promise.all([

@@ -2,10 +2,14 @@
  * POST /api/saju-naming/recommend
  *
  * 입력: { sungHanja, sungStroke, yongsin, gisin, nameLength, topN?, excludeChars? }
+ *   - sungStroke: 성씨 원획 (작명 81수리 = 원획 기준).
  * 출력: { candidates: NameCandidate[] }
  *
- * D1 (`NAMING_DB`) `hanja` 테이블에서 `inname_ok = 1` 한자 풀을 로드 후
- * `lib/names.ts`의 `recommendNames()`로 점수 정렬.
+ * D1 (`NAMING_DB`) `hanja`에서 사주 결과(yongsin 자원오행)로 SQL 사전 필터한 풀을 로드 후
+ * `lib/names.ts`의 `recommendNames()`로 점수 정렬 (C-5-7b — 도메인 본질 반영).
+ *   - yongsin 있으면 `ja_ohaeng IN (yongsin)` — 사주 보완 오행만 (null-stroke 비표준 405자 자동 제외).
+ *   - yongsin 비면(균형 사주) ja_ohaeng 필터 생략 — 의미 중심 추천.
+ *   - `stroke IS NOT NULL` + `LIMIT` — 풀 안정 + nameLength=2 O(n²) 조합 폭발 방지.
  */
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
@@ -21,6 +25,7 @@ import {
 
 const OHAENGS = ["목", "화", "토", "금", "수"] as const;
 const TOP_N_MAX = 50;
+const POOL_LIMIT = 1000; // recommend 풀 상한 — nameLength=2 조합 O(n²) 상한 (1000² = 100만)
 
 interface RecommendInput {
   sungHanja: string;
@@ -113,6 +118,7 @@ type HanjaRow = {
   character: string;
   hangeul: string;
   stroke: number;
+  won_stroke: number;
   ohaeng: string;
   meaning: string;
   frequency: number;
@@ -123,6 +129,7 @@ function rowToHanjaEntry(r: HanjaRow): HanjaEntry {
     character: r.character,
     hangeul: r.hangeul,
     stroke: r.stroke,
+    won_stroke: r.won_stroke,
     ohaeng: r.ohaeng,
     meaning: r.meaning,
     frequency: r.frequency,
@@ -166,10 +173,23 @@ export async function POST(req: Request): Promise<Response> {
 
   let dbResults: HanjaRow[];
   try {
+    // 사주 결과(yongsin 자원오행) SQL 반영 + null-stroke(비표준 405자) 제외 + 풀 상한.
+    const conditions = ["inname_ok = 1", "stroke IS NOT NULL"];
+    const bindings: string[] = [];
+    if (validated.yongsin.length > 0) {
+      conditions.push(
+        `ja_ohaeng IN (${validated.yongsin.map(() => "?").join(", ")})`,
+      );
+      bindings.push(...validated.yongsin);
+    }
+    // yongsin 빈 배열(균형 사주) → ja_ohaeng 필터 생략 (fallback — 의미 중심 추천).
+    const sql =
+      "SELECT character, hangeul, stroke, won_stroke, ohaeng, meaning, frequency " +
+      `FROM hanja WHERE ${conditions.join(" AND ")} ` +
+      `ORDER BY frequency DESC, stroke ASC, character LIMIT ${POOL_LIMIT}`;
     const result = await db
-      .prepare(
-        "SELECT character, hangeul, stroke, ohaeng, meaning, frequency FROM hanja WHERE inname_ok = 1",
-      )
+      .prepare(sql)
+      .bind(...bindings)
       .all<HanjaRow>();
     dbResults = result.results ?? [];
   } catch (e) {
