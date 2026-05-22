@@ -34,7 +34,6 @@ type Props = {
   onReset: () => void;
   onExportCsv: () => void;
   targetReturnPct: number;
-  showTargetColumns: boolean;
   tableTitle: string;
   legendCompleted: string;
   legendNextBuy: string;
@@ -68,7 +67,6 @@ export function DcaDownDetail({
   onReset,
   onExportCsv,
   targetReturnPct,
-  showTargetColumns,
   tableTitle,
   legendCompleted,
   legendNextBuy,
@@ -142,23 +140,19 @@ export function DcaDownDetail({
                 <th className="px-3 py-2 text-right font-medium">
                   {colCumBuyAmount}
                 </th>
-                {showTargetColumns && (
-                  <>
-                    <th className="px-3 py-2 text-right font-medium">
-                      {colProfit}
-                    </th>
-                    <th className="px-3 py-2 text-right font-medium">
-                      {colTargetPrice} ({fmt.format(targetReturnPct)}%)
-                    </th>
-                  </>
-                )}
+                <th className="px-3 py-2 text-right font-medium">
+                  {colProfit}
+                </th>
+                <th className="px-3 py-2 text-right font-medium">
+                  {colTargetPrice} ({fmt.format(targetReturnPct)}%)
+                </th>
               </tr>
             </thead>
             <tbody>
               {rounds.length === 0 ? (
                 <tr className="border-t border-border">
                   <td
-                    colSpan={showTargetColumns ? 10 : 8}
+                    colSpan={10}
                     className="px-3 py-8 text-center text-sm text-muted-foreground"
                   >
                     {emptyHint}
@@ -214,21 +208,17 @@ export function DcaDownDetail({
                     <td className="tnum px-3 py-1.5 text-right">
                       {fmtCurrency(r.cumulativeBuyAmount)}
                     </td>
-                    {showTargetColumns && (
-                      <>
-                        <td
-                          className={cn(
-                            "tnum px-3 py-1.5 text-right",
-                            profitClass,
-                          )}
-                        >
-                          {fmtCurrency(r.profit)}
-                        </td>
-                        <td className="tnum px-3 py-1.5 text-right">
-                          {fmtCurrency(r.targetPrice)}
-                        </td>
-                      </>
-                    )}
+                    <td
+                      className={cn(
+                        "tnum px-3 py-1.5 text-right",
+                        profitClass,
+                      )}
+                    >
+                      {fmtCurrency(r.profit)}
+                    </td>
+                    <td className="tnum px-3 py-1.5 text-right">
+                      {fmtCurrency(r.targetPrice)}
+                    </td>
                   </tr>
                 );
                 })

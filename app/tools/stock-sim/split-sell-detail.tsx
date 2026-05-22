@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-type SellRound = {
+type Round = {
   n: number;
   price: number;
   cumulativeRisePct: number;
@@ -23,12 +23,12 @@ type SellRound = {
 };
 
 type Props = {
-  rounds: SellRound[];
+  rounds: Round[];
   fmt: Intl.NumberFormat;
   fmtInt: Intl.NumberFormat;
   fmtCurrency: (n: number) => string;
-  lastCompletedSellRound: number;
-  onSellRoundClick: (n: number) => void;
+  lastCompletedRound: number;
+  onRoundClick: (n: number) => void;
   onReset: () => void;
   onExportCsv: () => void;
   tableTitle: string;
@@ -52,13 +52,13 @@ const NEXT_BG = "color-mix(in oklch, #22c55e 15%, transparent)";
 const COMPLETED_SWATCH = "color-mix(in oklch, #facc15 30%, transparent)";
 const NEXT_SWATCH = "color-mix(in oklch, #22c55e 30%, transparent)";
 
-export function DcaDownSellDetail({
+export function SplitSellDetail({
   rounds,
   fmt,
   fmtInt,
   fmtCurrency,
-  lastCompletedSellRound,
-  onSellRoundClick,
+  lastCompletedRound,
+  onRoundClick,
   onReset,
   onExportCsv,
   tableTitle,
@@ -146,8 +146,8 @@ export function DcaDownSellDetail({
                 </tr>
               ) : (
                 rounds.map((r) => {
-                  const isCompleted = r.n <= lastCompletedSellRound;
-                  const isNext = r.n === lastCompletedSellRound + 1;
+                  const isCompleted = r.n <= lastCompletedRound;
+                  const isNext = r.n === lastCompletedRound + 1;
                   const rowClass = cn(
                     "cursor-pointer border-t border-border transition-colors",
                     (isCompleted || isNext) && "font-medium",
@@ -170,7 +170,7 @@ export function DcaDownSellDetail({
                       key={r.n}
                       className={rowClass}
                       style={rowStyle}
-                      onClick={() => onSellRoundClick(r.n)}
+                      onClick={() => onRoundClick(r.n)}
                     >
                       <td className="tnum px-3 py-1.5">{r.n}</td>
                       <td className="tnum px-3 py-1.5 text-right">

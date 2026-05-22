@@ -6,7 +6,7 @@
 
 - **이메일 발송 진단기** `/tools/email-diag` — SPF/DMARC/MX/PTR 진단 + AI 요약. [상세](app/tools/email-diag/README.md)
 - **Cron 변환기** `/tools/cron-trans` — cron 식 ↔ 자연어 양방향 변환. [상세](app/tools/cron-trans/README.md)
-- **주식 시뮬레이터** `/tools/stock-sim` — 평단가 / 배당 / 분할매수 시뮬레이션 (3 탭). [상세](app/tools/stock-sim/README.md)
+- **주식 시뮬레이터** `/tools/stock-sim` — 평단가 / 배당 / 분할매수 / 분할매도 시뮬레이션 (4 탭). [상세](app/tools/stock-sim/README.md)
 - **영양제 플래너** `/tools/supp-plan` — 약동학 기반 개인 영양제 스케줄링. [상세](app/tools/supp-plan/README.md)
 
 ## 유니버설
