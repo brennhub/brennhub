@@ -47,6 +47,12 @@ function isTaxType(v: unknown): v is TaxType {
   return v === "short" || v === "long" || v === "custom";
 }
 
+type SellBasis = "avgCost" | "currentPrice";
+
+function isSellBasis(v: unknown): v is SellBasis {
+  return v === "avgCost" || v === "currentPrice";
+}
+
 type StoredState = {
   ticker: string;
   holdings: string;
@@ -56,10 +62,10 @@ type StoredState = {
   avgCost: string;
   taxRate: string;
   taxType: TaxType;
+  sellBasis: SellBasis;
   weightEnabled: boolean;
   firstWeightPct: string;
   lastCompletedRound: number;
-  forceFirstShare: boolean;
 };
 
 type Round = {
@@ -136,7 +142,7 @@ export function SplitSellCalculator() {
   const [taxType, setTaxType] = useState<TaxType>("custom");
   const [weightEnabled, setWeightEnabled] = useState<boolean>(false);
   const [firstWeightPct, setFirstWeightPct] = useState<string>("50");
-  const [forceFirstShare, setForceFirstShare] = useState<boolean>(true);
+  const [sellBasis, setSellBasis] = useState<SellBasis>("avgCost");
   const [lastCompletedRound, setLastCompletedRound] = useState<number>(0);
   const [hydrated, setHydrated] = useState(false);
 
@@ -161,8 +167,7 @@ export function SplitSellCalculator() {
           setWeightEnabled(parsed.weightEnabled);
         if (typeof parsed.firstWeightPct === "string")
           setFirstWeightPct(parsed.firstWeightPct);
-        if (typeof parsed.forceFirstShare === "boolean")
-          setForceFirstShare(parsed.forceFirstShare);
+        if (isSellBasis(parsed.sellBasis)) setSellBasis(parsed.sellBasis);
         if (typeof parsed.lastCompletedRound === "number")
           setLastCompletedRound(parsed.lastCompletedRound);
       }
@@ -188,7 +193,7 @@ export function SplitSellCalculator() {
           taxType,
           weightEnabled,
           firstWeightPct,
-          forceFirstShare,
+          sellBasis,
           lastCompletedRound,
         } satisfies StoredState),
       );
@@ -207,7 +212,7 @@ export function SplitSellCalculator() {
     taxType,
     weightEnabled,
     firstWeightPct,
-    forceFirstShare,
+    sellBasis,
     lastCompletedRound,
   ]);
 
@@ -305,10 +310,13 @@ export function SplitSellCalculator() {
     const riseNum = parseNum(riseInterval);
     const taxRateNum = parseNum(taxRate);
     const holdingsNum = Math.floor(parseNum(holdings));
+    const basisUSD =
+      sellBasis === "currentPrice" ? startPriceUSD : avgCostUSD;
 
     const valid =
       holdingsNum > 0 &&
-      startPriceUSD > 0 &&
+      avgCostUSD > 0 &&
+      basisUSD > 0 &&
       nNum >= N_MIN &&
       riseNum > 0;
     if (!valid) {
@@ -332,43 +340,22 @@ export function SplitSellCalculator() {
     );
     const shareAlloc = allocateShares(holdingsNum, normalizedWeights);
 
-    // forceFirstShare: guarantee leading rounds sell >= 1 share, then trim
-    // from the back so the parts still sum to exactly the held count.
-    if (forceFirstShare) {
-      for (let n = 0; n < nNum; n++) {
-        if (shareAlloc[n] === 0) shareAlloc[n] = 1;
-        else break;
-      }
-      let total = shareAlloc.reduce((s, v) => s + v, 0);
-      let safety = nNum * 100;
-      while (total > holdingsNum && safety-- > 0) {
-        let trimmed = false;
-        for (let i = nNum - 1; i >= 0; i--) {
-          if (shareAlloc[i] > 0) {
-            shareAlloc[i] -= 1;
-            total -= 1;
-            trimmed = true;
-            break;
-          }
-        }
-        if (!trimmed) break;
-      }
-    }
-
     const roundsArr: Round[] = [];
     let cumulativeShares = 0;
     let cumulativeSellAmount = 0;
     for (let n = 0; n < nNum; n++) {
-      const price = startPriceUSD * (1 + (riseNum / 100) * n);
+      // Round m (1-indexed): price rises by riseNum% per round from m=1.
+      const m = n + 1;
+      const price = basisUSD * (1 + (riseNum / 100) * m);
       const shares = shareAlloc[n];
       const sellAmount = shares * price;
       cumulativeShares += shares;
       cumulativeSellAmount += sellAmount;
       const realizedPnl = shares * (price - avgCostUSD);
       roundsArr.push({
-        n: n + 1,
+        n: m,
         price,
-        cumulativeRisePct: riseNum * n,
+        cumulativeRisePct: riseNum * m,
         shares,
         cumulativeShares,
         sellAmount,
@@ -400,12 +387,12 @@ export function SplitSellCalculator() {
     holdings,
     startPriceUSD,
     avgCostUSD,
+    sellBasis,
     nNum,
     riseInterval,
     taxRate,
     weightEnabled,
     firstWeightPct,
-    forceFirstShare,
   ]);
 
   const profitColor =
@@ -489,6 +476,10 @@ export function SplitSellCalculator() {
     setTaxRate(type === "short" ? "24" : "15");
   };
 
+  const handleBasisClick = (basis: SellBasis) => {
+    setSellBasis(basis);
+  };
+
   const handleHoldingsChange = (text: string) => {
     setHoldings(text.replace(/[^\d]/g, ""));
   };
@@ -521,7 +512,7 @@ export function SplitSellCalculator() {
     setTaxType("custom");
     setWeightEnabled(false);
     setFirstWeightPct("50");
-    setForceFirstShare(true);
+    setSellBasis("avgCost");
   };
 
   const priceSteps =
@@ -605,7 +596,33 @@ export function SplitSellCalculator() {
             aria-label={t.holdingsHeader}
           />
         </Field>
-        <Field label={t.startPriceHeader} htmlFor="ss-start">
+        <div className="flex flex-wrap items-center gap-3">
+          <Label className="text-sm">{t.sellBasisLabel}</Label>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant={sellBasis === "avgCost" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleBasisClick("avgCost")}
+            >
+              {t.avgCostLabel}
+            </Button>
+            <Button
+              type="button"
+              variant={sellBasis === "currentPrice" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleBasisClick("currentPrice")}
+            >
+              {t.startPriceHeader}
+            </Button>
+            <InfoTooltip text={t.sellBasisTooltip} />
+          </div>
+        </div>
+        <Field
+          label={t.startPriceHeader}
+          htmlFor="ss-start"
+          disabled={sellBasis === "avgCost"}
+        >
           <NumberStepper
             id="ss-start"
             value={startPrice}
@@ -618,6 +635,7 @@ export function SplitSellCalculator() {
             inputMode="decimal"
             placeholder={t.startPricePlaceholder}
             aria-label={t.startPriceHeader}
+            disabled={sellBasis === "avgCost"}
           />
         </Field>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -763,22 +781,6 @@ export function SplitSellCalculator() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 border-t border-border pt-3">
-          <Switch
-            id="ss-force-first-share"
-            checked={forceFirstShare}
-            onCheckedChange={setForceFirstShare}
-            aria-label={t.forceFirstShareLabel}
-          />
-          <Label
-            htmlFor="ss-force-first-share"
-            className="cursor-pointer text-sm"
-          >
-            {t.forceFirstShareLabel}
-          </Label>
-          <InfoTooltip text={t.forceFirstShareTooltip} />
-        </div>
-
         {zeroShareWarning && (
           <p className="border-t border-border pt-3 text-sm text-amber-600 dark:text-amber-400">
             ⚠️{" "}
@@ -909,13 +911,15 @@ function Field({
   label,
   htmlFor,
   children,
+  disabled,
 }: {
   label: string;
   htmlFor: string;
   children: ReactNode;
+  disabled?: boolean;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className={cn("space-y-1.5", disabled && "opacity-60")}>
       <Label htmlFor={htmlFor} className="text-sm">
         {label}
       </Label>
