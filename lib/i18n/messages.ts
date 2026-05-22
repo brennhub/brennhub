@@ -836,6 +836,11 @@ export const messages: Record<Locale, Messages> = {
         description:
           "포메이션, 선수 명단, 등번호를 시각적으로 구성하고 PNG로 다운로드",
       },
+      "language-maker": {
+        name: "언어 창조기",
+        description:
+          "픽셀로 문자를 그리고 입력값에 1:1로 매핑해 나만의 언어를 만들고 실시간 변환·공유",
+      },
     },
   },
   en: {
@@ -1280,6 +1285,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Football Best XI Builder",
         description:
           "Visually compose your football starting eleven (formation, names, numbers) and download as PNG",
+      },
+      "language-maker": {
+        name: "Language Maker",
+        description:
+          "Create your own language — draw pixel glyphs, map them to any input, convert text in real time",
       },
     },
   },
