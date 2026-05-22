@@ -2,6 +2,39 @@
 
 주요 결정 / 이정표.
 
+## [0.2.1] — 2026-05-22
+
+### Fixed (P2 시각 검증 회귀 — dev 점검에서 발견)
+
+- **start/goal 타일 아이콘 렌더링** — `fillRect` 단색 → Lucide `User`(시작점) + `Flag`(도착점) 아이콘 stroke + 옅은 배경 틴트 병행. 기획서 V1 매핑 일치.
+- 64×64(셀 ~8px) 가독성 — 아이콘 시각 stroke ≥1.25px 보장 + 틴트가 식별 보조.
+
+### Added (렌더러 추상화)
+
+- **`lib/maze/render/`** — 4-파일 구조:
+  - `types.ts` — `RenderEngine` / `TileRenderer` / `ThemePalette` / `RenderRect`. 옵셔널 `ready?: () => Promise<void>` 훅 (V2 비동기 에셋 로드용).
+  - `icons.ts` — lucide-react v1.14.0 iconNode 직접 임베드(User/Flag) + `pathFromNode` 변환 + `getIconPaths` WeakMap 캐시. ISC 출처 표기.
+  - `default.ts` — `createDefaultEngine(dark)` V1 구현 + `strokeIcon` Path2D 헬퍼.
+  - `index.ts` — `selectEngine(theme, dark)` 진입점. V2 `sprite-dungeon` 분기 자리.
+- **`components/maze/maze-grid.tsx` 재배선** — 인라인 `fillRect`/`stroke` 제거, `engine.clearBackground` → 셀별 `engine.renderTile` → `engine.drawGridLines` 3-단계. `MazeTheme` prop 추가, `await engine.ready?.()` + cancel 가드.
+- **`app/tools/maze/client-shell.tsx`** — `<MazeGrid theme={project.theme}>` prop 추가.
+
+### Decided
+
+- **Path2D 동기 렌더** — `drawImage(SVG dataURL)` 미사용 (async preload 회피, flicker 0). 동기 strokeStyle로 테마 색 즉시 적용.
+- **lucide iconNode 직접 임베드** — 근사·재구성 없이 lucide-react v1.14.0 소스 그대로. 라이브러리 업데이트 시 같은 형식으로 동기화 가능.
+- **start 아이콘 = `User`** (`PersonStanding` 대안 검토) — head circle + shoulders 2-원소 silhouette이 작은 셀에서 더 명료.
+- **lineWidth 적응 = `Math.max(2, 1.25/drawScale)`** — `drawScale = (cell·0.8)/24` (10% inset). 큰 셀은 Lucide 네이티브 2 유지, 작은 셀(cell=8)도 시각 stroke ≥1.25px 보장. 도출식은 default.ts 인라인 주석.
+- **틴트 = 양 테마 공통 alpha** (`rgba(22,163,74,0.18)` / `rgba(225,29,72,0.18)`) — bg 블렌딩으로 light/dark 모두 자연.
+- **아이콘 색은 테마 분기** — light=`*-600` / dark=`*-400` (대비 확보).
+- **DPR 변환 외부 1회 설정** — 엔진 메서드는 `ctx.setTransform` 호출 금지(규약, RenderEngine 주석 명시). 로컬 변환은 save/translate/scale/restore로만 — DPR 보존.
+- **`tile satisfies never` 분기 가드** — V2 신규 타일(4/5/6) 추가 시 TS가 default 분기에서 에러를 내 강제 처리.
+
+### Notes
+
+- V2 `sprite-dungeon` 엔진은 비동기 스프라이트 시트 로드가 필요할 가능성 — `ready?` 훅으로 처리. maze-grid는 이미 `await engine.ready?.()` + cancel 가드 — V2 추가 시 maze-grid 변경 0(단 새 엔진이 ready 훅을 노출하는 것이 전제).
+- 인터랙티브 시각은 dev 재배포 후 사용자 점검.
+
 ## [0.2.0] — 2026-05-22
 
 ### Added (P2 — 2-step 그리드 에디터)

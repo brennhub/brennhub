@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useTheme } from "@/components/theme-provider";
-import { TILE, type MazeSize, type TileType } from "@/lib/maze/types";
+import type { MazeSize, MazeTheme, TileType } from "@/lib/maze/types";
+import { selectEngine } from "@/lib/maze/render";
 
 /** canvas 한 변 논리 픽셀 크기. 셀 크기 = DISPLAY_PX / size. */
 const DISPLAY_PX = 512;
@@ -10,76 +11,75 @@ const DISPLAY_PX = 512;
 type Props = {
   grid: TileType[][];
   size: MazeSize;
+  /** MazeProject.theme — V1은 "default" 고정. V2 sprite-dungeon 분기점. */
+  theme: MazeTheme;
   /** 셀 페인트 — 적용 타일은 client-shell이 활성 도구로 결정. */
   onPaint: (r: number, c: number) => void;
 };
 
-/** 타일별 색 — 테마 대응 (pixel-editor 색 패턴). */
-function tileColors(dark: boolean) {
-  return {
-    bg: dark ? "#27272a" : "#fafafa",
-    wall: dark ? "#fafafa" : "#18181b",
-    start: "#16a34a", // emerald-600
-    goal: "#e11d48", // rose-600
-    grid: dark ? "#3f3f46" : "#e4e4e7",
-  };
-}
-
-/** Step2 픽셀 격자 에디터 — pixel-editor 포인터 드로잉 패턴 재사용. */
-export function MazeGrid({ grid, size, onPaint }: Props) {
-  const { theme } = useTheme();
+/**
+ * Step2 픽셀 격자 에디터.
+ *
+ * 렌더링 일체는 `selectEngine`이 반환하는 RenderEngine이 담당한다:
+ *   clearBackground → 셀별 renderTile → drawGridLines.
+ * 이 컴포넌트는 fillRect/stroke를 직접 호출하지 않는다 (V2 테마 교체를
+ * engine 분기 한 줄로 가능하게 하기 위한 규약).
+ *
+ * 포인터 드로잉은 pixel-editor 패턴 재사용.
+ */
+export function MazeGrid({ grid, size, theme: mazeTheme, onPaint }: Props) {
+  const { theme: colorMode } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // 드래그(그리기) 상태.
   const drawingRef = useRef(false);
   const lastCellRef = useRef<string | null>(null);
 
-  // canvas 렌더 — 배경 + 타일 셀 + 격자선.
+  // 렌더 — engine 3-단계 오케스트레이션.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    // DPR 변환은 여기서 한 번만 설정한다. 이후 engine 메서드는 setTransform을
+    // 호출하지 않기로 한 규약(RenderEngine 주석 참고) — DPR 보존.
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.round(DISPLAY_PX * dpr);
     canvas.height = Math.round(DISPLAY_PX * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const cell = DISPLAY_PX / size;
-    const dark = theme === "dark";
-    const col = tileColors(dark);
+    const dark = colorMode === "dark";
+    const engine = selectEngine(mazeTheme, dark);
 
-    ctx.fillStyle = col.bg;
-    ctx.fillRect(0, 0, DISPLAY_PX, DISPLAY_PX);
+    // 비동기 ready 훅(V2 sprite-dungeon용)을 await — V1 default는 즉시.
+    // cancel 가드 — props 변경/언마운트로 인한 stale 렌더 방지.
+    let cancelled = false;
+    const draw = async () => {
+      if (engine.ready) await engine.ready();
+      if (cancelled) return;
 
-    for (let r = 0; r < size; r += 1) {
-      const row = grid[r];
-      if (!row) continue;
-      for (let c = 0; c < size; c += 1) {
-        const tile = row[c];
-        if (tile === TILE.EMPTY) continue;
-        ctx.fillStyle =
-          tile === TILE.WALL
-            ? col.wall
-            : tile === TILE.START
-              ? col.start
-              : col.goal;
-        ctx.fillRect(c * cell, r * cell, cell, cell);
+      engine.clearBackground(ctx, DISPLAY_PX);
+      for (let r = 0; r < size; r += 1) {
+        const row = grid[r];
+        if (!row) continue;
+        for (let c = 0; c < size; c += 1) {
+          engine.renderTile(ctx, row[c], engine.palette, {
+            x: c * cell,
+            y: r * cell,
+            size: cell,
+          });
+        }
       }
-    }
+      engine.drawGridLines(ctx, DISPLAY_PX, size);
+    };
+    void draw();
 
-    ctx.strokeStyle = col.grid;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let i = 0; i <= size; i += 1) {
-      const p = Math.round(i * cell) + 0.5;
-      ctx.moveTo(p, 0);
-      ctx.lineTo(p, DISPLAY_PX);
-      ctx.moveTo(0, p);
-      ctx.lineTo(DISPLAY_PX, p);
-    }
-    ctx.stroke();
-  }, [grid, size, theme]);
+    return () => {
+      cancelled = true;
+    };
+  }, [grid, size, mazeTheme, colorMode]);
 
   const cellFromEvent = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>): { r: number; c: number } => {
