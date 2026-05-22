@@ -75,6 +75,7 @@ export function SlotPanel({
                     onChange={(e) => onTriggerChange(g.id, e.target.value)}
                     placeholder={t.triggerPlaceholder}
                     maxLength={32}
+                    spellCheck={false}
                     className={`mt-1 ${INPUT_CLASS}`}
                   />
                   {duplicate && (
