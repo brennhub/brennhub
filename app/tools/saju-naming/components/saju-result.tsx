@@ -207,10 +207,6 @@ export function SajuResultView({ data }: { data: SajuApiResponse }) {
               </div>
             )}
           </div>
-          <p className="mt-5 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-            다음 단계 — 성씨를 입력하면 이 사주에 맞는 이름 후보를 추천해
-            드립니다. (준비 중)
-          </p>
         </CardContent>
       </Card>
     </div>
