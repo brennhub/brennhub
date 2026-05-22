@@ -70,8 +70,9 @@ export function NameRecommendSection({ yongsin, gisin }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sungHanja: selected.hanja,
+          sungHangeul: selected.hangeul, // 음령오행 체인 시작점
           sungStroke: selected.wonStroke,
-          yongsin,
+          yongsin, // route SQL 자원오행 필터용
           gisin,
           nameLength,
           topN: 3,

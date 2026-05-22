@@ -3,16 +3,18 @@
  *
  * 실행: npx tsx app/tools/saju-naming/poc/names-poc.test.ts
  *
- * 검증 (C-5-7c 반영):
- *   - 시드 25자 풀 / 사주 case 3건 (n=2, n=1, yongsin 빈 배열).
+ * 검증 (음령오행 2단계 반영):
+ *   - 시드 25자 풀 / n=2·n=1.
+ *   - case3: 음령오행 통합 — soundScore = evaluateSoundOhaeng(성+이름),
+ *     breakdown "음령N+수리N=T", F3 제거(ohaengScore 없음).
  *   - 정렬(totalScore desc) / topN 상한 / 81수리 won_stroke 기준 / no-throw.
- *   - case4: bounded top-N 정확성 (축소 topN == 전체 정렬 상위 N 점수 동일).
- *   - case5: 대형 풀(500자) n=2 스트레스 — Workers 메모리 OOM 회귀 가드.
+ *   - case4: bounded top-N 정확성. case5: 대형 풀 OOM 회귀 가드.
  *
  * Edge runtime 호환을 위해 lib/names.ts에서 분리 (CHANGELOG 0.4.1).
  */
 
 import { recommendNames, type HanjaEntry } from "../lib/names";
+import { evaluateSoundOhaeng } from "../lib/sound-ohaeng";
 
 // 시드 25자 — stroke=필획, won_stroke=원획 (氵 변형부수 한자는 환원 +1).
 const seed: HanjaEntry[] = [
@@ -51,62 +53,64 @@ function sortedDesc(xs: { totalScore: number }[]): boolean {
   return xs.every((c, i) => i === 0 || xs[i - 1].totalScore >= c.totalScore);
 }
 
-// case 1 — n=2, yongsin=[수] gisin=[금]
-const r1 = recommendNames({
-  sungHanja: "林",
-  sungStroke: 8,
-  yongsin: ["수"],
-  gisin: ["금"],
-  nameLength: 2,
-  topN: 3,
-  db: seed,
-});
+// 성씨 — 林(림). 음령 체인 시작점.
+const SUNG = { sungHanja: "林", sungHangeul: "림", sungStroke: 8 };
+
+// case 1 — n=2
+const r1 = recommendNames({ ...SUNG, nameLength: 2, topN: 3, db: seed });
 check("case1 topN ≤ 3", r1.length <= 3);
 check("case1 정렬 desc", sortedDesc(r1));
 check("case1 totalScore 유효", r1.every((c) => Number.isFinite(c.totalScore)));
 
-// case 2 — n=1, 81수리 won_stroke 기준 검증.
+// case 2 — n=1, 81수리 won_stroke 기준 검증 (surie 경로 불변).
 //   浩: won_stroke 11 → calculateSurie(8,11) = 원8길+형19흉+이11길+정19흉 = 40.
-//   (필획 10 사용 시 = 원8길+형18길+이10흉+정18길 = 60 → 회귀 감지.)
-const r2 = recommendNames({
-  sungHanja: "林",
-  sungStroke: 8,
-  yongsin: ["수"],
-  gisin: ["금"],
-  nameLength: 1,
-  topN: 25,
-  db: seed,
-});
+const r2 = recommendNames({ ...SUNG, nameLength: 1, topN: 25, db: seed });
 check("case2 정렬 desc", sortedDesc(r2));
 const ho = r2.find((c) => c.hanja === "浩");
 check("case2 浩 후보 존재", ho !== undefined);
 check("case2 浩 surieScore=40 (won_stroke 11 기준)", ho?.surieScore === 40);
 
-// case 3 — yongsin 빈 배열 (균형 사주 fallback) — no-throw + 정렬
-const r3 = recommendNames({
-  sungHanja: "林",
-  sungStroke: 8,
-  yongsin: [],
-  gisin: [],
-  nameLength: 1,
-  topN: 5,
-  db: seed,
-});
-check("case3 yongsin 빈 — no-throw + 정렬 + topN", sortedDesc(r3) && r3.length <= 5);
+// case 3 — 음령오행 통합 검증
+//   soundScore = evaluateSoundOhaeng([성씨한글, ...이름한글]) / breakdown 음령·수리 /
+//   totalScore = round(음령×.55) + round(수리×.45) / F3 제거 (ohaengScore 없음).
+const r3 = recommendNames({ ...SUNG, nameLength: 2, topN: 5, db: seed });
+for (const c of r3) {
+  const nameSyllables = [...c.hangeul]; // 이름 한글 글자별
+  const expectedSound = evaluateSoundOhaeng([
+    "림",
+    ...nameSyllables,
+  ]).score;
+  check(
+    `case3 ${c.hanja} soundScore = evaluateSoundOhaeng 체인`,
+    c.soundScore === expectedSound,
+  );
+  const sw = Math.round(c.soundScore * 0.55);
+  const rw = Math.round(c.surieScore * 0.45);
+  check(`case3 ${c.hanja} totalScore = 음령+수리`, c.totalScore === sw + rw);
+  check(
+    `case3 ${c.hanja} breakdown 음령·수리 형식`,
+    c.breakdown === `음령${sw}+수리${rw}=${c.totalScore}`,
+  );
+  check(
+    `case3 ${c.hanja} F3 제거 (ohaengScore 없음)`,
+    !("ohaengScore" in c),
+  );
+}
 
-// case 4 — bounded top-N 정확성 (C-5-7c).
-//   recommendNames는 exact top-N (근사 아님) → topN=3 결과 점수 = topN=full 결과 상위 3개 점수.
-//   타이 시 동점 후보의 배열 순서는 다를 수 있어 totalScore 배열로만 비교.
+// case 4 — bounded top-N 정확성. exact top-N → topN=3 점수 = topN=full 상위 3.
 const smallPool = seed.slice(0, 6); // n=2 → 6×5 = 30 조합
-const c4opts = {
-  sungHanja: "林",
-  sungStroke: 8,
-  yongsin: ["수"],
-  gisin: ["금"],
-  nameLength: 2 as const,
-};
-const r4full = recommendNames({ ...c4opts, topN: 30, db: smallPool });
-const r4top3 = recommendNames({ ...c4opts, topN: 3, db: smallPool });
+const r4full = recommendNames({
+  ...SUNG,
+  nameLength: 2,
+  topN: 30,
+  db: smallPool,
+});
+const r4top3 = recommendNames({
+  ...SUNG,
+  nameLength: 2,
+  topN: 3,
+  db: smallPool,
+});
 check("case4 전체 정렬 30개", r4full.length === 30);
 check("case4 축소 3개", r4top3.length === 3);
 check("case4 정렬 desc (full)", sortedDesc(r4full));
@@ -115,8 +119,7 @@ check(
   r4top3.every((c, i) => c.totalScore === r4full[i].totalScore),
 );
 
-// case 5 — 대형 합성 풀 500자 n=2 스트레스 (약 25만 조합) — Workers 메모리 OOM 회귀 가드.
-//   합성 한자: 점수 계산은 won_stroke/ohaeng/hangeul만 사용 → character는 placeholder.
+// case 5 — 대형 합성 풀 500자 n=2 스트레스 (약 25만 조합) — OOM 회귀 가드.
 const HANGEUL_POOL = ["가", "나", "다", "라", "마", "바", "사", "아", "자", "차"];
 const OH = ["목", "화", "토", "금", "수"];
 const bigPool: HanjaEntry[] = [];
@@ -132,10 +135,7 @@ for (let i = 0; i < 500; i++) {
   });
 }
 const r5 = recommendNames({
-  sungHanja: "林",
-  sungStroke: 8,
-  yongsin: ["수"],
-  gisin: ["금"],
+  ...SUNG,
   nameLength: 2,
   topN: 30,
   db: bigPool,
@@ -153,5 +153,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `PoC 통과 — recommendNames 5 case (n=2 / n=1 / yongsin 빈 / bounded 정확성 / 대형풀 500자) · 81수리 won_stroke 기준 · 정렬·topN.`,
+  `PoC 통과 — recommendNames 5 case (n=2 / n=1 / 음령오행 통합 / bounded 정확성 / 대형풀 500자) · 음령 55%+수리 45% · F3 제거.`,
 );
