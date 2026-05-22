@@ -216,6 +216,33 @@ export type Messages = {
       stepperWeightMax: string;
       invalidInputHint: string;
       tableEmptyHint: string;
+      sellToggleLabel: string;
+      sellToggleTooltip: string;
+      sellSectionHint: string;
+      sellRoundsLabel: string;
+      sellRoundsPlaceholder: string;
+      riseIntervalLabel: string;
+      riseIntervalPlaceholder: string;
+      avgSellPriceLabel: string;
+      realizedProfitLabel: string;
+      afterTaxRealizedLabel: string;
+      sellTableTitle: string;
+      colSellRound: string;
+      colSellPrice: string;
+      colRisePct: string;
+      colSellShares: string;
+      colCumSoldShares: string;
+      colSellAmount: string;
+      colCumSellAmount: string;
+      colRealizedPnl: string;
+      legendSellCompleted: string;
+      legendSellNext: string;
+      sellZeroShareWarningSingle: string;
+      sellZeroShareWarningRange: string;
+      sellEmptyHint: string;
+      stepperSellRoundsMax: string;
+      stepperSellRoundsMin: string;
+      stepperRiseMax: string;
     };
   };
   suppPlan: {
@@ -628,6 +655,38 @@ export const messages: Record<Locale, Messages> = {
         invalidInputHint:
           "분할매수 시뮬레이션을 위해 모든 입력값(총 예산, 현재가, 매수 횟수, 하락율)이 0보다 큰 값이어야 합니다.",
         tableEmptyHint: "결과 없음",
+        sellToggleLabel: "분할 매도 시뮬레이션",
+        sellToggleTooltip:
+          "분할 매수로 모은 보유 포지션을 여러 회차로 나눠 매도하는 가상 시나리오. 매수 1회차는 현재가(0% 하락)에서 시작하지만, 매도 1회차는 평단가 기준 +상승율%에서 시작합니다.",
+        sellSectionHint:
+          "가중치 설정은 매수·매도 양쪽 회차 배분에 함께 적용됩니다. 매도 1회차 가격 = 평단가 × (1 + 상승율%).",
+        sellRoundsLabel: "매도 횟수",
+        sellRoundsPlaceholder: "2-50",
+        riseIntervalLabel: "상승율 (%)",
+        riseIntervalPlaceholder: "5",
+        avgSellPriceLabel: "평균 매도가",
+        realizedProfitLabel: "실현 손익",
+        afterTaxRealizedLabel: "세후 실현 손익",
+        sellTableTitle: "회차별 매도",
+        colSellRound: "매도 회차",
+        colSellPrice: "매도가",
+        colRisePct: "상승율 (%)",
+        colSellShares: "매도 주식수",
+        colCumSoldShares: "누적 매도",
+        colSellAmount: "매도금",
+        colCumSellAmount: "누적 매도금",
+        colRealizedPnl: "실현 손익",
+        legendSellCompleted: "매도 완료",
+        legendSellNext: "다음 매도",
+        sellZeroShareWarningSingle:
+          "회차 {n}은 배분 주식수가 0주입니다. 매도 횟수를 줄이거나 보유 수량을 늘리세요.",
+        sellZeroShareWarningRange:
+          "회차 {start}~{end}는 배분 주식수가 0주입니다. 매도 횟수를 줄이거나 보유 수량을 늘리세요.",
+        sellEmptyHint:
+          "매수 계획과 매도 입력값(매도 횟수, 상승율)을 입력하면 결과가 나타납니다.",
+        stepperSellRoundsMax: "매도 횟수는 최대 50회입니다",
+        stepperSellRoundsMin: "최소 2회 매도 필요",
+        stepperRiseMax: "상승율은 최대 100%입니다",
       },
     },
     suppPlan: {
@@ -1073,6 +1132,38 @@ export const messages: Record<Locale, Messages> = {
         invalidInputHint:
           "All inputs (Total Budget, Current Price, Rounds, Drop %) must be greater than 0 for DCA simulation.",
         tableEmptyHint: "No data",
+        sellToggleLabel: "Split-Sell Simulation",
+        sellToggleTooltip:
+          "A virtual scenario for selling the accumulated position across multiple rounds. Buy round 1 starts at the current price (0% drop), but sell round 1 starts at +Rise% above the average cost.",
+        sellSectionHint:
+          "The weighting setting applies to both buy and sell round distribution. Sell round 1 price = Avg Cost × (1 + Rise%).",
+        sellRoundsLabel: "Sell Rounds",
+        sellRoundsPlaceholder: "2-50",
+        riseIntervalLabel: "Rise %",
+        riseIntervalPlaceholder: "5",
+        avgSellPriceLabel: "Avg Sell Price",
+        realizedProfitLabel: "Realized P&L",
+        afterTaxRealizedLabel: "After-Tax Realized P&L",
+        sellTableTitle: "Round-by-Round Sells",
+        colSellRound: "Sell Round",
+        colSellPrice: "Sell Price",
+        colRisePct: "Rise %",
+        colSellShares: "Shares Sold",
+        colCumSoldShares: "Cum Sold",
+        colSellAmount: "Sell Amount",
+        colCumSellAmount: "Cum Sell Amount",
+        colRealizedPnl: "Realized P&L",
+        legendSellCompleted: "Sold",
+        legendSellNext: "Next Sell",
+        sellZeroShareWarningSingle:
+          "Round {n} is allocated 0 shares. Reduce sell rounds or increase holdings.",
+        sellZeroShareWarningRange:
+          "Rounds {start}-{end} are allocated 0 shares. Reduce sell rounds or increase holdings.",
+        sellEmptyHint:
+          "Enter the buy plan and sell inputs (sell rounds, rise %) to see results.",
+        stepperSellRoundsMax: "Max sell rounds is 50",
+        stepperSellRoundsMin: "Minimum 2 sell rounds",
+        stepperRiseMax: "Rise max is 100%",
       },
     },
     suppPlan: {

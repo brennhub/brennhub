@@ -27,6 +27,7 @@ type Props = {
   "aria-label"?: string;
   maxReachedMessage?: string;
   minReachedMessage?: string;
+  disabled?: boolean;
 };
 
 function roundForStep(value: number, step: number): number {
@@ -67,6 +68,7 @@ export function NumberStepper({
   "aria-label": ariaLabel,
   maxReachedMessage,
   minReachedMessage,
+  disabled = false,
 }: Props) {
   const current = parseFloat(value);
   const valid = Number.isFinite(current);
@@ -166,10 +168,16 @@ export function NumberStepper({
         }}
         placeholder={placeholder}
         aria-label={ariaLabel}
+        disabled={disabled}
         className="tnum w-full min-w-0 bg-transparent px-2.5 py-1 text-base text-foreground outline-none placeholder:text-muted-foreground md:text-sm"
       />
       {showBigStep ? (
-        <div className="grid shrink-0 grid-cols-2 grid-rows-2 border-l border-input">
+        <div
+          className={cn(
+            "grid shrink-0 grid-cols-2 grid-rows-2 border-l border-input",
+            disabled && "pointer-events-none opacity-50",
+          )}
+        >
           <StepperButton onClick={handleSmallUp} aria-label="Increase small">
             <ChevronUp className="size-3" />
           </StepperButton>
@@ -189,7 +197,12 @@ export function NumberStepper({
           </StepperButton>
         </div>
       ) : (
-        <div className="flex shrink-0 flex-col border-l border-input">
+        <div
+          className={cn(
+            "flex shrink-0 flex-col border-l border-input",
+            disabled && "pointer-events-none opacity-50",
+          )}
+        >
           <StepperButton onClick={handleSmallUp} aria-label="Increase">
             <ChevronUp className="size-3" />
           </StepperButton>

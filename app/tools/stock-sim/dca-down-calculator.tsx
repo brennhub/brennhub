@@ -28,6 +28,7 @@ import {
 } from "@/lib/format/currency";
 import { cn } from "@/lib/utils";
 import { DcaDownDetail } from "./dca-down-detail";
+import { DcaDownSellDetail } from "./dca-down-sell-detail";
 
 const STORAGE_KEY = "brennhub:stock-sim:dca-down";
 
@@ -42,6 +43,11 @@ const DROP_MIN = 0;
 const DROP_MAX = 50;
 const TAX_MAX = 50;
 const TARGET_MAX = 500;
+const RISE_INTERVAL_DEFAULT = "5";
+const RISE_MIN = 0;
+const RISE_MAX = 100;
+const SELL_N_MIN = N_MIN;
+const SELL_N_MAX = N_MAX_HARD;
 
 type TaxType = "short" | "long" | "custom";
 
@@ -62,6 +68,10 @@ type StoredState = {
   firstWeightPct: string;
   lastCompletedRound: number;
   forceFirstShare: boolean;
+  sellEnabled: boolean;
+  sellRounds: string;
+  riseInterval: string;
+  lastCompletedSellRound: number;
   finalDrop?: string;
   nextBuyRound?: number;
 };
@@ -79,6 +89,17 @@ type Round = {
   targetPrice: number;
 };
 
+type SellRound = {
+  n: number;
+  price: number;
+  cumulativeRisePct: number;
+  shares: number;
+  cumulativeShares: number;
+  sellAmount: number;
+  cumulativeSellAmount: number;
+  realizedPnl: number;
+};
+
 function parseNum(s: string): number {
   const n = parseFloat(s);
   return Number.isFinite(n) ? n : 0;
@@ -86,6 +107,45 @@ function parseNum(s: string): number {
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
+}
+
+// Shared weighting: Martingale ratio (2x default) or symmetric 0-100 tilt.
+// Used by both the buy plan and the split-sell ladder.
+function computeNormalizedWeights(
+  count: number,
+  weightEnabled: boolean,
+  firstWeightPct: string,
+): number[] {
+  const effectiveR = weightEnabled
+    ? (100 - clamp(parseNum(firstWeightPct), WEIGHT_MIN, WEIGHT_MAX)) / 50
+    : 2;
+  const weights = Array.from({ length: count }, (_, k) =>
+    Math.pow(effectiveR, k),
+  );
+  const weightSum = weights.reduce((s, w) => s + w, 0);
+  return weightSum > 0 ? weights.map((w) => w / weightSum) : weights;
+}
+
+// Largest-remainder integer allocation: splits an integer total across
+// fractional weights so the parts sum back to exactly `total`. The buy side
+// distributes cash (floor + trim); the sell side distributes shares and needs
+// an exact integer partition instead.
+function allocateShares(total: number, weights: number[]): number[] {
+  if (total <= 0 || weights.length === 0) {
+    return weights.map(() => 0);
+  }
+  const raw = weights.map((w) => total * w);
+  const floored = raw.map((r) => Math.floor(r));
+  let remainder = total - floored.reduce((s, v) => s + v, 0);
+  const byFrac = raw
+    .map((r, i) => ({ i, frac: r - Math.floor(r) }))
+    .sort((a, b) => b.frac - a.frac);
+  const result = [...floored];
+  for (let k = 0; k < byFrac.length && remainder > 0; k++) {
+    result[byFrac[k].i] += 1;
+    remainder -= 1;
+  }
+  return result;
 }
 
 export function DcaDownCalculator() {
@@ -109,6 +169,13 @@ export function DcaDownCalculator() {
   const [firstWeightPct, setFirstWeightPct] = useState<string>("50");
   const [forceFirstShare, setForceFirstShare] = useState<boolean>(true);
   const [lastCompletedRound, setLastCompletedRound] = useState<number>(0);
+  const [sellEnabled, setSellEnabled] = useState<boolean>(false);
+  const [sellRounds, setSellRounds] = useState<string>(String(N_DEFAULT));
+  const [riseInterval, setRiseInterval] = useState<string>(
+    RISE_INTERVAL_DEFAULT,
+  );
+  const [lastCompletedSellRound, setLastCompletedSellRound] =
+    useState<number>(0);
   const [hydrated, setHydrated] = useState(false);
 
   const prevCurrencyRef = useRef<Currency | null>(null);
@@ -150,6 +217,14 @@ export function DcaDownCalculator() {
         } else if (typeof parsed.nextBuyRound === "number") {
           setLastCompletedRound(Math.max(0, parsed.nextBuyRound - 1));
         }
+        if (typeof parsed.sellEnabled === "boolean")
+          setSellEnabled(parsed.sellEnabled);
+        if (typeof parsed.sellRounds === "string")
+          setSellRounds(parsed.sellRounds);
+        if (typeof parsed.riseInterval === "string")
+          setRiseInterval(parsed.riseInterval);
+        if (typeof parsed.lastCompletedSellRound === "number")
+          setLastCompletedSellRound(parsed.lastCompletedSellRound);
       }
     } catch {
       // corrupt
@@ -175,6 +250,10 @@ export function DcaDownCalculator() {
           firstWeightPct,
           forceFirstShare,
           lastCompletedRound,
+          sellEnabled,
+          sellRounds,
+          riseInterval,
+          lastCompletedSellRound,
         } satisfies StoredState),
       );
     } catch {
@@ -194,6 +273,10 @@ export function DcaDownCalculator() {
     firstWeightPct,
     forceFirstShare,
     lastCompletedRound,
+    sellEnabled,
+    sellRounds,
+    riseInterval,
+    lastCompletedSellRound,
   ]);
 
   useEffect(() => {
@@ -281,6 +364,12 @@ export function DcaDownCalculator() {
     return Math.min(Math.ceil(100 / dn), N_MAX_HARD);
   }, [dropInterval]);
 
+  const sellNNum = useMemo(() => {
+    const n = Math.floor(parseNum(sellRounds));
+    if (!Number.isFinite(n) || n < SELL_N_MIN) return N_DEFAULT;
+    return Math.min(n, SELL_N_MAX);
+  }, [sellRounds]);
+
   useEffect(() => {
     if (nNum > maxN && maxN >= N_MIN) {
       setRounds(String(maxN));
@@ -294,6 +383,14 @@ export function DcaDownCalculator() {
       setLastCompletedRound(0);
     }
   }, [nNum, lastCompletedRound]);
+
+  useEffect(() => {
+    if (lastCompletedSellRound > sellNNum) {
+      setLastCompletedSellRound(sellNNum);
+    } else if (lastCompletedSellRound < 0) {
+      setLastCompletedSellRound(0);
+    }
+  }, [sellNNum, lastCompletedSellRound]);
 
   const computed = useMemo(() => {
     const dropNum = parseNum(dropInterval);
@@ -321,14 +418,11 @@ export function DcaDownCalculator() {
       };
     }
 
-    const effectiveR = weightEnabled
-      ? (100 - clamp(parseNum(firstWeightPct), WEIGHT_MIN, WEIGHT_MAX)) / 50
-      : 2;
-    const weights = Array.from({ length: nNum }, (_, k) =>
-      Math.pow(effectiveR, k),
+    const normalizedWeights = computeNormalizedWeights(
+      nNum,
+      weightEnabled,
+      firstWeightPct,
     );
-    const weightSum = weights.reduce((s, w) => s + w, 0);
-    const normalizedWeights = weights.map((w) => w / weightSum);
 
     const returnRatio = targetReturnNum / 100;
 
@@ -426,22 +520,110 @@ export function DcaDownCalculator() {
     forceFirstShare,
   ]);
 
+  // Split-sell ladder: distributes the accumulated position (computed.totalShares)
+  // across sell rounds rising from the average cost. Sell round m price =
+  // finalAvg × (1 + rise% × m), so round 1 already sits +rise% in profit.
+  const sellComputed = useMemo(() => {
+    const riseNum = parseNum(riseInterval);
+    const taxRateNum = parseNum(taxRate);
+    const totalShares = computed.totalShares;
+    const finalAvg = computed.finalAvg;
+
+    const valid =
+      computed.valid &&
+      totalShares > 0 &&
+      finalAvg > 0 &&
+      sellNNum >= SELL_N_MIN &&
+      riseNum > 0;
+    if (!valid) {
+      return {
+        valid: false,
+        rounds: [] as SellRound[],
+        avgSellPrice: 0,
+        realizedProfit: 0,
+        taxAmount: 0,
+        afterTaxProfit: 0,
+      };
+    }
+
+    const weights = computeNormalizedWeights(
+      sellNNum,
+      weightEnabled,
+      firstWeightPct,
+    );
+    const shareAlloc = allocateShares(totalShares, weights);
+
+    const roundsArr: SellRound[] = [];
+    let cumulativeShares = 0;
+    let cumulativeSellAmount = 0;
+    for (let m = 0; m < sellNNum; m++) {
+      const risePct = riseNum * (m + 1);
+      const price = finalAvg * (1 + risePct / 100);
+      const shares = shareAlloc[m];
+      const sellAmount = shares * price;
+      const realizedPnl = shares * (price - finalAvg);
+      cumulativeShares += shares;
+      cumulativeSellAmount += sellAmount;
+      roundsArr.push({
+        n: m + 1,
+        price,
+        cumulativeRisePct: risePct,
+        shares,
+        cumulativeShares,
+        sellAmount,
+        cumulativeSellAmount,
+        realizedPnl,
+      });
+    }
+
+    const avgSellPrice =
+      totalShares > 0 ? cumulativeSellAmount / totalShares : 0;
+    const realizedProfit = cumulativeSellAmount - totalShares * finalAvg;
+    const taxAmount = realizedProfit * (taxRateNum / 100);
+    const afterTaxProfit = realizedProfit - taxAmount;
+
+    return {
+      valid: true,
+      rounds: roundsArr,
+      avgSellPrice,
+      realizedProfit,
+      taxAmount,
+      afterTaxProfit,
+    };
+  }, [
+    computed,
+    riseInterval,
+    sellNNum,
+    taxRate,
+    weightEnabled,
+    firstWeightPct,
+  ]);
+
+  // Summary card swaps between buy-target and split-sell figures.
+  const displayProfit = sellEnabled
+    ? sellComputed.realizedProfit
+    : computed.expectedProfit;
+  const displayTax = sellEnabled ? sellComputed.taxAmount : computed.taxAmount;
+  const displayAfterTax = sellEnabled
+    ? sellComputed.afterTaxProfit
+    : computed.afterTaxProfit;
+  const summaryValid = sellEnabled ? sellComputed.valid : computed.valid;
+
   const profitColor =
-    computed.expectedProfit === 0
+    displayProfit === 0
       ? ""
-      : computed.expectedProfit > 0
+      : displayProfit > 0
         ? "text-[var(--color-gain)]"
         : "text-[var(--color-loss)]";
 
   const afterTaxColor =
-    computed.afterTaxProfit === 0
+    displayAfterTax === 0
       ? ""
-      : computed.afterTaxProfit > 0
+      : displayAfterTax > 0
         ? "text-[var(--color-gain)]"
         : "text-[var(--color-loss)]";
 
-  const taxColor =
-    computed.taxAmount > 0 ? "text-[var(--color-loss)]" : "";
+  const taxColor = displayTax > 0 ? "text-[var(--color-loss)]" : "";
 
   const zeroShareWarning = useMemo(() => {
     if (!computed.valid) return null;
@@ -456,8 +638,25 @@ export function DcaDownCalculator() {
     };
   }, [computed]);
 
+  const sellZeroShareWarning = useMemo(() => {
+    if (!sellComputed.valid) return null;
+    const zeros = sellComputed.rounds
+      .filter((r) => r.shares === 0)
+      .map((r) => r.n);
+    if (zeros.length === 0) return null;
+    return {
+      start: zeros[0],
+      end: zeros[zeros.length - 1],
+      count: zeros.length,
+    };
+  }, [sellComputed]);
+
   const handleRowClick = (n: number) => {
     setLastCompletedRound(n);
+  };
+
+  const handleSellRowClick = (n: number) => {
+    setLastCompletedSellRound(n);
   };
 
   const handleRoundsChange = (text: string) => {
@@ -479,6 +678,27 @@ export function DcaDownCalculator() {
   const handleDropStep = (newDrop: number) => {
     if (newDrop < DROP_MIN || newDrop > DROP_MAX) return;
     setDropInterval(String(newDrop));
+  };
+
+  const handleSellRoundsChange = (text: string) => {
+    setSellRounds(text.replace(/[^\d]/g, ""));
+  };
+
+  const handleSellRoundsBlur = () => {
+    const n = parseInt(sellRounds, 10);
+    if (!sellRounds || !Number.isFinite(n) || n < SELL_N_MIN) {
+      setSellRounds(String(SELL_N_MIN));
+    }
+  };
+
+  const handleSellRoundsStep = (newN: number) => {
+    if (newN < SELL_N_MIN || newN > SELL_N_MAX) return;
+    setSellRounds(String(newN));
+  };
+
+  const handleRiseStep = (newRise: number) => {
+    if (newRise < RISE_MIN || newRise > RISE_MAX) return;
+    setRiseInterval(String(newRise));
   };
 
   const handleTargetStep = (newTarget: number) => {
@@ -536,6 +756,9 @@ export function DcaDownCalculator() {
     setWeightEnabled(false);
     setFirstWeightPct("50");
     setForceFirstShare(true);
+    setSellEnabled(false);
+    setSellRounds(String(N_DEFAULT));
+    setRiseInterval(RISE_INTERVAL_DEFAULT);
   };
 
   const budgetSteps =
@@ -549,6 +772,7 @@ export function DcaDownCalculator() {
 
   const handleExportCsv = () => {
     if (!computed.valid) return;
+    const showTarget = !sellEnabled;
     const header = [
       t.colRound,
       t.colPrice,
@@ -558,8 +782,7 @@ export function DcaDownCalculator() {
       t.colCumShares,
       t.colBuyAmount,
       t.colCumBuyAmount,
-      t.colProfit,
-      t.colTargetPrice,
+      ...(showTarget ? [t.colProfit, t.colTargetPrice] : []),
     ].join(",");
     const fmtNum = (usdValue: number): string => {
       const display = currency === "usd" ? usdValue : usdValue * rate;
@@ -575,8 +798,7 @@ export function DcaDownCalculator() {
         r.cumulativeShares,
         fmtNum(r.buyAmount),
         fmtNum(r.cumulativeBuyAmount),
-        fmtNum(r.profit),
-        fmtNum(r.targetPrice),
+        ...(showTarget ? [fmtNum(r.profit), fmtNum(r.targetPrice)] : []),
       ].join(","),
     );
     const csv = "﻿" + [header, ...lines].join("\n");
@@ -586,6 +808,47 @@ export function DcaDownCalculator() {
     const a = document.createElement("a");
     a.href = url;
     a.download = `dca-down-${today}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportSellCsv = () => {
+    if (!sellComputed.valid) return;
+    const header = [
+      t.colSellRound,
+      t.colSellPrice,
+      t.colRisePct,
+      t.colSellShares,
+      t.colCumSoldShares,
+      t.colSellAmount,
+      t.colCumSellAmount,
+      t.colRealizedPnl,
+    ].join(",");
+    const fmtNum = (usdValue: number): string => {
+      const display = currency === "usd" ? usdValue : usdValue * rate;
+      return display.toFixed(currency === "usd" ? 2 : 0);
+    };
+    const lines = sellComputed.rounds.map((r) =>
+      [
+        r.n,
+        fmtNum(r.price),
+        r.cumulativeRisePct.toFixed(2),
+        r.shares,
+        r.cumulativeShares,
+        fmtNum(r.sellAmount),
+        fmtNum(r.cumulativeSellAmount),
+        fmtNum(r.realizedPnl),
+      ].join(","),
+    );
+    const csv = "﻿" + [header, ...lines].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const today = new Date().toISOString().slice(0, 10);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dca-down-sell-${today}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -682,7 +945,11 @@ export function DcaDownCalculator() {
               minReachedMessage={t.stepperDropMin}
             />
           </Field>
-          <Field label={t.targetReturnLabel} htmlFor="dca-target">
+          <Field
+            label={t.targetReturnLabel}
+            htmlFor="dca-target"
+            disabled={sellEnabled}
+          >
             <NumberStepper
               id="dca-target"
               value={targetReturn}
@@ -697,6 +964,7 @@ export function DcaDownCalculator() {
               placeholder={t.targetReturnPlaceholder}
               aria-label={t.targetReturnLabel}
               maxReachedMessage={t.stepperTargetMax}
+              disabled={sellEnabled}
             />
           </Field>
         </div>
@@ -805,6 +1073,85 @@ export function DcaDownCalculator() {
           <InfoTooltip text={t.forceFirstShareTooltip} />
         </div>
 
+        <div className="space-y-2 border-t border-border pt-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="dca-sell-toggle"
+              checked={sellEnabled}
+              onCheckedChange={setSellEnabled}
+              aria-label={t.sellToggleLabel}
+            />
+            <Label
+              htmlFor="dca-sell-toggle"
+              className="cursor-pointer text-sm"
+            >
+              {t.sellToggleLabel}
+            </Label>
+            <InfoTooltip text={t.sellToggleTooltip} />
+          </div>
+          {sellEnabled && (
+            <>
+              <p className="text-xs text-muted-foreground">
+                {t.sellSectionHint}
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label={t.sellRoundsLabel} htmlFor="dca-sell-rounds">
+                  <NumberStepper
+                    id="dca-sell-rounds"
+                    value={sellRounds}
+                    onInputChange={handleSellRoundsChange}
+                    onInputBlur={handleSellRoundsBlur}
+                    onStep={handleSellRoundsStep}
+                    displayFormatter={formatNWithUnit}
+                    min={SELL_N_MIN}
+                    max={SELL_N_MAX}
+                    smallStep={1}
+                    bigStep={10}
+                    inputMode="numeric"
+                    placeholder={t.sellRoundsPlaceholder}
+                    aria-label={t.sellRoundsLabel}
+                    maxReachedMessage={t.stepperSellRoundsMax}
+                    minReachedMessage={t.stepperSellRoundsMin}
+                  />
+                </Field>
+                <Field label={t.riseIntervalLabel} htmlFor="dca-rise">
+                  <NumberStepper
+                    id="dca-rise"
+                    value={riseInterval}
+                    onInputChange={setRiseInterval}
+                    onStep={handleRiseStep}
+                    displayFormatter={formatPercent}
+                    min={RISE_MIN}
+                    max={RISE_MAX}
+                    smallStep={1}
+                    bigStep={5}
+                    inputMode="decimal"
+                    placeholder={t.riseIntervalPlaceholder}
+                    aria-label={t.riseIntervalLabel}
+                    maxReachedMessage={t.stepperRiseMax}
+                  />
+                </Field>
+              </div>
+              {sellZeroShareWarning && (
+                <p className="text-sm text-amber-600 dark:text-amber-400">
+                  ⚠️{" "}
+                  {sellZeroShareWarning.count === 1
+                    ? t.sellZeroShareWarningSingle.replace(
+                        "{n}",
+                        String(sellZeroShareWarning.start),
+                      )
+                    : t.sellZeroShareWarningRange
+                        .replace(
+                          "{start}",
+                          String(sellZeroShareWarning.start),
+                        )
+                        .replace("{end}", String(sellZeroShareWarning.end))}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+
         {zeroShareWarning && (
           <p className="border-t border-border pt-3 text-sm text-amber-600 dark:text-amber-400">
             ⚠️{" "}
@@ -852,23 +1199,38 @@ export function DcaDownCalculator() {
             label={t.finalAvgLabel}
             value={computed.valid ? fmtCurrency(computed.finalAvg) : "—"}
           />
+          {!sellEnabled && (
+            <SummaryRow
+              label={t.targetReturnDisplayLabel}
+              value={
+                computed.valid
+                  ? `${fmt.format(computed.targetReturnPct)}%`
+                  : "—"
+              }
+            />
+          )}
+          {sellEnabled ? (
+            <SummaryRow
+              label={t.avgSellPriceLabel}
+              value={
+                sellComputed.valid
+                  ? fmtCurrency(sellComputed.avgSellPrice)
+                  : "—"
+              }
+            />
+          ) : (
+            <SummaryRow
+              label={t.targetPriceLabel}
+              value={computed.valid ? fmtCurrency(computed.targetSell) : "—"}
+            />
+          )}
           <SummaryRow
-            label={t.targetReturnDisplayLabel}
+            label={sellEnabled ? t.realizedProfitLabel : t.expectedProfitLabel}
             value={
-              computed.valid ? `${fmt.format(computed.targetReturnPct)}%` : "—"
-            }
-          />
-          <SummaryRow
-            label={t.targetPriceLabel}
-            value={computed.valid ? fmtCurrency(computed.targetSell) : "—"}
-          />
-          <SummaryRow
-            label={t.expectedProfitLabel}
-            value={
-              computed.valid ? (
+              summaryValid ? (
                 <span className={cn(profitColor)}>
-                  {computed.expectedProfit > 0 ? "+" : ""}
-                  {fmtCurrency(computed.expectedProfit)}
+                  {displayProfit > 0 ? "+" : ""}
+                  {fmtCurrency(displayProfit)}
                 </span>
               ) : (
                 "—"
@@ -878,10 +1240,10 @@ export function DcaDownCalculator() {
           <SummaryRow
             label={t.taxAmountLabel}
             value={
-              computed.valid ? (
+              summaryValid ? (
                 <span className={cn(taxColor)}>
-                  {computed.taxAmount > 0 ? "−" : ""}
-                  {fmtCurrency(computed.taxAmount)}
+                  {displayTax > 0 ? "−" : ""}
+                  {fmtCurrency(displayTax)}
                 </span>
               ) : (
                 "—"
@@ -889,12 +1251,14 @@ export function DcaDownCalculator() {
             }
           />
           <SummaryRow
-            label={t.afterTaxProfitLabel}
+            label={
+              sellEnabled ? t.afterTaxRealizedLabel : t.afterTaxProfitLabel
+            }
             value={
-              computed.valid ? (
+              summaryValid ? (
                 <span className={cn(afterTaxColor)}>
-                  {computed.afterTaxProfit > 0 ? "+" : ""}
-                  {fmtCurrency(computed.afterTaxProfit)}
+                  {displayAfterTax > 0 ? "+" : ""}
+                  {fmtCurrency(displayAfterTax)}
                 </span>
               ) : (
                 "—"
@@ -923,6 +1287,7 @@ export function DcaDownCalculator() {
         onReset={() => setLastCompletedRound(0)}
         onExportCsv={handleExportCsv}
         targetReturnPct={computed.targetReturnPct}
+        showTargetColumns={!sellEnabled}
         tableTitle={t.tableTitle}
         legendCompleted={t.legendCompleted}
         legendNextBuy={t.legendNextBuy}
@@ -940,6 +1305,33 @@ export function DcaDownCalculator() {
         colTargetPrice={t.colTargetPrice}
         emptyHint={t.tableEmptyHint}
       />
+
+      {sellEnabled && (
+        <DcaDownSellDetail
+          rounds={sellComputed.rounds}
+          fmt={fmt}
+          fmtInt={fmtInt}
+          fmtCurrency={fmtCurrency}
+          lastCompletedSellRound={lastCompletedSellRound}
+          onSellRoundClick={handleSellRowClick}
+          onReset={() => setLastCompletedSellRound(0)}
+          onExportCsv={handleExportSellCsv}
+          tableTitle={t.sellTableTitle}
+          legendCompleted={t.legendSellCompleted}
+          legendNextSell={t.legendSellNext}
+          legendReset={t.legendReset}
+          exportCsvLabel={t.exportCsvLabel}
+          colRound={t.colSellRound}
+          colPrice={t.colSellPrice}
+          colRisePct={t.colRisePct}
+          colShares={t.colSellShares}
+          colCumShares={t.colCumSoldShares}
+          colSellAmount={t.colSellAmount}
+          colCumSellAmount={t.colCumSellAmount}
+          colRealizedPnl={t.colRealizedPnl}
+          emptyHint={t.sellEmptyHint}
+        />
+      )}
     </div>
   );
 }
@@ -948,13 +1340,15 @@ function Field({
   label,
   htmlFor,
   children,
+  disabled,
 }: {
   label: string;
   htmlFor: string;
   children: ReactNode;
+  disabled?: boolean;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className={cn("space-y-1.5", disabled && "opacity-60")}>
       <Label htmlFor={htmlFor} className="text-sm">
         {label}
       </Label>
