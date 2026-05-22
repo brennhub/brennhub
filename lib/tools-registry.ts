@@ -50,4 +50,10 @@ export const tools: Tool[] = [
     status: "live",
     createdAt: "2026-05-21",
   },
+  {
+    id: "maze",
+    slug: "maze",
+    status: "coming-soon",
+    createdAt: "2026-05-22",
+  },
 ];

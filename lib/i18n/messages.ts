@@ -456,6 +456,10 @@ export type Messages = {
     unmappedNote: string;
     goToSlots: string;
   };
+  maze: {
+    title: string;
+    description: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -469,6 +473,7 @@ export type Messages = {
     toolSajuNaming: string;
     toolLineupBuilder: string;
     toolLanguageMaker: string;
+    toolMaze: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -976,6 +981,10 @@ export const messages: Record<Locale, Messages> = {
       unmappedNote: "매핑되지 않은 글자는 회색 원문으로 표시됩니다.",
       goToSlots: "문자 만들기로",
     },
+    maze: {
+      title: "픽셀 미로 만들기",
+      description: "픽셀 격자로 나만의 미로를 설계하고 링크로 공유하세요.",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -989,6 +998,7 @@ export const messages: Record<Locale, Messages> = {
       toolSajuNaming: "사주 작명",
       toolLineupBuilder: "축구 베스트 일레븐 만들기",
       toolLanguageMaker: "언어 창조기",
+      toolMaze: "픽셀 미로 만들기",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -1039,6 +1049,10 @@ export const messages: Record<Locale, Messages> = {
         name: "언어 창조기",
         description:
           "픽셀로 문자를 그리고 입력값에 1:1로 매핑해 나만의 언어를 만들고 실시간 변환·공유",
+      },
+      maze: {
+        name: "픽셀 미로 만들기",
+        description: "픽셀 격자로 미로를 설계하고 풀이하며 링크로 공유",
       },
     },
   },
@@ -1528,6 +1542,10 @@ export const messages: Record<Locale, Messages> = {
       unmappedNote: "Unmapped characters appear as gray original text.",
       goToSlots: "Go to characters",
     },
+    maze: {
+      title: "Pixel Maze Maker",
+      description: "Design your own maze on a pixel grid and share it via link.",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -1541,6 +1559,7 @@ export const messages: Record<Locale, Messages> = {
       toolSajuNaming: "Saju Naming",
       toolLineupBuilder: "Football Best XI Builder",
       toolLanguageMaker: "Language Maker",
+      toolMaze: "Pixel Maze Maker",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -1591,6 +1610,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Language Maker",
         description:
           "Create your own language — draw pixel glyphs, map them to any input, convert text in real time",
+      },
+      maze: {
+        name: "Pixel Maze Maker",
+        description:
+          "Design pixel-grid mazes, solve them, and share via link",
       },
     },
   },
