@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,10 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type {
-  HanjaEntry,
-  NameCandidate,
-} from "@/app/tools/saju-naming/lib/names";
+import type { NameCandidate } from "@/app/tools/saju-naming/lib/names";
+import {
+  SURNAMES,
+  type SurnameOption,
+} from "@/app/tools/saju-naming/lib/surnames";
 
 interface Props {
   /** 1단계 사주 결과의 용신 (자원오행 추천 기준). */
@@ -26,55 +27,28 @@ interface Props {
 const ERR_BOX =
   "mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300";
 
+/** 빈 입력 시 보여줄 자주 쓰는 성씨 수 (인구순 상위). */
+const QUICK_PICK = 12;
+
 export function NameRecommendSection({ yongsin, gisin }: Props) {
-  const [surname, setSurname] = useState("");
-  const [hanjaResults, setHanjaResults] = useState<HanjaEntry[] | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [searchErr, setSearchErr] = useState<string | null>(null);
-  const [selected, setSelected] = useState<HanjaEntry | null>(null);
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<SurnameOption | null>(null);
   const [nameLength, setNameLength] = useState<1 | 2>(2);
   const [candidates, setCandidates] = useState<NameCandidate[] | null>(null);
   const [recommending, setRecommending] = useState(false);
   const [recommendErr, setRecommendErr] = useState<string | null>(null);
 
-  async function searchHanja(e: FormEvent) {
-    e.preventDefault();
-    const q = surname.trim();
-    if (!q) {
-      setSearchErr("성씨 한글을 입력하세요.");
-      return;
-    }
-    setSearching(true);
-    setSearchErr(null);
-    setHanjaResults(null);
-    setSelected(null);
-    setCandidates(null);
-    setRecommendErr(null);
-    try {
-      const res = await fetch(
-        `/api/saju-naming/hanja-search?hangeul=${encodeURIComponent(q)}&limit=24`,
-      );
-      const json = (await res.json()) as
-        | { results: HanjaEntry[]; total: number }
-        | { error?: string };
-      if (!res.ok) {
-        setSearchErr(
-          ("error" in json && json.error) || "한자 검색에 실패했습니다.",
-        );
-      } else if (!("results" in json) || json.results.length === 0) {
-        setSearchErr(`'${q}'에 해당하는 한자가 없습니다.`);
-      } else {
-        setHanjaResults(json.results);
-      }
-    } catch (e2) {
-      setSearchErr(`네트워크 오류: ${(e2 as Error).message}`);
-    } finally {
-      setSearching(false);
-    }
-  }
+  const q = query.trim();
+  const matches = useMemo(
+    () =>
+      q
+        ? SURNAMES.filter((s) => s.hangeul.startsWith(q))
+        : SURNAMES.slice(0, QUICK_PICK),
+    [q],
+  );
 
-  function pickHanja(h: HanjaEntry) {
-    setSelected(h);
+  function pickSurname(s: SurnameOption) {
+    setSelected(s);
     setCandidates(null);
     setRecommendErr(null);
   }
@@ -95,8 +69,8 @@ export function NameRecommendSection({ yongsin, gisin }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sungHanja: selected.character,
-          sungStroke: selected.won_stroke,
+          sungHanja: selected.hanja,
+          sungStroke: selected.wonStroke,
           yongsin,
           gisin,
           nameLength,
@@ -127,71 +101,61 @@ export function NameRecommendSection({ yongsin, gisin }: Props) {
           <CardTitle className="text-lg">성씨 입력</CardTitle>
         </CardHeader>
         <CardContent>
-          <form
-            onSubmit={searchHanja}
-            className="flex flex-col gap-3 sm:flex-row sm:items-end"
-          >
-            <div className="flex-1">
-              <Label htmlFor="surname" className="text-sm">
-                성씨 (한글)
-              </Label>
-              <Input
-                id="surname"
-                placeholder="예: 김"
-                value={surname}
-                onChange={(e) => setSurname(e.target.value)}
-                disabled={searching}
-                className="mt-1"
-              />
-            </div>
-            <Button type="submit" variant="outline" disabled={searching}>
-              {searching ? "검색 중…" : "한자 찾기"}
-            </Button>
-          </form>
+          <div>
+            <Label htmlFor="surname" className="text-sm">
+              성씨 (한글)
+            </Label>
+            <Input
+              id="surname"
+              placeholder="예: 김"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="mt-1"
+            />
+          </div>
 
-          {searchErr && <div className={ERR_BOX}>{searchErr}</div>}
-
-          {hanjaResults && (
-            <div className="mt-4">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                성씨 한자를 선택하세요
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {hanjaResults.map((h) => {
-                  const active = selected?.character === h.character;
-                  return (
-                    <button
-                      key={h.character}
-                      type="button"
-                      onClick={() => pickHanja(h)}
-                      aria-pressed={active}
+          <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+            {q ? "검색 결과" : "자주 쓰는 성씨"}
+          </p>
+          {matches.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {matches.map((s) => {
+                const active =
+                  selected?.hangeul === s.hangeul &&
+                  selected?.hanja === s.hanja;
+                return (
+                  <button
+                    key={`${s.hangeul}-${s.hanja}`}
+                    type="button"
+                    onClick={() => pickSurname(s)}
+                    aria-pressed={active}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition-colors",
+                      active
+                        ? "border-zinc-900 bg-zinc-900 text-zinc-50 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
+                        : "border-zinc-200 text-zinc-700 hover:border-zinc-400 dark:border-zinc-800 dark:text-zinc-300 dark:hover:border-zinc-600",
+                    )}
+                  >
+                    <span className="text-base font-semibold">{s.hanja}</span>
+                    <span
                       className={cn(
-                        "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition-colors",
+                        "text-xs",
                         active
-                          ? "border-zinc-900 bg-zinc-900 text-zinc-50 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-                          : "border-zinc-200 text-zinc-700 hover:border-zinc-400 dark:border-zinc-800 dark:text-zinc-300 dark:hover:border-zinc-600",
+                          ? "text-zinc-300 dark:text-zinc-600"
+                          : "text-zinc-500 dark:text-zinc-400",
                       )}
                     >
-                      <span className="text-base font-semibold">
-                        {h.character}
-                      </span>
-                      {h.meaning && (
-                        <span
-                          className={cn(
-                            "text-xs",
-                            active
-                              ? "text-zinc-300 dark:text-zinc-600"
-                              : "text-zinc-500 dark:text-zinc-400",
-                          )}
-                        >
-                          {h.meaning}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                      {s.hangeul}
+                      {s.meaning ? ` · ${s.meaning}` : ""}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+          ) : (
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              목록에 없는 성씨입니다. 다른 성씨로 시도해 보세요.
+            </p>
           )}
 
           {selected && (
@@ -247,8 +211,8 @@ export function NameRecommendSection({ yongsin, gisin }: Props) {
             {candidates.map((c, i) => (
               <CandidateCard
                 key={`${c.hanja}-${i}`}
-                surname={selected?.character ?? ""}
-                surnameHangeul={surname.trim()}
+                surnameHanja={selected?.hanja ?? ""}
+                surnameHangeul={selected?.hangeul ?? ""}
                 candidate={c}
                 rank={i + 1}
               />
@@ -262,8 +226,8 @@ export function NameRecommendSection({ yongsin, gisin }: Props) {
         <Card>
           <CardContent>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              추천 후보를 찾지 못했습니다. 성씨 한자나 이름 글자 수를 바꿔
-              다시 시도해 보세요.
+              추천 후보를 찾지 못했습니다. 성씨나 이름 글자 수를 바꿔 다시
+              시도해 보세요.
             </p>
           </CardContent>
         </Card>
@@ -273,12 +237,12 @@ export function NameRecommendSection({ yongsin, gisin }: Props) {
 }
 
 function CandidateCard({
-  surname,
+  surnameHanja,
   surnameHangeul,
   candidate,
   rank,
 }: {
-  surname: string;
+  surnameHanja: string;
   surnameHangeul: string;
   candidate: NameCandidate;
   rank: number;
@@ -290,7 +254,7 @@ function CandidateCard({
           후보 {rank}
         </span>
         <span className="mt-1 text-2xl font-semibold tracking-wide text-zinc-900 dark:text-zinc-50">
-          {surname}
+          {surnameHanja}
           {candidate.hanja}
         </span>
         <span className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
