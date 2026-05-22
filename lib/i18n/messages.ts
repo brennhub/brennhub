@@ -406,6 +406,7 @@ export type Messages = {
     toolSuppPlan: string;
     toolSajuNaming: string;
     toolLineupBuilder: string;
+    toolLanguageMaker: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -855,6 +856,7 @@ export const messages: Record<Locale, Messages> = {
       toolSuppPlan: "영양제 플래너",
       toolSajuNaming: "사주 작명",
       toolLineupBuilder: "축구 베스트 일레븐 만들기",
+      toolLanguageMaker: "언어 창조기",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -1340,6 +1342,7 @@ export const messages: Record<Locale, Messages> = {
       toolSuppPlan: "Supplement Planner",
       toolSajuNaming: "Saju Naming",
       toolLineupBuilder: "Football Best XI Builder",
+      toolLanguageMaker: "Language Maker",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",

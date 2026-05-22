@@ -2,6 +2,30 @@
 
 주요 결정 / 이정표.
 
+## [0.2.0] — 2026-05-21
+
+### Added (V1 MVP — coming-soon → live)
+
+- **코어 로직** — `lib/language-maker/`: `types.ts`(16×16 글리프 · `LanguageProject`) + `storage.ts`(localStorage hydrate/persist/schemaVersion 마이그레이션) + `glyph.ts`(canvas 렌더 헬퍼 · longest-match 토큰화).
+- **페이지** — `app/tools/language-maker/{page,client-shell}.tsx` — Server shell + client. 스텝 1 슬롯·매핑 → 2 픽셀 에디터 → 3 바벨 타자기.
+- **UI 컴포넌트** — `components/language-maker/`: `step-nav` · `glyph-canvas`(읽기 전용 비트맵 canvas) · `slot-panel`(무지 슬롯 + 1:1 트리거 매핑) · `pixel-editor`(16×16 canvas 드로잉) · `typewriter`(실시간 변환 + PNG 저장).
+- **registry live 전환** — `tools-registry.ts` status `coming-soon` → `live` (page.tsx 생성과 동일 commit).
+- **i18n** — `languageMaker.*` namespace (ko/en) + `feedback.toolLanguageMaker`.
+- **feedback 통합** — `FeedbackTool` 타입 / `feedback-button` pathname 매핑 / `feedback-dialog` toolOptions / `api/feedback` TOOLS enum / admin `TOOL_LABEL` (BRENNHUB.md §6 통합 체크리스트 5단계).
+- **TOOLS.md** 도구 인덱스 등재.
+
+### Decided
+
+- **캡처/렌더 = canvas 네이티브 (`toDataURL`)** — 외부 캡처 라이브러리 0. 픽셀 에디터·바벨 타자기 모두 `<canvas>` 직접 렌더 → CSS 파싱 단계 부재로 lineup-builder가 겪은 빈 PNG 이슈 구조적 회피.
+- **다크모드 = `useTheme()` 구독** — 기존 `theme-provider` 재사용 (MutationObserver 미사용). PATTERNS.md 기존 패턴 재사용 원칙.
+- 픽셀 그리드 16×16 고정 / V1 단일 언어(글리프 컬렉션 1개) / 타자기 토큰화 longest-match(단어 트리거 우선) / 미매핑 글자 = 회색 원문 통과.
+- PNG 파일명 = `language-maker-<YYYY-MM-DD>.png` (stock-sim CSV `<slug>-<date>` 컨벤션 일관).
+
+### Notes
+
+- 빌드: `/tools/language-maker`가 별도 정적 route로 prerender — `[slug]` fallback 아님, route collision 없음.
+- V2 후보(스타터 팩 프리셋 · 랜덤 대칭 생성기)는 BACKLOG.md 참조.
+
 ## [0.1.0] — 2026-05-21
 
 ### Added (placeholder 등록 + 도구 폴더 문서 3종)
