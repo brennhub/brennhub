@@ -2,18 +2,18 @@
 
 import { cn } from "@/lib/utils";
 
-export type Step = 1 | 2 | 3;
+export type Step = 1 | 2;
 
 type Props = {
   step: Step;
-  /** [step1, step2, step3] 라벨. */
-  labels: [string, string, string];
+  /** [step1, step2] 라벨. */
+  labels: [string, string];
   onStep: (step: Step) => void;
 };
 
-/** 3스텝(슬롯·매핑 → 그리기 → 타이핑) 진행 네비게이션. */
+/** 2스텝(문자 만들기 → 타이핑) 진행 네비게이션. */
 export function StepNav({ step, labels, onStep }: Props) {
-  const steps: Step[] = [1, 2, 3];
+  const steps: Step[] = [1, 2];
   return (
     <div
       role="tablist"
