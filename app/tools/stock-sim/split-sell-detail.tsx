@@ -20,6 +20,7 @@ type Round = {
   sellAmount: number;
   cumulativeSellAmount: number;
   realizedPnl: number;
+  cumulativeRealizedPnl: number;
 };
 
 type Props = {
@@ -44,6 +45,7 @@ type Props = {
   colSellAmount: string;
   colCumSellAmount: string;
   colRealizedPnl: string;
+  colCumRealizedPnl: string;
   emptyHint: string;
 };
 
@@ -74,6 +76,7 @@ export function SplitSellDetail({
   colSellAmount,
   colCumSellAmount,
   colRealizedPnl,
+  colCumRealizedPnl,
   emptyHint,
 }: Props) {
   return (
@@ -109,7 +112,7 @@ export function SplitSellDetail({
           </Button>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[810px] text-sm">
             <thead className="bg-muted/40 text-xs text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left font-medium">{colRound}</th>
@@ -132,13 +135,16 @@ export function SplitSellDetail({
                 <th className="px-3 py-2 text-right font-medium">
                   {colRealizedPnl}
                 </th>
+                <th className="px-3 py-2 text-right font-medium">
+                  {colCumRealizedPnl}
+                </th>
               </tr>
             </thead>
             <tbody>
               {rounds.length === 0 ? (
                 <tr className="border-t border-border">
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="px-3 py-8 text-center text-sm text-muted-foreground"
                   >
                     {emptyHint}
@@ -163,6 +169,12 @@ export function SplitSellDetail({
                     r.realizedPnl > 0
                       ? "text-[var(--color-gain)]"
                       : r.realizedPnl < 0
+                        ? "text-[var(--color-loss)]"
+                        : "";
+                  const cumPnlClass =
+                    r.cumulativeRealizedPnl > 0
+                      ? "text-[var(--color-gain)]"
+                      : r.cumulativeRealizedPnl < 0
                         ? "text-[var(--color-loss)]"
                         : "";
                   return (
@@ -198,6 +210,14 @@ export function SplitSellDetail({
                         )}
                       >
                         {fmtCurrency(r.realizedPnl)}
+                      </td>
+                      <td
+                        className={cn(
+                          "tnum px-3 py-1.5 text-right",
+                          cumPnlClass,
+                        )}
+                      >
+                        {fmtCurrency(r.cumulativeRealizedPnl)}
                       </td>
                     </tr>
                   );
