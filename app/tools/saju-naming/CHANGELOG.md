@@ -128,6 +128,22 @@
 - "9,460 vs 9,389 = 71자 초과" 정정 — 표준 CJK 9,055는 공식 9,389 대비 오히려 334자 부족, 별도로 비표준 405 보유. 71은 단순 차이일 뿐 의미 부정확.
 - 후속(비critical) → 39-C: 정밀 권위 reconcile — 별표1 BMP 7,274 폰트-렌더 픽셀 매칭 + 교육용 기초한자 1,800 합집합. ~1.5~2d. Option B 안전 제외 적용 후 44 UI live 비차단.
 
+### Added (음령오행 점수 축 정립)
+- `lib/sound-ohaeng.ts` + `poc/sound-ohaeng.poc.ts` — 음령오행 plug-in 모듈 (자음 학파 tongyong/hunminjeongeum + ruleset A/B/C + 상생/상극 `relateOhaeng` + `evaluateSoundOhaeng` + 받침 브릿지).
+- `docs/learnings/2026-05-21-saju-naming-sound-ohaeng.md` — 음령오행 작명 이론 정찰(출처 명시) + 설계 + 상생 방향성 정찰.
+
+### Changed (음령오행 점수 축 정립)
+- `recommendNames` 점수 재정립 — `calcSoundScore`(초성 yongsin 멤버십) → `evaluateSoundOhaeng`(성+이름 자음 오행 상생/상극, A학설 default). 가중치 **음령 55% / 수리 45%** (기존 오행40·수리35·발음25 → 2축). breakdown `음령N+수리N=T`.
+- recommend route += `sungHangeul` 입력 (성씨 초성 = 음령 체인 시작점). `NameRecommendOptions` += sungHangeul / − yongsin·gisin (recommendNames 채점 미사용). `NameCandidate` − ohaengScore. Task 44 `name-recommend.tsx` cascade.
+
+### Fixed (음령오행 점수 축 정립)
+- F3 — `calcOhaengScore`가 `c.ohaeng`(음령오행) 채점 = `calcSoundScore`와 동일 축 이중 채점, 자원오행 미반영. `calcOhaengScore` 제거 — 자원오행은 recommend route SQL `ja_ohaeng IN(yongsin)` 하드 필터로 처리 (풀이 이미 걸러져 점수 축으로 또 매기면 무의미).
+
+### Decided (음령오행 점수 축 정립)
+- 자음 오행 배속 학파 — default `tongyong`(통용 다수안 = 신경준 『훈민정음운해』1750 계열), `hunminjeongeum`(해례 제자해 원전)은 plug-in. 채점 ruleset default A학설(초성만), B/C학설(종성·받침 브릿지)는 plug-in. 출처: 김만태 「훈민정음의 제자원리와 역학사상」(철학사상 2012) 등 — learnings 참조.
+- 상생 채점 = **방향 무관**(다수안). 방향성 `directionBonus`는 1차 출처 확보 후 refinement plug-in (BACKLOG 39-C, 비critical).
+- `RELATION_POINT`(상생 1.0/비화 0.5/상극 0.0) · 가중치 55:45 = 시작값, 최종 캘리브레이션은 39-C (풀 분포 측정).
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)

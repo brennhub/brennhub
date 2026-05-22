@@ -1,7 +1,8 @@
 /**
  * POST /api/saju-naming/recommend
  *
- * 입력: { sungHanja, sungStroke, yongsin, gisin, nameLength, topN?, excludeChars? }
+ * 입력: { sungHanja, sungHangeul, sungStroke, yongsin, gisin, nameLength, topN?, excludeChars? }
+ *   - sungHangeul: 성씨 한글 (음령오행 상생/상극 체인의 시작점).
  *   - sungStroke: 성씨 원획 (작명 81수리 = 원획 기준).
  * 출력: { candidates: NameCandidate[] }
  *
@@ -29,6 +30,7 @@ const POOL_LIMIT = 500; // recommend 풀 상한 — nameLength=2 조합 상한 (
 
 interface RecommendInput {
   sungHanja: string;
+  sungHangeul: string;
   sungStroke: number;
   yongsin: string[];
   gisin: string[];
@@ -65,6 +67,9 @@ function validate(body: unknown): RecommendInput | ValidationError {
 
   if (typeof b.sungHanja !== "string" || b.sungHanja.length === 0) {
     return { field: "sungHanja", code: "INVALID_INPUT" };
+  }
+  if (typeof b.sungHangeul !== "string" || b.sungHangeul.length === 0) {
+    return { field: "sungHangeul", code: "INVALID_INPUT" };
   }
   if (!isInt(b.sungStroke)) {
     return { field: "sungStroke", code: "INVALID_INPUT" };
@@ -103,6 +108,7 @@ function validate(body: unknown): RecommendInput | ValidationError {
 
   return {
     sungHanja: b.sungHanja,
+    sungHangeul: b.sungHangeul,
     sungStroke: b.sungStroke,
     yongsin: b.yongsin,
     gisin: b.gisin,
@@ -206,9 +212,8 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const candidates: NameCandidate[] = recommendNames({
       sungHanja: validated.sungHanja,
+      sungHangeul: validated.sungHangeul,
       sungStroke: validated.sungStroke,
-      yongsin: validated.yongsin,
-      gisin: validated.gisin,
       nameLength: validated.nameLength,
       topN: validated.topN,
       excludeChars: validated.excludeChars,

@@ -1,17 +1,19 @@
 /**
  * 이름 추천 알고리즘.
  *
- * 입력: 성씨 한자/획수, 용신/기신, 이름 길이.
+ * 입력: 성씨 한자/한글/획수, 이름 길이.
  * 출력: 점수 내림차순 후보.
  *
- * 점수 가중치:
- *   - 오행 점수 (40%): 한자 오행이 용신이면 +50/글자, 기신이면 -20/글자.
- *   - 81수리 점수 (35%): calculateSurie totalScore 그대로.
- *   - 발음오행 점수 (25%): 초성 오행이 용신이면 +50/글자, 기신이면 -10/글자.
- *   각 점수 0-100 클램프 후 가중 합산 → 정수 반올림.
+ * 점수 가중치 (음령오행 2단계 재정립):
+ *   - 음령오행 (55%): `evaluateSoundOhaeng` — 성+이름 자음 오행 상생/상극 채점.
+ *   - 81수리 (45%): `calculateSurie` totalScore.
+ *   자원오행(사주 보완)은 recommend route의 SQL `ja_ohaeng IN(yongsin)` 하드
+ *   필터로 처리 — 점수 축 아님 (F3 해결: 풀이 이미 걸러져 점수로 또 매기면 무의미).
+ *   각 점수 0-100, 가중 합산 → 정수.
  */
 
 import { calculateSurie } from "./surie";
+import { evaluateSoundOhaeng } from "./sound-ohaeng";
 
 // ───────────────────────── 발음오행 ─────────────────────────
 
@@ -102,7 +104,6 @@ export interface NameCandidate {
   ohaengList: string[];
   soundOhaengList: string[];
   surieScore: number;
-  ohaengScore: number;
   soundScore: number;
   totalScore: number;
   breakdown: string;
@@ -110,46 +111,12 @@ export interface NameCandidate {
 
 export interface NameRecommendOptions {
   sungHanja: string;
+  sungHangeul: string; // 성씨 한글 — 음령오행 체인의 시작점
   sungStroke: number;
-  yongsin: string[];
-  gisin: string[];
   nameLength: 1 | 2;
   topN: number;
   excludeChars?: string[];
   db: HanjaEntry[];
-}
-
-// ───────────────────────── 점수 계산 ─────────────────────────
-
-function clamp100(n: number): number {
-  return Math.max(0, Math.min(100, n));
-}
-
-function calcOhaengScore(
-  chars: HanjaEntry[],
-  yongsin: string[],
-  gisin: string[],
-): number {
-  let s = 0;
-  for (const c of chars) {
-    if (yongsin.includes(c.ohaeng)) s += 50;
-    if (gisin.includes(c.ohaeng)) s -= 20;
-  }
-  return clamp100(s);
-}
-
-function calcSoundScore(
-  soundOhaengs: (string | null)[],
-  yongsin: string[],
-  gisin: string[],
-): number {
-  let s = 0;
-  for (const so of soundOhaengs) {
-    if (!so) continue;
-    if (yongsin.includes(so)) s += 50;
-    if (gisin.includes(so)) s -= 10;
-  }
-  return clamp100(s);
 }
 
 // ───────────────────────── 메인 ─────────────────────────
@@ -165,7 +132,7 @@ function makeCandidate(
   const ohaengList = chars.map((c) => c.ohaeng);
   const soundOhaengList = chars.map((c) => getSoundOhaeng(c.hangeul) ?? "");
 
-  // 81수리는 원획(won_stroke) 기준 — 작명 정설 (sungStroke도 성씨 원획 전제).
+  // 81수리 — 원획(won_stroke) 기준 (작명 정설, sungStroke도 성씨 원획 전제).
   const surie = calculateSurie(
     options.sungStroke,
     wonStrokes[0],
@@ -173,20 +140,17 @@ function makeCandidate(
   );
   const surieScore = surie.totalScore;
 
-  const ohaengScore = calcOhaengScore(chars, options.yongsin, options.gisin);
-  const soundScore = calcSoundScore(
-    soundOhaengList,
-    options.yongsin,
-    options.gisin,
-  );
+  // 음령오행 — 성씨초성 → 이름 초성 자음 오행 상생/상극 (sound-ohaeng.ts, A학설 default).
+  const soundScore = evaluateSoundOhaeng([
+    options.sungHangeul,
+    ...chars.map((c) => c.hangeul),
+  ]).score;
 
-  const totalScore = Math.round(
-    ohaengScore * 0.4 + surieScore * 0.35 + soundScore * 0.25,
-  );
-
-  const breakdown = `오행${Math.round(ohaengScore * 0.4)}+수리${Math.round(
-    surieScore * 0.35,
-  )}+발음${Math.round(soundScore * 0.25)}=${totalScore}`;
+  // 가중치 — 음령 55% / 수리 45% (음령오행 2단계 시작값, 최종 캘리브레이션 39-C).
+  const soundWeighted = Math.round(soundScore * 0.55);
+  const surieWeighted = Math.round(surieScore * 0.45);
+  const totalScore = soundWeighted + surieWeighted;
+  const breakdown = `음령${soundWeighted}+수리${surieWeighted}=${totalScore}`;
 
   return {
     hanja,
@@ -195,7 +159,6 @@ function makeCandidate(
     ohaengList,
     soundOhaengList,
     surieScore,
-    ohaengScore,
     soundScore,
     totalScore,
     breakdown,
