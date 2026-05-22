@@ -10,6 +10,7 @@ const TOOLS = [
   "supp-plan",
   "saju-naming",
   "lineup-builder",
+  "language-maker",
 ] as const;
 const CATEGORIES = ["feature", "improvement", "complaint", "other"] as const;
 

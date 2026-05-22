@@ -8,6 +8,7 @@
 - **Cron 변환기** `/tools/cron-trans` — cron 식 ↔ 자연어 양방향 변환. [상세](app/tools/cron-trans/README.md)
 - **주식 시뮬레이터** `/tools/stock-sim` — 평단가 / 배당 / 분할매수 / 분할매도 시뮬레이션 (4 탭). [상세](app/tools/stock-sim/README.md)
 - **영양제 플래너** `/tools/supp-plan` — 약동학 기반 개인 영양제 스케줄링. [상세](app/tools/supp-plan/README.md)
+- **언어 창조기** `/tools/language-maker` — 픽셀 글리프를 그리고 입력값에 1:1 매핑해 실시간 변환·이미지 공유. [상세](app/tools/language-maker/README.md)
 
 ## 유니버설
 

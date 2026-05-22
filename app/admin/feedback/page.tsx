@@ -21,6 +21,7 @@ const TOOL_LABEL: Record<string, string> = {
   "supp-plan": "영양제 플래너",
   "saju-naming": "사주 작명",
   "lineup-builder": "축구 베스트 일레븐 만들기",
+  "language-maker": "언어 창조기",
 };
 
 const CATEGORY_LABEL: Record<string, string> = {

@@ -427,6 +427,37 @@ export type Messages = {
       "4-3-2-1": string;
     };
   };
+  languageMaker: {
+    title: string;
+    description: string;
+    step1: string;
+    step2: string;
+    step3: string;
+    slotHeading: string;
+    slotIntro: string;
+    addGlyph: string;
+    triggerPlaceholder: string;
+    drawAction: string;
+    deleteGlyph: string;
+    slotEmpty: string;
+    duplicateTrigger: string;
+    glyphIndex: string;
+    editorHeading: string;
+    editorIntro: string;
+    pickGlyph: string;
+    clearGlyph: string;
+    editorNoGlyph: string;
+    goToSlots: string;
+    typewriterHeading: string;
+    typewriterIntro: string;
+    inputLabel: string;
+    inputPlaceholder: string;
+    outputLabel: string;
+    download: string;
+    typewriterNoGlyph: string;
+    typewriterEmpty: string;
+    unmappedNote: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -439,6 +470,7 @@ export type Messages = {
     toolSuppPlan: string;
     toolSajuNaming: string;
     toolLineupBuilder: string;
+    toolLanguageMaker: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -914,6 +946,40 @@ export const messages: Record<Locale, Messages> = {
         "4-3-2-1": "4-3-2-1 크리스마스 트리",
       },
     },
+    languageMaker: {
+      title: "언어 창조기",
+      description:
+        "픽셀로 나만의 문자를 그리고 입력값에 매핑해 실시간으로 변환하세요.",
+      step1: "슬롯 · 매핑",
+      step2: "그리기",
+      step3: "타이핑",
+      slotHeading: "글리프 슬롯",
+      slotIntro:
+        "빈 슬롯을 만들고 각 글리프에 변환할 입력값(글자·단어)을 매핑하세요.",
+      addGlyph: "글리프 추가",
+      triggerPlaceholder: "매핑할 글자 또는 단어",
+      drawAction: "그리기",
+      deleteGlyph: "삭제",
+      slotEmpty: "아직 글리프가 없습니다. 첫 글리프를 추가해 시작하세요.",
+      duplicateTrigger: "이미 사용 중인 입력값입니다",
+      glyphIndex: "글리프 {n}",
+      editorHeading: "픽셀 에디터",
+      editorIntro: "16×16 격자를 클릭하거나 드래그해 글리프를 그리세요.",
+      pickGlyph: "편집할 글리프",
+      clearGlyph: "지우기",
+      editorNoGlyph: "먼저 글리프 슬롯을 추가하세요.",
+      goToSlots: "슬롯으로 가기",
+      typewriterHeading: "바벨 타자기",
+      typewriterIntro: "입력하면 매핑된 글리프로 실시간 변환됩니다.",
+      inputLabel: "입력",
+      inputPlaceholder: "변환할 텍스트를 입력하세요",
+      outputLabel: "변환 결과",
+      download: "이미지 저장",
+      typewriterNoGlyph: "먼저 글리프에 입력값을 매핑하세요.",
+      typewriterEmpty:
+        "위에 텍스트를 입력하면 변환 결과가 여기에 표시됩니다.",
+      unmappedNote: "매핑되지 않은 글자는 회색 원문으로 표시됩니다.",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -926,6 +992,7 @@ export const messages: Record<Locale, Messages> = {
       toolSuppPlan: "영양제 플래너",
       toolSajuNaming: "사주 작명",
       toolLineupBuilder: "축구 베스트 일레븐 만들기",
+      toolLanguageMaker: "언어 창조기",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -971,6 +1038,11 @@ export const messages: Record<Locale, Messages> = {
         name: "축구 베스트 일레븐 만들기",
         description:
           "포메이션, 선수 명단, 등번호를 시각적으로 구성하고 PNG로 다운로드",
+      },
+      "language-maker": {
+        name: "언어 창조기",
+        description:
+          "픽셀로 문자를 그리고 입력값에 1:1로 매핑해 나만의 언어를 만들고 실시간 변환·공유",
       },
     },
   },
@@ -1427,6 +1499,41 @@ export const messages: Record<Locale, Messages> = {
         "4-3-2-1": "4-3-2-1 Christmas Tree",
       },
     },
+    languageMaker: {
+      title: "Language Maker",
+      description:
+        "Draw your own characters pixel by pixel, map them to any input, and convert text in real time.",
+      step1: "Slots & Mapping",
+      step2: "Draw",
+      step3: "Type",
+      slotHeading: "Glyph slots",
+      slotIntro:
+        "Create blank slots and map each glyph to the input (letter or word) it replaces.",
+      addGlyph: "Add glyph",
+      triggerPlaceholder: "Letter or word to map",
+      drawAction: "Draw",
+      deleteGlyph: "Delete",
+      slotEmpty: "No glyphs yet. Add your first glyph to start.",
+      duplicateTrigger: "This input is already in use",
+      glyphIndex: "Glyph {n}",
+      editorHeading: "Pixel editor",
+      editorIntro: "Click or drag across the 16×16 grid to draw a glyph.",
+      pickGlyph: "Glyph to edit",
+      clearGlyph: "Clear",
+      editorNoGlyph: "Add a glyph slot first.",
+      goToSlots: "Go to slots",
+      typewriterHeading: "Babel typewriter",
+      typewriterIntro:
+        "Type and watch it convert into your mapped glyphs in real time.",
+      inputLabel: "Input",
+      inputPlaceholder: "Type text to convert",
+      outputLabel: "Converted output",
+      download: "Save image",
+      typewriterNoGlyph: "Map an input to a glyph first.",
+      typewriterEmpty:
+        "Type text above and the converted output will appear here.",
+      unmappedNote: "Unmapped characters appear as gray original text.",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -1439,6 +1546,7 @@ export const messages: Record<Locale, Messages> = {
       toolSuppPlan: "Supplement Planner",
       toolSajuNaming: "Saju Naming",
       toolLineupBuilder: "Football Best XI Builder",
+      toolLanguageMaker: "Language Maker",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -1484,6 +1592,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Football Best XI Builder",
         description:
           "Visually compose your football starting eleven (formation, names, numbers) and download as PNG",
+      },
+      "language-maker": {
+        name: "Language Maker",
+        description:
+          "Create your own language — draw pixel glyphs, map them to any input, convert text in real time",
       },
     },
   },

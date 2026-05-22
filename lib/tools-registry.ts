@@ -44,4 +44,10 @@ export const tools: Tool[] = [
     status: "live",
     createdAt: "2026-05-19",
   },
+  {
+    id: "language-maker",
+    slug: "language-maker",
+    status: "live",
+    createdAt: "2026-05-21",
+  },
 ];
