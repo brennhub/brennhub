@@ -85,6 +85,11 @@
 ### forceFirstShare safety guard (dca-down 전용)
 - R1 1주 보장 + budget 초과 시 뒤 회차에서 트림 (역순). 안전 카운터로 무한루프 가드.
 
+### 최대잔여 정수 배분 (split-sell 탭)
+- 정수 총량(보유 주식수)을 분수 가중치로 N분할하되 합이 정확히 일치해야 할 때.
+- `split-sell-calculator.tsx` `allocateShares(total, weights)` — floor 후 잔여분을 소수부 큰 순서로 1씩 분배.
+- 분할매수(현금 floor 배분 + 트림)와 달리 분할매도는 정수 분할이라 별도 패턴 필요.
+
 ### Color-scheme aware gain/loss
 - 값 양수/음수에 따라 `text-[var(--color-gain)]` / `text-[var(--color-loss)]` 적용. ColorSchemeProvider가 CSS 변수 swap.
 
