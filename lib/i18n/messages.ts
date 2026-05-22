@@ -247,8 +247,8 @@ export type Messages = {
       firstWeightLabel: string;
       firstWeightPlaceholder: string;
       weightEqualBenchmark: string;
-      forceFirstShareLabel: string;
-      forceFirstShareTooltip: string;
+      sellBasisLabel: string;
+      sellBasisTooltip: string;
       summaryTitle: string;
       totalProceedsLabel: string;
       totalSharesLabel: string;
@@ -664,7 +664,7 @@ export const messages: Record<Locale, Messages> = {
         startPricePlaceholder: "첫 매수가",
         nLabel: "매수 횟수",
         nPlaceholder: "2-50",
-        dropIntervalLabel: "하락율 (%)",
+        dropIntervalLabel: "하락률 (%)",
         dropIntervalPlaceholder: "5",
         targetReturnLabel: "목표 수익률 (%)",
         targetReturnPlaceholder: "30",
@@ -677,7 +677,7 @@ export const messages: Record<Locale, Messages> = {
         tableTitle: "회차별 매수",
         colRound: "매수 회차",
         colPrice: "가격",
-        colDropPct: "하락율 (%)",
+        colDropPct: "하락률 (%)",
         colBuyAmount: "매수금",
         colShares: "주식수",
         colCumShares: "누적 주식수",
@@ -701,9 +701,9 @@ export const messages: Record<Locale, Messages> = {
         legendCompleted: "매수 완료",
         legendNextBuy: "다음 매수",
         legendReset: "리셋",
-        stepperDropMax: "하락율은 최대 50% 입니다",
-        stepperDropMin: "하락율은 최소 0.1% 입니다",
-        stepperNMax: "매수 횟수는 최대 {max}회입니다 (현재 하락율 기준)",
+        stepperDropMax: "하락률은 최대 50% 입니다",
+        stepperDropMin: "하락률은 최소 0.1% 입니다",
+        stepperNMax: "매수 횟수는 최대 {max}회입니다 (현재 하락률 기준)",
         stepperNMin: "최소 2회 매수 필요",
         stepperGenericMax: "최대값 도달",
         forceFirstShareLabel: "시작가 매수 보장",
@@ -724,7 +724,7 @@ export const messages: Record<Locale, Messages> = {
         stepperTargetMax: "목표 수익률은 최대 500%입니다",
         stepperWeightMax: "분배 균형은 최대 100입니다",
         invalidInputHint:
-          "분할매수 시뮬레이션을 위해 모든 입력값(총 예산, 현재가, 매수 횟수, 하락율)이 0보다 큰 값이어야 합니다.",
+          "분할매수 시뮬레이션을 위해 모든 입력값(총 예산, 현재가, 매수 횟수, 하락률)이 0보다 큰 값이어야 합니다.",
         tableEmptyHint: "결과 없음",
       },
       splitSell: {
@@ -737,7 +737,7 @@ export const messages: Record<Locale, Messages> = {
         startPricePlaceholder: "첫 매도가",
         nLabel: "매도 횟수",
         nPlaceholder: "2-50",
-        riseIntervalLabel: "상승율 (%)",
+        riseIntervalLabel: "상승률 (%)",
         riseIntervalPlaceholder: "5",
         avgCostLabel: "평단가",
         avgCostPlaceholder: "산 가격",
@@ -756,9 +756,9 @@ export const messages: Record<Locale, Messages> = {
         firstWeightLabel: "분배 균형 (0-100)",
         firstWeightPlaceholder: "50",
         weightEqualBenchmark: "(50 = 균등값)",
-        forceFirstShareLabel: "시작가 매도 보장",
-        forceFirstShareTooltip:
-          "1회차부터 1주 이상 매도 강제. 보유 수량 안전 가드 유지.",
+        sellBasisLabel: "매도가 기준",
+        sellBasisTooltip:
+          "매도가 사다리의 시작 기준. 평단가 기준: 평단가에서 회차별 상승. 현재가 기준: 현재가에서 회차별 상승. 1회차부터 상승률이 적용됩니다.",
         summaryTitle: "최종 결과 요약",
         totalProceedsLabel: "총 매도금",
         totalSharesLabel: "총 매도 주식수",
@@ -769,7 +769,7 @@ export const messages: Record<Locale, Messages> = {
         tableTitle: "회차별 매도",
         colRound: "매도 회차",
         colPrice: "매도가",
-        colRisePct: "상승율 (%)",
+        colRisePct: "상승률 (%)",
         colShares: "매도 주식수",
         colCumShares: "누적 매도",
         colSellAmount: "매도금",
@@ -784,10 +784,10 @@ export const messages: Record<Locale, Messages> = {
         zeroShareWarningRange:
           "회차 {start}~{end}는 배분 주식수가 0주입니다. 매도 횟수를 줄이거나 보유 수량을 늘리세요.",
         invalidInputHint:
-          "분할매도 시뮬레이션을 위해 모든 입력값(보유 주식수, 현재가, 매도 횟수, 상승율)이 0보다 큰 값이어야 합니다.",
+          "분할매도 시뮬레이션을 위해 보유 주식수 · 평단가 · 매도 횟수 · 상승률, 그리고 매도가 기준으로 선택한 가격이 모두 0보다 커야 합니다.",
         tableEmptyHint: "결과 없음",
-        stepperRiseMax: "상승율은 최대 100%입니다",
-        stepperRiseMin: "상승율은 0% 이상이어야 합니다",
+        stepperRiseMax: "상승률은 최대 100%입니다",
+        stepperRiseMin: "상승률은 0% 이상이어야 합니다",
         stepperNMax: "매도 횟수는 최대 50회입니다",
         stepperNMin: "최소 2회 매도 필요",
         stepperTaxMax: "세율은 최대 50%입니다",
@@ -1306,9 +1306,9 @@ export const messages: Record<Locale, Messages> = {
         firstWeightLabel: "Weight Balance (0-100)",
         firstWeightPlaceholder: "50",
         weightEqualBenchmark: "(50 = Equal)",
-        forceFirstShareLabel: "Sell at Current Price",
-        forceFirstShareTooltip:
-          "Force minimum 1 share from round 1 (held-count cap protected)",
+        sellBasisLabel: "Sell Price Basis",
+        sellBasisTooltip:
+          "Starting point of the sell-price ladder. Avg Cost: rises per round from your average cost. Current Price: rises per round from the current price. The rise applies from round 1.",
         summaryTitle: "Summary",
         totalProceedsLabel: "Total Proceeds",
         totalSharesLabel: "Total Shares Sold",
@@ -1334,7 +1334,7 @@ export const messages: Record<Locale, Messages> = {
         zeroShareWarningRange:
           "Rounds {start}-{end} are allocated 0 shares. Reduce sell rounds or increase holdings.",
         invalidInputHint:
-          "All inputs (Shares Held, Current Price, Sell Rounds, Rise %) must be greater than 0 for split-sell simulation.",
+          "Shares Held, Avg Cost, Sell Rounds, Rise %, and the chosen basis price must all be greater than 0 for split-sell simulation.",
         tableEmptyHint: "No data",
         stepperRiseMax: "Rise max is 100%",
         stepperRiseMin: "Rise must be 0% or higher",
