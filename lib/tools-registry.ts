@@ -5,6 +5,13 @@ export type Tool = {
   slug: string;
   status: ToolStatus;
   createdAt: string;
+  /**
+   * 전용 `app/tools/<slug>/page.tsx`가 존재하는지 여부.
+   * true면 `[slug]` fallback이 해당 슬러그를 정적 경로로 emit하지 않는다
+   * (전용 페이지와 `[slug]`가 같은 라우트를 emit하는 collision 방지).
+   * status가 아직 "coming-soon"이어도 전용 페이지를 먼저 둘 때 사용.
+   */
+  hasPage?: boolean;
 };
 
 export const tools: Tool[] = [
@@ -49,5 +56,13 @@ export const tools: Tool[] = [
     slug: "language-maker",
     status: "live",
     createdAt: "2026-05-21",
+  },
+  {
+    id: "maze",
+    slug: "maze",
+    status: "coming-soon",
+    createdAt: "2026-05-22",
+    // 전용 에디터 페이지(P2)는 있으나 공유(P4) 전까지 coming-soon 유지.
+    hasPage: true,
   },
 ];

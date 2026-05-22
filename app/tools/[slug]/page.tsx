@@ -3,8 +3,10 @@ import { tools } from "@/lib/tools-registry";
 import { ClientSlugPage } from "./client-page";
 
 export function generateStaticParams() {
+  // 전용 page.tsx가 있는 슬러그는 제외 — 그렇지 않으면 [slug]와 전용
+  // 페이지가 같은 /tools/<slug> 라우트를 둘 다 emit해 collision 발생.
   return tools
-    .filter((t) => t.status === "coming-soon")
+    .filter((t) => t.status === "coming-soon" && !t.hasPage)
     .map((tool) => ({ slug: tool.slug }));
 }
 
