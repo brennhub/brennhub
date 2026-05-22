@@ -7,6 +7,7 @@ import type { Pillar } from "@/app/tools/saju-naming/lib/saju";
 import type { OhaengAnalysis } from "@/app/tools/saju-naming/lib/ohaeng";
 import { SajuInputForm, type SajuFormValues } from "./components/saju-input-form";
 import { SajuResultView } from "./components/saju-result";
+import { NameRecommendSection } from "./components/name-recommend";
 
 /**
  * `/api/saju-naming/saju` 응답 형태.
@@ -94,6 +95,13 @@ export function SajuNamingClientShell() {
       )}
 
       {result && <SajuResultView data={result} />}
+
+      {result && (
+        <NameRecommendSection
+          yongsin={result.ohaeng.yongsin}
+          gisin={result.ohaeng.gisin}
+        />
+      )}
     </main>
   );
 }
