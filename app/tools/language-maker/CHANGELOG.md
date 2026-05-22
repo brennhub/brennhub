@@ -2,6 +2,28 @@
 
 주요 결정 / 이정표.
 
+## [0.3.0] — 2026-05-22
+
+### Changed (V1.1 — 문자 만들기 UI 재설계: 카드 그리드 + 모달 에디터)
+
+- **스텝 3 → 2** — "슬롯·매핑 / 그리기 / 타이핑" → "문자 만들기 / 타이핑". `step-nav.tsx` 2스텝화.
+- **카드 그리드** — `slot-panel.tsx`(리스트) → `character-grid.tsx`(카드 그리드) 재작성 + `character-card.tsx` 신규. 카드 = 문자 미리보기 + 트리거 입력 + 모서리 삭제. '그리기' 버튼 제거 — 미리보기 클릭으로 에디터 진입.
+- **픽셀 에디터 모달화** — `pixel-editor.tsx`가 모달 오버레이(edit-dialog/feedback-dialog 패턴: backdrop blur · ESC · scroll lock · X)로. 글리프 선택 스트립 제거 — 카드가 선택 역할. `client-shell`이 `editingId`로 열림 관리.
+- **드래그 재정렬** — 외부 라이브러리 없이 Pointer Events 자체 구현. `data-glyph-id` + `elementFromPoint` 히트테스트로 `glyphs` 배열 라이브 재정렬.
+- **용어** — user-facing 문자열 "글리프"→"문자" / "Glyph"→"Character". 코드 식별자(`Glyph` 타입·`glyph.ts`·`glyphs` 필드) 불변.
+- **i18n** — `languageMaker.*` namespace 재정비 (2스텝 라벨 + 카드/모달/드래그 문자열, 폐기 키 제거).
+
+### Decided (V1.1)
+
+- **데이터 모델 불변** — `glyphs` 배열 순서 = 카드 순서. 드래그 재정렬 = 배열 재정렬. schemaVersion 유지, 마이그레이션 0 — **기존 V1 사용자 데이터 안전**.
+- **드래그/스크롤 분리** — 마우스 6px 임계값 / 터치 길게 누르기(280ms) 활성화. 순수 6px 임계값은 터치에서 브라우저가 스크롤을 먼저 확정해 불가 → 터치는 길게 누르기가 표준이자 유일하게 견고. 드래그 활성 후에만 non-passive `touchmove`로 스크롤 차단.
+
+### Notes (V1.1)
+
+- `slot-panel.tsx` 삭제 (→ `character-grid.tsx`).
+- 드래그 재정렬은 포인터 기반이라 키보드 비대응 — 순서는 변환 결과에 영향 없는 정리용이라 V1.1 허용 한계.
+- 함께 출시된 polish (별도 commit) — 트리거·타자기 입력칸 `spellCheck={false}` + 타자기 변환 글리프 1.5px inset 간격.
+
 ## [0.2.0] — 2026-05-21
 
 ### Added (V1 MVP — coming-soon → live)
