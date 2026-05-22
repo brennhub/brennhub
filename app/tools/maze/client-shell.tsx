@@ -141,6 +141,7 @@ export function MazeClientShell() {
             <MazeGrid
               grid={project.grid}
               size={project.size}
+              theme={project.theme}
               onPaint={handlePaint}
             />
           </div>

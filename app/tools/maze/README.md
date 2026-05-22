@@ -109,12 +109,17 @@ lib/maze/
   types.ts                                 # P2 완료 — TileType / MazeProject + 상수 (위 canonical)
   grid.ts                                  # P2 완료 — 격자 헬퍼 (emptyGrid/cloneGrid/findStart 등)
   storage.ts                               # P2 완료 — localStorage load/save/migrate
+  render/
+    types.ts                               # P2.1 완료 — RenderEngine / TileRenderer / ThemePalette + ready? 훅
+    icons.ts                               # P2.1 완료 — lucide v1.14.0 iconNode 임베드 (User/Flag, ISC)
+    default.ts                             # P2.1 완료 — V1 default 엔진 (Path2D stroke)
+    index.ts                               # P2.1 완료 — selectEngine 진입점 (V2 sprite-dungeon 분기 자리)
   share.ts                                 # P4 — short_id 생성 · payload 직렬화
 components/maze/
   step-nav.tsx                             # P2 완료 — 2스텝 네비게이션
   settings-panel.tsx                       # P2 완료 — Step1 설정 (크기·fog)
   tool-palette.tsx                         # P2 완료 — Step2 도구 팔레트
-  maze-grid.tsx                            # P2 완료 — Step2 픽셀 격자 에디터 (canvas)
+  maze-grid.tsx                            # P2 완료 + P2.1 재배선 — engine 오케스트레이션 only (fillRect 직접 호출 0)
   reset-confirm-dialog.tsx                 # P2 완료 — 맵 초기화 확인 모달
 app/api/maze/
   route.ts                                 # P4 — 공유 저장/조회 (runtime="edge" 금지)

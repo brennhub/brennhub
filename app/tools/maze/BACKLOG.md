@@ -43,6 +43,22 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 - [x] `npm run build` 통과 — `/tools/maze`가 전용 정적 route로 emit, `[slug]`와 collision 없음
 - [ ] dev 검증 — 2-step 흐름 / 사이즈별(16·32·64) 드로잉 / 다크·라이트 / 모바일 터치 (dev 배포 후 사용자 시각 검증)
 
+## P2.1 — 회귀 수정 (start/goal 아이콘) — 완료 (CHANGELOG `[0.2.1]`)
+
+dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘, 도착점 = `Flag` 아이콘)이 단색 fill로 잘못 렌더되던 문제 수정 + 렌더러 추상화 도입(V2 sprite-dungeon 위한 전제 구조).
+
+- [x] `lib/maze/render/{types,icons,default,index}.ts` 신규 — `RenderEngine` 인터페이스 + `selectEngine` 진입점 + lucide-react v1.14.0 iconNode 직접 임베드(User/Flag, ISC)
+- [x] `default.ts` `strokeIcon` Path2D 헬퍼 — lineWidth 적응 공식 `Math.max(2, 1.25/drawScale)` 인라인 도출
+- [x] `maze-grid.tsx` 재배선 — 인라인 `fillRect`/`stroke` 제거, engine 3-단계 오케스트레이션, `MazeTheme` prop + `await engine.ready?.()` + cancel 가드
+- [x] `client-shell.tsx` — `<MazeGrid theme={project.theme}>` prop
+- [x] DPR 보존 규약 — 엔진 `ctx.setTransform` 금지, 외부 1회 설정 (RenderEngine 주석 명시)
+- [x] `npm run build` 통과 (TS·SSR)
+- [ ] dev 재배포 후 사용자 시각 점검 — start/goal 아이콘 + 틴트 / 사이즈별 / 다크·라이트 / 모바일
+
+### V2 caveat (BACKLOG에 명시)
+
+- V2 `sprite-dungeon` 엔진은 스프라이트 시트 비동기 로드가 필요할 가능성 — `RenderEngine.ready?: () => Promise<void>` 훅으로 처리. maze-grid는 이미 `await engine.ready?.()` + cancel 가드를 두므로 V2 추가 시 maze-grid 변경 0. **단** 새 엔진이 ready 훅을 노출하는 것이 전제 — "변경 0" 주장은 이 전제 위에서만 성립 (silent oversell 금지).
+
 ## P3 — 검증 · 플레이 · Fog 렌더
 
 - [ ] 미로 검증 — 외곽 폐쇄 확인 + 시작→도착 도달 가능(BFS) 판정
