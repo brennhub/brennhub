@@ -7,7 +7,7 @@ import { SCHEMA_VERSION, type Glyph } from "@/lib/language-maker/types";
 import { newGlyph } from "@/lib/language-maker/glyph";
 import { loadProject, saveProject } from "@/lib/language-maker/storage";
 import { StepNav, type Step } from "@/components/language-maker/step-nav";
-import { SlotPanel } from "@/components/language-maker/slot-panel";
+import { CharacterGrid } from "@/components/language-maker/character-grid";
 import { PixelEditor } from "@/components/language-maker/pixel-editor";
 import { Typewriter } from "@/components/language-maker/typewriter";
 
@@ -18,9 +18,9 @@ export function LanguageMakerClientShell() {
   const [glyphs, setGlyphs] = useState<Glyph[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [step, setStep] = useState<Step>(1);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  // hydrate — localStorage에서 글리프 컬렉션 로드.
+  // hydrate — localStorage에서 문자 컬렉션 로드.
   useEffect(() => {
     const project = loadProject();
     setGlyphs(project.glyphs);
@@ -33,16 +33,11 @@ export function LanguageMakerClientShell() {
     saveProject({ schemaVersion: SCHEMA_VERSION, glyphs });
   }, [glyphs, hydrated]);
 
-  // 스텝 2 진입 시 선택 글리프가 없거나 stale이면 첫 글리프로 보정.
-  useEffect(() => {
-    if (step !== 2 || glyphs.length === 0) return;
-    if (!glyphs.some((g) => g.id === selectedId)) {
-      setSelectedId(glyphs[0].id);
-    }
-  }, [step, glyphs, selectedId]);
-
   const handleAdd = useCallback(() => {
-    setGlyphs((prev) => [...prev, newGlyph()]);
+    const g = newGlyph();
+    setGlyphs((prev) => [...prev, g]);
+    // 추가 즉시 에디터 열어 바로 그리기.
+    setEditingId(g.id);
   }, []);
 
   const handleDelete = useCallback((id: string) => {
@@ -66,12 +61,14 @@ export function LanguageMakerClientShell() {
     [],
   );
 
-  const handleDraw = useCallback((id: string) => {
-    setSelectedId(id);
-    setStep(2);
+  const handleReorder = useCallback((next: Glyph[]) => {
+    setGlyphs(next);
   }, []);
 
-  const goToSlots = useCallback(() => setStep(1), []);
+  const goToCharacters = useCallback(() => setStep(1), []);
+  const closeEditor = useCallback(() => setEditingId(null), []);
+
+  const editingGlyph = glyphs.find((g) => g.id === editingId) ?? null;
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 pt-6 pb-20">
@@ -91,35 +88,29 @@ export function LanguageMakerClientShell() {
         <p className="mt-2 text-muted-foreground">{tl.description}</p>
       </header>
 
-      <StepNav
-        step={step}
-        labels={[tl.step1, tl.step2, tl.step3]}
-        onStep={setStep}
-      />
+      <StepNav step={step} labels={[tl.step1, tl.step2]} onStep={setStep} />
 
       <div className="mt-6">
         {step === 1 && (
-          <SlotPanel
+          <CharacterGrid
             glyphs={glyphs}
             onAdd={handleAdd}
             onDelete={handleDelete}
             onTriggerChange={handleTriggerChange}
-            onDraw={handleDraw}
+            onEdit={setEditingId}
+            onReorder={handleReorder}
           />
         )}
         {step === 2 && (
-          <PixelEditor
-            glyphs={glyphs}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onBitmapChange={handleBitmapChange}
-            onGoToSlots={goToSlots}
-          />
-        )}
-        {step === 3 && (
-          <Typewriter glyphs={glyphs} onGoToSlots={goToSlots} />
+          <Typewriter glyphs={glyphs} onGoToSlots={goToCharacters} />
         )}
       </div>
+
+      <PixelEditor
+        glyph={editingGlyph}
+        onBitmapChange={handleBitmapChange}
+        onClose={closeEditor}
+      />
     </main>
   );
 }

@@ -14,6 +14,8 @@ const PAD = 16;
 /** 글리프 한 칸 표시 크기. */
 const CELL = 40;
 const GAP = 6;
+/** 글리프를 셀 안쪽으로 들이는 여백 — 인접·동일 글리프 경계 구분. */
+const GLYPH_INSET = 1.5;
 
 type Props = {
   glyphs: Glyph[];
@@ -83,7 +85,15 @@ export function Typewriter({ glyphs, onGoToSlots }: Props) {
       const x = PAD + c * (CELL + GAP);
       const y = PAD + r * (CELL + GAP);
       if (token.kind === "glyph") {
-        drawGlyph(ctx, token.glyph.bitmap, x, y, CELL / GRID_SIZE, ink);
+        // 셀 가장자리에서 GLYPH_INSET만큼 안쪽으로 — 꽉 찬 글리프도 여백 확보.
+        drawGlyph(
+          ctx,
+          token.glyph.bitmap,
+          x + GLYPH_INSET,
+          y + GLYPH_INSET,
+          (CELL - GLYPH_INSET * 2) / GRID_SIZE,
+          ink,
+        );
       } else if (token.char.trim().length > 0) {
         // 매핑되지 않은 글자 — 회색 원문으로 통과.
         ctx.fillStyle = literalColor;
@@ -151,6 +161,7 @@ export function Typewriter({ glyphs, onGoToSlots }: Props) {
           onChange={(e) => setInput(e.target.value)}
           placeholder={t.inputPlaceholder}
           rows={3}
+          spellCheck={false}
           className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors hover:border-ring/60 focus:border-ring placeholder:text-muted-foreground"
         />
         <p className="text-xs text-muted-foreground">{t.unmappedNote}</p>
