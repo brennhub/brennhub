@@ -75,7 +75,12 @@ export type Messages = {
     exchangeRateTooltip: string;
     exchangeRateTooltipManual: string;
     rateLabel: string;
-    tabs: { costBasis: string; dividend: string; dcaDown: string };
+    tabs: {
+      costBasis: string;
+      dividend: string;
+      dcaDown: string;
+      splitSell: string;
+    };
     costBasis: {
       inputTitle: string;
       priceHeader: string;
@@ -216,33 +221,65 @@ export type Messages = {
       stepperWeightMax: string;
       invalidInputHint: string;
       tableEmptyHint: string;
-      sellToggleLabel: string;
-      sellToggleTooltip: string;
-      sellSectionHint: string;
-      sellRoundsLabel: string;
-      sellRoundsPlaceholder: string;
+    };
+    splitSell: {
+      inputTitle: string;
+      tickerHeader: string;
+      tickerPlaceholder: string;
+      holdingsHeader: string;
+      holdingsPlaceholder: string;
+      startPriceHeader: string;
+      startPricePlaceholder: string;
+      nLabel: string;
+      nPlaceholder: string;
       riseIntervalLabel: string;
       riseIntervalPlaceholder: string;
+      avgCostLabel: string;
+      avgCostPlaceholder: string;
+      taxRateLabel: string;
+      taxTypeShortTerm: string;
+      taxTypeLongTerm: string;
+      taxTooltipShortTerm: string;
+      taxTooltipLongTerm: string;
+      weightToggle: string;
+      weightTooltip: string;
+      weightHint: string;
+      firstWeightLabel: string;
+      firstWeightPlaceholder: string;
+      weightEqualBenchmark: string;
+      forceFirstShareLabel: string;
+      forceFirstShareTooltip: string;
+      summaryTitle: string;
+      totalProceedsLabel: string;
+      totalSharesLabel: string;
       avgSellPriceLabel: string;
       realizedProfitLabel: string;
+      taxAmountLabel: string;
       afterTaxRealizedLabel: string;
-      sellTableTitle: string;
-      colSellRound: string;
-      colSellPrice: string;
+      tableTitle: string;
+      colRound: string;
+      colPrice: string;
       colRisePct: string;
-      colSellShares: string;
-      colCumSoldShares: string;
+      colShares: string;
+      colCumShares: string;
       colSellAmount: string;
       colCumSellAmount: string;
       colRealizedPnl: string;
-      legendSellCompleted: string;
-      legendSellNext: string;
-      sellZeroShareWarningSingle: string;
-      sellZeroShareWarningRange: string;
-      sellEmptyHint: string;
-      stepperSellRoundsMax: string;
-      stepperSellRoundsMin: string;
+      legendCompleted: string;
+      legendNextSell: string;
+      legendReset: string;
+      exportCsvLabel: string;
+      zeroShareWarningSingle: string;
+      zeroShareWarningRange: string;
+      invalidInputHint: string;
+      tableEmptyHint: string;
       stepperRiseMax: string;
+      stepperRiseMin: string;
+      stepperNMax: string;
+      stepperNMin: string;
+      stepperTaxMax: string;
+      stepperWeightMax: string;
+      unitN: string;
     };
   };
   suppPlan: {
@@ -502,7 +539,12 @@ export const messages: Record<Locale, Messages> = {
       exchangeRateTooltip: "1 USD = {rate} KRW ({date} 갱신)",
       exchangeRateTooltipManual: "1 USD = {rate} KRW (수동 설정)",
       rateLabel: "1 USD =",
-      tabs: { costBasis: "평단가", dividend: "배당", dcaDown: "분할매수" },
+      tabs: {
+        costBasis: "평단가",
+        dividend: "배당",
+        dcaDown: "분할매수",
+        splitSell: "분할매도",
+      },
       costBasis: {
         inputTitle: "매수 기록",
         priceHeader: "매수가",
@@ -655,38 +697,73 @@ export const messages: Record<Locale, Messages> = {
         invalidInputHint:
           "분할매수 시뮬레이션을 위해 모든 입력값(총 예산, 현재가, 매수 횟수, 하락율)이 0보다 큰 값이어야 합니다.",
         tableEmptyHint: "결과 없음",
-        sellToggleLabel: "분할 매도 시뮬레이션",
-        sellToggleTooltip:
-          "분할 매수로 모은 보유 포지션을 여러 회차로 나눠 매도하는 가상 시나리오. 매수 1회차는 현재가(0% 하락)에서 시작하지만, 매도 1회차는 평단가 기준 +상승율%에서 시작합니다.",
-        sellSectionHint:
-          "가중치 설정은 매수·매도 양쪽 회차 배분에 함께 적용됩니다. 매도 1회차 가격 = 평단가 × (1 + 상승율%).",
-        sellRoundsLabel: "매도 횟수",
-        sellRoundsPlaceholder: "2-50",
+      },
+      splitSell: {
+        inputTitle: "분할 매도 계획",
+        tickerHeader: "종목",
+        tickerPlaceholder: "AAPL",
+        holdingsHeader: "보유 주식수",
+        holdingsPlaceholder: "총 보유 수량",
+        startPriceHeader: "현재가",
+        startPricePlaceholder: "첫 매도가",
+        nLabel: "매도 횟수",
+        nPlaceholder: "2-50",
         riseIntervalLabel: "상승율 (%)",
         riseIntervalPlaceholder: "5",
+        avgCostLabel: "평단가",
+        avgCostPlaceholder: "산 가격",
+        taxRateLabel: "세율 (%)",
+        taxTypeShortTerm: "단기",
+        taxTypeLongTerm: "장기",
+        taxTooltipShortTerm:
+          "1년 미만 보유. 일반 소득세 24% 적용 (단일 신고 $103k~$197k 소득 기준, 2025)",
+        taxTooltipLongTerm:
+          "1년 이상 보유. 장기 자본이득세 15% 적용 (단일 신고 $48k~$533k 소득 기준, 2025)",
+        weightToggle: "가중치 적용",
+        weightTooltip:
+          "각 회차별 매도 비중을 '분배 균형(0-100)'으로 조절. 값이 작을수록 후반(고가)에 많이 매도 (Martingale 방향). 큰 값일수록 균등 가까움.",
+        weightHint:
+          "가중치 OFF: Martingale (2배 배수, 고가일수록 더 매도). 가중치 ON: 분배 균형 직접 입력",
+        firstWeightLabel: "분배 균형 (0-100)",
+        firstWeightPlaceholder: "50",
+        weightEqualBenchmark: "(50 = 균등값)",
+        forceFirstShareLabel: "시작가 매도 보장",
+        forceFirstShareTooltip:
+          "1회차부터 1주 이상 매도 강제. 보유 수량 안전 가드 유지.",
+        summaryTitle: "최종 결과 요약",
+        totalProceedsLabel: "총 매도금",
+        totalSharesLabel: "총 매도 주식수",
         avgSellPriceLabel: "평균 매도가",
         realizedProfitLabel: "실현 손익",
+        taxAmountLabel: "예상 세금",
         afterTaxRealizedLabel: "세후 실현 손익",
-        sellTableTitle: "회차별 매도",
-        colSellRound: "매도 회차",
-        colSellPrice: "매도가",
+        tableTitle: "회차별 매도",
+        colRound: "매도 회차",
+        colPrice: "매도가",
         colRisePct: "상승율 (%)",
-        colSellShares: "매도 주식수",
-        colCumSoldShares: "누적 매도",
+        colShares: "매도 주식수",
+        colCumShares: "누적 매도",
         colSellAmount: "매도금",
         colCumSellAmount: "누적 매도금",
         colRealizedPnl: "실현 손익",
-        legendSellCompleted: "매도 완료",
-        legendSellNext: "다음 매도",
-        sellZeroShareWarningSingle:
+        legendCompleted: "매도 완료",
+        legendNextSell: "다음 매도",
+        legendReset: "리셋",
+        exportCsvLabel: "CSV로 내보내기",
+        zeroShareWarningSingle:
           "회차 {n}은 배분 주식수가 0주입니다. 매도 횟수를 줄이거나 보유 수량을 늘리세요.",
-        sellZeroShareWarningRange:
+        zeroShareWarningRange:
           "회차 {start}~{end}는 배분 주식수가 0주입니다. 매도 횟수를 줄이거나 보유 수량을 늘리세요.",
-        sellEmptyHint:
-          "매수 계획과 매도 입력값(매도 횟수, 상승율)을 입력하면 결과가 나타납니다.",
-        stepperSellRoundsMax: "매도 횟수는 최대 50회입니다",
-        stepperSellRoundsMin: "최소 2회 매도 필요",
+        invalidInputHint:
+          "분할매도 시뮬레이션을 위해 모든 입력값(보유 주식수, 현재가, 매도 횟수, 상승율)이 0보다 큰 값이어야 합니다.",
+        tableEmptyHint: "결과 없음",
         stepperRiseMax: "상승율은 최대 100%입니다",
+        stepperRiseMin: "상승율은 0% 이상이어야 합니다",
+        stepperNMax: "매도 횟수는 최대 50회입니다",
+        stepperNMin: "최소 2회 매도 필요",
+        stepperTaxMax: "세율은 최대 50%입니다",
+        stepperWeightMax: "분배 균형은 최대 100입니다",
+        unitN: "회",
       },
     },
     suppPlan: {
@@ -981,6 +1058,7 @@ export const messages: Record<Locale, Messages> = {
         costBasis: "Cost Basis",
         dividend: "Dividends",
         dcaDown: "Averaging Down",
+        splitSell: "Split Sell",
       },
       costBasis: {
         inputTitle: "Purchases",
@@ -1132,38 +1210,73 @@ export const messages: Record<Locale, Messages> = {
         invalidInputHint:
           "All inputs (Total Budget, Current Price, Rounds, Drop %) must be greater than 0 for DCA simulation.",
         tableEmptyHint: "No data",
-        sellToggleLabel: "Split-Sell Simulation",
-        sellToggleTooltip:
-          "A virtual scenario for selling the accumulated position across multiple rounds. Buy round 1 starts at the current price (0% drop), but sell round 1 starts at +Rise% above the average cost.",
-        sellSectionHint:
-          "The weighting setting applies to both buy and sell round distribution. Sell round 1 price = Avg Cost × (1 + Rise%).",
-        sellRoundsLabel: "Sell Rounds",
-        sellRoundsPlaceholder: "2-50",
+      },
+      splitSell: {
+        inputTitle: "Sell Plan",
+        tickerHeader: "Ticker",
+        tickerPlaceholder: "AAPL",
+        holdingsHeader: "Shares Held",
+        holdingsPlaceholder: "Total held",
+        startPriceHeader: "Current Price",
+        startPricePlaceholder: "First sell",
+        nLabel: "Sell Rounds",
+        nPlaceholder: "2-50",
         riseIntervalLabel: "Rise %",
         riseIntervalPlaceholder: "5",
+        avgCostLabel: "Avg Cost",
+        avgCostPlaceholder: "Cost basis",
+        taxRateLabel: "Tax Rate (%)",
+        taxTypeShortTerm: "Short-term",
+        taxTypeLongTerm: "Long-term",
+        taxTooltipShortTerm:
+          "Held < 1 year. Ordinary income tax 24% (single filer $103k~$197k bracket, 2025)",
+        taxTooltipLongTerm:
+          "Held > 1 year. Long-term capital gains 15% (single filer $48k~$533k bracket, 2025)",
+        weightToggle: "Apply Weighting",
+        weightTooltip:
+          "Control each round's sell size via 'Weight Balance (0-100)'. Smaller = more back-loaded at higher prices (Martingale). Larger = closer to equal.",
+        weightHint:
+          "OFF: Martingale (2x doubling, sells more at higher prices). ON: Set weight balance",
+        firstWeightLabel: "Weight Balance (0-100)",
+        firstWeightPlaceholder: "50",
+        weightEqualBenchmark: "(50 = Equal)",
+        forceFirstShareLabel: "Sell at Current Price",
+        forceFirstShareTooltip:
+          "Force minimum 1 share from round 1 (held-count cap protected)",
+        summaryTitle: "Summary",
+        totalProceedsLabel: "Total Proceeds",
+        totalSharesLabel: "Total Shares Sold",
         avgSellPriceLabel: "Avg Sell Price",
         realizedProfitLabel: "Realized P&L",
+        taxAmountLabel: "Tax",
         afterTaxRealizedLabel: "After-Tax Realized P&L",
-        sellTableTitle: "Round-by-Round Sells",
-        colSellRound: "Sell Round",
-        colSellPrice: "Sell Price",
+        tableTitle: "Round-by-Round Sells",
+        colRound: "Sell Round",
+        colPrice: "Sell Price",
         colRisePct: "Rise %",
-        colSellShares: "Shares Sold",
-        colCumSoldShares: "Cum Sold",
+        colShares: "Shares Sold",
+        colCumShares: "Cum Sold",
         colSellAmount: "Sell Amount",
         colCumSellAmount: "Cum Sell Amount",
         colRealizedPnl: "Realized P&L",
-        legendSellCompleted: "Sold",
-        legendSellNext: "Next Sell",
-        sellZeroShareWarningSingle:
+        legendCompleted: "Sold",
+        legendNextSell: "Next Sell",
+        legendReset: "Reset",
+        exportCsvLabel: "Export CSV",
+        zeroShareWarningSingle:
           "Round {n} is allocated 0 shares. Reduce sell rounds or increase holdings.",
-        sellZeroShareWarningRange:
+        zeroShareWarningRange:
           "Rounds {start}-{end} are allocated 0 shares. Reduce sell rounds or increase holdings.",
-        sellEmptyHint:
-          "Enter the buy plan and sell inputs (sell rounds, rise %) to see results.",
-        stepperSellRoundsMax: "Max sell rounds is 50",
-        stepperSellRoundsMin: "Minimum 2 sell rounds",
+        invalidInputHint:
+          "All inputs (Shares Held, Current Price, Sell Rounds, Rise %) must be greater than 0 for split-sell simulation.",
+        tableEmptyHint: "No data",
         stepperRiseMax: "Rise max is 100%",
+        stepperRiseMin: "Rise must be 0% or higher",
+        stepperNMax: "Max sell rounds is 50",
+        stepperNMin: "Minimum 2 sell rounds",
+        stepperTaxMax: "Tax rate max is 50%",
+        stepperWeightMax: "Weight balance max is 100",
+        unitN: "rounds",
       },
     },
     suppPlan: {
