@@ -618,27 +618,42 @@ export function SplitSellCalculator() {
             <InfoTooltip text={t.sellBasisTooltip} />
           </div>
         </div>
-        <Field
-          label={t.startPriceHeader}
-          htmlFor="ss-start"
-          disabled={sellBasis === "avgCost"}
-        >
+        {sellBasis === "currentPrice" && (
+          <Field label={t.startPriceHeader} htmlFor="ss-start">
+            <NumberStepper
+              id="ss-start"
+              value={startPrice}
+              onInputChange={setStartPrice}
+              onStep={handleStartPriceStep}
+              displayFormatter={formatStartPriceDisplay}
+              min={0}
+              smallStep={priceSteps.small}
+              bigStep={priceSteps.big}
+              inputMode="decimal"
+              placeholder={t.startPricePlaceholder}
+              aria-label={t.startPriceHeader}
+            />
+          </Field>
+        )}
+        <Field label={t.avgCostLabel} htmlFor="ss-avg-cost">
           <NumberStepper
-            id="ss-start"
-            value={startPrice}
-            onInputChange={setStartPrice}
-            onStep={handleStartPriceStep}
-            displayFormatter={formatStartPriceDisplay}
+            id="ss-avg-cost"
+            value={avgCost}
+            onInputChange={setAvgCost}
+            onStep={handleAvgCostStep}
+            displayFormatter={formatAvgCostDisplay}
             min={0}
             smallStep={priceSteps.small}
             bigStep={priceSteps.big}
             inputMode="decimal"
-            placeholder={t.startPricePlaceholder}
-            aria-label={t.startPriceHeader}
-            disabled={sellBasis === "avgCost"}
+            placeholder={t.avgCostPlaceholder}
+            aria-label={t.avgCostLabel}
           />
+          {sellBasis === "currentPrice" && (
+            <p className="text-xs text-muted-foreground">{t.avgCostHint}</p>
+          )}
         </Field>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label={t.nLabel} htmlFor="ss-rounds">
             <NumberStepper
               id="ss-rounds"
@@ -674,21 +689,6 @@ export function SplitSellCalculator() {
               aria-label={t.riseIntervalLabel}
               maxReachedMessage={t.stepperRiseMax}
               minReachedMessage={t.stepperRiseMin}
-            />
-          </Field>
-          <Field label={t.avgCostLabel} htmlFor="ss-avg-cost">
-            <NumberStepper
-              id="ss-avg-cost"
-              value={avgCost}
-              onInputChange={setAvgCost}
-              onStep={handleAvgCostStep}
-              displayFormatter={formatAvgCostDisplay}
-              min={0}
-              smallStep={priceSteps.small}
-              bigStep={priceSteps.big}
-              inputMode="decimal"
-              placeholder={t.avgCostPlaceholder}
-              aria-label={t.avgCostLabel}
             />
           </Field>
         </div>
@@ -911,15 +911,13 @@ function Field({
   label,
   htmlFor,
   children,
-  disabled,
 }: {
   label: string;
   htmlFor: string;
   children: ReactNode;
-  disabled?: boolean;
 }) {
   return (
-    <div className={cn("space-y-1.5", disabled && "opacity-60")}>
+    <div className="space-y-1.5">
       <Label htmlFor={htmlFor} className="text-sm">
         {label}
       </Label>

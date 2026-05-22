@@ -236,6 +236,7 @@ export type Messages = {
       riseIntervalPlaceholder: string;
       avgCostLabel: string;
       avgCostPlaceholder: string;
+      avgCostHint: string;
       taxRateLabel: string;
       taxTypeShortTerm: string;
       taxTypeLongTerm: string;
@@ -712,6 +713,7 @@ export const messages: Record<Locale, Messages> = {
         riseIntervalPlaceholder: "5",
         avgCostLabel: "평단가",
         avgCostPlaceholder: "산 가격",
+        avgCostHint: "실현손익 계산에 사용됩니다",
         taxRateLabel: "세율 (%)",
         taxTypeShortTerm: "단기",
         taxTypeLongTerm: "장기",
@@ -1225,6 +1227,7 @@ export const messages: Record<Locale, Messages> = {
         riseIntervalPlaceholder: "5",
         avgCostLabel: "Avg Cost",
         avgCostPlaceholder: "Cost basis",
+        avgCostHint: "Used to compute realized P&L",
         taxRateLabel: "Tax Rate (%)",
         taxTypeShortTerm: "Short-term",
         taxTypeLongTerm: "Long-term",
