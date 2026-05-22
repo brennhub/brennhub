@@ -459,6 +459,25 @@ export type Messages = {
   maze: {
     title: string;
     description: string;
+    step1: string;
+    step2: string;
+    settingsIntro: string;
+    sizeLabel: string;
+    fogLabel: string;
+    fogDescription: string;
+    fogRadiusLabel: string;
+    fogRadiusMax: string;
+    fogRadiusMin: string;
+    startButton: string;
+    drawIntro: string;
+    toolWall: string;
+    toolEraser: string;
+    toolStart: string;
+    toolGoal: string;
+    resetTitle: string;
+    resetMessage: string;
+    resetConfirm: string;
+    resetCancel: string;
   };
   feedback: {
     button: string;
@@ -984,6 +1003,28 @@ export const messages: Record<Locale, Messages> = {
     maze: {
       title: "픽셀 미로 만들기",
       description: "픽셀 격자로 나만의 미로를 설계하고 링크로 공유하세요.",
+      step1: "설정",
+      step2: "그리기",
+      settingsIntro:
+        "맵 크기와 시야 옵션을 정하세요. 그리기를 시작하면 크기는 바꿀 수 없습니다.",
+      sizeLabel: "맵 크기",
+      fogLabel: "시야 제한",
+      fogDescription:
+        "플레이할 때 시작점 주변만 보이도록 시야를 제한합니다.",
+      fogRadiusLabel: "시야 반경 (칸)",
+      fogRadiusMax: "최대 시야 반경입니다",
+      fogRadiusMin: "최소 시야 반경입니다",
+      startButton: "그리기 시작",
+      drawIntro: "도구를 고르고 격자를 클릭·드래그해 미로를 그리세요.",
+      toolWall: "벽",
+      toolEraser: "지우개",
+      toolStart: "시작점",
+      toolGoal: "도착점",
+      resetTitle: "맵 초기화",
+      resetMessage:
+        "설정으로 돌아가면 지금까지 그린 맵이 모두 초기화됩니다. 계속할까요?",
+      resetConfirm: "초기화하고 돌아가기",
+      resetCancel: "취소",
     },
     feedback: {
       button: "피드백",
@@ -1545,6 +1586,28 @@ export const messages: Record<Locale, Messages> = {
     maze: {
       title: "Pixel Maze Maker",
       description: "Design your own maze on a pixel grid and share it via link.",
+      step1: "Settings",
+      step2: "Draw",
+      settingsIntro:
+        "Choose the map size and visibility options. Size is locked once you start drawing.",
+      sizeLabel: "Map size",
+      fogLabel: "Fog of War",
+      fogDescription:
+        "Limits visibility to a radius around the start when playing.",
+      fogRadiusLabel: "Vision radius (tiles)",
+      fogRadiusMax: "Maximum vision radius",
+      fogRadiusMin: "Minimum vision radius",
+      startButton: "Start drawing",
+      drawIntro: "Pick a tool, then click or drag on the grid to draw your maze.",
+      toolWall: "Wall",
+      toolEraser: "Eraser",
+      toolStart: "Start",
+      toolGoal: "Goal",
+      resetTitle: "Reset map",
+      resetMessage:
+        "Going back to settings will reset everything you've drawn. Continue?",
+      resetConfirm: "Reset and go back",
+      resetCancel: "Cancel",
     },
     feedback: {
       button: "Feedback",

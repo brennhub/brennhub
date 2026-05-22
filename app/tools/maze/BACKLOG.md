@@ -2,44 +2,62 @@
 
 Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
+단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3** 검증·플레이·Fog 렌더 · **P4** 숏링크 공유.
+
 ## P1 — 스캐폴딩 (인프라/골격) — 완료 (CHANGELOG `[0.1.0]`)
 
-- [x] `tools-registry.ts`에 `maze` entry (status `"coming-soon"`) — 페이지 미생성, `[slug]` fallback 자동 처리
-- [x] i18n — `maze` namespace 골격(ko/en `title`/`description`) + `feedback.toolMaze` + `tools` 객체 `maze.{name,description}`
+- [x] `tools-registry.ts`에 `maze` entry (status `"coming-soon"`)
+- [x] i18n — `maze` namespace 골격 + `feedback.toolMaze` + `tools` 객체
 - [x] 도구 폴더 문서 3종 (`README`/`BACKLOG`/`CHANGELOG`)
-- [x] 루트 `TOOLS.md` 인덱스에 maze 등재 (준비 중 표기)
-- [x] D1 마이그레이션 SQL — `migrations/001_maze.sql` (`maze` 테이블: `short_id`/`payload`/`created_at`)
-- [x] feedback 사전 통합 — `feedback-button.tsx` pathname 매핑 / `feedback-dialog.tsx` `FeedbackTool` + toolOptions / `api/feedback/route.ts` TOOLS enum / admin `TOOL_LABEL`
-- [x] `npm run build` 통과 + `/tools/maze`가 `[slug]` fallback으로 처리됨 확인
+- [x] 루트 `TOOLS.md` 인덱스에 maze 등재
+- [x] D1 마이그레이션 SQL — `migrations/001_maze.sql`
+- [x] feedback 사전 통합 (button/dialog/api/admin)
 
-## P2 — V1 MVP (status "coming-soon" → "live")
+## P2 — 그리드 에디터 — 완료 (CHANGELOG `[0.2.0]`)
 
-### 인프라
+### 타입 / 코어
 
-- [ ] D1 데이터베이스 생성 (`brennhub-maze` / `brennhub-maze-dev`) + `wrangler.jsonc` top-level·`env.preview` 양쪽에 `MAZE_DB` binding 배선 + `001_maze.sql` 적용
-- [ ] `app/tools/maze/page.tsx` (Server Component) + `client-shell.tsx` (`"use client"`)
-- [ ] `tools-registry.ts` status `"coming-soon"` → `"live"` 전환 (page.tsx 생성과 같은 commit — route collision 방지)
-- [ ] 공유 API `app/api/maze/route.ts` — 저장(POST)/조회(GET). **`export const runtime = "edge"` 금지** (BRENNHUB.md §7)
+- [x] `lib/maze/types.ts` — `TileType`(정수 유니온) / `TILE` 명명 상수 / `MazeSize` / `MazeTheme` / `MazeProject` / `SIZES` / `FOG_RADIUS` (README canonical 상속)
+- [x] `lib/maze/grid.ts` — 격자 헬퍼 `emptyGrid` / `cloneGrid` / `isValidGrid` / `findStart` / `newMazeId` / `newProject`
+- [x] `lib/maze/storage.ts` — localStorage hydrate + persist + schemaVersion 마이그레이션 (language-maker `migrate()` 패턴)
 
-### 데이터 / 상태
+### 페이지 / UI
 
-- [ ] `lib/maze/types.ts` — `TileType`(정수 유니온) / `MazeProject` / `TILE` 상수 (README canonical 정의 상속)
-- [ ] `lib/maze/storage.ts` — localStorage hydrate + persist + schemaVersion 마이그레이션 (supp-plan `migrate()` 패턴)
-- [ ] `lib/maze/share.ts` — `short_id`(6자) 생성 · `MazeProject` payload 직렬화/역직렬화
+- [x] `app/tools/maze/page.tsx` (Server shell) + `client-shell.tsx` (`"use client"`)
+- [x] `components/maze/step-nav.tsx` — 2스텝(설정 → 그리기), 언어 창조기 StepNav 구조 재사용
+- [x] `components/maze/settings-panel.tsx` — Step1: 사이즈 16/32/64 + Fog 토글(`Switch`) + 시야 반경(`NumberStepper`)
+- [x] `components/maze/tool-palette.tsx` — Step2: 벽 / 지우개 / 시작점 / 도착점 (Lucide `Square`/`Eraser`/`Smile`/`Flag`)
+- [x] `components/maze/maze-grid.tsx` — Step2: `<canvas>` 격자 에디터, pixel-editor 포인터 드로잉 패턴 재사용
+- [x] `components/maze/reset-confirm-dialog.tsx` — Step2→Step1 "맵 초기화" 확인 모달
+- [x] 시작점 1개(이동) / 도착점 멀티 배치 규칙
+- [x] 사이즈 잠금 — Step2에서 변경 불가, Step1 복귀 시 확인 후 전면 리셋 (Padding/Crop 없음)
+- [x] 다크/라이트 대응 — `useTheme()` 구독 (canvas 색)
 
-### UI 컴포넌트
+### 통합
 
-- [ ] `components/maze/maze-grid.tsx` — `<canvas>` 픽셀 격자 에디터 (클릭/드래그로 타일 찍기)
-- [ ] `components/maze/tile-palette.tsx` — 타일 선택 팔레트 (길/벽/시작점/도착점)
-- [ ] `components/maze/size-selector.tsx` — 16/32/64 정사각 선택
-- [ ] Fog of War 플레이 모드 — `fogOfWar`/`fogRadius` 기반 시야 제한 렌더
-- [ ] 숏링크 공유 UI — 저장 → `/tools/maze?m=<short_id>` 발급/복사
-- [ ] 다크/라이트 모드 대응
+- [x] i18n — `maze` namespace를 에디터 문자열로 확장 (ko/en)
+- [x] route collision 회피 — registry `Tool.hasPage` 플래그 + `[slug]` `generateStaticParams` 필터 (status는 `coming-soon` 유지)
 
 ### 검증
 
-- [ ] `npm run build` — `/tools/maze`가 별도 정적 row로 emit (route collision 없음)
-- [ ] feat→dev→main 머지·push 후 다크/라이트·모바일 시각 검증
+- [x] `npm run build` 통과 — `/tools/maze`가 전용 정적 route로 emit, `[slug]`와 collision 없음
+- [ ] dev 검증 — 2-step 흐름 / 사이즈별(16·32·64) 드로잉 / 다크·라이트 / 모바일 터치 (dev 배포 후 사용자 시각 검증)
+
+## P3 — 검증 · 플레이 · Fog 렌더
+
+- [ ] 미로 검증 — 외곽 폐쇄 확인 + 시작→도착 도달 가능(BFS) 판정
+- [ ] 플레이 모드 — 시작점에서 이동, 도착점 도달 판정
+- [ ] Fog of War 렌더 — `fogOfWar`/`fogRadius` 기반 시야 제한 표시
+- [ ] 검증 실패 시 그리기 단계 inline 경고 (validity guard 패턴)
+
+## P4 — 숏링크 공유 (D1 · API) + live 전환
+
+- [ ] D1 데이터베이스 생성 (`brennhub-maze` / `brennhub-maze-dev`) + `wrangler.jsonc` top-level·`env.preview` 양쪽 `MAZE_DB` binding 배선 + `001_maze.sql` 적용
+- [ ] `lib/maze/share.ts` — `short_id`(6자) 생성 · `MazeProject` payload 직렬화/역직렬화
+- [ ] 공유 API `app/api/maze/route.ts` — 저장(POST)/조회(GET). **`export const runtime = "edge"` 금지** (BRENNHUB.md §7)
+- [ ] `page.tsx` — `?m=<short_id>` searchParams 서버 fetch → 공유된 미로 로드
+- [ ] 숏링크 발급/복사 UI
+- [ ] `tools-registry.ts` status `"coming-soon"` → `"live"` 전환 + `hasPage` 정리
 
 ## V2 후보 (효능감 검증 후 별도 task)
 
@@ -51,13 +69,17 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 ## 도메인 결정 (확정)
 
 - 타일 저장 = **정수** (`0~3`, V2 `4~6`). 문자열 유니온은 64×64 payload ~4배 → 숏링크 경량화와 충돌. 매핑 레이어 없이 저장값이 곧 정수, 가독성은 `TILE` 명명 상수.
-- 격자 크기 = **16 / 32 / 64 정사각 3종 고정** (기획서 사양, `width`/`height` 분리 없음).
-- **Fog of War는 MVP 기능** — `fogOfWar`/`fogRadius`를 P1 canonical `MazeProject`에 포함 (P2 schema 마이그레이션 회피).
+- 격자 크기 = **16 / 32 / 64 정사각 3종 고정** (`width`/`height` 분리 없음). 기본값 32.
+- **사이즈 잠금** — Step1에서 사이즈 확정, Step2 그리기 중 변경 불가. Step1 복귀 시 "맵 초기화" 확인 → 전면 리셋. Padding/Crop 로직 없음 (V1 복잡도 차단).
+- **Fog of War는 MVP 기능** — `fogOfWar`/`fogRadius`를 P1 canonical `MazeProject`에 포함. `fogRadius` = Min 1 / Max 6 / default 3 (정수·칸, 세 사이즈 공통).
 - `theme` = `"default"` | `"sprite-dungeon"`. V1은 `"default"`만 사용.
-- 공유 = D1 `maze` 테이블, `short_id` 6자. binding `MAZE_DB` (P2에서 배선).
+- 도구 = 벽 / 지우개 / 시작점 / 도착점. 시작점 1개(이동), 도착점 멀티.
+- UX = 2-step (설정 → 그리기). 언어 창조기 step-by-step 패턴 재사용.
+- route collision — 전용 `page.tsx`가 있어도 `coming-soon` 유지하려면 registry `hasPage` 플래그로 `[slug]` emit에서 제외. live 전환은 P4.
+- 공유 = D1 `maze` 테이블, `short_id` 6자. binding `MAZE_DB` (P4에서 배선).
 
 ## 출처
 
 - 외부 기획서 (Brenn 수령, 2026-05-22) + brennhub 외부 기획서 필터 7개 적용 결과.
 - 필터 적용 결과: 가격/결제 UI · 광고 슬롯 · 별도 백엔드 모두 미해당 (Workers + D1 완결).
-- P1 스코프는 의도적 축소 — 실제 에디터 로직은 P2.
+- 단계 분할 — P2 에디터 / P3 검증·플레이·fog / P4 공유. 의도적 점진 출시.

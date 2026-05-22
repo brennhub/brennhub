@@ -2,6 +2,35 @@
 
 주요 결정 / 이정표.
 
+## [0.2.0] — 2026-05-22
+
+### Added (P2 — 2-step 그리드 에디터)
+
+- **코어 로직** — `lib/maze/`: `types.ts`(`TileType` 정수 유니온 · `TILE` 명명 상수 · `MazeProject` · `SIZES` · `FOG_RADIUS`) + `grid.ts`(`emptyGrid`/`cloneGrid`/`isValidGrid`/`findStart`/`newMazeId`/`newProject`) + `storage.ts`(localStorage hydrate/persist/schemaVersion 마이그레이션).
+- **페이지** — `app/tools/maze/{page,client-shell}.tsx` — Server shell + client 오케스트레이션. 단일 `MazeProject` state + 스텝/도구/다이얼로그 UI state.
+- **UI 컴포넌트** — `components/maze/`: `step-nav`(2스텝 네비) · `settings-panel`(Step1 크기·fog) · `tool-palette`(Step2 도구 4종) · `maze-grid`(canvas 격자 에디터) · `reset-confirm-dialog`(맵 초기화 확인 모달).
+- **Step1 설정** — 맵 크기 16/32/64 정사각 선택 + Fog of War 토글(공유 `Switch`) + 시야 반경 1~6 입력(공유 `NumberStepper`, `showBigStep={false}`).
+- **Step2 그리기** — 벽 / 지우개 / 시작점 / 도착점 도구로 격자를 클릭·드래그 페인트. 시작점 1개(이동), 도착점 멀티 배치.
+- **i18n** — `maze` namespace를 에디터 문자열 전체로 확장 (ko/en).
+
+### Changed
+
+- **데이터 구조 확정** — `MazeProject`에 `id`(P4 숏링크용) 추가, 격자 필드명 `tiles` → `grid`, 크기 필드 `width`/`height` → 단일 `size: 16|32|64`. README canonical 갱신.
+- **BACKLOG 단계 재분할** — 기존 "P2 V1 MVP" 단일 묶음을 P2(에디터) / P3(검증·플레이·fog) / P4(공유)로 분리.
+
+### Decided
+
+- **step-by-step UX = 언어 창조기 패턴 재사용** — `page` → `client-shell`(오케스트레이션) → `StepNav` 구조와 pixel-editor 포인터 드로잉(`drawingRef`/`cellFromEvent`/`setPointerCapture`/`touchAction:"none"`)을 코드에서 확인 후 1:1 미러링. 추측 패턴 없음.
+- **사이즈 잠금** — Step1에서 사이즈 확정. Step2→Step1 복귀 시 확인 다이얼로그 → 맵 전면 리셋. Padding/Crop 로직 없음 (V1 복잡도 차단).
+- **route collision 회피** — 전용 `page.tsx`가 있어도 status `"coming-soon"`을 유지하기 위해 registry `Tool`에 `hasPage` 플래그 추가 + `[slug]` `generateStaticParams`가 `hasPage` 슬러그를 제외. live 전환은 P4.
+- **localStorage 영속 포함** — 에디터 작업본을 새로고침에도 유지 (language-maker hydrate/persist 패턴). `MazeProject.schemaVersion` 활용.
+
+### Notes
+
+- 빌드: `/tools/maze`가 전용 정적 route로 prerender — `[slug]` fallback에서 제외되어 route collision 없음.
+- 검증(외곽 폐쇄·BFS) · 플레이 모드 · Fog 렌더는 P3, 숏링크 공유(D1·API)는 P4. 본 단계 미포함.
+- API route 미생성 — `runtime = "edge"` 이슈 무관.
+
 ## [0.1.0] — 2026-05-22
 
 ### Added (P1 — 스캐폴딩: 인프라/골격 등록)
