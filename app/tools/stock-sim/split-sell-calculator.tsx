@@ -77,6 +77,7 @@ type Round = {
   sellAmount: number;
   cumulativeSellAmount: number;
   realizedPnl: number;
+  cumulativeRealizedPnl: number;
 };
 
 function parseNum(s: string): number {
@@ -286,8 +287,6 @@ export function SplitSellCalculator() {
     if (usd === 0) return raw;
     return fmtCurrency(usd);
   };
-  const formatHoldingsDisplay = (raw: string): string =>
-    raw ? fmtInt.format(parseNum(raw)) : "";
   const formatNWithUnit = (raw: string): string =>
     raw ? `${raw} ${t.unitN}` : "";
   const formatPercent = (raw: string): string => (raw ? `${raw} %` : "");
@@ -323,6 +322,7 @@ export function SplitSellCalculator() {
       return {
         valid: false,
         rounds: [] as Round[],
+        totalInvest: 0,
         totalProceeds: 0,
         totalShares: 0,
         avgSellPrice: 0,
@@ -343,6 +343,7 @@ export function SplitSellCalculator() {
     const roundsArr: Round[] = [];
     let cumulativeShares = 0;
     let cumulativeSellAmount = 0;
+    let cumulativeRealizedPnl = 0;
     for (let n = 0; n < nNum; n++) {
       // Round m (1-indexed): price rises by riseNum% per round from m=1.
       const m = n + 1;
@@ -352,6 +353,7 @@ export function SplitSellCalculator() {
       cumulativeShares += shares;
       cumulativeSellAmount += sellAmount;
       const realizedPnl = shares * (price - avgCostUSD);
+      cumulativeRealizedPnl += realizedPnl;
       roundsArr.push({
         n: m,
         price,
@@ -361,20 +363,23 @@ export function SplitSellCalculator() {
         sellAmount,
         cumulativeSellAmount,
         realizedPnl,
+        cumulativeRealizedPnl,
       });
     }
 
     const last = roundsArr[roundsArr.length - 1];
     const totalProceeds = last?.cumulativeSellAmount ?? 0;
     const totalShares = last?.cumulativeShares ?? 0;
+    const totalInvest = holdingsNum * avgCostUSD;
     const avgSellPrice = totalShares > 0 ? totalProceeds / totalShares : 0;
-    const realizedProfit = roundsArr.reduce((s, r) => s + r.realizedPnl, 0);
+    const realizedProfit = last?.cumulativeRealizedPnl ?? 0;
     const taxAmount = realizedProfit * (taxRateNum / 100);
     const afterTaxProfit = realizedProfit - taxAmount;
 
     return {
       valid: true,
       rounds: roundsArr,
+      totalInvest,
       totalProceeds,
       totalShares,
       avgSellPrice,
@@ -531,6 +536,7 @@ export function SplitSellCalculator() {
       t.colSellAmount,
       t.colCumSellAmount,
       t.colRealizedPnl,
+      t.colCumRealizedPnl,
     ].join(",");
     const fmtNum = (usdValue: number): string => {
       const display = currency === "usd" ? usdValue : usdValue * rate;
@@ -546,6 +552,7 @@ export function SplitSellCalculator() {
         fmtNum(r.sellAmount),
         fmtNum(r.cumulativeSellAmount),
         fmtNum(r.realizedPnl),
+        fmtNum(r.cumulativeRealizedPnl),
       ].join(","),
     );
     const csv = "﻿" + [header, ...lines].join("\n");
@@ -587,7 +594,6 @@ export function SplitSellCalculator() {
             value={holdings}
             onInputChange={handleHoldingsChange}
             onStep={handleHoldingsStep}
-            displayFormatter={formatHoldingsDisplay}
             min={0}
             smallStep={1}
             bigStep={100}
@@ -811,6 +817,10 @@ export function SplitSellCalculator() {
       <CardContent>
         <dl className="space-y-3">
           <SummaryRow
+            label={t.totalInvestLabel}
+            value={computed.valid ? fmtCurrency(computed.totalInvest) : "—"}
+          />
+          <SummaryRow
             label={t.totalProceedsLabel}
             value={computed.valid ? fmtCurrency(computed.totalProceeds) : "—"}
           />
@@ -901,6 +911,7 @@ export function SplitSellCalculator() {
         colSellAmount={t.colSellAmount}
         colCumSellAmount={t.colCumSellAmount}
         colRealizedPnl={t.colRealizedPnl}
+        colCumRealizedPnl={t.colCumRealizedPnl}
         emptyHint={t.tableEmptyHint}
       />
     </div>
