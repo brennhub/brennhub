@@ -1,25 +1,27 @@
 "use client";
 
-import { Eraser, Flag, Smile, Square, type LucideIcon } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMessages } from "@/lib/i18n/provider";
+import { MAZE_TOOL_ICONS } from "@/lib/maze/icons";
 
-/** Step2 그리기 도구. */
-export type Tool = "wall" | "eraser" | "start" | "goal";
+/**
+ * Step2 그리기 도구 — 0.6.1에서 "eraser" 제거 (벽 재클릭 토글이 대체).
+ * 시작·도착 아이콘은 `MAZE_TOOL_ICONS` 단일 출처로 렌더러와 정합.
+ */
+export type Tool = "wall" | "start" | "goal";
 
 type Props = {
   activeTool: Tool;
   onToolChange: (tool: Tool) => void;
 };
 
-/** Step2 도구 팔레트 — 벽 / 지우개 / 시작점 / 도착점. */
 export function ToolPalette({ activeTool, onToolChange }: Props) {
   const t = useMessages().maze;
   const tools: { value: Tool; label: string; Icon: LucideIcon }[] = [
-    { value: "wall", label: t.toolWall, Icon: Square },
-    { value: "eraser", label: t.toolEraser, Icon: Eraser },
-    { value: "start", label: t.toolStart, Icon: Smile },
-    { value: "goal", label: t.toolGoal, Icon: Flag },
+    { value: "wall", label: t.toolWall, Icon: MAZE_TOOL_ICONS.WALL },
+    { value: "start", label: t.toolStart, Icon: MAZE_TOOL_ICONS.START },
+    { value: "goal", label: t.toolGoal, Icon: MAZE_TOOL_ICONS.GOAL },
   ];
   return (
     <div role="group" aria-label="tools" className="flex flex-wrap gap-1.5">

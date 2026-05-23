@@ -474,7 +474,6 @@ export type Messages = {
     startButton: string;
     drawIntro: string;
     toolWall: string;
-    toolEraser: string;
     toolStart: string;
     toolGoal: string;
     resetTitle: string;
@@ -1058,7 +1057,6 @@ export const messages: Record<Locale, Messages> = {
       startButton: "그리기 시작",
       drawIntro: "도구를 고르고 격자를 클릭·드래그해 미로를 그리세요.",
       toolWall: "벽",
-      toolEraser: "지우개",
       toolStart: "시작점",
       toolGoal: "도착점",
       resetTitle: "맵 초기화",
@@ -1684,7 +1682,6 @@ export const messages: Record<Locale, Messages> = {
       startButton: "Start drawing",
       drawIntro: "Pick a tool, then click or drag on the grid to draw your maze.",
       toolWall: "Wall",
-      toolEraser: "Eraser",
       toolStart: "Start",
       toolGoal: "Goal",
       resetTitle: "Reset map",

@@ -19,7 +19,7 @@
 - **사이즈 잠금** — 그리기 시작 시 사이즈가 고정된다. Step2에서는 변경 불가.
 
 ### Step 2 — 그리기
-- 도구 4종(벽 / 지우개 / 시작점 / 도착점)을 골라 격자를 클릭·드래그로 칠한다.
+- 도구 3종(벽 / 시작점 / 도착점)을 골라 격자를 클릭·드래그로 칠한다. 0.6.1에서 지우개 제거 — 벽 재클릭 토글이 대체.
 - 시작점은 1개(새로 찍으면 이동, 드래그 가능). 도착점은 여러 개 배치 — **클릭 1회 = 깃발 1개**(드래그 금지), 기존 깃발 재클릭 시 삭제.
 - **벽 재클릭 토글** — 벽 도구로 빈 칸 클릭 → 벽, 벽 클릭 → 빈 칸. 드래그 일관성: pointerdown 시작 셀 값으로 stroke 전체 fill 결정.
 - **Undo / Redo** — `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Shift+Z` (Cmd 동일), 또는 화면 버튼. **stroke 단위 1 entry** (드래그 한 번 = undo 한 번). Step2 한정.
@@ -125,6 +125,7 @@ lib/maze/
   types.ts                                 # P2 완료 — TileType / MazeProject + 상수 (위 canonical)
   grid.ts                                  # P2 완료 + P3b isPassable 단일 헬퍼 — 격자 헬퍼 + 통과성 단일 출처
   storage.ts                               # P2 완료 — localStorage load/save/migrate
+  icons.ts                                 # 0.6.1 — 도구 팔레트 아이콘 단일 출처 (렌더러와 cross-ref)
   validate.ts                              # P3a + P3a-2 완료 — 완결성 검증 + 미로 품질 점수 (SCORE_TUNING)
   play.ts                                  # P3b 완료 — PlayState / applyMove / isWin (순수 결정론)
   render/
@@ -136,7 +137,7 @@ lib/maze/
 components/maze/
   step-nav.tsx                             # P2 완료 + P3b 3-step 확장 (Step = 1|2|3 + disabledSteps)
   settings-panel.tsx                       # P2 완료 — Step1 설정 (크기·fog)
-  tool-palette.tsx                         # P2 완료 — Step2 도구 팔레트
+  tool-palette.tsx                         # P2 + 0.6.1 — Step2 도구 팔레트 (지우개 제거 + MAZE_TOOL_ICONS 정합)
   maze-grid.tsx                            # P2 완료 + P2.1 재배선 — engine 오케스트레이션 only (fillRect 직접 호출 0)
   reset-confirm-dialog.tsx                 # P2 완료 — 맵 초기화 확인 모달
   validation-panel.tsx                     # P3a + P3a-2 — Step2 배지: 미통과 사유 / 통과 시 별점·차원 바·약점
