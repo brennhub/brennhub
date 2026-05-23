@@ -14,6 +14,7 @@ import { MazeGrid } from "@/components/maze/maze-grid";
 import { ResetConfirmDialog } from "@/components/maze/reset-confirm-dialog";
 import { ValidationPanel } from "@/components/maze/validation-panel";
 import { EditorControls } from "@/components/maze/editor-controls";
+import { PathCommitButton } from "@/components/maze/path-commit-button";
 import { PlayMode } from "@/components/maze/play-mode";
 
 /**
@@ -22,15 +23,27 @@ import { PlayMode } from "@/components/maze/play-mode";
  * 메모리 정정 (1차 계산 4KB는 오해 — JS 2D number 배열은 packed byte가 아님):
  *   64×64 ≈ 4096 원소 × ~8B + 배열 오버헤드 ≈ ~32KB/snapshot.
  *   100 deep ≈ 3~4MB. 사용자 디자인 1회분으로 무시 가능 — 100 유지.
+ *
+ * P3c-2 확장: snapshot이 `{ grid, marks }` 양쪽 — Set은 sparse라 메모리 영향 미미.
  */
 const HISTORY_DEPTH = 100;
 
+/** History 한 단계 — grid + 길 마크 layer 동시 스냅샷 (P3c-2). */
+type HistorySnapshot = {
+  grid: TileType[][];
+  marks: ReadonlySet<string>;
+};
+
 type GridHistory = {
-  past: TileType[][][];
-  future: TileType[][][];
+  past: HistorySnapshot[];
+  future: HistorySnapshot[];
 };
 
 const EMPTY_HISTORY: GridHistory = { past: [], future: [] };
+const EMPTY_MARKS: ReadonlySet<string> = new Set();
+
+/** path stroke 모드 — pointerdown 시 시작 셀 마크 여부로 결정. */
+type PathStrokeMode = "set" | "clear";
 
 export function MazeClientShell() {
   const t = useMessages();
@@ -41,12 +54,14 @@ export function MazeClientShell() {
   const [step, setStep] = useState<Step>(1);
   const [activeTool, setActiveTool] = useState<Tool>("wall");
   const [confirmOpen, setConfirmOpen] = useState(false);
-  // P3c-1: 그리드 초기화 모달 (Step2 유지, grid만 비움).
   const [resetGridOpen, setResetGridOpen] = useState(false);
-  // P3c-1: stroke 단위 undo/redo 히스토리.
   const [history, setHistory] = useState<GridHistory>(EMPTY_HISTORY);
-  // P3c-1: 벽 stroke 일관성 — pointerdown 시 시작 셀로 결정한 fill을 stroke 전체에 적용.
+  // P3c-2: 길 마크 transient 레이어 (grid 밖). "벽 생성"으로 grid에 commit되며 클리어.
+  const [pathMarks, setPathMarks] = useState<ReadonlySet<string>>(EMPTY_MARKS);
+  // P3c-1: 벽 stroke 일관성.
   const strokeFillRef = useRef<TileType | null>(null);
+  // P3c-2: path stroke 일관성 — 시작 셀 마크 여부로 stroke 전체 set/clear 결정.
+  const pathStrokeModeRef = useRef<PathStrokeMode | null>(null);
 
   // hydrate — localStorage 로드. grid가 있으면 그리기 단계로 복원.
   useEffect(() => {
@@ -56,7 +71,7 @@ export function MazeClientShell() {
     setHydrated(true);
   }, []);
 
-  // persist — hydrate 이후 변경분만 저장.
+  // persist — hydrate 이후 변경분만 저장 (pathMarks는 transient라 미저장).
   useEffect(() => {
     if (!hydrated) return;
     saveProject(project);
@@ -74,19 +89,15 @@ export function MazeClientShell() {
     setProject((p) => ({ ...p, fogRadius: radius }));
   }, []);
 
-  // Step1 → Step2 — 현재 사이즈로 빈 격자를 빌드 (사이즈 잠금 시점).
-  // 새 grid에 대한 히스토리는 비움 — 이전 stroke들이 사이즈 다른 grid 참조라 호환 X.
+  // Step1 → Step2 — 사이즈 잠금 + grid·marks·history 모두 새 컨텍스트로.
   const handleStart = useCallback(() => {
     setProject((p) => ({ ...p, grid: emptyGrid(p.size) }));
     setHistory(EMPTY_HISTORY);
+    setPathMarks(EMPTY_MARKS);
     setStep(2);
   }, []);
 
   // StepNav 클릭 — 1↔2↔3 전이.
-  //  - 2/3 → 1: 맵 초기화 확인 다이얼로그.
-  //  - 1 → 2: 격자 빌드(handleStart).
-  //  - 2 → 3: 검증 통과 시에만 (Step3 disabled 처리로 막지만 방어).
-  //  - 3 → 2: 그대로 복귀 (편집 재개).
   const handleStepNav = useCallback(
     (next: Step) => {
       if (next === step) return;
@@ -105,29 +116,24 @@ export function MazeClientShell() {
     [step, handleStart],
   );
 
-  // 확인 — 맵 전면 리셋 후 설정 단계로 (size/fog 설정은 유지). 히스토리도 클리어.
+  // Step2/3 → Step1 확인 — 맵 전면 리셋. grid/marks/history 모두 클리어.
   const handleConfirmReset = useCallback(() => {
     setProject((p) => ({ ...p, grid: [] }));
     setHistory(EMPTY_HISTORY);
+    setPathMarks(EMPTY_MARKS);
     setStep(1);
     setConfirmOpen(false);
   }, []);
 
-  // 완결성 검증 — grid 변경마다 라이브 재계산. 64×64도 BFS 즉시(µs 수준).
-  // 규칙2(외곽 폐쇄)는 boundary clamp으로 자동 충족 — validate에서 별도 체크 없음.
-  // P3b 플레이어 이동도 동일 clamp 규약을 따른다(BFS 통과성 == 이동 통과성).
+  // 완결성 검증 + 점수 — pathMarks는 grid 밖이라 영향 0. 길 도구 사용 중엔
+  // 현 grid 기준 표시 (마크 미반영) — commit 후 갱신. 정직한 동작.
   const validation = useMemo(() => validateMaze(project.grid), [project.grid]);
-  // 품질 점수 (P3a-2) — 완결성 통과 시에만 산출. 게이팅 X — Step3 활성 조건은
-  // validation.ok 그대로. 점수는 보여주기만 (별점·차원 바·약점 안내).
   const score = useMemo(
     () => (validation.ok ? scoreMaze(project.grid) : null),
     [project.grid, validation.ok],
   );
 
-  // archetype 임계값 보정용 콘솔 신호 (P3a-2 1차안).
-  // UI는 차원별 norm만 노출 — composite total(sqrt(A·B))은 패널에 안 보인다.
-  // 4개 archetype(빈 들판/벽 허술/외길/제대로 된 미로) total을 손계산 없이 읽기 위한 임시 신호.
-  // **P4 live 전 제거** (BACKLOG: "dev archetype 임계값 보정용 콘솔 신호 제거").
+  // archetype 임계값 보정용 콘솔 신호 (P3a-2 1차안). P4 live 전 제거.
   useEffect(() => {
     if (!score) return;
      
@@ -141,55 +147,93 @@ export function MazeClientShell() {
     });
   }, [score]);
 
-  // 셀 페인트 (P3c-1 재작성) — 활성 도구별 분기 + stroke 일관성 + no-op 가드 + history push.
-  //  - 불변 갱신 유지: project.grid는 절대 in-place mutate 금지. cloneGrid 후에만 set.
-  //    이유 (a) score/validation useMemo가 grid 참조 불변으로 깨짐, (b) past가 같은 객체
-  //    참조를 잡고 있어 스냅샷이 오염됨. 빌드로 안 잡히는 종류라 명시.
-  //  - No-op 가드: 실제 grid 변경 없으면 history도 setProject도 skip. 시작점 동위치
-  //    클릭 같은 idempotent 액션이 history를 더럽히지 않게.
-  //  - 벽 stroke 일관성: pointerdown 시 시작 셀 값으로 stroke 전체 fill(WALL ↔ EMPTY) 결정,
-  //    drag pointermove는 그 값을 그대로 적용 — per-cell 토글의 드래그 엉킴 차단.
+  // 셀 페인트 — 활성 도구별 분기.
+  //
+  //  불변 갱신 명문화 (P3c-1·P3c-2 동일 교훈):
+  //   - grid: cloneGrid 후 mutate, project.grid 직접 mutate 금지.
+  //   - pathMarks: `setPathMarks((prev) => new Set(prev))` 패턴. in-place `.add()` 금지 —
+  //     (a) 리렌더 안 됨, (b) history snapshot이 살아있는 Set을 가리켜 undo가 엉뚱한
+  //     마크 복원. 빌드로 안 잡힘.
+  //
+  //  도구별:
+  //   - wall: stroke 시작 셀로 fill(WALL/EMPTY) 결정, drag 일관 적용.
+  //   - path: stroke 시작 셀 마크 여부로 set/clear 결정, drag 일관 적용. grid 미변경.
+  //   - goal: 클릭 1회 = 깃발 1개 (드래그 무시, 재클릭 토글).
+  //   - start: 1개 이동, 드래그 가능.
+  //
+  //  History push (stroke 시작 시): grid·marks 양쪽 snapshot.
   const handlePaint = useCallback(
     (r: number, c: number, isInitial: boolean) => {
-      // 도착점은 클릭 1회 = 깃발 1개. 드래그 무시 (P3a-2 후속 교정).
+      // 도착점은 클릭 1회만 (P3a-2 후속).
       if (activeTool === "goal" && !isInitial) return;
 
+      // ─ Path 도구 ─ grid 미변경, pathMarks만 변경.
+      if (activeTool === "path") {
+        const key = `${r},${c}`;
+
+        if (isInitial) {
+          pathStrokeModeRef.current = pathMarks.has(key) ? "clear" : "set";
+        }
+        const mode = pathStrokeModeRef.current ?? "set";
+
+        // No-op 가드.
+        if (mode === "set" && pathMarks.has(key)) return;
+        if (mode === "clear" && !pathMarks.has(key)) return;
+
+        // History push — 시작 시 1회. grid는 그대로 잡고, marks는 변경 직전 상태로 잡음.
+        if (isInitial) {
+          setHistory((h) => ({
+            past: [
+              ...h.past,
+              { grid: project.grid, marks: pathMarks },
+            ].slice(-HISTORY_DEPTH),
+            future: [],
+          }));
+        }
+
+        // 불변 갱신.
+        setPathMarks((prev) => {
+          const next = new Set(prev);
+          if (mode === "set") next.add(key);
+          else next.delete(key);
+          return next;
+        });
+        return;
+      }
+
+      // ─ Wall / Goal / Start ─ grid 변경.
       setProject((p) => {
-        // 1) 도구별 next 값 결정.
         let nextTile: TileType;
         if (activeTool === "wall") {
           if (isInitial) {
-            // 시작 셀이 벽이면 stroke = EMPTY (지우기), 그 외(EMPTY/START/GOAL)면 WALL.
             strokeFillRef.current =
               p.grid[r][c] === TILE.WALL ? TILE.EMPTY : TILE.WALL;
           }
           nextTile = strokeFillRef.current ?? TILE.WALL;
         } else if (activeTool === "goal") {
-          // 재클릭 토글.
           nextTile = p.grid[r][c] === TILE.GOAL ? TILE.EMPTY : TILE.GOAL;
         } else {
           nextTile = TILE.START;
         }
 
-        // 2) No-op 가드.
+        // No-op 가드.
         if (activeTool === "start") {
-          // 시작점이 이미 그 셀이면 변경 없음.
           const prev = findStart(p.grid);
           if (prev && prev.r === r && prev.c === c) return p;
         } else if (p.grid[r][c] === nextTile) {
           return p;
         }
 
-        // 3) 실제 변경 발생 — stroke 시작이면 history push.
-        //    함수형 update 안에서 다른 setState 호출은 React 18 batching에 묶임 — OK.
         if (isInitial) {
           setHistory((h) => ({
-            past: [...h.past, p.grid].slice(-HISTORY_DEPTH),
+            past: [
+              ...h.past,
+              { grid: p.grid, marks: pathMarks },
+            ].slice(-HISTORY_DEPTH),
             future: [],
           }));
         }
 
-        // 4) 불변 갱신 — clone 후 set, 원본 grid는 안 건드림.
         const grid = cloneGrid(p.grid);
         if (activeTool === "start") {
           const prev = findStart(grid);
@@ -199,28 +243,31 @@ export function MazeClientShell() {
         return { ...p, grid };
       });
     },
-    [activeTool],
+    [activeTool, pathMarks, project.grid],
   );
 
-  // Undo — 가장 최근 past를 grid로 복원, 현재 grid는 future에 push.
+  // Undo — past 마지막 snapshot 복원, 현재(grid, marks) future에 push.
   const undo = useCallback(() => {
     setHistory((h) => {
       if (h.past.length === 0) return h;
       const prev = h.past[h.past.length - 1];
       const newPast = h.past.slice(0, -1);
+      // 현재 grid·marks 캡처해 future에 push.
       setProject((p) => {
-        // 현재 grid를 future에 push. 불변 — grid 원본 그대로 (변경 없음).
         setHistory((hh) => ({
           past: hh.past,
-          future: [...hh.future, p.grid].slice(-HISTORY_DEPTH),
+          future: [...hh.future, { grid: p.grid, marks: pathMarks }].slice(
+            -HISTORY_DEPTH,
+          ),
         }));
-        return { ...p, grid: prev };
+        return { ...p, grid: prev.grid };
       });
+      setPathMarks(prev.marks);
       return { past: newPast, future: h.future };
     });
-  }, []);
+  }, [pathMarks]);
 
-  // Redo — 가장 최근 future를 grid로 복원, 현재 grid는 past에 push.
+  // Redo — future 마지막 snapshot 복원, 현재 past에 push.
   const redo = useCallback(() => {
     setHistory((h) => {
       if (h.future.length === 0) return h;
@@ -228,33 +275,66 @@ export function MazeClientShell() {
       const newFuture = h.future.slice(0, -1);
       setProject((p) => {
         setHistory((hh) => ({
-          past: [...hh.past, p.grid].slice(-HISTORY_DEPTH),
+          past: [...hh.past, { grid: p.grid, marks: pathMarks }].slice(
+            -HISTORY_DEPTH,
+          ),
           future: hh.future,
         }));
-        return { ...p, grid: next };
+        return { ...p, grid: next.grid };
       });
+      setPathMarks(next.marks);
       return { past: h.past, future: newFuture };
     });
-  }, []);
+  }, [pathMarks]);
 
-  // 그리드 초기화 (P3c-1) — Step2 유지, grid만 EMPTY로. history entry로 push되어 undo 가능.
+  // 그리드 초기화 (P3c-1) — grid empty + marks 클리어. 둘 다 history entry로 push.
   const handleResetGrid = useCallback(() => {
     setProject((p) => {
-      // 이미 빈 grid면 no-op.
       const allEmpty = p.grid.every((row) => row.every((v) => v === TILE.EMPTY));
-      if (allEmpty) return p;
+      const noMarks = pathMarks.size === 0;
+      if (allEmpty && noMarks) return p; // no-op
       setHistory((h) => ({
-        past: [...h.past, p.grid].slice(-HISTORY_DEPTH),
+        past: [
+          ...h.past,
+          { grid: p.grid, marks: pathMarks },
+        ].slice(-HISTORY_DEPTH),
         future: [],
       }));
       return { ...p, grid: emptyGrid(p.size) };
     });
+    setPathMarks(EMPTY_MARKS);
     setResetGridOpen(false);
-  }, []);
+  }, [pathMarks]);
 
-  // 키보드 단축키 — Step2 한정 mount. Step3는 unmount 상태라 play-controls 방향키와 충돌 0.
-  //  Ctrl+Z / Cmd+Z         → undo
-  //  Ctrl+Y / Ctrl+Shift+Z  → redo
+  // "벽 생성" (P3c-2) — pathMarks를 grid에 반영하는 1회 commit.
+  //   - 마크 셀     → EMPTY
+  //   - start/goal  → 보존
+  //   - 그 외       → WALL
+  // 1 undo entry로 push. 커밋 후 marks 클리어 — 사용자가 새 패스 그리고 다시 commit 가능.
+  const handleCommitWalls = useCallback(() => {
+    if (pathMarks.size === 0) return;
+    setProject((p) => {
+      setHistory((h) => ({
+        past: [
+          ...h.past,
+          { grid: p.grid, marks: pathMarks },
+        ].slice(-HISTORY_DEPTH),
+        future: [],
+      }));
+      const size = p.grid.length;
+      const grid: TileType[][] = Array.from({ length: size }, (_, r) =>
+        Array.from({ length: size }, (_, c) => {
+          const cur = p.grid[r][c];
+          if (cur === TILE.START || cur === TILE.GOAL) return cur;
+          return pathMarks.has(`${r},${c}`) ? TILE.EMPTY : TILE.WALL;
+        }),
+      );
+      return { ...p, grid };
+    });
+    setPathMarks(EMPTY_MARKS);
+  }, [pathMarks]);
+
+  // 키보드 단축키 — Step2 한정.
   useEffect(() => {
     if (step !== 2) return;
     const onKey = (e: KeyboardEvent) => {
@@ -324,13 +404,15 @@ export function MazeClientShell() {
               onRedo={redo}
               onResetGrid={() => setResetGridOpen(true)}
             />
-            {/* 그리드를 위, 검증·점수 패널을 아래로 — 패널 높이 변화(✗ ↔ 통과 ↔
-                weakness)가 그리드를 밀어 사용자가 그리던 셀 위치를 잃지 않게.
-                P3a-2 후속 교정. */}
+            <PathCommitButton
+              visible={activeTool === "path" && pathMarks.size > 0}
+              onCommit={handleCommitWalls}
+            />
             <MazeGrid
               grid={project.grid}
               size={project.size}
               theme={project.theme}
+              pathMarks={pathMarks}
               onPaint={handlePaint}
             />
             <ValidationPanel result={validation} score={score} />
@@ -341,13 +423,11 @@ export function MazeClientShell() {
         )}
       </div>
 
-      {/* Step2/3 → Step1 전환 모달 (기존). */}
       <ResetConfirmDialog
         open={confirmOpen}
         onConfirm={handleConfirmReset}
         onCancel={() => setConfirmOpen(false)}
       />
-      {/* 그리드 초기화 모달 (P3c-1 신규) — Step2 유지하며 grid만 비움, undo 가능. */}
       <ResetConfirmDialog
         open={resetGridOpen}
         title={tm.resetGridTitle}

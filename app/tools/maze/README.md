@@ -19,7 +19,8 @@
 - **사이즈 잠금** — 그리기 시작 시 사이즈가 고정된다. Step2에서는 변경 불가.
 
 ### Step 2 — 그리기
-- 도구 3종(벽 / 시작점 / 도착점)을 골라 격자를 클릭·드래그로 칠한다. 0.6.1에서 지우개 제거 — 벽 재클릭 토글이 대체.
+- 도구 4종(벽 / **길** / 시작점 / 도착점)을 골라 격자를 클릭·드래그로 칠한다. 0.6.1에서 지우개 제거 — 벽 재클릭 토글이 대체. 0.7.0에서 **길** 도구 추가.
+- **길 도구 + "벽 생성"** — 길 도구로 통로만 칠하면(lime 마크 transient 오버레이), "벽 생성" 버튼이 노출됨. 클릭 시: 마크 셀=EMPTY / start·goal=보존 / 그 외=WALL. 1 undo entry로 push, Ctrl+Z로 회복.
 - 시작점은 1개(새로 찍으면 이동, 드래그 가능). 도착점은 여러 개 배치 — **클릭 1회 = 깃발 1개**(드래그 금지), 기존 깃발 재클릭 시 삭제.
 - **벽 재클릭 토글** — 벽 도구로 빈 칸 클릭 → 벽, 벽 클릭 → 빈 칸. 드래그 일관성: pointerdown 시작 셀 값으로 stroke 전체 fill 결정.
 - **Undo / Redo** — `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Shift+Z` (Cmd 동일), 또는 화면 버튼. **stroke 단위 1 entry** (드래그 한 번 = undo 한 번). Step2 한정.
@@ -142,6 +143,7 @@ components/maze/
   reset-confirm-dialog.tsx                 # P2 완료 — 맵 초기화 확인 모달
   validation-panel.tsx                     # P3a + P3a-2 — Step2 배지: 미통과 사유 / 통과 시 별점·차원 바·약점
   editor-controls.tsx                      # P3c-1 — Step2 undo/redo/초기화 컨트롤 row
+  path-commit-button.tsx                   # P3c-2 — 길 도구 활성 시 노출되는 "벽 생성" 버튼
   play-canvas.tsx                          # P3b 완료 — Step3 캔버스 (fog 시야 안 셀+격자선만)
   play-controls.tsx                        # P3b 완료 — D-pad + 키보드(방향키 preventDefault)
   play-mode.tsx                            # P3b 완료 — Step3 컨테이너 (P4 재사용 인터페이스)

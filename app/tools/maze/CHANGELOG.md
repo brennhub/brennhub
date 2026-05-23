@@ -2,6 +2,42 @@
 
 주요 결정 / 이정표.
 
+## [0.7.0] — 2026-05-23
+
+### Added (P3c-2 — 길 그리기 모드 + 자동 벽 생성)
+
+길 도구로 미로의 통로만 칠하고 "벽 생성" 버튼 한 번으로 나머지를 벽으로 채우는 워크플로 추가. 사용자 mental model: "길을 그리는 도구 + 활성 시 벽 생성 버튼 동반." 기존 벽 그리기 워크플로는 그대로.
+
+- **길 도구 `"path"` 추가** — `Tool` 타입 확장(`"wall" | "path" | "start" | "goal"`). 팔레트에 lucide `Route` 아이콘으로 추가.
+- **transient pathMarks 레이어** — `useState<ReadonlySet<string>>`. key = `"r,c"`. **`MazeProject.grid` 밖**의 별도 state, localStorage 미저장. `TileType` 4/5/6은 V2(Trap/Key/Door) 예약이라 마크에 재사용 금지.
+- **path stroke 일관성** — `pathStrokeModeRef: "set" | "clear"`. pointerdown 시 시작 셀 마크 여부로 stroke 전체 set/clear 결정. wall stroke 일관성과 동일 패턴.
+- **"벽 생성" 버튼 (`components/maze/path-commit-button.tsx` 신규)** — 길 도구 활성 + `pathMarks.size > 0`일 때만 노출. 클릭 시 즉시 commit (모달 없음 — undo로 회복 가능).
+- **Commit 알고리즘** — `handleCommitWalls`:
+  - 마크 셀     → `EMPTY`
+  - `START`/`GOAL` → 보존 (마크 여부 무관, 사용자 의도된 엔드포인트 유지)
+  - 그 외 셀   → `WALL`
+- **마크 렌더** — `RenderEngine.renderPathMark` 옵셔널 추가, `default.ts` 구현 (lime `rgba(132,204,22,0.32)`). 셀 위 반투명 오버레이 → 다크/라이트 양쪽 자연. `maze-grid` 렌더 순서: `clearBackground → renderTile → renderPathMark(있는 셀만) → drawGridLines`.
+- **History 확장 `{ grid, marks }` 양쪽 스냅샷** — path stroke / commit / 다른 도구 액션 모두 동일 push 패턴. undo가 grid·marks 양쪽 복원. localStorage 영향 0(history 비저장).
+- **`ThemePalette.pathMarkTint`** — 신규 lime 컬러. start emerald · goal rose · player blue · path mark lime — 4색 모두 명확히 구분.
+- **i18n 신규 4키** (ko/en) — `toolPath` / `commitWallsButton` / `commitWallsHint` + (`MAZE_TOOL_ICONS.PATH` icons map).
+
+### Decided
+
+- **Q1: 도구 vs 모드 → 팔레트 도구** — 모드 토글의 "현재 모드 뭐였지" 부하 회피. 기존 wall/start/goal 추가 패턴과 일관.
+- **Q2: 자동 벽 범위 → (A) 길 아닌 모든 칸** — (B) 인접 1칸은 사방 뚫림 = 비-미로. (A)는 벽이 자연스럽게 "길 옆"에 생김. start/goal은 어느 경우든 보존.
+- **Q3: 마크 자료구조 → `Set<string>`** — sparse 미로에 메모리 효율 + O(1) add/has/delete. RenderEngine 옵셔널 메서드로 캔버스 통합(직접 `fillRect` 금지 규약 준수).
+- **Q4: marks ↔ undo → history `{grid, marks}` 통합** — 길 stroke가 grid 미변경이지만 사용자에게 undo는 stroke 단위라 통합 자연. 별도 stack 안 만듦.
+- **Q5: 마크 수명 → 세션 보존 + stroke 시작 셀 토글 + commit 시 클리어 + Step1·사이즈 변경 시 클리어** — 다른 도구 잠시 사용 후 돌아와도 보존. grid 직접 편집 시 자동 정리 X — 시각화로 정직.
+- **Commit 모달 없음** — 즉시 실행 + undo 회복. 모달은 마찰.
+- **검증·점수가 마크 미반영** — 길 도구 사용 중엔 현 grid 기준 표시 (정직). commit 후 갱신. 버그 아님.
+- **불변 갱신 명시 (Set 버전)** — `setPathMarks((prev) => new Set(prev))`. in-place `.add()`/`.delete()` 금지 — (a) 리렌더 안 됨, (b) history snapshot의 같은 Set 참조 오염으로 undo 엉뚱. 빌드로 안 잡힘 — 주석 명문화.
+
+### Notes
+
+- 길 도구는 드래그 지원 (wall과 동일). pointerdown 시 시작 셀 모드 1회 결정.
+- 점수 알고리즘 / SCORE_TUNING / fog / Step3 / P3b play.ts·play-canvas — 무변경 (회귀 0).
+- `MazeProject.grid` 외 state(pathMarks)는 의도적으로 영속 비대상 — 페이지 새로고침 시 마크 사라짐, grid는 복원. 사용자 의도("그리고 commit") 흐름과 일치.
+
 ## [0.6.1] — 2026-05-23
 
 ### Removed

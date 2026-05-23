@@ -25,6 +25,8 @@ export type ThemePalette = {
   playerTint: string;
   /** 플레이어 아이콘 stroke (P3b 플레이 모드). */
   playerIcon: string;
+  /** 길 마크 transient 오버레이 (P3c-2). */
+  pathMarkTint: string;
 };
 
 export type TileRenderer = (
@@ -63,6 +65,19 @@ export type RenderEngine = {
    * 구현이 필수 — 인터페이스 확장이라 silent oversell 방지.
    */
   renderPlayer: (
+    ctx: CanvasRenderingContext2D,
+    palette: ThemePalette,
+    rect: RenderRect,
+  ) => void;
+
+  /**
+   * 길 마크 오버레이 렌더 (P3c-2 옵셔널) — 셀 위에 반투명 색 덧칠.
+   *
+   * 마크는 `MazeProject.grid` 밖의 transient 레이어. "벽 생성" 커밋 시 grid에
+   * 반영되어 사라진다. 미정의 시 maze-grid가 호출 자체를 skip — 호출자 책임.
+   * V2 sprite-dungeon 엔진은 자기 마크 스타일을 따로 구현해 적용.
+   */
+  renderPathMark?: (
     ctx: CanvasRenderingContext2D,
     palette: ThemePalette,
     rect: RenderRect,

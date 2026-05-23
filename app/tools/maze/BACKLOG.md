@@ -2,7 +2,7 @@
 
 Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
-단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX (undo/redo·재클릭 토글·초기화) · **P3c-2** 길 그리기 모드+자동 벽 · **P4** 숏링크 공유.
+단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX (undo/redo·재클릭 토글·초기화) · **P3c-2** 길 그리기 + 벽 생성 · **P4** 숏링크 공유.
 
 ## P1 — 스캐폴딩 (인프라/골격) — 완료 (CHANGELOG `[0.1.0]`)
 
@@ -118,13 +118,23 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] i18n 6키 (ko/en) — editorUndo·editorRedo·editorResetGrid·resetGrid{Title,Message,Confirm}
 - [ ] dev 시각 점검 — undo/redo 스트로크 단위 / 키보드+모바일 버튼 / 벽 재클릭+드래그 일관성 / 초기화+undo / Step3 키보드 무충돌 / 0.5.1 회귀 0
 
-## P3c-2 — 길 그리기 모드 + 자동 벽 (별도 task, 설계 모호점 해소 후)
+## P3c-2 — 길 그리기 모드 + 자동 벽 — 완료 (CHANGELOG `[0.7.0]`)
 
-- [ ] Step1에 "벽 그리기 / 길 파기" 편집 모드 선택. "길 파기"는 그리드가 전부 `WALL`로 시작(carve 방식).
-- [ ] `MazeProject`에 `editorMode?: "wall" | "carve"` 같은 필드 추가 — schemaVersion bump + storage migrate.
-- [ ] carve 모드의 wall 도구 의미 재정의 (EMPTY로 carve / 또는 별도 도구).
-- [ ] 자동 벽 — 외곽 자동 채움? 또는 미지정 셀 자동 wall? 설계 모호점.
-- [ ] history 통합 — P3c-1 stroke 단위 entry 패턴에 편입.
+설계 모호점이었던 "Step1 carve 모드 / grid 전체 wall 시작" 안은 폐기. 사용자 mental model("에디터 내 길 도구 + 벽 생성 버튼")로 재설계.
+
+- [x] `Tool` 타입에 `"path"` 추가 + `MAZE_TOOL_ICONS.PATH` (lucide `Route`)
+- [x] `pathMarks: ReadonlySet<string>` state — grid 밖 transient 레이어
+- [x] path stroke 일관성 — `pathStrokeModeRef: "set"|"clear"` (wall stroke 패턴 응용)
+- [x] `RenderEngine.renderPathMark` 옵셔널 + default 엔진 구현 (lime 반투명)
+- [x] `ThemePalette.pathMarkTint`
+- [x] `components/maze/path-commit-button.tsx` — 길 도구 활성 + 마크 존재 시 contextual 노출
+- [x] `handleCommitWalls` — start/goal 보존 + 마크 EMPTY + 그 외 WALL, marks 클리어
+- [x] History 확장 `HistorySnapshot = { grid, marks }` — undo가 양쪽 복원
+- [x] 불변 갱신 명시 (Set 버전: `new Set(prev)` 패턴) — history 오염 차단
+- [x] 즉시 commit (모달 없음) — undo로 회복 가능
+- [x] Step1·사이즈 변경·Step1 복귀 시 marks 클리어
+- [x] i18n 4키 (ko/en) — toolPath / commitWallsButton / commitWallsHint + icons.ts PATH 매핑
+- [ ] dev 시각 점검 — 길 stroke + 토글 / 벽 생성 commit / undo·redo grid+marks 양쪽 / 마크 위 다른 도구 페인트 시 마크 유지 / 검증·점수 commit 후 갱신 / 0.6.1 회귀 확인
 
 ## P4 — 숏링크 공유 (D1 · API) + live 전환
 

@@ -472,8 +472,11 @@ export type Messages = {
     startButton: string;
     drawIntro: string;
     toolWall: string;
+    toolPath: string;
     toolStart: string;
     toolGoal: string;
+    commitWallsButton: string;
+    commitWallsHint: string;
     resetTitle: string;
     resetMessage: string;
     resetConfirm: string;
@@ -1053,8 +1056,12 @@ export const messages: Record<Locale, Messages> = {
       startButton: "그리기 시작",
       drawIntro: "도구를 고르고 격자를 클릭·드래그해 미로를 그리세요.",
       toolWall: "벽",
+      toolPath: "길",
       toolStart: "시작점",
       toolGoal: "도착점",
+      commitWallsButton: "벽 생성",
+      commitWallsHint:
+        "그린 길을 제외한 칸이 모두 벽이 됩니다. 시작점·도착점은 유지.",
       resetTitle: "맵 초기화",
       resetMessage:
         "설정으로 돌아가면 지금까지 그린 맵이 모두 초기화됩니다. 계속할까요?",
@@ -1676,8 +1683,12 @@ export const messages: Record<Locale, Messages> = {
       startButton: "Start drawing",
       drawIntro: "Pick a tool, then click or drag on the grid to draw your maze.",
       toolWall: "Wall",
+      toolPath: "Path",
       toolStart: "Start",
       toolGoal: "Goal",
+      commitWallsButton: "Generate walls",
+      commitWallsHint:
+        "Cells outside your path become walls. Start and goal are preserved.",
       resetTitle: "Reset map",
       resetMessage:
         "Going back to settings will reset everything you've drawn. Continue?",
