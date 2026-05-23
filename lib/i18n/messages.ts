@@ -461,16 +461,15 @@ export type Messages = {
     description: string;
     step1: string;
     step2: string;
-    step3: string;
-    settingsIntro: string;
     sizeLabel: string;
     fogLabel: string;
     fogDescription: string;
     fogRadiusLabel: string;
     fogRadiusMax: string;
     fogRadiusMin: string;
-    startButton: string;
-    drawIntro: string;
+    sizeChangeTitle: string;
+    sizeChangeMessage: string;
+    sizeChangeConfirm: string;
     toolWall: string;
     toolPath: string;
     toolStart: string;
@@ -1041,11 +1040,8 @@ export const messages: Record<Locale, Messages> = {
     maze: {
       title: "픽셀 미로 만들기",
       description: "픽셀 격자로 나만의 미로를 설계하고 링크로 공유하세요.",
-      step1: "설정",
-      step2: "그리기",
-      step3: "플레이",
-      settingsIntro:
-        "맵 크기와 시야 옵션을 정하세요. 그리기를 시작하면 크기는 바꿀 수 없습니다.",
+      step1: "만들기",
+      step2: "플레이",
       sizeLabel: "맵 크기",
       fogLabel: "시야 제한",
       fogDescription:
@@ -1053,8 +1049,10 @@ export const messages: Record<Locale, Messages> = {
       fogRadiusLabel: "시야 반경 (칸)",
       fogRadiusMax: "최대 시야 반경입니다",
       fogRadiusMin: "최소 시야 반경입니다",
-      startButton: "그리기 시작",
-      drawIntro: "도구를 고르고 격자를 클릭·드래그해 미로를 그리세요.",
+      sizeChangeTitle: "사이즈 변경",
+      sizeChangeMessage:
+        "사이즈를 바꾸면 그리드의 모든 셀이 새 크기로 다시 생성됩니다. 지금까지 그린 내용은 사라집니다.",
+      sizeChangeConfirm: "변경",
       toolWall: "벽",
       toolPath: "길",
       toolStart: "시작점",
@@ -1668,11 +1666,8 @@ export const messages: Record<Locale, Messages> = {
     maze: {
       title: "Pixel Maze Maker",
       description: "Design your own maze on a pixel grid and share it via link.",
-      step1: "Settings",
-      step2: "Draw",
-      step3: "Play",
-      settingsIntro:
-        "Choose the map size and visibility options. Size is locked once you start drawing.",
+      step1: "Build",
+      step2: "Play",
       sizeLabel: "Map size",
       fogLabel: "Fog of War",
       fogDescription:
@@ -1680,8 +1675,10 @@ export const messages: Record<Locale, Messages> = {
       fogRadiusLabel: "Vision radius (tiles)",
       fogRadiusMax: "Maximum vision radius",
       fogRadiusMin: "Minimum vision radius",
-      startButton: "Start drawing",
-      drawIntro: "Pick a tool, then click or drag on the grid to draw your maze.",
+      sizeChangeTitle: "Change size",
+      sizeChangeMessage:
+        "Changing size regenerates the grid at the new dimensions. Anything drawn will be lost.",
+      sizeChangeConfirm: "Change",
       toolWall: "Wall",
       toolPath: "Path",
       toolStart: "Start",

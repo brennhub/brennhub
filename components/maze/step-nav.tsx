@@ -2,20 +2,24 @@
 
 import { cn } from "@/lib/utils";
 
-export type Step = 1 | 2 | 3;
+/**
+ * 0.8.0 (P3d): 설정+그리기 통합으로 3-step → 2-step 축소.
+ *   1 = 만들기 (설정 + 그리기 + 검증·점수, 한 화면)
+ *   2 = 플레이 (validation.ok 시에만 활성)
+ */
+export type Step = 1 | 2;
 
 type Props = {
   step: Step;
-  /** [step1, step2, step3] 라벨. */
-  labels: [string, string, string];
+  /** [step1, step2] 라벨. */
+  labels: [string, string];
   onStep: (step: Step) => void;
-  /** 비활성 step (예: Step3는 검증 통과 시에만 활성). */
+  /** 비활성 step (예: 플레이는 검증 통과 시에만 활성). */
   disabledSteps?: readonly Step[];
 };
 
-/** 3스텝(설정 → 그리기 → 플레이) 진행 네비게이션. 언어 창조기 StepNav 구조 재사용. */
 export function StepNav({ step, labels, onStep, disabledSteps }: Props) {
-  const steps: Step[] = [1, 2, 3];
+  const steps: Step[] = [1, 2];
   const disabledSet = new Set(disabledSteps ?? []);
   return (
     <div

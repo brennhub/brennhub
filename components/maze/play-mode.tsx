@@ -26,7 +26,7 @@ type Props = {
  * 같은 props로 들어온다. 상태는 자급(useState) — client-shell이 신경 쓰지 않는다.
  *
  * 빈/이상 project 가드: `initialPlayState`가 null이면 진입 차단 메시지 표시 —
- * StepNav가 disabledSteps로 P3a 미통과 시 Step3 진입을 막지만 방어적 fallback.
+ * StepNav가 disabledSteps로 검증 미통과 시 플레이 단계 진입을 막지만 방어적 fallback.
  */
 export function PlayMode({ project, onBackToEdit }: Props) {
   const t = useMessages().maze;
