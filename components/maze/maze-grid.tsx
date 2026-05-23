@@ -4,92 +4,143 @@ import { useCallback, useEffect, useRef } from "react";
 import { useTheme } from "@/components/theme-provider";
 import type { MazeSize, MazeTheme, TileType } from "@/lib/maze/types";
 import { selectEngine } from "@/lib/maze/render";
+import {
+  cellFromCanvasPx,
+  clampCellPx,
+  clampPan,
+  zoomAtCursor,
+  type ViewState,
+} from "@/lib/maze/viewport";
 
-/** canvas 한 변 논리 픽셀 크기. 셀 크기 = DISPLAY_PX / size. */
+/** canvas 한 변 논리 픽셀 크기. viewport는 viewport.ts 모듈이 displayPx로 계산. */
 const DISPLAY_PX = 512;
+
+/** 휠 한 노치당 줌 배율. ×1.1 / ÷1.1 (자연스러운 작은 step). */
+const WHEEL_ZOOM_FACTOR = 1.1;
 
 type Props = {
   grid: TileType[][];
   size: MazeSize;
-  /** MazeProject.theme — V1은 "default" 고정. V2 sprite-dungeon 분기점. */
   theme: MazeTheme;
-  /**
-   * 길 마크 transient 레이어 (P3c-2) — `"r,c"` key Set.
-   * grid 밖 별도 state. "벽 생성" 커밋 시 grid에 반영되며 client-shell이 소거.
-   * 미지정 시 마크 렌더 skip.
-   */
   pathMarks?: ReadonlySet<string>;
-  /**
-   * 셀 페인트 — 적용 타일은 client-shell이 활성 도구로 결정.
-   * `isInitial=true`는 pointerdown(클릭 시작), `false`는 pointermove(드래그 진행) —
-   * client-shell이 도구별로 드래그 허용 여부를 판단(P3a-2 후속: 도착점은 클릭 1회만).
-   */
+  /** 줌·팬 상태 (P3e-1) — client-shell이 소유, viewport.ts가 산술 담당. */
+  view: ViewState;
+  onViewChange: (view: ViewState) => void;
+  /** 손도구 토글 (P3e-1) — 활성 시 1포인터/마우스도 팬, 그리기 비활성. */
+  handMode: boolean;
   onPaint: (r: number, c: number, isInitial: boolean) => void;
 };
 
 /**
- * Step2 픽셀 격자 에디터.
+ * Step1(만들기) 픽셀 격자 에디터.
  *
- * 렌더링 일체는 `selectEngine`이 반환하는 RenderEngine이 담당한다:
- *   clearBackground → 셀별 renderTile → drawGridLines.
- * 이 컴포넌트는 fillRect/stroke를 직접 호출하지 않는다 (V2 테마 교체를
- * engine 분기 한 줄로 가능하게 하기 위한 규약).
+ * 렌더: clearBackground → 셀별 renderTile → renderPathMark(있는 셀만) → drawGridLines.
+ * 변환은 명시 cellPx + panX/panY로만 — ctx.scale 금지 (lineWidth 일정 유지).
  *
- * 포인터 드로잉은 pixel-editor 패턴 재사용.
+ * 포인터/줌/팬 (P3e-1):
+ *   - 1 포인터 = 그리기 (단 handMode/spacePressed면 팬, 그리기 비활성)
+ *   - 2 포인터 = 핀치줌 + 팬 (1포인터 진행 stroke는 즉시 정식 종료)
+ *   - 휠 = 커서 중심 줌 (addEventListener {passive:false}로 페이지 스크롤 차단)
+ *   - 스페이스 keydown/keyup = 일시 손도구 (입력 필드 focus 시 무시)
  */
 export function MazeGrid({
   grid,
   size,
   theme: mazeTheme,
   pathMarks,
+  view,
+  onViewChange,
+  handMode,
   onPaint,
 }: Props) {
   const { theme: colorMode } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // 드래그(그리기) 상태.
+  // 1포인터 그리기 상태.
   const drawingRef = useRef(false);
   const lastCellRef = useRef<string | null>(null);
 
-  // 렌더 — engine 3-단계 오케스트레이션.
+  // 활성 포인터 추적 (멀티터치).
+  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(
+    new Map(),
+  );
+
+  // 핀치 시작 시 anchor 상태 — 핀치 진행 동안 reference로 사용.
+  const pinchAnchorRef = useRef<{
+    initialDist: number;
+    initialView: ViewState;
+    centerX: number;
+    centerY: number;
+  } | null>(null);
+
+  // 스페이스 일시 손도구.
+  const spacePressedRef = useRef(false);
+
+  // 변경되는 view를 최신값으로 콜백에서 읽기 위한 ref.
+  const viewRef = useRef(view);
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
+  const handModeRef = useRef(handMode);
+  useEffect(() => {
+    handModeRef.current = handMode;
+  }, [handMode]);
+
+  // client 좌표 → canvas displayPx 좌표 (rect 보정).
+  const clientToCanvasPx = useCallback(
+    (clientX: number, clientY: number): { x: number; y: number } => {
+      const c = canvasRef.current;
+      if (!c) return { x: 0, y: 0 };
+      const rect = c.getBoundingClientRect();
+      return {
+        x: ((clientX - rect.left) * DISPLAY_PX) / rect.width,
+        y: ((clientY - rect.top) * DISPLAY_PX) / rect.height,
+      };
+    },
+    [],
+  );
+
+  // 진행 stroke를 정식 종료 — 1→2 포인터 전환 / 스페이스 keydown / 손도구 토글 등에서 호출.
+  // client-shell의 strokeFillRef·pathStrokeModeRef는 다음 stroke의 isInitial=true가
+  // 덮어쓰므로 별도 신호 불필요. drawingRef·lastCellRef만 리셋해도 stroke 효과 완전 종료.
+  const finalizeStroke = useCallback(() => {
+    drawingRef.current = false;
+    lastCellRef.current = null;
+  }, []);
+
+  // 렌더 — view 변경 시 재실행 (의존성).
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // DPR 변환은 여기서 한 번만 설정한다. 이후 engine 메서드는 setTransform을
-    // 호출하지 않기로 한 규약(RenderEngine 주석 참고) — DPR 보존.
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.round(DISPLAY_PX * dpr);
     canvas.height = Math.round(DISPLAY_PX * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const cell = DISPLAY_PX / size;
     const dark = colorMode === "dark";
     const engine = selectEngine(mazeTheme, dark);
 
-    // 비동기 ready 훅(V2 sprite-dungeon용)을 await — V1 default는 즉시.
-    // cancel 가드 — props 변경/언마운트로 인한 stale 렌더 방지.
     let cancelled = false;
     const draw = async () => {
       if (engine.ready) await engine.ready();
       if (cancelled) return;
 
       engine.clearBackground(ctx, DISPLAY_PX);
+      const { cellPx, panX, panY } = view;
       for (let r = 0; r < size; r += 1) {
         const row = grid[r];
         if (!row) continue;
         for (let c = 0; c < size; c += 1) {
           engine.renderTile(ctx, row[c], engine.palette, {
-            x: c * cell,
-            y: r * cell,
-            size: cell,
+            x: panX + c * cellPx,
+            y: panY + r * cellPx,
+            size: cellPx,
           });
         }
       }
-      // 길 마크 transient 오버레이 (P3c-2) — 타일 위, 격자선 아래.
-      // 엔진이 renderPathMark 미정의이거나 마크 비어있으면 skip.
       if (pathMarks && pathMarks.size > 0 && engine.renderPathMark) {
         for (const key of pathMarks) {
           const [rs, cs] = key.split(",");
@@ -98,75 +149,220 @@ export function MazeGrid({
           if (!Number.isFinite(r) || !Number.isFinite(c)) continue;
           if (r < 0 || r >= size || c < 0 || c >= size) continue;
           engine.renderPathMark(ctx, engine.palette, {
-            x: c * cell,
-            y: r * cell,
-            size: cell,
+            x: panX + c * cellPx,
+            y: panY + r * cellPx,
+            size: cellPx,
           });
         }
       }
-      engine.drawGridLines(ctx, DISPLAY_PX, size);
+      engine.drawGridLines(ctx, panX, panY, cellPx, size);
     };
     void draw();
 
     return () => {
       cancelled = true;
     };
-  }, [grid, size, mazeTheme, colorMode, pathMarks]);
+  }, [grid, size, mazeTheme, colorMode, pathMarks, view]);
 
-  const cellFromEvent = useCallback(
-    (e: React.PointerEvent<HTMLCanvasElement>): { r: number; c: number } => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const clamp = (n: number) =>
-        Math.max(0, Math.min(size - 1, Math.floor(n)));
-      return {
-        r: clamp(((e.clientY - rect.top) / rect.height) * size),
-        c: clamp(((e.clientX - rect.left) / rect.width) * size),
-      };
-    },
-    [size],
-  );
+  // 휠 줌 — addEventListener with {passive:false}. React onWheel은 passive 처리될 수
+  // 있어 preventDefault가 안 먹음. 페이지 스크롤 차단 위해 직접 등록.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const v = viewRef.current;
+      const factor = e.deltaY < 0 ? WHEEL_ZOOM_FACTOR : 1 / WHEEL_ZOOM_FACTOR;
+      const newCellPx = clampCellPx(v.cellPx * factor, size, DISPLAY_PX);
+      if (newCellPx === v.cellPx) return;
+      const { x, y } = clientToCanvasPx(e.clientX, e.clientY);
+      onViewChange(zoomAtCursor(v, x, y, newCellPx, size, DISPLAY_PX));
+    };
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    return () => canvas.removeEventListener("wheel", onWheel);
+  }, [size, onViewChange, clientToCanvasPx]);
+
+  // 스페이스 keydown/keyup — 일시 손도구.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          (target as HTMLElement).isContentEditable)
+      ) {
+        return;
+      }
+      e.preventDefault();
+      if (!spacePressedRef.current) {
+        spacePressedRef.current = true;
+        // 스페이스 누르는 순간 진행 stroke 종료 — 손도구 전환과 동시에 그리던 게 멈추게.
+        finalizeStroke();
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") spacePressedRef.current = false;
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [finalizeStroke]);
+
+  // 손도구 토글이 ON으로 바뀌면 진행 stroke 정식 종료.
+  useEffect(() => {
+    if (handMode) finalizeStroke();
+  }, [handMode, finalizeStroke]);
+
+  const isPanMode = (): boolean =>
+    handModeRef.current || spacePressedRef.current;
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       e.currentTarget.setPointerCapture(e.pointerId);
-      const { r, c } = cellFromEvent(e);
-      drawingRef.current = true;
-      lastCellRef.current = `${r},${c}`;
-      onPaint(r, c, true);
+      const { x, y } = clientToCanvasPx(e.clientX, e.clientY);
+      activePointersRef.current.set(e.pointerId, { x, y });
+
+      const count = activePointersRef.current.size;
+      if (count === 1) {
+        if (isPanMode()) return; // 1포인터 팬 모드 — 그리기 안 함
+        const cell = cellFromCanvasPx(x, y, viewRef.current, size);
+        if (!cell) return;
+        drawingRef.current = true;
+        lastCellRef.current = `${cell.r},${cell.c}`;
+        onPaint(cell.r, cell.c, true);
+      } else if (count === 2) {
+        // 1→2 전환: 진행 stroke 정식 종료 + 핀치 anchor 잡기.
+        finalizeStroke();
+        const pts = Array.from(activePointersRef.current.values());
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy);
+        pinchAnchorRef.current = {
+          initialDist: dist || 1,
+          initialView: viewRef.current,
+          centerX: (pts[0].x + pts[1].x) / 2,
+          centerY: (pts[0].y + pts[1].y) / 2,
+        };
+      }
+      // 3+ 포인터는 무시 (멀티터치 의도 명확치 않음).
     },
-    [cellFromEvent, onPaint],
+    [clientToCanvasPx, size, onPaint, finalizeStroke],
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
-      if (!drawingRef.current) return;
-      const { r, c } = cellFromEvent(e);
-      const key = `${r},${c}`;
-      // 같은 셀 위 연속 이동은 무시 — 셀당 페인트 1회.
-      if (key === lastCellRef.current) return;
-      lastCellRef.current = key;
-      onPaint(r, c, false);
+      const prev = activePointersRef.current.get(e.pointerId);
+      if (!prev) return;
+      const { x, y } = clientToCanvasPx(e.clientX, e.clientY);
+      activePointersRef.current.set(e.pointerId, { x, y });
+
+      const count = activePointersRef.current.size;
+
+      if (count === 2 && pinchAnchorRef.current) {
+        // 핀치줌 + 팬: anchor 기준 거리 비율로 cellPx, center 이동으로 추가 pan.
+        const pts = Array.from(activePointersRef.current.values());
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy);
+        const cx = (pts[0].x + pts[1].x) / 2;
+        const cy = (pts[0].y + pts[1].y) / 2;
+        const a = pinchAnchorRef.current;
+        const scale = dist / a.initialDist;
+        const newCellPx = clampCellPx(
+          a.initialView.cellPx * scale,
+          size,
+          DISPLAY_PX,
+        );
+        // anchor center 기준 줌
+        const zoomed = zoomAtCursor(
+          a.initialView,
+          a.centerX,
+          a.centerY,
+          newCellPx,
+          size,
+          DISPLAY_PX,
+        );
+        // center 이동분만큼 추가 팬
+        const dxCenter = cx - a.centerX;
+        const dyCenter = cy - a.centerY;
+        const clamped = clampPan(
+          zoomed.panX + dxCenter,
+          zoomed.panY + dyCenter,
+          zoomed.cellPx,
+          size,
+          DISPLAY_PX,
+        );
+        onViewChange({
+          cellPx: zoomed.cellPx,
+          panX: clamped.panX,
+          panY: clamped.panY,
+        });
+        return;
+      }
+
+      if (count === 1) {
+        if (isPanMode()) {
+          const dx = x - prev.x;
+          const dy = y - prev.y;
+          const v = viewRef.current;
+          const clamped = clampPan(
+            v.panX + dx,
+            v.panY + dy,
+            v.cellPx,
+            size,
+            DISPLAY_PX,
+          );
+          onViewChange({ cellPx: v.cellPx, panX: clamped.panX, panY: clamped.panY });
+          return;
+        }
+        if (!drawingRef.current) return;
+        const cell = cellFromCanvasPx(x, y, viewRef.current, size);
+        if (!cell) return;
+        const key = `${cell.r},${cell.c}`;
+        if (key === lastCellRef.current) return;
+        lastCellRef.current = key;
+        onPaint(cell.r, cell.c, false);
+      }
     },
-    [cellFromEvent, onPaint],
+    [clientToCanvasPx, size, onPaint, onViewChange],
   );
 
-  const endDrag = useCallback(() => {
-    drawingRef.current = false;
-    lastCellRef.current = null;
-  }, []);
+  const handlePointerEnd = useCallback(
+    (e: React.PointerEvent<HTMLCanvasElement>) => {
+      activePointersRef.current.delete(e.pointerId);
+      const count = activePointersRef.current.size;
+      if (count === 0) {
+        finalizeStroke();
+        pinchAnchorRef.current = null;
+      } else if (count === 1) {
+        // 2→1 전환: 핀치 종료. 남은 1포인터는 그리기로 자동 진입 X
+        // (사용자가 손가락 떼는 중 — 명확한 새 stroke 시작 의도 아님).
+        pinchAnchorRef.current = null;
+      }
+    },
+    [finalizeStroke],
+  );
 
   return (
     <canvas
       ref={canvasRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={endDrag}
-      onPointerCancel={endDrag}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
       style={{
         width: "100%",
         maxWidth: DISPLAY_PX,
         height: "auto",
+        // 브라우저 기본 핀치줌·스크롤이 캔버스 제스처를 가로채지 못하게 차단.
         touchAction: "none",
+        // 손도구 또는 스페이스 시 grab 커서 시각 피드백.
+        cursor: handMode ? "grab" : "default",
       }}
       className="mx-auto block rounded-md border border-border"
     />

@@ -15,7 +15,16 @@ import { ResetConfirmDialog } from "@/components/maze/reset-confirm-dialog";
 import { ValidationPanel } from "@/components/maze/validation-panel";
 import { EditorControls } from "@/components/maze/editor-controls";
 import { PathCommitButton } from "@/components/maze/path-commit-button";
+import { ZoomControls } from "@/components/maze/zoom-controls";
 import { PlayMode } from "@/components/maze/play-mode";
+import {
+  clampCellPx,
+  clampPan,
+  fitView,
+  zoomAtCursor,
+  zoomLimits,
+  type ViewState,
+} from "@/lib/maze/viewport";
 
 /**
  * Undo/Redo 히스토리 깊이 상한 (P3c-1).
@@ -39,6 +48,12 @@ const EMPTY_HISTORY: GridHistory = { past: [], future: [] };
 const EMPTY_MARKS: ReadonlySet<string> = new Set();
 
 type PathStrokeMode = "set" | "clear";
+
+/** maze-grid·play-canvas 캔버스 한 변 픽셀 — viewport.ts 산술 인자. */
+const CANVAS_DISPLAY_PX = 512;
+
+/** 줌 버튼 한 클릭당 배율 (휠과 동일 step). */
+const ZOOM_BUTTON_FACTOR = 1.2;
 
 /**
  * 0.8.0 (P3d): Step1·Step2 통합.
@@ -64,6 +79,12 @@ export function MazeClientShell() {
   const [pathMarks, setPathMarks] = useState<ReadonlySet<string>>(EMPTY_MARKS);
   const strokeFillRef = useRef<TileType | null>(null);
   const pathStrokeModeRef = useRef<PathStrokeMode | null>(null);
+  // P3e-1: 줌·팬 transient view 상태. localStorage 미저장 (schemaVersion 영향 0).
+  const [view, setView] = useState<ViewState>(() =>
+    fitView(newProject().size, CANVAS_DISPLAY_PX),
+  );
+  // P3e-1: 손도구 모드 — 활성 시 1포인터/마우스도 팬.
+  const [handMode, setHandMode] = useState(false);
 
   // hydrate — 빈 grid면 emptyGrid로 자동 채움. 새 만들기 워크플로 시작 가능.
   // (0.8.0 P3d: 이전엔 Step1 진입 후 startButton 클릭으로 채워졌으나, 통합 화면엔 진입점 없음.)
@@ -74,6 +95,7 @@ export function MazeClientShell() {
         ? { ...loaded, grid: emptyGrid(loaded.size) }
         : loaded,
     );
+    setView(fitView(loaded.size, CANVAS_DISPLAY_PX));
     setHydrated(true);
   }, []);
 
@@ -90,11 +112,13 @@ export function MazeClientShell() {
   }, []);
 
   // 사이즈 변경 클릭 — 비어있으면 즉시, 아니면 확인 다이얼로그.
-  // history·marks 모두 클리어 — 다른 사이즈 grid 참조 stroke는 복원 불가.
+  // history·marks·view 모두 새로 — 다른 사이즈 grid 참조 stroke는 복원 불가하고
+  // view는 새 사이즈의 fit으로 리셋해야 컨트롤 한계가 의미 있음.
   const applySizeChange = useCallback((size: MazeSize) => {
     setProject((p) => ({ ...p, size, grid: emptyGrid(size) }));
     setHistory(EMPTY_HISTORY);
     setPathMarks(EMPTY_MARKS);
+    setView(fitView(size, CANVAS_DISPLAY_PX));
   }, []);
 
   const handleSizeChange = useCallback(
@@ -299,6 +323,66 @@ export function MazeClientShell() {
     setPathMarks(EMPTY_MARKS);
   }, [pathMarks]);
 
+  // 줌 컨트롤 (P3e-1) — 버튼은 캔버스 중앙 기준 줌(zoomAtCursor에 center 전달).
+  const handleZoomIn = useCallback(() => {
+    const newCellPx = clampCellPx(
+      view.cellPx * ZOOM_BUTTON_FACTOR,
+      project.size,
+      CANVAS_DISPLAY_PX,
+    );
+    if (newCellPx === view.cellPx) return;
+    setView(
+      zoomAtCursor(
+        view,
+        CANVAS_DISPLAY_PX / 2,
+        CANVAS_DISPLAY_PX / 2,
+        newCellPx,
+        project.size,
+        CANVAS_DISPLAY_PX,
+      ),
+    );
+  }, [view, project.size]);
+
+  const handleZoomOut = useCallback(() => {
+    const newCellPx = clampCellPx(
+      view.cellPx / ZOOM_BUTTON_FACTOR,
+      project.size,
+      CANVAS_DISPLAY_PX,
+    );
+    if (newCellPx === view.cellPx) return;
+    setView(
+      zoomAtCursor(
+        view,
+        CANVAS_DISPLAY_PX / 2,
+        CANVAS_DISPLAY_PX / 2,
+        newCellPx,
+        project.size,
+        CANVAS_DISPLAY_PX,
+      ),
+    );
+  }, [view, project.size]);
+
+  const handleFit = useCallback(() => {
+    setView(fitView(project.size, CANVAS_DISPLAY_PX));
+  }, [project.size]);
+
+  // view 변경 외부 핸들러 — maze-grid가 휠/핀치/팬으로 view를 갱신할 때 호출.
+  // 잘못된 view(한계 밖)가 들어와도 한 번 더 clamp — 방어.
+  const handleViewChange = useCallback(
+    (next: ViewState) => {
+      const cellPx = clampCellPx(next.cellPx, project.size, CANVAS_DISPLAY_PX);
+      const { panX, panY } = clampPan(
+        next.panX,
+        next.panY,
+        cellPx,
+        project.size,
+        CANVAS_DISPLAY_PX,
+      );
+      setView({ cellPx, panX, panY });
+    },
+    [project.size],
+  );
+
   // 키보드 단축키 — 만들기 단계(step === 1) 한정.
   // 플레이 단계(step === 2)에서는 play-controls가 방향키/WASD를 별도 바인딩 — 충돌 0.
   useEffect(() => {
@@ -368,13 +452,30 @@ export function MazeClientShell() {
               onRedo={redo}
               onResetGrid={() => setResetGridOpen(true)}
             />
-            <MazeGrid
-              grid={project.grid}
-              size={project.size}
-              theme={project.theme}
-              pathMarks={pathMarks}
-              onPaint={handlePaint}
-            />
+            {/* 캔버스 + ZoomControls 오버레이 — relative wrapper, ZoomControls는 absolute.
+                그리드 위 row를 안 늘림 (P3d 모바일 우려 직결, P3e-1 핵심 결정). */}
+            <div className="relative mx-auto max-w-[512px]">
+              <MazeGrid
+                grid={project.grid}
+                size={project.size}
+                theme={project.theme}
+                pathMarks={pathMarks}
+                view={view}
+                onViewChange={handleViewChange}
+                handMode={handMode}
+                onPaint={handlePaint}
+              />
+              <ZoomControls
+                cellPx={view.cellPx}
+                minCellPx={zoomLimits(project.size, CANVAS_DISPLAY_PX).min}
+                maxCellPx={zoomLimits(project.size, CANVAS_DISPLAY_PX).max}
+                handMode={handMode}
+                onToggleHand={() => setHandMode((v) => !v)}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                onFit={handleFit}
+              />
+            </div>
             <PathCommitButton
               visible={activeTool === "path" && pathMarks.size > 0}
               onCommit={handleCommitWalls}

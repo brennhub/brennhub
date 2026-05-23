@@ -2,7 +2,7 @@
 
 Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
-단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX (undo/redo·재클릭 토글·초기화) · **P3c-2** 길 그리기 + 벽 생성 · **P3d** 만들기 단계 통합 · **P4** 숏링크 공유.
+단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX (undo/redo·재클릭 토글·초기화) · **P3c-2** 길 그리기 + 벽 생성 · **P3d** 만들기 단계 통합 · **P3e-1** 편집 줌/팬 + 변환 인프라 · **P3e-2** 플레이 카메라 · **P4** 숏링크 공유.
 
 ## P1 — 스캐폴딩 (인프라/골격) — 완료 (CHANGELOG `[0.1.0]`)
 
@@ -113,10 +113,25 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] i18n cleanup (step3·startButton·settingsIntro·drawIntro 제거 + sizeChange* 3키 추가)
 - [ ] dev 시각 점검 — 통합 화면 / 모바일 그리드 가시성 / 사이즈 변경 다이얼로그 / 빈 grid 즉시 변경 / 키보드 만들기만 / 0.7.1 회귀(Footprints·commit 박스)
 
-## P3e — 줌·확대축소·플레이 카메라 (별도 task)
+## P3e-1 — 편집 줌/팬 + 변환 인프라 — 완료 (CHANGELOG `[0.9.0]`)
 
-- [ ] 64×64에서 화면 픽셀이 부족해 셀이 작음 — 줌 / 핀치-줌 / 휠 zoom 검토.
-- [ ] 플레이 카메라 — fog ON일 때 플레이어 중심 follow camera로 큰 미로 탐험 자연.
+- [x] `lib/maze/viewport.ts` 순수 산술 모듈 — ViewState · fitView · clampPan · zoomAtCursor · cellFromCanvasPx · cameraFollow · zoomLimits
+- [x] `RenderEngine.drawGridLines` 시그니처 확장 (panX, panY, cellPx, size). default 엔진 갱신
+- [x] `components/maze/zoom-controls.tsx` — 캔버스 우상단 오버레이 (손도구·+/−·맞춤)
+- [x] maze-grid view props + 셀 좌표 변환 + 멀티터치 (1포인터 그리기/팬, 2포인터 핀치+팬) + 휠(addEventListener passive:false) + 스페이스 일시 손도구
+- [x] 1→2 포인터 전환 시 stroke finalize (drawingRef/lastCellRef 리셋, client-shell ref들은 다음 isInitial이 덮어씀)
+- [x] client-shell view/handMode state + applySizeChange/hydrate에 view fit 리셋 + handleViewChange 방어적 재clamp
+- [x] play-canvas drawGridLines 새 시그니처 호환 (panX=0, panY=0)
+- [x] i18n 4키 — viewZoomIn / viewZoomOut / viewFit / viewHand (ko/en)
+- [ ] dev 시각 점검 — 16맵 컨트롤 비활성·32/64맵 줌인 한계(16맵 셀 크기)·줌아웃 한계(fit)·휠 커서 중심·모바일 핀치/팬·스페이스 일시 손도구·손도구 토글·우상단 오버레이가 셀 그리기 가리는지
+
+## P3e-2 — 플레이 카메라 (변환 재사용)
+
+- [ ] play-canvas에 `cameraFollow(player, size, cellPx, displayPx)` 적용 — viewport.ts 재사용, 자체 산술 0
+- [ ] 32·64맵에서 `cellPx = displayPx / 16` 고정, 16맵은 카메라 비활성 (cellPx = displayPx / 16 동일)
+- [ ] 플레이어 이동 시 즉시 카메라 스냅 (보간 없음)
+- [ ] fog 원형 clip이 카메라 변환 후 좌표계에서도 정상 (clip center = panX + (player.c + 0.5) × cellPx)
+- [ ] dev 시각 점검 — 32·64맵 카메라 follow / 가장자리 클램프 / 16맵 회귀 0
 
 ## Px — 등급 flavored 네이밍 (점수 튜닝 안정화 후)
 

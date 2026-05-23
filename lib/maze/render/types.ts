@@ -83,10 +83,20 @@ export type RenderEngine = {
     rect: RenderRect,
   ) => void;
 
-  /** 격자선 stroke. */
+  /**
+   * 격자선 stroke (P3e-1 시그니처 확장 — panX/panY/cellPx 명시 인자).
+   *
+   * 줌·팬 도입 후 호출자(maze-grid·play-canvas)가 변환 산술을 보유하고 엔진은
+   * pixel 단위로만 그린다. `ctx.scale` 사용 금지 규약 그대로 — scale을 쓰면
+   * lineWidth가 함께 변형돼 줌인 시 격자선이 두꺼워짐.
+   *
+   * 셀 좌표 모델: x = panX + c * cellPx, y = panY + r * cellPx.
+   */
   drawGridLines: (
     ctx: CanvasRenderingContext2D,
-    displayPx: number,
+    panX: number,
+    panY: number,
+    cellPx: number,
     size: number,
   ) => void;
 
