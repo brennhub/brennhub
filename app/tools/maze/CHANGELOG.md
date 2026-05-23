@@ -2,6 +2,44 @@
 
 주요 결정 / 이정표.
 
+## [0.4.0] — 2026-05-22
+
+### Added (P3b — 플레이 모드 + Fog of War)
+
+- **`lib/maze/play.ts`** — 순수 결정론 게임 상태. `PlayState`/`Dir`/`Pos` 타입 + `initialPlayState`(시작점 검색, 없으면 null) + `applyMove`(clamp + WALL 차단 + 승리 체크) + `isWin`.
+- **`lib/maze/grid.ts` `isPassable` 헬퍼** — 단일 통과성 술어. BFS(validate)와 플레이어 이동(play)이 같은 정의를 공유 → 드리프트 차단. validate.ts의 인라인 isPassable 제거 + 헤더에 명문화.
+- **`lib/maze/render/{types,default}.ts`** — `ThemePalette` 확장: `playerTint`/`playerIcon`(blue). `RenderEngine`에 `renderPlayer` 메서드 추가(필수). default 엔진은 `User` 아이콘 그대로(시작점과 동일 — 같은 사람) + blue 색 구분.
+- **StepNav 3-step 확장** — `Step = 1|2|3`, `labels: [string,string,string]`, `disabledSteps?: readonly Step[]`. 검증 미통과 시 `[3]` disabled.
+- **`components/maze/play-canvas.tsx`** — 플레이 렌더 (3-단계: 배경 → 시야 안 셀별 renderTile → renderPlayer → grid lines). fog ON일 때 검정 배경(#000) + 시야 안 셀만 렌더 + **격자선도 시야 안 셀만 stroke** — blackout 영역에 grid 패턴 비치지 않게.
+- **`components/maze/play-controls.tsx`** — D-pad(데스크탑·모바일 공통) + 키보드 핸들러(방향키/WASD). 방향키 입력 시 `e.preventDefault()` — 페이지 스크롤 차단. modifier 키 조합은 무시.
+- **`components/maze/win-dialog.tsx`** — 승리 모달 (ResetConfirmDialog 패턴 재사용). "다시 플레이" / "편집으로 돌아가기".
+- **`components/maze/play-mode.tsx`** — Step3 컨테이너. project props 단일 진입점(P4 공유 진입도 같은 인터페이스로 재사용). 자급 PlayState. grid 변경 시 자동 reset(useEffect).
+- **`client-shell.tsx`** — Step3 라우팅. StepNav `disabledSteps={validation.ok ? undefined : [3]}`. Step3 → Step2 복귀는 reset 다이얼로그 없이 즉시.
+- **i18n** — `maze.step3` + `maze.play*`/`maze.win*` 키 11개 (ko/en).
+
+### Decided
+
+- **Step3 신규 (UX)** — 풀스크린 오버레이/inline 토글 대신 기존 step-by-step 패턴 일관. P4 공유 진입은 Step3 직행 가능, 편집↔플레이 토글 자연.
+- **모바일 조작 = D-pad only** — 스와이프는 정밀 1칸 이동에 부적합(한 swipe = 몇 칸?). D-pad는 데스크탑에도 표시(키 모르는 사용자 가이드 + 입력 보조). 스와이프는 V2 후보.
+- **Fog = 하드 엣지 원형** — 셀 좌표 `(r-pr)² + (c-pc)² ≤ fogRadius²` 정수 비교. 그라데이션은 "픽셀 미로" 미학과 충돌. fog ON 시 격자선도 시야 안 셀만 stroke → blackout 강조.
+- **플레이어 마커 = User 아이콘 + blue** — 시작점(emerald)·도착점(rose)과 명확히 구분. 시작점 셀 마커는 보존(사용자 출발점 기억 도움), 플레이어는 위 layer.
+- **통과성 단일 헬퍼** — `lib/maze/grid.ts` `isPassable(tile)`이 단일 출처. BFS·이동 둘 다 호출 → "BFS == 이동" 구조적 보장. V2 신규 타일 추가 시 한 곳만 갱신.
+- **applyMove 차단 시 동일 객체 반환** — 새 객체 생성 없이 같은 state 반환 → 불필요한 React 리렌더 차단.
+- **WinDialog ESC = 편집 복귀** — 덜 파괴적인 기본 동작(restart는 상태를 잃음).
+- **플레이어블 상태는 localStorage 미보존** — `MazeProject`(에디터 작업본)만 보존, `PlayState`는 세션 메모리. 새로고침 시 grid는 Step2로 복원, 플레이는 다시 시작.
+
+### Architecture
+
+- **PlayMode 단일 진입점** — P4 공유 진입 재사용 위해 `<PlayMode project={...} onBackToEdit={...} />` 인터페이스 고정. P4는 short_id로 fetch한 project를 같은 props로 넘긴다.
+- **RenderEngine 인터페이스 확장 = 필수 메서드 추가** — `renderPlayer`는 옵셔널 아님. V2 sprite-dungeon 가설 엔진도 구현 필요. P2.1 "변경 0 주장은 ready 훅 노출 전제" 원칙과 동일 — silent oversell 방지 명문화.
+
+### Notes
+
+- 플레이 모드·이동·충돌·승리·fog 시야 모두 **AI 미사용 순수 결정론** (BRENNHUB.md §3).
+- 빈/이상 grid 안전 가드 — `initialPlayState`가 null이면 PlayMode가 `playNotReadyHint` 메시지 표시. StepNav `disabledSteps`로 사실상 도달 차단되지만 방어 fallback.
+- 숏링크 공유 P4, registry `coming-soon` → `live` 전환 P4. 본 단계 미포함.
+- API route 미생성 — `runtime = "edge"` 이슈 무관.
+
 ## [0.3.0] — 2026-05-22
 
 ### Added (P3a — 완결성 검증 시스템)

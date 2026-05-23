@@ -2,18 +2,21 @@
 
 import { cn } from "@/lib/utils";
 
-export type Step = 1 | 2;
+export type Step = 1 | 2 | 3;
 
 type Props = {
   step: Step;
-  /** [step1, step2] 라벨. */
-  labels: [string, string];
+  /** [step1, step2, step3] 라벨. */
+  labels: [string, string, string];
   onStep: (step: Step) => void;
+  /** 비활성 step (예: Step3는 검증 통과 시에만 활성). */
+  disabledSteps?: readonly Step[];
 };
 
-/** 2스텝(설정 → 그리기) 진행 네비게이션. 언어 창조기 StepNav 구조 재사용. */
-export function StepNav({ step, labels, onStep }: Props) {
-  const steps: Step[] = [1, 2];
+/** 3스텝(설정 → 그리기 → 플레이) 진행 네비게이션. 언어 창조기 StepNav 구조 재사용. */
+export function StepNav({ step, labels, onStep, disabledSteps }: Props) {
+  const steps: Step[] = [1, 2, 3];
+  const disabledSet = new Set(disabledSteps ?? []);
   return (
     <div
       role="tablist"
@@ -22,18 +25,25 @@ export function StepNav({ step, labels, onStep }: Props) {
     >
       {steps.map((s, i) => {
         const active = s === step;
+        const disabled = disabledSet.has(s);
         return (
           <div key={s} className="flex items-center gap-2">
             <button
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => onStep(s)}
+              aria-disabled={disabled}
+              disabled={disabled}
+              onClick={() => {
+                if (!disabled) onStep(s);
+              }}
               className={cn(
                 "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
                 active
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-card text-muted-foreground hover:text-foreground",
+                disabled &&
+                  "cursor-not-allowed opacity-50 hover:text-muted-foreground",
               )}
             >
               <span

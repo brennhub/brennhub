@@ -1,3 +1,4 @@
+import { isPassable } from "./grid";
 import { TILE, type TileType } from "./types";
 
 /**
@@ -11,7 +12,8 @@ import { TILE, type TileType } from "./types";
  *     검증의 통과성과 플레이의 통과성이 일치한다.
  *   - 규칙3(도달성): 시작점에서 4방향 BFS로 도착점 최소 1개에 도달 가능 → `reachability`.
  *
- * 통과 타일(passable): EMPTY / START / GOAL. 차단(blocked): WALL.
+ * 통과성은 `grid.ts`의 `isPassable` 단일 헬퍼를 사용 — 플레이어 이동(play.ts)과
+ * 정의를 공유한다. BFS 통과성 == 이동 통과성을 구조적으로 보장 (드리프트 차단).
  */
 
 /** 검증 실패 사유 식별자 — UI에서 i18n으로 메시지 합성. */
@@ -32,11 +34,6 @@ export type ValidationResult = {
   endpoints: RuleResult;
   reachability: RuleResult;
 };
-
-/** 통과 가능한 타일인가. WALL만 차단. */
-function isPassable(t: TileType | undefined): boolean {
-  return t === TILE.EMPTY || t === TILE.START || t === TILE.GOAL;
-}
 
 /** 시작점/도착점 좌표 수집. */
 function collectEndpoints(grid: TileType[][]): {

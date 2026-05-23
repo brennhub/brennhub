@@ -30,6 +30,9 @@ function createDefaultPalette(dark: boolean): ThemePalette {
     goalTint: "rgba(225, 29, 72, 0.18)", // rose
     goalIcon: dark ? "#fb7185" : "#e11d48",
     gridLine: dark ? "#3f3f46" : "#e4e4e7",
+    // 플레이어 — blue 컨벤션. 시작점(emerald)·도착점(rose)과 명확히 구분.
+    playerTint: "rgba(37, 99, 235, 0.28)", // blue (alpha 약간 강 — 셀 위 덧칠)
+    playerIcon: dark ? "#60a5fa" : "#2563eb",
   };
 }
 
@@ -106,6 +109,13 @@ export function createDefaultEngine(dark: boolean): RenderEngine {
       ctx.fillRect(0, 0, displayPx, displayPx);
     },
     renderTile,
+    renderPlayer(ctx, p, rect) {
+      // 시작점과 동일 아이콘(User) — 같은 사람이 움직인다는 시각 일관.
+      // 색만 blue로 구분. 시작점 셀 마커는 보존되므로 출발점도 함께 보인다.
+      ctx.fillStyle = p.playerTint;
+      ctx.fillRect(rect.x, rect.y, rect.size, rect.size);
+      strokeIcon(ctx, ICON_USER, rect, p.playerIcon);
+    },
     drawGridLines(ctx, displayPx, size) {
       const cell = displayPx / size;
       ctx.strokeStyle = palette.gridLine;

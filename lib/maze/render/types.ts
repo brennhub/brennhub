@@ -21,6 +21,10 @@ export type ThemePalette = {
   goalIcon: string;
   /** 격자선. */
   gridLine: string;
+  /** 플레이어 셀 틴트 (P3b 플레이 모드). */
+  playerTint: string;
+  /** 플레이어 아이콘 stroke (P3b 플레이 모드). */
+  playerIcon: string;
 };
 
 export type TileRenderer = (
@@ -50,6 +54,19 @@ export type RenderEngine = {
 
   /** 단일 셀 렌더. EMPTY는 no-op 가능 (배경이 처리). */
   renderTile: TileRenderer;
+
+  /**
+   * 플레이어 마커 렌더 (P3b 플레이 모드).
+   *
+   * 시작점 마커 위에 덧그리는 별도 layer — START 셀은 그대로 두고 플레이어
+   * 위치에 추가로 그린다. 새 엔진(V2 sprite-dungeon 등)을 추가할 때 이 메서드
+   * 구현이 필수 — 인터페이스 확장이라 silent oversell 방지.
+   */
+  renderPlayer: (
+    ctx: CanvasRenderingContext2D,
+    palette: ThemePalette,
+    rect: RenderRect,
+  ) => void;
 
   /** 격자선 stroke. */
   drawGridLines: (
