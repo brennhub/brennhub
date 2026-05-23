@@ -2,6 +2,38 @@
 
 주요 결정 / 이정표.
 
+## [0.8.0] — 2026-05-23
+
+### Changed (P3d — 설정+그리기 단계 통합)
+
+3-step(설정/그리기/플레이) → **2-step(만들기/플레이)**. "그리기 후 설정으로 돌아갈 때 grid 초기화" 마찰을 제거. 사이즈/fog 컨트롤이 만들기 화면에 상시 노출되어 흐름이 끊기지 않음.
+
+- **StepNav 2노드** — `Step = 1 | 2` (만들기 / 플레이). labels `[string, string]`. `disabledSteps={[2]}` 검증 미통과 시.
+- **만들기 화면 통합 레이아웃** — 그리드 **위**(고정 높이만): 헤더 → StepNav → SettingsPanel(사이즈/Fog row) → ToolPalette → EditorControls. 그리드 **아래**(가변/contextual): PathCommitButton → ValidationPanel. 0.5.1·0.7.1의 "가변 요소는 그리드 아래" 원칙 일관 유지.
+- **사이즈 변경 흐름** — 비어있지 않은 grid에서 다른 사이즈 클릭 시 `ResetConfirmDialog`(`sizeChange*` i18n) → 확인 시 `{ size, grid: emptyGrid(size), history: empty, marks: empty }` 모두 새로. 빈 grid면 다이얼로그 스킵 즉시 변경. fog 토글·반경은 grid 영향 0이라 항상 즉시.
+- **`SettingsPanel` 단순화** — `onStart` props 제거 (만들기 시작 버튼 없어짐). `settingsIntro` 텍스트 제거. props 표현 단순, 분리 컴포넌트 유지(가독성). client-shell이 비대해지지 않게.
+- **localStorage hydrate 변경** — `loaded.grid.length === 0`이면 `emptyGrid(loaded.size)`로 자동 채움 (이전엔 Step1 startButton 클릭이 트리거). schemaVersion 영향 0 — MazeProject 구조 무변경.
+- **키보드 핸들러 step 의존 갱신** — `step !== 2` → `step !== 1` (만들기 한정 활성). 플레이 단계에서는 play-controls가 방향키/WASD 별도 바인딩 — 충돌 0.
+- **handleStart / handleConfirmReset 제거** — 단계 전이 자체가 사라짐. 신규 grid는 hydrate·사이즈 변경 시점에 자동 채움.
+
+### Removed
+
+- `tm.step3` / `tm.startButton` / `tm.settingsIntro` / `tm.drawIntro` i18n 키 — 통합으로 무용. Messages 타입 + ko/en 본문 모두 제거. (실제 사용처 0 grep 확인.)
+- Step1→Step2 reset 확인 다이얼로그 경로 폐지. `ResetConfirmDialog` 컴포넌트는 그리드 초기화·사이즈 변경 두 인스턴스에서 재사용 (0.6.0 props 일반화 활용).
+
+### Decided
+
+- **2-step (만들기/플레이) vs 모드 토글** — 단계 의미가 본질적으로 다름(편집 vs 플레이) → 단계 라벨 유지. 모드 토글은 mental load 추가만.
+- **빈 grid 자동 채움 시점** — hydrate. 이전 Step1 startButton 트리거를 hydrate로 이동. 페이지 진입과 동시에 그리기 가능.
+- **사이즈 변경 = grid + history + marks 모두 새로** — 다른 사이즈 grid 참조하는 stroke 호환 X(history 깨짐 방지). marks도 좌표 기반이라 사이즈 바뀌면 무효 — 클리어. 사용자가 명시 확인하면 그게 의도.
+- **SettingsPanel 분리 유지** — 폐기·인라인 대신 props 단순화. client-shell이 이미 크고, 분리 컴포넌트가 가독성에 유리. 통합 화면에서 unconditional 렌더.
+
+### Notes
+
+- **step 리터럴 전수 재번호** — `disabledSteps`(`[3]→[2]`) / 키보드(`!== 2 → !== 1`) / 플레이 뷰 조건부(`step === 3 → step === 2`) / WinDialog 복귀(`setStep(2) → setStep(1)`) / hydrate 복원 로직 / play-mode 주석. grep 전수 확인 후 누락 0.
+- 점수 알고리즘 / SCORE_TUNING / fog / play.ts / play-canvas / undo·redo 로직 / 검증 BFS — 무변경 (회귀 0 보장).
+- 회귀 점검: 키보드는 만들기 단계만, 플레이는 방향키. 플레이 진입 시 만들기 단축키 unmount. 충돌 0.
+
 ## [0.7.1] — 2026-05-23
 
 ### Changed

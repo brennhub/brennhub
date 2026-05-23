@@ -2,7 +2,7 @@
 
 Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
-단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX (undo/redo·재클릭 토글·초기화) · **P3c-2** 길 그리기 + 벽 생성 · **P4** 숏링크 공유.
+단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX (undo/redo·재클릭 토글·초기화) · **P3c-2** 길 그리기 + 벽 생성 · **P3d** 만들기 단계 통합 · **P4** 숏링크 공유.
 
 ## P1 — 스캐폴딩 (인프라/골격) — 완료 (CHANGELOG `[0.1.0]`)
 
@@ -100,6 +100,23 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] `client-shell.tsx` — Step3 라우팅, 1↔2↔3 전이
 - [x] i18n `maze.step3` + `maze.play*`/`maze.win*` 키 11개 (ko/en)
 - [ ] dev 시각 점검 — Step3 활성/비활성 / 이동(키보드·D-pad) / 벽 충돌·경계 / 승리 모달 / fog(반경 1·3·6) / 다크·라이트 / 32×32·64×64
+
+## P3d — 만들기 단계 통합 — 완료 (CHANGELOG `[0.8.0]`)
+
+- [x] StepNav 2노드 (만들기·플레이), Step = 1|2 축소
+- [x] 통합 화면 레이아웃 — 위 고정 / 아래 가변
+- [x] 사이즈 변경 시 확인 다이얼로그 (비어있으면 즉시) — ResetConfirmDialog 재사용
+- [x] SettingsPanel 단순화 (onStart·settingsIntro 제거)
+- [x] hydrate 시 빈 grid 자동 채움
+- [x] 키보드 step 의존 갱신 (만들기 한정)
+- [x] step 리터럴 전수 재번호 (disabledSteps·키보드·플레이 뷰·WinDialog 복귀·주석)
+- [x] i18n cleanup (step3·startButton·settingsIntro·drawIntro 제거 + sizeChange* 3키 추가)
+- [ ] dev 시각 점검 — 통합 화면 / 모바일 그리드 가시성 / 사이즈 변경 다이얼로그 / 빈 grid 즉시 변경 / 키보드 만들기만 / 0.7.1 회귀(Footprints·commit 박스)
+
+## P3e — 줌·확대축소·플레이 카메라 (별도 task)
+
+- [ ] 64×64에서 화면 픽셀이 부족해 셀이 작음 — 줌 / 핀치-줌 / 휠 zoom 검토.
+- [ ] 플레이 카메라 — fog ON일 때 플레이어 중심 follow camera로 큰 미로 탐험 자연.
 
 ## Px — 등급 flavored 네이밍 (점수 튜닝 안정화 후)
 
