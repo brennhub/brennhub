@@ -2,6 +2,7 @@ import { TILE } from "../types";
 import {
   getIconPaths,
   ICON_FLAG,
+  ICON_FOOTPRINTS,
   ICON_USER,
   type IconNode,
 } from "./icons";
@@ -86,9 +87,10 @@ const renderTile: TileRenderer = (ctx, tile, palette, rect) => {
       return;
     case TILE.START:
       // 작은 셀(64×64 ≈ 8px)에서도 식별되도록 틴트 + 아이콘 병행.
+      // 0.7.1: User → Footprints — 시작점 타일(서있는 자국)과 플레이어(움직이는 사람)를 시각 분리.
       ctx.fillStyle = palette.startTint;
       ctx.fillRect(rect.x, rect.y, rect.size, rect.size);
-      strokeIcon(ctx, ICON_USER, rect, palette.startIcon);
+      strokeIcon(ctx, ICON_FOOTPRINTS, rect, palette.startIcon);
       return;
     case TILE.GOAL:
       ctx.fillStyle = palette.goalTint;
@@ -113,8 +115,8 @@ export function createDefaultEngine(dark: boolean): RenderEngine {
     },
     renderTile,
     renderPlayer(ctx, p, rect) {
-      // 시작점과 동일 아이콘(User) — 같은 사람이 움직인다는 시각 일관.
-      // 색만 blue로 구분. 시작점 셀 마커는 보존되므로 출발점도 함께 보인다.
+      // 0.7.1: 플레이어 = User. 시작점 타일은 Footprints(남은 자국)로 분리됨 —
+      // "출발점에서 사람이 떠나서 움직인다"는 시각 메타포 일관.
       ctx.fillStyle = p.playerTint;
       ctx.fillRect(rect.x, rect.y, rect.size, rect.size);
       strokeIcon(ctx, ICON_USER, rect, p.playerIcon);

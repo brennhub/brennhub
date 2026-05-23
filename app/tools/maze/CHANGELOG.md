@@ -2,6 +2,29 @@
 
 주요 결정 / 이정표.
 
+## [0.7.1] — 2026-05-23
+
+### Changed
+
+- **PathCommitButton 위치 — 그리드 위 → 아래**. 0.5.1에서 검증·점수 패널에 적용한 "가변/contextual 요소는 그리드 아래" 원칙을 길 도구 commit 박스에도 확장. 그리드 위에 가변 박스가 있으면 박스 등장·소멸·높이 변화가 그리드를 위아래로 밀어 사용자가 그리던 셀 위치를 잃음. 그리드 아래 순서: MazeGrid → PathCommitButton(contextual) → ValidationPanel(상시).
+- **검증·점수 패널 위치 확인** — 0.5.1 그리드 아래 배치가 0.7.0 P3c-2 레이아웃 변경 후에도 유지됨 (회귀 0).
+
+### Changed (시작점 ↔ 플레이어 아이콘 분리)
+
+- **시작점 타일 아이콘 — User → Footprints** (`lib/maze/render/default.ts` TILE.START 분기 + `lib/maze/render/icons.ts` `ICON_FOOTPRINTS` 추가). "남은 자국 = 출발 지점" 의미.
+- **플레이어 마커 — User 유지** (`renderPlayer`). "움직이는 사람"이 출발 지점의 자국에서 떠난 시각 메타포.
+- **도구 팔레트 START 버튼 — Footprints**. 0.6.1의 "버튼 = 맵 아이콘" 원칙으로 `MAZE_TOOL_ICONS.START`도 Footprints. `lib/maze/icons.ts` 갱신.
+- **도착점(Flag) · 길 도구(Route) · 벽(Square)** — 무변경. 4개 아이콘 모두 명확히 구분.
+
+### Decided
+
+- **시작점 = "남은 자국", 플레이어 = "사람"** — 두 시각을 분리하면 Step3 진입 시 출발점 자국이 보존된 채로 사람이 떠나는 메타포가 자연. 같은 User 두 개일 때 "어느 게 어디"가 헷갈리던 문제 해소.
+
+### Notes
+
+- ICON_FOOTPRINTS는 lucide-react v1.14.0 `icons/footprints.mjs`에서 4 path 원소 그대로 임베드(ISC). 근사·재구성 없음.
+- 동작 로직(history·undo·commit·검증·점수·플레이) 무변경 — UI 정리만.
+
 ## [0.7.0] — 2026-05-23
 
 ### Added (P3c-2 — 길 그리기 모드 + 자동 벽 생성)

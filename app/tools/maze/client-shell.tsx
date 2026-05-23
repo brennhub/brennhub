@@ -404,16 +404,20 @@ export function MazeClientShell() {
               onRedo={redo}
               onResetGrid={() => setResetGridOpen(true)}
             />
-            <PathCommitButton
-              visible={activeTool === "path" && pathMarks.size > 0}
-              onCommit={handleCommitWalls}
-            />
             <MazeGrid
               grid={project.grid}
               size={project.size}
               theme={project.theme}
               pathMarks={pathMarks}
               onPaint={handlePaint}
+            />
+            {/* PathCommitButton·ValidationPanel은 모두 그리드 아래.
+                높이 변화가 그리드를 안 밀게 — 0.5.1에서 검증 패널에 적용한
+                원칙을 0.7.1에서 PathCommitButton에도 확장. contextual
+                액션(commit)이 상시 패널(검증/점수)보다 위. */}
+            <PathCommitButton
+              visible={activeTool === "path" && pathMarks.size > 0}
+              onCommit={handleCommitWalls}
             />
             <ValidationPanel result={validation} score={score} />
           </div>
