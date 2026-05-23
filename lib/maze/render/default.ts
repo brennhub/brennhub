@@ -33,6 +33,9 @@ function createDefaultPalette(dark: boolean): ThemePalette {
     // 플레이어 — blue 컨벤션. 시작점(emerald)·도착점(rose)과 명확히 구분.
     playerTint: "rgba(37, 99, 235, 0.28)", // blue (alpha 약간 강 — 셀 위 덧칠)
     playerIcon: dark ? "#60a5fa" : "#2563eb",
+    // 길 마크 transient — lime. start/goal/player 모두와 구분되는 컬러군.
+    // alpha 0.32로 셀 내용 위에 덧칠해도 밑 글리프(start User/goal Flag) 식별 가능.
+    pathMarkTint: "rgba(132, 204, 22, 0.32)",
   };
 }
 
@@ -115,6 +118,12 @@ export function createDefaultEngine(dark: boolean): RenderEngine {
       ctx.fillStyle = p.playerTint;
       ctx.fillRect(rect.x, rect.y, rect.size, rect.size);
       strokeIcon(ctx, ICON_USER, rect, p.playerIcon);
+    },
+    renderPathMark(ctx, p, rect) {
+      // 셀 위 반투명 lime 오버레이 — start/goal 글리프 위에 덧칠돼도 밑이 비침.
+      // 마크는 transient: "벽 생성" 커밋 시 grid에 반영되며 소거됨.
+      ctx.fillStyle = p.pathMarkTint;
+      ctx.fillRect(rect.x, rect.y, rect.size, rect.size);
     },
     drawGridLines(ctx, displayPx, size) {
       const cell = displayPx / size;

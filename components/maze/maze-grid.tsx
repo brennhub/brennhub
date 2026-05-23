@@ -14,6 +14,12 @@ type Props = {
   /** MazeProject.theme — V1은 "default" 고정. V2 sprite-dungeon 분기점. */
   theme: MazeTheme;
   /**
+   * 길 마크 transient 레이어 (P3c-2) — `"r,c"` key Set.
+   * grid 밖 별도 state. "벽 생성" 커밋 시 grid에 반영되며 client-shell이 소거.
+   * 미지정 시 마크 렌더 skip.
+   */
+  pathMarks?: ReadonlySet<string>;
+  /**
    * 셀 페인트 — 적용 타일은 client-shell이 활성 도구로 결정.
    * `isInitial=true`는 pointerdown(클릭 시작), `false`는 pointermove(드래그 진행) —
    * client-shell이 도구별로 드래그 허용 여부를 판단(P3a-2 후속: 도착점은 클릭 1회만).
@@ -31,7 +37,13 @@ type Props = {
  *
  * 포인터 드로잉은 pixel-editor 패턴 재사용.
  */
-export function MazeGrid({ grid, size, theme: mazeTheme, onPaint }: Props) {
+export function MazeGrid({
+  grid,
+  size,
+  theme: mazeTheme,
+  pathMarks,
+  onPaint,
+}: Props) {
   const { theme: colorMode } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -76,6 +88,22 @@ export function MazeGrid({ grid, size, theme: mazeTheme, onPaint }: Props) {
           });
         }
       }
+      // 길 마크 transient 오버레이 (P3c-2) — 타일 위, 격자선 아래.
+      // 엔진이 renderPathMark 미정의이거나 마크 비어있으면 skip.
+      if (pathMarks && pathMarks.size > 0 && engine.renderPathMark) {
+        for (const key of pathMarks) {
+          const [rs, cs] = key.split(",");
+          const r = Number(rs);
+          const c = Number(cs);
+          if (!Number.isFinite(r) || !Number.isFinite(c)) continue;
+          if (r < 0 || r >= size || c < 0 || c >= size) continue;
+          engine.renderPathMark(ctx, engine.palette, {
+            x: c * cell,
+            y: r * cell,
+            size: cell,
+          });
+        }
+      }
       engine.drawGridLines(ctx, DISPLAY_PX, size);
     };
     void draw();
@@ -83,7 +111,7 @@ export function MazeGrid({ grid, size, theme: mazeTheme, onPaint }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [grid, size, mazeTheme, colorMode]);
+  }, [grid, size, mazeTheme, colorMode, pathMarks]);
 
   const cellFromEvent = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>): { r: number; c: number } => {

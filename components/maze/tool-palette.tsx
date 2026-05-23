@@ -6,10 +6,15 @@ import { useMessages } from "@/lib/i18n/provider";
 import { MAZE_TOOL_ICONS } from "@/lib/maze/icons";
 
 /**
- * Step2 그리기 도구 — 0.6.1에서 "eraser" 제거 (벽 재클릭 토글이 대체).
- * 시작·도착 아이콘은 `MAZE_TOOL_ICONS` 단일 출처로 렌더러와 정합.
+ * Step2 그리기 도구.
+ * 변경 이력:
+ *   - 0.6.1: "eraser" 제거 (벽 재클릭 토글이 대체)
+ *   - 0.7.0 (P3c-2): "path" 추가 — 길 마크 그리고 "벽 생성" 버튼으로 commit
+ *
+ * 시작·도착 아이콘은 `MAZE_TOOL_ICONS` 단일 출처로 렌더러와 정합. PATH는 마크 자체가
+ * 렌더러 글리프 없는 transient 오버레이 — 팔레트 버튼 아이콘으로만 lucide `Route` 사용.
  */
-export type Tool = "wall" | "start" | "goal";
+export type Tool = "wall" | "path" | "start" | "goal";
 
 type Props = {
   activeTool: Tool;
@@ -20,6 +25,7 @@ export function ToolPalette({ activeTool, onToolChange }: Props) {
   const t = useMessages().maze;
   const tools: { value: Tool; label: string; Icon: LucideIcon }[] = [
     { value: "wall", label: t.toolWall, Icon: MAZE_TOOL_ICONS.WALL },
+    { value: "path", label: t.toolPath, Icon: MAZE_TOOL_ICONS.PATH },
     { value: "start", label: t.toolStart, Icon: MAZE_TOOL_ICONS.START },
     { value: "goal", label: t.toolGoal, Icon: MAZE_TOOL_ICONS.GOAL },
   ];
