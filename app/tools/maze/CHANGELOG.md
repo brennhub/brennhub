@@ -2,6 +2,51 @@
 
 주요 결정 / 이정표.
 
+## [0.9.0] — 2026-05-23
+
+### Added (P3e-1 — 편집 줌/팬 + 변환 인프라)
+
+만들기 화면에서 32·64맵 줌/팬. 변환 산술은 순수 모듈로 분리해 P3e-2 플레이 카메라가 같은 함수 재사용.
+
+- **`lib/maze/viewport.ts` (신규)** — 순수 산술 모듈. `ViewState` / `fitView` / `clampPan` / `clampCellPx` / `zoomLimits` / `zoomAtCursor` / `cellFromCanvasPx` / `cameraFollow`. 셀↔픽셀 매핑·pan 클램프·커서 중심 줌·플레이 카메라 follow 모두 한 곳. 컴포넌트(maze-grid·play-canvas)는 이벤트 처리만, 산술은 본 모듈 호출.
+- **줌 한계**:
+  - 줌아웃 = `displayPx / size` (현 그리드 fit)
+  - 줌인 = `displayPx / ZOOM_REFERENCE_SIZE` (16맵 셀 크기)
+  - 16맵은 두 한계가 같아 줌 컨트롤 사실상 비활성.
+- **`components/maze/zoom-controls.tsx` (신규)** — 캔버스 우상단 absolute 오버레이. 손도구 토글(✋) + 확대(+) + 축소(−) + 맞춤(⊡) 4 버튼. 그리드 위 row를 늘리지 않음 (P3d 모바일 우려 직결). zoomLimits 도달 시 +/− disabled.
+- **`maze-grid.tsx` 재배선**:
+  - `view: ViewState` / `onViewChange` / `handMode` props 추가.
+  - 셀 좌표 = `panX + c × cellPx` / `panY + r × cellPx`. `ctx.scale` 미사용 (lineWidth 일정).
+  - **휠 줌** — `useEffect`에서 `addEventListener("wheel", h, {passive: false})`로 직접 등록. React `onWheel` prop은 passive 처리될 수 있어 `preventDefault` 안 먹어 페이지 스크롤 차단 못 함 — gotcha 회피.
+  - **멀티터치** — `Map<pointerId, point>` 추적. 1 포인터 = 그리기(또는 손도구 시 팬). **2 포인터 = 핀치줌 + 팬** (anchor 거리·중심으로 zoomAtCursor + 추가 팬).
+  - **1→2 포인터 전환 시 stroke finalize** — `drawingRef`/`lastCellRef` 리셋. client-shell의 `strokeFillRef`/`pathStrokeModeRef`는 다음 stroke의 `isInitial=true`가 덮어쓰므로 자동 정리.
+  - **스페이스 keydown/keyup** — 일시 손도구. input/textarea focus 시 무시. 스페이스 누르는 순간 진행 stroke도 finalize.
+  - `cursor: handMode ? "grab" : "default"` — 시각 피드백.
+  - `touchAction: "none"` 유지 — 브라우저 핀치/스크롤이 캔버스 제스처 가로채는 것 차단.
+- **`RenderEngine.drawGridLines` 시그니처 확장** — `(ctx, panX, panY, cellPx, size)`. default 엔진 갱신. `play-canvas`는 P3e-1 호환만 (panX=panY=0, cellPx=DISPLAY_PX/size). P3e-2에서 카메라 도입.
+- **client-shell `view`/`handMode` state** — transient. `applySizeChange`/`hydrate`에 `setView(fitView(size))` 추가. 버튼 줌은 캔버스 중앙 기준 `zoomAtCursor`. `handleViewChange` 방어적 재clamp.
+- **i18n 신규 4키** (ko/en) — `viewZoomIn` / `viewZoomOut` / `viewFit` / `viewHand`.
+
+### Decided
+
+- **순수 산술 모듈 분리** (lib/maze/viewport.ts) — 컴포넌트가 좌표·clamp 산술을 자체 보유하면 P3e-2 play-canvas가 같은 산술을 다시 짜게 됨. 단일 출처로 드리프트 차단. lib/maze/*.ts 패턴(grid·validate·play) 일관.
+- **명시 cellPx 변환** (B) — `ctx.scale` 안 씀. lineWidth가 scale 영향 안 받아 격자선·아이콘 stroke 두께 일정. 셀 좌표는 컴포넌트가 계산해 renderTile rect에 그대로 넘김.
+- **휠 = addEventListener {passive:false}** — React onWheel passive 처리 문제 회피. 브라우저 gotcha.
+- **1↔2 포인터 전환 = stroke 정식 종료** — finalizeStroke 헬퍼로 drawingRef/lastCellRef 리셋. client-shell ref들은 다음 stroke isInitial이 덮어써 자동.
+- **줌·팬 = transient** — MazeProject·localStorage 미포함. 새로고침 시 fitView로 복원. schemaVersion 영향 0.
+- **사이즈 변경 = view 새 fit** — history·marks와 함께 view도 새 사이즈의 fit으로 리셋.
+- **버튼 줌 중심 = 캔버스 중앙**, 휠/핀치 = 커서/중심. 사용자 의도 일치.
+
+### Changed (회귀 없음)
+
+- `play-canvas.tsx` — `drawGridLines` 호출만 새 시그니처(panX=0, panY=0, cell, size). 동작 동일.
+
+### Notes
+
+- 점수 알고리즘 / SCORE_TUNING / validate BFS / commit 알고리즘 / pathMarks 로직 / play.ts(이동·승리) — **무변경** (회귀 0).
+- P3e-2 (플레이 카메라) — 본 모듈 재사용 (cameraFollow). 별도 task.
+- dev 점검 시 줌 컨트롤 우상단 오버레이가 셀 그리기 가리는지 확인 — 거슬리면 후속 패치(축소·반투명·이동).
+
 ## [0.8.0] — 2026-05-23
 
 ### Changed (P3d — 설정+그리기 단계 통합)

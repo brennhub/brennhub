@@ -472,6 +472,10 @@ export type Messages = {
     sizeChangeTitle: string;
     sizeChangeMessage: string;
     sizeChangeConfirm: string;
+    viewZoomIn: string;
+    viewZoomOut: string;
+    viewFit: string;
+    viewHand: string;
     toolWall: string;
     toolPath: string;
     toolStart: string;
@@ -1057,6 +1061,10 @@ export const messages: Record<Locale, Messages> = {
       sizeChangeMessage:
         "사이즈를 바꾸면 그리드의 모든 셀이 새 크기로 다시 생성됩니다. 지금까지 그린 내용은 사라집니다.",
       sizeChangeConfirm: "변경",
+      viewZoomIn: "확대",
+      viewZoomOut: "축소",
+      viewFit: "맞춤",
+      viewHand: "손도구 (스페이스 + 드래그)",
       toolWall: "벽",
       toolPath: "길",
       toolStart: "시작점",
@@ -1685,6 +1693,10 @@ export const messages: Record<Locale, Messages> = {
       sizeChangeMessage:
         "Changing size regenerates the grid at the new dimensions. Anything drawn will be lost.",
       sizeChangeConfirm: "Change",
+      viewZoomIn: "Zoom in",
+      viewZoomOut: "Zoom out",
+      viewFit: "Fit",
+      viewHand: "Hand tool (space + drag)",
       toolWall: "Wall",
       toolPath: "Path",
       toolStart: "Start",

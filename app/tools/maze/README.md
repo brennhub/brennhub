@@ -20,7 +20,7 @@
 - **ToolPalette** — 도구 4종(벽 / **길** / 시작점 / 도착점). 0.6.1에서 지우개 제거(벽 재클릭 토글이 대체). 시작점 아이콘 = Footprints (0.7.1 — 플레이어 User와 시각 분리).
 - **EditorControls** — undo / redo / 그리드 초기화(휴지통).
 
-**MazeGrid** — 위치 고정 핵심. 위·아래 어느 쪽도 그리드를 밀지 않게.
+**MazeGrid** — 위치 고정 핵심. 위·아래 어느 쪽도 그리드를 밀지 않게. **줌·팬**(0.9.0 P3e-1): 32·64맵에서 휠·핀치·+/− 버튼으로 확대/축소. 줌인 한계 = 16맵 셀 크기, 줌아웃 한계 = 현 그리드 fit. 16맵은 컨트롤 비활성. 팬: 스페이스+드래그(데스크탑) / 2 손가락(모바일) / 손도구(✋) 토글. 캔버스 우상단 컨트롤 오버레이.
 
 **그리드 아래 (가변 / contextual)**:
 - **PathCommitButton** (contextual, 길 도구 + 마크 존재 시) — 클릭 시 마크=EMPTY / start·goal=보존 / 그 외=WALL. 1 undo entry, Ctrl+Z 회복.
@@ -132,6 +132,7 @@ lib/maze/
   storage.ts                               # P2 완료 — localStorage load/save/migrate
   icons.ts                                 # 0.6.1 — 도구 팔레트 아이콘 단일 출처 (렌더러와 cross-ref)
   validate.ts                              # P3a + P3a-2 완료 — 완결성 검증 + 미로 품질 점수 (SCORE_TUNING)
+  viewport.ts                              # P3e-1 — 뷰포트 변환 순수 산술 (ViewState·zoom·clamp·camera)
   play.ts                                  # P3b 완료 — PlayState / applyMove / isWin (순수 결정론)
   render/
     types.ts                               # P2.1 완료 + P3b renderPlayer — RenderEngine 인터페이스
@@ -148,6 +149,7 @@ components/maze/
   validation-panel.tsx                     # P3a + P3a-2 — Step2 배지: 미통과 사유 / 통과 시 별점·차원 바·약점
   editor-controls.tsx                      # P3c-1 — Step2 undo/redo/초기화 컨트롤 row
   path-commit-button.tsx                   # P3c-2 — 길 도구 활성 시 노출되는 "벽 생성" 버튼
+  zoom-controls.tsx                        # P3e-1 — 캔버스 우상단 줌·손도구 오버레이
   play-canvas.tsx                          # P3b 완료 — Step3 캔버스 (fog 시야 안 셀+격자선만)
   play-controls.tsx                        # P3b 완료 — D-pad + 키보드(방향키 preventDefault)
   play-mode.tsx                            # P3b 완료 — Step3 컨테이너 (P4 재사용 인터페이스)

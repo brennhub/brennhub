@@ -85,7 +85,8 @@ export function PlayCanvas({
           y: player.r * cell,
           size: cell,
         });
-        engine.drawGridLines(ctx, DISPLAY_PX, size);
+        // P3e-1 시그니처 호환 — 카메라 미도입(panX=panY=0). 카메라는 P3e-2에서.
+        engine.drawGridLines(ctx, 0, 0, cell, size);
       };
 
       if (fogOfWar) {
