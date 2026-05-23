@@ -2,7 +2,7 @@
 
 Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
-단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3** 검증·플레이·Fog 렌더 · **P4** 숏링크 공유.
+단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3b** 플레이·Fog 렌더 · **P4** 숏링크 공유.
 
 ## P1 — 스캐폴딩 (인프라/골격) — 완료 (CHANGELOG `[0.1.0]`)
 
@@ -59,12 +59,24 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 
 - V2 `sprite-dungeon` 엔진은 스프라이트 시트 비동기 로드가 필요할 가능성 — `RenderEngine.ready?: () => Promise<void>` 훅으로 처리. maze-grid는 이미 `await engine.ready?.()` + cancel 가드를 두므로 V2 추가 시 maze-grid 변경 0. **단** 새 엔진이 ready 훅을 노출하는 것이 전제 — "변경 0" 주장은 이 전제 위에서만 성립 (silent oversell 금지).
 
-## P3 — 검증 · 플레이 · Fog 렌더
+## P3a — 완결성 검증 — 완료 (CHANGELOG `[0.3.0]`)
 
-- [ ] 미로 검증 — 외곽 폐쇄 확인 + 시작→도착 도달 가능(BFS) 판정
-- [ ] 플레이 모드 — 시작점에서 이동, 도착점 도달 판정
+- [x] `lib/maze/validate.ts` — `validateMaze(grid)` + `ValidationResult` 타입 + 4방향 BFS
+- [x] 규칙1(엔드포인트) — 시작 정확히 1개 + 도착 1개 이상
+- [x] 규칙2(외곽 폐쇄) — boundary clamp 자동 충족, 명시 체크 없음(헤더 명문화)
+- [x] 규칙3(도달성) — 시작→도착 BFS. endpoints 미통과 시 `skipped` 보류
+- [x] `components/maze/validation-panel.tsx` — Step2 배지 + 펼침 상세
+- [x] `client-shell.tsx` — `useMemo` 라이브 재계산
+- [x] i18n `maze.validation*` 키 12개 (ko/en)
+- [x] 빈 grid 안전 가드 — Step2 진입 직후 크래시 없음
+- [ ] dev 시각 점검 — 빈/미완성/완성/도달 불가 미로에서 패널 반응 + 펼침 + 다크·라이트
+
+## P3b — 플레이 · Fog 렌더
+
+- [ ] 플레이 모드 — 시작점에서 이동(키보드·터치), 도착점 도달 판정
+- [ ] **플레이어 이동 규약(P3a에서 확정)** — `r,c`를 `[0, size-1]` clamp + WALL 진입 차단. 외곽 EMPTY 통과 가능. BFS 통과성과 일치
 - [ ] Fog of War 렌더 — `fogOfWar`/`fogRadius` 기반 시야 제한 표시
-- [ ] 검증 실패 시 그리기 단계 inline 경고 (validity guard 패턴)
+- [ ] 검증 실패 미로는 플레이 진입 차단 (validation-panel이 이미 사유 표시)
 
 ## P4 — 숏링크 공유 (D1 · API) + live 전환
 
@@ -81,6 +93,7 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [ ] **테마 시스템** — `MazeTheme`의 `"sprite-dungeon"` 활성화. 타일 스프라이트 세트 교체.
 - [ ] **공유 API rate limit** — `maze` 저장 POST에 IP 해시 기반 rate limit (feedback `RATE_LIMIT_WINDOW_MS` 패턴 재사용).
 - [ ] **인기 미로 랭킹** — `created_at` 인덱스 + 조회수/플레이수 컬럼 기반 랭킹 보드.
+- [ ] **외곽 EMPTY = 둘레 고속도로 — soft 디자인 hint 후보** — 규칙2는 clamp으로 자동 충족이라 강제 안 함. 단 외곽 한 줄이 모두 EMPTY면 BFS상 둘레가 사실상 고속도로처럼 작동해 의도치 않은 트리비얼 풀이가 생기기 쉬움. 강제 검증으로 올리지 말고, "외곽이 비어 있어요 — 의도한 디자인인가요?" 톤의 soft hint 배지를 효능감 검증 후 별도 task로 검토.
 
 ## 도메인 결정 (확정)
 

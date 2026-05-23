@@ -1,16 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/provider";
 import { TILE, type MazeProject, type MazeSize } from "@/lib/maze/types";
 import { cloneGrid, emptyGrid, findStart, newProject } from "@/lib/maze/grid";
 import { loadProject, saveProject } from "@/lib/maze/storage";
+import { validateMaze } from "@/lib/maze/validate";
 import { StepNav, type Step } from "@/components/maze/step-nav";
 import { SettingsPanel } from "@/components/maze/settings-panel";
 import { ToolPalette, type Tool } from "@/components/maze/tool-palette";
 import { MazeGrid } from "@/components/maze/maze-grid";
 import { ResetConfirmDialog } from "@/components/maze/reset-confirm-dialog";
+import { ValidationPanel } from "@/components/maze/validation-panel";
 
 export function MazeClientShell() {
   const t = useMessages();
@@ -70,6 +72,11 @@ export function MazeClientShell() {
     setStep(1);
     setConfirmOpen(false);
   }, []);
+
+  // 완결성 검증 — grid 변경마다 라이브 재계산. 64×64도 BFS 즉시(µs 수준).
+  // 규칙2(외곽 폐쇄)는 boundary clamp으로 자동 충족 — validate에서 별도 체크 없음.
+  // P3b 플레이어 이동도 동일 clamp 규약을 따른다(BFS 통과성 == 이동 통과성).
+  const validation = useMemo(() => validateMaze(project.grid), [project.grid]);
 
   // 셀 페인트 — 활성 도구에 따라 타일 결정.
   const handlePaint = useCallback(
@@ -138,6 +145,7 @@ export function MazeClientShell() {
               activeTool={activeTool}
               onToolChange={setActiveTool}
             />
+            <ValidationPanel result={validation} />
             <MazeGrid
               grid={project.grid}
               size={project.size}
