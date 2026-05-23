@@ -27,6 +27,13 @@ import {
   type ViewState,
 } from "@/lib/maze/viewport";
 
+/** [16, max(W,H)] 안으로 clamp. 사이즈 변경 시 stale 저장값 정렬에 사용. */
+function clampPlayViewSpan(n: number, width: number, height: number): number {
+  const lo = ZOOM_REFERENCE_SIZE;
+  const hi = Math.max(width, height, ZOOM_REFERENCE_SIZE);
+  return Math.min(hi, Math.max(lo, n));
+}
+
 /**
  * Undo/Redo 히스토리 깊이 상한 (P3c-1).
  *
@@ -119,8 +126,17 @@ export function MazeClientShell() {
 
   // 사이즈 변경 클릭 — 비어있으면 즉시, 아니면 확인 다이얼로그.
   // 0.10.0 직사각 일반화 — width/height 양 차원 받음. history·marks·view 모두 새로.
+  // 0.12.0: playViewSpan도 새 [16, max(W,H)]로 clamp해 stale 저장값 차단
+  //   (예: 64→32 축소 후 playViewSpan=50이 max=32 초과한 채 남는 일 방지).
+  //   "축소→확대 시 N 복원" nicety는 포기 — 일관성이 더 중요.
   const applySizeChange = useCallback((width: number, height: number) => {
-    setProject((p) => ({ ...p, width, height, grid: emptyGrid(width, height) }));
+    setProject((p) => ({
+      ...p,
+      width,
+      height,
+      grid: emptyGrid(width, height),
+      playViewSpan: clampPlayViewSpan(p.playViewSpan, width, height),
+    }));
     setHistory(EMPTY_HISTORY);
     setPathMarks(EMPTY_MARKS);
     setView(fitView(width, height, CANVAS_DISPLAY_PX));
@@ -149,6 +165,15 @@ export function MazeClientShell() {
 
   const handleFogRadiusChange = useCallback((radius: number) => {
     setProject((p) => ({ ...p, fogRadius: radius }));
+  }, []);
+
+  // 플레이 시야 거리 (P3e-2 0.12.0) — grid 영향 0이라 즉시 적용. settings-panel이
+  // 이미 NumberStepper에서 [16, max(W,H)] clamp하지만 방어로 한 번 더.
+  const handlePlayViewSpanChange = useCallback((n: number) => {
+    setProject((p) => ({
+      ...p,
+      playViewSpan: clampPlayViewSpan(n, p.width, p.height),
+    }));
   }, []);
 
   // StepNav 클릭 — 만들기 ↔ 플레이. 같은 step이면 no-op.
@@ -451,6 +476,8 @@ export function MazeClientShell() {
               height={project.height}
               fogOfWar={project.fogOfWar}
               fogRadius={project.fogRadius}
+              playViewSpan={project.playViewSpan}
+              onPlayViewSpanChange={handlePlayViewSpanChange}
               onSizeChange={handleDimsChange}
               onFogToggle={handleFogToggle}
               onFogRadiusChange={handleFogRadiusChange}

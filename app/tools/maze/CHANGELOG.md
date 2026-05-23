@@ -2,6 +2,41 @@
 
 주요 결정 / 이정표.
 
+## [0.12.0] — 2026-05-23
+
+### Added (P3e-2 — 플레이 카메라 + 제작자 설정 시야 거리)
+
+큰 맵 플레이를 위한 카메라 추적. 시야 거리는 제작자가 만들기 단계에서 설정 (16칸 가장 가까이 ~ max(W,H) 전체 fit). 원 P3e plan의 "16칸 고정"을 사용자 요구대로 가변 필드로 개정.
+
+- **`MazeProject.playViewSpan: number`** — 캔버스 한 변에 보이는 칸 수. 범위 `[ZOOM_REFERENCE_SIZE(=16), max(width, height)]`. 작을수록 가까이(셀 크게), 클수록 멀리(셀 작게).
+- **schemaVersion 2 → 3** — `storage.ts` migrate에 v2→v3 분기. 구 프로젝트는 `playViewSpan = 16` 강제 (사용자 명시: "구 프로젝트 기본 = 가장 가까이"). migrate 재귀 호출로 v3 분기 자동 처리. storage가 손상값·stale 값에 대비해 `[16, max(W,H)]` clamp.
+- **`play-canvas.tsx` 카메라 적용** — `viewport.ts cameraFollow` (Phase A에서 width/height 일반화 완료) 그대로 호출. cellPx = displayPx / effectiveN, effectiveN = clamp(playViewSpan, 16, max(W,H)). `clampPan`이 자동으로 카메라 정지(grid ≤ displayPx)·추적(grid > displayPx) 분기 처리. 별도 분기 코드 0.
+- **`play-canvas.tsx` 가시 셀 컬링** — Phase B에서 P3e-2로 미뤘던 항목. `[rMin,rMax)×[cMin,cMax)` 범위. maze-grid Phase B 패턴 그대로. 128×128 N=16에서 16384 → 256 셀 (64배 절약). fog ON 시 clip 외에 컬링이 fillRect 호출 수 추가 절약.
+- **fog 원형 clip 변환 보정** — `ctx.arc(panX + (player.c+0.5)*cell, ...)` — 카메라 변환 후 좌표계에서 player 중심.
+- **플레이어 셀 마커 skip (0.10.1)** 유지 — 컬링 범위 안이라도 `if (r === player.r && c === player.c) continue`.
+- **`settings-panel.tsx` 플레이 시야 거리 row** — fog 카드 안 별도 row. `NumberStepper` (min=16, max=max(W,H)). `max(W,H) ≤ ZOOM_REFERENCE_SIZE`이면 row 자체 미렌더(zoom-controls 비활성 패턴 일관). 즉시 적용(다이얼로그 없음 — grid 영향 0).
+- **`client-shell.tsx`**:
+  - `handlePlayViewSpanChange` 콜백 — clamp 후 즉시 setProject.
+  - `applySizeChange`에 `playViewSpan: clampPlayViewSpan(p.playViewSpan, width, height)` 추가 — **사이즈 변경 시 stale 저장값 일관 정렬**. 사용자 정정 반영: 운영 시점만 clamp는 NumberStepper max와 저장값 어긋남 발생.
+- **i18n 신규 3키** (ko/en) — `playViewSpanLabel` / `playViewSpanMax` / `playViewSpanMin`.
+
+### Decided
+
+- **데이터 모델 = "보이는 칸 수 N" (옵션 C)** — cellPx 직접(display 결합)·정규화 0..1(직관 X) 대비 의미 직관적 + display 비결합 + 정수 단위 스테퍼 자연.
+- **단일 출처 `ZOOM_REFERENCE_SIZE = 16`** — viewport.ts에서 export, storage·grid·settings-panel·play-canvas·client-shell이 모두 import. 편집 줌인 한계(셀 크기)와 플레이 시야 최소 거리(칸 수)가 같은 16칸 단위라 의미 일관.
+- **사이즈 변경 시 playViewSpan clamp** — 사용자 정정 반영. "저장값 보존, 운영 시점에만 clamp"는 스테퍼 max(=max(W,H))와 저장값 어긋남 발생 (예: 64→32 축소 후 50이 max=32 초과 잔류). 저장값을 새 범위로 정렬해 항상 스테퍼 안. 축소→확대 N 복원 nicety는 포기 — 일관성이 더 중요.
+- **카메라 = `cameraFollow + clampPan` 자동 분기** — cellPx ≤ fit이면 양 차원 ≤ displayPx로 가운데 정렬(정지), cellPx > fit이면 한 차원 클램프(추적). 별도 분기 코드 불필요.
+- **fog clip + 카메라 합성** — clip center 좌표가 변환된 픽셀(panX/Y + ...). 자연 작동.
+- **"다시 플레이" 카메라 리셋** — `setState(initialPlayState(grid))` → player 좌표 → cameraFollow 자동 재계산. 별도 카메라 리셋 코드 0.
+- **P4 숏링크 자동 직렬화** — `playViewSpan` 필드가 `MazeProject` 안이라 JSON.stringify에 자연 포함. 공유 미로가 제작자 줌 그대로 플레이.
+- **viewport.ts 무변경** — Phase A에서 이미 width/height 일반화. P3e-2는 호출자(play-canvas)만 신규.
+
+### Notes
+
+- 점수 산식 / `SCORE_TUNING` / commit / pathMarks / play.ts 이동·승리 / viewport.ts 산술 — **무변경**. 렌더·새 필드·새 핸들러만.
+- maze-grid (편집 캔버스) / 편집 줌 (P3e-1) / Phase B W·H UI·컬링 — **무변경**.
+- 16×16 / 16×8 / 8×16 등 max(W,H) ≤ 16 케이스: settings-panel 시야 거리 row 미렌더 + play-canvas effectiveN = max(W,H) clamp로 fit·정지. 현행 동일.
+
 ## [0.11.0] — 2026-05-23
 
 ### Added (Phase B — 임의 W·H UI + 가시 셀 컬링)

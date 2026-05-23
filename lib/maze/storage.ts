@@ -9,6 +9,7 @@ import {
   type MazeTheme,
   type TileType,
 } from "./types";
+import { ZOOM_REFERENCE_SIZE } from "./viewport";
 import { isValidGrid, newMazeId, newProject } from "./grid";
 
 const KEY = "brennhub-maze";
@@ -22,11 +23,12 @@ function isValidDim(n: unknown): n is number {
  *
  * Schema versions:
  *   v1 (P1~0.9.x): `size: 16|32|64` 정사각
- *   v2 (0.10.0+): `width`/`height: number` 분리 (DIM_MIN..DIM_MAX)
+ *   v2 (0.10.0~0.11.0): `width`/`height: number` 분리 (DIM_MIN..DIM_MAX)
+ *   v3 (0.12.0+): `playViewSpan: number` 추가 — 플레이 시야 거리 (캔버스 한 변 보이는 칸 수)
  *
  * v1 → v2: width=height=size로 변환. grid는 이미 size×size = width×height라 데이터
- * 변환 없음 — 메타데이터만. `size` 필드는 destructure로 명시 제거(스프레드는
- * inferred raw property를 통과시켜 v2 객체에 stale `size`가 잔류).
+ * 변환 없음 — 메타데이터만. `size` 필드는 destructure로 명시 제거.
+ * v2 → v3: `playViewSpan = 16` 강제 (사용자 명시 — 구 프로젝트 기본 = 가장 가까이).
  */
 function migrate(raw: unknown): MazeProject {
   if (!raw || typeof raw !== "object") return newProject();
@@ -42,9 +44,18 @@ function migrate(raw: unknown): MazeProject {
     if (size < DIM_MIN || size > DIM_MAX) return newProject();
     return migrate({
       ...rest,
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: 2,
       width: size,
       height: size,
+    });
+  }
+
+  if (version === 2) {
+    // v2 → v3: playViewSpan = 16 강제 (구 프로젝트 기본 = 가장 가까이).
+    return migrate({
+      ...d,
+      schemaVersion: SCHEMA_VERSION,
+      playViewSpan: ZOOM_REFERENCE_SIZE,
     });
   }
 
@@ -72,6 +83,18 @@ function migrate(raw: unknown): MazeProject {
   const theme: MazeTheme =
     d.theme === "sprite-dungeon" ? "sprite-dungeon" : "default";
 
+  // playViewSpan — [ZOOM_REFERENCE_SIZE, max(width, height)] 안으로 clamp.
+  // 저장값이 손상되었거나 사이즈 변경 후 stale이면 안전 fallback.
+  const maxSpan = Math.max(width, height);
+  const rawSpan =
+    typeof d.playViewSpan === "number" && Number.isInteger(d.playViewSpan)
+      ? d.playViewSpan
+      : ZOOM_REFERENCE_SIZE;
+  const playViewSpan = Math.min(
+    Math.max(rawSpan, ZOOM_REFERENCE_SIZE),
+    Math.max(maxSpan, ZOOM_REFERENCE_SIZE),
+  );
+
   return {
     id: typeof d.id === "string" && d.id.length > 0 ? d.id : newMazeId(),
     schemaVersion: SCHEMA_VERSION,
@@ -80,6 +103,7 @@ function migrate(raw: unknown): MazeProject {
     fogOfWar: d.fogOfWar === true,
     fogRadius,
     theme,
+    playViewSpan,
     grid,
   };
 }
