@@ -2,7 +2,7 @@
 
 Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
-단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3b** 플레이·Fog 렌더 · **P4** 숏링크 공유.
+단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P4** 숏링크 공유.
 
 ## P1 — 스캐폴딩 (인프라/골격) — 완료 (CHANGELOG `[0.1.0]`)
 
@@ -71,6 +71,22 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] 빈 grid 안전 가드 — Step2 진입 직후 크래시 없음
 - [ ] dev 시각 점검 — 빈/미완성/완성/도달 불가 미로에서 패널 반응 + 펼침 + 다크·라이트
 
+## P3a-2 — 미로 품질 점수 — 완료 (CHANGELOG `[0.5.0]`)
+
+- [x] `lib/maze/validate.ts` `scoreMaze(grid)` — 순수 결정론 점수 산출
+- [x] A(detour) = BFS 최단 / 맨해튼, saturation=4
+- [x] B(corridor × texture) — 복도성 base + 텍스처 보너스. 빈 들판이 corridor=0이라 B=0 자동 보장
+- [x] "진짜" 막다른 길 = degree==1 AND tile ∉ {START, GOAL} — 외길 텍스처=0 분리
+- [x] 합성 = sqrt(A × B) — 가산식 외길>미로 역전 차단
+- [x] 트리비얼 가드 — manhattan ≤ 1 강제 ★1
+- [x] 약점 단일 표시 (low-detour / no-corridors / no-texture)
+- [x] `SCORE_TUNING` 한 블록 — 재튜닝 핸들 단일 출처
+- [x] `validation-panel.tsx` — 별점 + 차원 바 3개 + weakness 안내
+- [x] `client-shell.tsx` — useMemo(scoreMaze) 라이브 재계산
+- [x] i18n score* / weak* 8키 (ko/en)
+- [ ] **dev archetype 실측 임계값 보정 (필수)** — 빈 들판/벽 허술/외길 복도/제대로 된 미로 4종을 *실제로 만들어* total 측정, STAR_THRESHOLDS·CORRIDOR_BASE_WEIGHT·TEXTURE_SATURATION 보정. STAR_THRESHOLDS[2]=0.72는 추정치 0.707·0.734 사이 0.027 폭에 끼워넣은 fragile 값 — 좋은 미로가 0.72 밑이면 외길과 ★3 뭉쳐 원불만 재발. 보정용 콘솔 신호는 `client-shell.tsx` `useEffect([score])` `console.log("[maze score]", ...)` — 브라우저 콘솔에서 archetype별 raw total 읽을 수 있음.
+- [ ] **archetype 보정용 콘솔 신호 제거** — P4 live 전. `client-shell.tsx`의 `console.log("[maze score]", ...)` useEffect를 통째로 제거. prod 콘솔 노이즈 방지.
+
 ## P3b — 플레이 · Fog 렌더 — 완료 (CHANGELOG `[0.4.0]`)
 
 - [x] `lib/maze/play.ts` — `PlayState`/`Dir` + `initialPlayState`/`applyMove`/`isWin`
@@ -84,6 +100,10 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] `client-shell.tsx` — Step3 라우팅, 1↔2↔3 전이
 - [x] i18n `maze.step3` + `maze.play*`/`maze.win*` 키 11개 (ko/en)
 - [ ] dev 시각 점검 — Step3 활성/비활성 / 이동(키보드·D-pad) / 벽 충돌·경계 / 승리 모달 / fog(반경 1·3·6) / 다크·라이트 / 32×32·64×64
+
+## Px — 등급 flavored 네이밍 (점수 튜닝 안정화 후)
+
+- [ ] 별점에 등급 라벨 부여 — 예: ★1 = "들판", ★2 = "산책로", ★3 = "미로", ★4 = "던전", ★5 = "고문실" (가칭, 톤은 별도 결정). UI 헤드라인에 별점 옆 표시. **선행 조건**: 위 "dev archetype 실측 임계값 보정" 완료 — 임계값이 흔들리는 상태에선 라벨이 잘못 붙음.
 
 ## Px (P3b 이후 · P4 이전) — 에디터 UX 패스 (별도 task)
 

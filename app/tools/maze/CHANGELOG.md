@@ -2,6 +2,60 @@
 
 주요 결정 / 이정표.
 
+## [0.5.0] — 2026-05-22
+
+### Added (P3a-2 — 미로 품질 점수 시스템)
+
+완결성 검증(P3a) 통과 위에 ★1–5 품질 점수를 얹는다. 벽이 허술하게 뚫린
+미로에 무의미한 "플레이 가능 ✓"가 뜨던 문제 해결.
+
+- **`lib/maze/validate.ts` `scoreMaze(grid)`** — 순수 결정론 점수 산출.
+  완결성 통과 시에만 호출 전제(validation.ok). 빈 grid·예외 케이스는 null.
+- **차원 A — 경로 우회도**: BFS 최단경로(시작→가장 가까운 도달 가능 도착점)
+  / 맨해튼 거리. 1차안 saturation = 4(직선 4배 우회 시 만점).
+- **차원 B — 복도성 base × 텍스처 보너스**: 통과 셀 중 degree ≤ 2 비율
+  (corridor) × (0.5 + 0.5 × 텍스처 정규화). 텍스처 = (junction + 진짜
+  막다른 길) / passable, saturation = 0.15. **"진짜" 막다른 길 = degree==1
+  AND tile ∉ {START, GOAL}** — 구조적 끝과 가짜 막다른 길 분리.
+- **합성 = sqrt(A × B)** — 단순 기하평균. "둘 다 있어야 점수" 구조.
+  가중치 가산식·가중 기하평균은 우세 차원이 약한 차원을 보상해 외길 > 미로
+  역전을 유발 → 폐기.
+- **트리비얼 가드** — manhattan ≤ 1(시작·도착 인접) 강제 ★1, weakness=low-detour.
+- **약점 식별** — 우선순위 detour < corridor < texture, 임계값 0.30 미만 1개 표시.
+- **튜닝 상수 한 블록 `SCORE_TUNING`** — 본 블록만 수정하면 점수 분포 변경.
+  로직 재작업 없이 dev 실측 후 임계값 보정 가능 (BACKLOG 항목).
+- **UI** `validation-panel.tsx` 개정 — 통과 시 헤드라인을 별점(Lucide Star × 5,
+  filled/outline) + "플레이 가능" 보조 마크로 교체. 차원 바 3개(detour/
+  corridor/texture, 진행률 + 0.00 raw 값) + weakness 안내(amber, 있을 때만).
+  미통과 분기는 P3a 원안 유지(✗ + 사유 + 펼침).
+- **`client-shell.tsx`** — `useMemo(scoreMaze, [grid, validation.ok])` 추가.
+- **i18n** — `scoreLabel`·`scoreStarsAria`·`scoreDim*` 5개 + `weak*` 3개
+  = 8키 (ko/en).
+
+### Decided
+
+- **점수는 게이팅 아님** — Step3 활성 조건은 `validation.ok` 그대로. 점수는
+  보여주기만. 공유·플레이 차단 의도 없음 — 디자이너의 자유.
+- **차원 B에서 `count(degree≥3)` 직접 사용 폐기** — 빈 들판이 거의 전 셀
+  degree 3~4라 갈림길 만점을 받아버림(튜닝으로 못 고침). corridor base가
+  지배해야 빈 들판 = 0 보장.
+- **합성 = sqrt(A × B)** 채택, 가산식 `A·0.6 + B·0.4` 폐기. 가산식은 외길
+  (A=1, B=0.5)=0.80이 미로(A=0.7, B=0.77)=0.728보다 높은 역전 발생 →
+  STAR_THRESHOLDS·WEIGHT 조정으로 못 고침.
+- **`STAR_THRESHOLDS = [0.20, 0.40, 0.72, 0.85]`** 1차안 — 외길 0.707과
+  미로 0.734 사이 0.027 폭에 ★3/★4 경계(0.72)를 끼움. **fragile** — dev
+  archetype 4개 실측 후 보정 필수 (BACKLOG).
+- **이중 BFS** — `validateMaze`의 reachability BFS(boolean 종결)와
+  `scoreMaze`의 distMap BFS는 분리. 64×64 추가 1회 BFS = µs, 합치는 복잡도
+  > 절약 비용.
+
+### Notes
+
+- 점수도 순수 결정론(BFS + degree 집계) — AI 미사용.
+- 등급에 flavored 네이밍(★1=들판/★5=고문실 등)은 별도 task로 BACKLOG —
+  점수 공식 튜닝 안정화 후 진행.
+- 시각 점검 archetype: 빈 들판/벽 허술/외길 복도/제대로 된 미로 — total 실측 비교 후 임계값 보정.
+
 ## [0.4.0] — 2026-05-22
 
 ### Added (P3b — 플레이 모드 + Fog of War)
