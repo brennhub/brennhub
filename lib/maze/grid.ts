@@ -1,10 +1,10 @@
 import {
-  DEFAULT_SIZE,
+  DEFAULT_HEIGHT,
+  DEFAULT_WIDTH,
   FOG_RADIUS,
   SCHEMA_VERSION,
   TILE,
   type MazeProject,
-  type MazeSize,
   type TileType,
 } from "./types";
 
@@ -13,16 +13,16 @@ import {
  *
  * EMPTY / START / GOAL = 통과 가능. WALL = 차단.
  * V2 신규 타일(TRAP / KEY / DOOR) 추가 시 여기 한 곳만 갱신하면 검증·이동이
- * 동시에 따라온다. 두 곳에 인라인으로 두면 드리프트 위험 — 본 헬퍼가 단일 출처.
+ * 동시에 따라온다.
  */
 export function isPassable(tile: TileType | undefined): boolean {
   return tile === TILE.EMPTY || tile === TILE.START || tile === TILE.GOAL;
 }
 
-/** 모든 칸이 길(EMPTY)인 size×size 격자 생성. */
-export function emptyGrid(size: MazeSize): TileType[][] {
-  return Array.from({ length: size }, () =>
-    Array.from({ length: size }, () => TILE.EMPTY as TileType),
+/** 모든 칸이 길(EMPTY)인 width×height 격자 생성. grid[r].length === width. */
+export function emptyGrid(width: number, height: number): TileType[][] {
+  return Array.from({ length: height }, () =>
+    Array.from({ length: width }, () => TILE.EMPTY as TileType),
   );
 }
 
@@ -31,18 +31,19 @@ export function cloneGrid(grid: TileType[][]): TileType[][] {
   return grid.map((row) => [...row]);
 }
 
-/** size×size 정수 격자인지 검증 (localStorage 손상 방어). */
+/** width×height 정수 격자인지 검증 (localStorage 손상 방어). */
 export function isValidGrid(
   value: unknown,
-  size: number,
+  width: number,
+  height: number,
 ): value is TileType[][] {
   return (
     Array.isArray(value) &&
-    value.length === size &&
+    value.length === height &&
     value.every(
       (row) =>
         Array.isArray(row) &&
-        row.length === size &&
+        row.length === width &&
         row.every(
           (cell) => cell === 0 || cell === 1 || cell === 2 || cell === 3,
         ),
@@ -71,12 +72,13 @@ export function newMazeId(): string {
   return `m-${Date.now().toString(36)}-${mazeSeq.toString(36)}`;
 }
 
-/** 기본값으로 새 미로 프로젝트 생성. grid는 Step2 진입 시 빌드. */
+/** 기본값으로 새 미로 프로젝트 생성. grid는 만들기 단계에서 빌드. */
 export function newProject(): MazeProject {
   return {
     id: newMazeId(),
     schemaVersion: SCHEMA_VERSION,
-    size: DEFAULT_SIZE,
+    width: DEFAULT_WIDTH,
+    height: DEFAULT_HEIGHT,
     fogOfWar: false,
     fogRadius: FOG_RADIUS.DEFAULT,
     theme: "default",

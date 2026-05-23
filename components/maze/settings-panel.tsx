@@ -4,28 +4,32 @@ import { NumberStepper } from "@/components/number-stepper";
 import { Switch } from "@/components/switch";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/lib/i18n/provider";
-import { FOG_RADIUS, SIZES, type MazeSize } from "@/lib/maze/types";
+import { FOG_RADIUS, SIZE_PRESETS } from "@/lib/maze/types";
 
 type Props = {
-  size: MazeSize;
+  width: number;
+  height: number;
   fogOfWar: boolean;
   fogRadius: number;
   /**
    * 사이즈 변경 요청 — 통합 화면(0.8.0 P3d)에선 비어있지 않은 그리드면 client-shell이
    * 확인 다이얼로그 분기. 빈 그리드면 즉시 변경. 본 컴포넌트는 단순 콜백만.
+   * 0.10.0(Phase A): 정사각 프리셋 버튼은 (s, s)로 W·H 동일 호출.
+   * Phase B에서 W·H NumberStepper 추가 시 같은 콜백 재사용.
    */
-  onSizeChange: (size: MazeSize) => void;
+  onSizeChange: (width: number, height: number) => void;
   onFogToggle: (on: boolean) => void;
   onFogRadiusChange: (radius: number) => void;
 };
 
 /**
  * 사이즈 / Fog of War 설정 패널.
- * 0.8.0(P3d): Step1·Step2 통합으로 "그리기 시작" 버튼·intro 텍스트 제거.
- * 통합 화면에서 그리드 위 고정 높이 row로 상시 노출. props 표현 단순.
+ * 0.10.0 Phase A: 내부 모델은 width/height 분리이나 UI는 정사각 프리셋 버튼 유지.
+ * Phase B(0.11.0)에서 W·H NumberStepper UI 추가.
  */
 export function SettingsPanel({
-  size,
+  width,
+  height,
   fogOfWar,
   fogRadius,
   onSizeChange,
@@ -33,26 +37,29 @@ export function SettingsPanel({
   onFogRadiusChange,
 }: Props) {
   const t = useMessages().maze;
+  const isSquare = width === height;
 
   return (
     <div className="space-y-4">
-      {/* 맵 크기. 비어있지 않은 grid에서 변경 시 client-shell이 확인 모달. */}
       <div className="space-y-2">
         <span className="text-sm font-medium text-foreground">
           {t.sizeLabel}
         </span>
         <div className="flex flex-wrap gap-1.5">
-          {SIZES.map((s) => (
-            <Button
-              key={s}
-              type="button"
-              variant={s === size ? "default" : "outline"}
-              size="sm"
-              onClick={() => onSizeChange(s)}
-            >
-              {s}×{s}
-            </Button>
-          ))}
+          {SIZE_PRESETS.map((s) => {
+            const active = isSquare && width === s;
+            return (
+              <Button
+                key={s}
+                type="button"
+                variant={active ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSizeChange(s, s)}
+              >
+                {s}×{s}
+              </Button>
+            );
+          })}
         </div>
       </div>
 

@@ -54,13 +54,14 @@ export function applyMove(
   dir: Dir,
   grid: TileType[][],
 ): PlayState {
-  const size = grid.length;
-  if (size === 0) return state;
+  const height = grid.length;
+  if (height === 0) return state;
+  const width = grid[0]?.length ?? 0;
   const { dr, dc } = DELTA[dir];
   const nr = state.player.r + dr;
   const nc = state.player.c + dc;
-  // 경계 clamp — grid 밖은 차단.
-  if (nr < 0 || nr >= size || nc < 0 || nc >= size) return state;
+  // 경계 clamp — grid 밖은 차단 (직사각 일반화: r은 height, c는 width 기준).
+  if (nr < 0 || nr >= height || nc < 0 || nc >= width) return state;
   const next = grid[nr]?.[nc];
   if (!isPassable(next)) return state;
   const won = next === TILE.GOAL;

@@ -57,7 +57,7 @@ export type MazeScore = {
  * 기획서 3규칙 중:
  *   - 규칙1(엔드포인트): 시작점 정확히 1개 + 도착점 1개 이상 → `endpoints`.
  *   - 규칙2(외곽 폐쇄): boundary clamp으로 자동 충족 — BFS·플레이어 이동 모두
- *     `0 ≤ r,c < size` 안에서만 동작하므로 grid 밖 탈출이 물리적으로 불가능.
+ *     `0 ≤ r < height, 0 ≤ c < width` 안에서만 동작하므로 grid 밖 탈출이 물리적으로 불가능.
  *     명시 체크 없음. 단 P3b 이동 구현이 동일 clamp 규약을 반드시 따라야
  *     검증의 통과성과 플레이의 통과성이 일치한다.
  *   - 규칙3(도달성): 시작점에서 4방향 BFS로 도착점 최소 1개에 도달 가능 → `reachability`.
@@ -112,9 +112,10 @@ function anyGoalReachable(
   goalSet: Set<string>,
 ): boolean {
   if (goalSet.size === 0) return false;
-  const size = grid.length;
-  const visited: boolean[][] = Array.from({ length: size }, () =>
-    Array.from({ length: size }, () => false),
+  const height = grid.length;
+  const width = grid[0]?.length ?? 0;
+  const visited: boolean[][] = Array.from({ length: height }, () =>
+    Array.from({ length: width }, () => false),
   );
   const queue: { r: number; c: number }[] = [start];
   visited[start.r][start.c] = true;
@@ -129,7 +130,7 @@ function anyGoalReachable(
       { r, c: c + 1 },
     ];
     for (const n of neighbors) {
-      if (n.r < 0 || n.r >= size || n.c < 0 || n.c >= size) continue;
+      if (n.r < 0 || n.r >= height || n.c < 0 || n.c >= width) continue;
       if (visited[n.r][n.c]) continue;
       if (!isPassable(grid[n.r]?.[n.c])) continue;
       visited[n.r][n.c] = true;
@@ -205,9 +206,10 @@ function bfsDistanceMap(
   grid: TileType[][],
   start: { r: number; c: number },
 ): number[][] {
-  const size = grid.length;
-  const dist: number[][] = Array.from({ length: size }, () =>
-    Array.from({ length: size }, () => Infinity),
+  const height = grid.length;
+  const width = grid[0]?.length ?? 0;
+  const dist: number[][] = Array.from({ length: height }, () =>
+    Array.from({ length: width }, () => Infinity),
   );
   dist[start.r][start.c] = 0;
   const queue: { r: number; c: number }[] = [start];
@@ -221,7 +223,7 @@ function bfsDistanceMap(
       { r: cur.r, c: cur.c + 1 },
     ];
     for (const n of neighbors) {
-      if (n.r < 0 || n.r >= size || n.c < 0 || n.c >= size) continue;
+      if (n.r < 0 || n.r >= height || n.c < 0 || n.c >= width) continue;
       if (!isPassable(grid[n.r]?.[n.c])) continue;
       if (dist[n.r][n.c] !== Infinity) continue;
       dist[n.r][n.c] = d + 1;
@@ -243,8 +245,8 @@ function bfsDistanceMap(
  * 부르는 것이 정상이지만 방어용 fallback.
  */
 export function scoreMaze(grid: TileType[][]): MazeScore | null {
-  const size = grid.length;
-  if (size === 0) return null;
+  const height = grid.length;
+  if (height === 0) return null;
 
   const { starts, goals } = collectEndpoints(grid);
   if (starts.length !== 1 || goals.length === 0) return null;
@@ -292,7 +294,7 @@ export function scoreMaze(grid: TileType[][]): MazeScore | null {
   let corridorN = 0;
   let junctionN = 0;
   let deadEndRealN = 0; // 시작·도착 제외한 "진짜" 막다른 길
-  for (let r = 0; r < size; r += 1) {
+  for (let r = 0; r < height; r += 1) {
     const row = grid[r];
     for (let c = 0; c < row.length; c += 1) {
       const tile = row[c];

@@ -132,7 +132,7 @@ lib/maze/
   storage.ts                               # P2 완료 — localStorage load/save/migrate
   icons.ts                                 # 0.6.1 — 도구 팔레트 아이콘 단일 출처 (렌더러와 cross-ref)
   validate.ts                              # P3a + P3a-2 완료 — 완결성 검증 + 미로 품질 점수 (SCORE_TUNING)
-  viewport.ts                              # P3e-1 — 뷰포트 변환 순수 산술 (ViewState·zoom·clamp·camera)
+  viewport.ts                              # P3e-1 + 0.10.0 — 뷰포트 변환 (width/height 일반화)
   play.ts                                  # P3b 완료 — PlayState / applyMove / isWin (순수 결정론)
   render/
     types.ts                               # P2.1 완료 + P3b renderPlayer — RenderEngine 인터페이스

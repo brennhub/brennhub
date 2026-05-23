@@ -91,13 +91,17 @@ export type RenderEngine = {
    * lineWidth가 함께 변형돼 줌인 시 격자선이 두꺼워짐.
    *
    * 셀 좌표 모델: x = panX + c * cellPx, y = panY + r * cellPx.
+   *
+   * 0.10.0 직사각 일반화 — `size` 단일 인자 → `width`/`height` 분리.
+   * grid 영역 = `width × cellPx` 가로, `height × cellPx` 세로.
    */
   drawGridLines: (
     ctx: CanvasRenderingContext2D,
     panX: number,
     panY: number,
     cellPx: number,
-    size: number,
+    width: number,
+    height: number,
   ) => void;
 
   /**

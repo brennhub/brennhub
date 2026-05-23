@@ -62,7 +62,8 @@ export function PlayMode({ project, onBackToEdit }: Props) {
     <div className="space-y-4">
       <PlayCanvas
         grid={project.grid}
-        size={project.size}
+        width={project.width}
+        height={project.height}
         theme={project.theme}
         player={state.player}
         fogOfWar={project.fogOfWar}
