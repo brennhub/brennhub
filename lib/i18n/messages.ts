@@ -479,6 +479,12 @@ export type Messages = {
     resetMessage: string;
     resetConfirm: string;
     resetCancel: string;
+    resetGridTitle: string;
+    resetGridMessage: string;
+    resetGridConfirm: string;
+    editorUndo: string;
+    editorRedo: string;
+    editorResetGrid: string;
     validationTitlePass: string;
     validationTitleFail: string;
     validationNoStart: string;
@@ -1056,6 +1062,13 @@ export const messages: Record<Locale, Messages> = {
         "설정으로 돌아가면 지금까지 그린 맵이 모두 초기화됩니다. 계속할까요?",
       resetConfirm: "초기화하고 돌아가기",
       resetCancel: "취소",
+      resetGridTitle: "그리드 초기화",
+      resetGridMessage:
+        "그리드의 모든 셀이 빈 칸으로 초기화됩니다. 사이즈와 시야 설정은 유지됩니다. 실행취소(Undo) 가능합니다.",
+      resetGridConfirm: "초기화",
+      editorUndo: "실행취소",
+      editorRedo: "다시실행",
+      editorResetGrid: "초기화",
       validationTitlePass: "플레이 가능",
       validationTitleFail: "검증 실패",
       validationNoStart: "시작점이 없습니다",
@@ -1673,6 +1686,13 @@ export const messages: Record<Locale, Messages> = {
         "Going back to settings will reset everything you've drawn. Continue?",
       resetConfirm: "Reset and go back",
       resetCancel: "Cancel",
+      resetGridTitle: "Clear grid",
+      resetGridMessage:
+        "All cells will be cleared. Size and fog settings stay. This action can be undone.",
+      resetGridConfirm: "Clear",
+      editorUndo: "Undo",
+      editorRedo: "Redo",
+      editorResetGrid: "Clear grid",
       validationTitlePass: "Ready to play",
       validationTitleFail: "Validation failed",
       validationNoStart: "No start tile placed",

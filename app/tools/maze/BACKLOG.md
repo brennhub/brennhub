@@ -2,7 +2,7 @@
 
 Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
-단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P4** 숏링크 공유.
+단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX (undo/redo·재클릭 토글·초기화) · **P3c-2** 길 그리기 모드+자동 벽 · **P4** 숏링크 공유.
 
 ## P1 — 스캐폴딩 (인프라/골격) — 완료 (CHANGELOG `[0.1.0]`)
 
@@ -105,10 +105,26 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 
 - [ ] 별점에 등급 라벨 부여 — 예: ★1 = "들판", ★2 = "산책로", ★3 = "미로", ★4 = "던전", ★5 = "고문실" (가칭, 톤은 별도 결정). UI 헤드라인에 별점 옆 표시. **선행 조건**: 위 "dev archetype 실측 임계값 보정" 완료 — 임계값이 흔들리는 상태에선 라벨이 잘못 붙음.
 
-## Px (P3b 이후 · P4 이전) — 에디터 UX 패스 (별도 task)
+## P3c-1 — 에디터 UX (undo/redo · 벽 재클릭 토글 · 초기화) — 완료 (CHANGELOG `[0.6.0]`)
 
-- [ ] (a) **재클릭 토글로 지우개 도구 대체** — 같은 도구 재클릭 시 그 셀의 타일을 `EMPTY`로 되돌리는 cycle. dca-down-calculator의 "tax 4-button deselect-on-reclick" 패턴 응용. 지우개 버튼 제거 검토.
-- [ ] (b) **Step1에 "벽 그리기 / 길 파기" 모드 선택** — "길 파기"는 그리드가 전부 `WALL`로 시작(carve 방식). 디자인 워크플로우 옵션. `MazeProject`에 `editorMode?: "wall" | "carve"` 같은 필드 추가 검토.
+- [x] `GridHistory = { past, future }` state + stroke 단위 push (`HISTORY_DEPTH=100`)
+- [x] `EditorControls` 컴포넌트 — undo·redo·초기화 row (좌·우 분리, flex-wrap)
+- [x] 키보드 `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Shift+Z` (Cmd 동일), Step2 한정 mount/unmount
+- [x] 벽 재클릭 토글 — pointerdown 시작 셀 기반 stroke 일관성(`strokeFillRef`)
+- [x] 그리드 초기화 — `ResetConfirmDialog` props 일반화 + 신규 모달 인스턴스, undo 가능
+- [x] No-op 가드 — 실제 grid 변경 없을 때 history·setProject 모두 skip
+- [x] 불변 갱신 명문화 — `cloneGrid` 후 mutate, 원본 grid 보존 (history 스냅샷 오염 차단)
+- [x] handleStart / handleConfirmReset 시 `setHistory(EMPTY_HISTORY)`
+- [x] i18n 6키 (ko/en) — editorUndo·editorRedo·editorResetGrid·resetGrid{Title,Message,Confirm}
+- [ ] dev 시각 점검 — undo/redo 스트로크 단위 / 키보드+모바일 버튼 / 벽 재클릭+드래그 일관성 / 초기화+undo / Step3 키보드 무충돌 / 0.5.1 회귀 0
+
+## P3c-2 — 길 그리기 모드 + 자동 벽 (별도 task, 설계 모호점 해소 후)
+
+- [ ] Step1에 "벽 그리기 / 길 파기" 편집 모드 선택. "길 파기"는 그리드가 전부 `WALL`로 시작(carve 방식).
+- [ ] `MazeProject`에 `editorMode?: "wall" | "carve"` 같은 필드 추가 — schemaVersion bump + storage migrate.
+- [ ] carve 모드의 wall 도구 의미 재정의 (EMPTY로 carve / 또는 별도 도구).
+- [ ] 자동 벽 — 외곽 자동 채움? 또는 미지정 셀 자동 wall? 설계 모호점.
+- [ ] history 통합 — P3c-1 stroke 단위 entry 패턴에 편입.
 
 ## P4 — 숏링크 공유 (D1 · API) + live 전환
 
