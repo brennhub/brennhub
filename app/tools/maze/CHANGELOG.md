@@ -2,6 +2,39 @@
 
 주요 결정 / 이정표.
 
+## [0.6.0] — 2026-05-23
+
+### Added (P3c-1 — 에디터 UX: undo/redo · 벽 재클릭 토글 · 초기화)
+
+- **Undo/Redo (stroke 단위)** — `client-shell.tsx`에 `GridHistory = { past, future }` 상태 추가. stroke 시작(pointerdown=`isInitial=true`) 시 1 entry push, drag 중(pointermove)은 무변경. `HISTORY_DEPTH = 100` (≈3~4MB 최악, 64×64 packed 아닌 JS 2D 배열 기준). 키보드: `Ctrl+Z` undo / `Ctrl+Y`·`Ctrl+Shift+Z` redo (Cmd 동일). 키보드 핸들러는 Step2 mount/unmount — Step3 방향키와 충돌 0. 모바일은 신규 `EditorControls` 화면 버튼이 유일 진입점.
+- **벽 재클릭 토글** — wall 도구: 빈 셀 클릭 → WALL, WALL 셀 클릭 → EMPTY. **stroke 일관성**: pointerdown 시점에 시작 셀 값으로 stroke 전체 fill을 결정(WALL 또는 EMPTY), pointermove는 그 값을 그대로 적용 — per-cell 토글의 드래그 엉킴 차단. 시작 셀이 START/GOAL이면 stroke=WALL (기존 호환). `useRef<TileType>`로 stroke 동안 fill값 보관.
+- **그리드 초기화 버튼** — Step2 유지하며 grid만 EMPTY로. `EditorControls`의 휴지통 버튼 → 확인 모달 → 실행. **undo 가능** (history entry 1개로 push).
+- **`components/maze/editor-controls.tsx` (신규)** — undo/redo/초기화 row. 좌측 undo·redo + 우측 초기화 (`justify-between`). flex-wrap 모바일 줄바꿈. 아이콘만(모바일) / 아이콘+라벨(`sm:` 이상).
+- **`ResetConfirmDialog` props 일반화** — `title`/`message`/`confirmLabel` 옵셔널 추가. 미지정 시 기존 maze.reset* 키 사용(기존 호출부 무변경). 신규 그리드 초기화 모달은 `resetGrid*` 키 전달.
+- **i18n 신규 6키** (ko/en) — `editorUndo` / `editorRedo` / `editorResetGrid` / `resetGridTitle` / `resetGridMessage` / `resetGridConfirm`.
+
+### Changed (handlePaint 재작성)
+
+- **불변 갱신 명시** — `project.grid` 절대 in-place mutate 금지. 항상 `cloneGrid` 후 mutate, 새 객체로 set. 이유: (a) `score`/`validation` `useMemo`가 grid 참조 불변이면 캐시되어 패널이 라이브 갱신 안 됨, (b) `history.past`에 저장된 grid 참조가 in-place mutate되면 스냅샷 오염으로 undo가 엉뚱한 상태 복원. **빌드로는 안 잡히는 종류** — 주석에 명문화.
+- **No-op 가드** — 실제 grid 변경 없으면 history push와 setProject 모두 skip. 시작점 동일 셀 클릭·이미 같은 fill 셀 페인트 등 idempotent 액션이 history를 더럽히지 않게.
+- **도구별 stroke 일관성 명문화** — wall만 stroke 시작 셀 기반 toggle, 나머지 도구(eraser/goal/start)는 단순 액션.
+
+### Decided
+
+- **stroke = 1 undo entry** (셀별 X) — 사용자 명세. drag로 100칸 칠해도 undo 한 번이면 stroke 전체 취소. UX 직관 일치.
+- **HISTORY_DEPTH = 100** — 100 × ~32KB = ~3~4MB 최악. 디자인 1회분 메모리로 무시 가능. (1차 4KB 계산은 packed byte 가정 오해 — JS 2D number 배열은 packed 아님.)
+- **사이즈 변경 / Step1 복귀 시 history clear** — 다른 사이즈 grid 참조하는 stroke는 복원 불가, 깨끗이 비움. `handleStart` / `handleConfirmReset`에 `setHistory(EMPTY_HISTORY)`.
+- **그리드 초기화도 history entry** — undo 가능. 사용자가 실수로 초기화해도 회복.
+- **키보드는 Step2 한정 mount** — Step3에서 Ctrl+Z 눌러도 무반응 (play-controls의 방향키 모드와 분리). Step3 mount 후 Step2로 돌아오면 keydown 재바인딩.
+- **벽 stroke 일관성 = 시작 셀 기준** — per-cell 토글이면 wall→empty→wall→… 같은 셀 위 드래그가 엉킴. 시작 셀 1회 결정으로 의도 명확.
+- **wall 위에 start/goal 도구**: 기존 호환 — wall 덮어쓰기. eraser/wall로만 wall 직접 제거.
+
+### Notes
+
+- 길 그리기 모드 + 자동 벽(항목 7) → **P3c-2** 별도 task. 본 패치 미구현.
+- 점수 알고리즘 / `SCORE_TUNING` / fog 렌더 / Step3 게이팅 — 무변경 (회귀 0 보장).
+- archetype 보정용 콘솔 신호는 그대로 — P4 live 전 제거 항목 유지.
+
 ## [0.5.1] — 2026-05-23
 
 ### Fixed (P3a-2 후속 교정 — 어긋난 것 3건)

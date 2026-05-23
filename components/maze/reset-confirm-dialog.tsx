@@ -8,14 +8,31 @@ type Props = {
   open: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  /**
+   * 신규(P3c-1) — props 일반화. 미지정 시 기존 maze.resetTitle 등을 사용해
+   * Step2→Step1 모달과 호환 (기존 호출부 무변경).
+   * P3c-1의 "그리드 초기화" 모달은 maze.resetGrid* 키를 명시 전달.
+   */
+  title?: string;
+  message?: string;
+  confirmLabel?: string;
 };
 
 /**
- * Step2 → Step1 되돌아가기 확인 모달.
- * 사이즈가 잠겨 있으므로 설정으로 돌아가면 맵을 전면 리셋한다.
- * feedback-dialog / pixel-editor 모달 패턴 재사용 (overlay + ESC + scroll lock).
+ * 일반화된 확인 모달 — feedback-dialog / pixel-editor 모달 패턴 (overlay + ESC + scroll lock).
+ *
+ * 사용처:
+ *   1. Step2 → Step1 (사이즈 잠금 풀고 grid 비움, props 기본값)
+ *   2. P3c-1 그리드 초기화 (Step2 유지하며 grid만 비움, props 명시 전달)
  */
-export function ResetConfirmDialog({ open, onConfirm, onCancel }: Props) {
+export function ResetConfirmDialog({
+  open,
+  onConfirm,
+  onCancel,
+  title,
+  message,
+  confirmLabel,
+}: Props) {
   const t = useMessages().maze;
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -49,18 +66,20 @@ export function ResetConfirmDialog({ open, onConfirm, onCancel }: Props) {
       <div className="relative w-full max-w-sm rounded-lg border border-border bg-card text-card-foreground shadow-lg">
         <div className="border-b border-border px-5 py-4">
           <h2 id="maze-reset-title" className="text-lg font-semibold">
-            {t.resetTitle}
+            {title ?? t.resetTitle}
           </h2>
         </div>
         <div className="px-5 py-4">
-          <p className="text-sm text-muted-foreground">{t.resetMessage}</p>
+          <p className="text-sm text-muted-foreground">
+            {message ?? t.resetMessage}
+          </p>
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-3">
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
             {t.resetCancel}
           </Button>
           <Button type="button" size="sm" onClick={onConfirm}>
-            {t.resetConfirm}
+            {confirmLabel ?? t.resetConfirm}
           </Button>
         </div>
       </div>
