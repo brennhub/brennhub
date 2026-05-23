@@ -8,6 +8,17 @@ import {
   type TileType,
 } from "./types";
 
+/**
+ * 단일 통과성 술어 — BFS(검증)와 플레이어 이동이 반드시 같은 정의를 쓰도록 강제.
+ *
+ * EMPTY / START / GOAL = 통과 가능. WALL = 차단.
+ * V2 신규 타일(TRAP / KEY / DOOR) 추가 시 여기 한 곳만 갱신하면 검증·이동이
+ * 동시에 따라온다. 두 곳에 인라인으로 두면 드리프트 위험 — 본 헬퍼가 단일 출처.
+ */
+export function isPassable(tile: TileType | undefined): boolean {
+  return tile === TILE.EMPTY || tile === TILE.START || tile === TILE.GOAL;
+}
+
 /** 모든 칸이 길(EMPTY)인 size×size 격자 생성. */
 export function emptyGrid(size: MazeSize): TileType[][] {
   return Array.from({ length: size }, () =>

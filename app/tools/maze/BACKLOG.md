@@ -71,12 +71,24 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] 빈 grid 안전 가드 — Step2 진입 직후 크래시 없음
 - [ ] dev 시각 점검 — 빈/미완성/완성/도달 불가 미로에서 패널 반응 + 펼침 + 다크·라이트
 
-## P3b — 플레이 · Fog 렌더
+## P3b — 플레이 · Fog 렌더 — 완료 (CHANGELOG `[0.4.0]`)
 
-- [ ] 플레이 모드 — 시작점에서 이동(키보드·터치), 도착점 도달 판정
-- [ ] **플레이어 이동 규약(P3a에서 확정)** — `r,c`를 `[0, size-1]` clamp + WALL 진입 차단. 외곽 EMPTY 통과 가능. BFS 통과성과 일치
-- [ ] Fog of War 렌더 — `fogOfWar`/`fogRadius` 기반 시야 제한 표시
-- [ ] 검증 실패 미로는 플레이 진입 차단 (validation-panel이 이미 사유 표시)
+- [x] `lib/maze/play.ts` — `PlayState`/`Dir` + `initialPlayState`/`applyMove`/`isWin`
+- [x] `lib/maze/grid.ts` `isPassable` 단일 헬퍼 — BFS·이동 정의 공유. validate.ts 인라인 제거
+- [x] RenderEngine 확장 — `playerTint`/`playerIcon` + `renderPlayer` (필수 메서드)
+- [x] StepNav 3-step + `disabledSteps` — `validation.ok=false` 시 Step3 disabled
+- [x] `components/maze/play-canvas.tsx` — fog ON 시 검정 배경 + 시야 안 셀만 + **격자선도 시야 안만**
+- [x] `components/maze/play-controls.tsx` — D-pad + 키보드(방향키/WASD), 방향키 `preventDefault`
+- [x] `components/maze/win-dialog.tsx` — 승리 모달 (다시 플레이/편집 복귀)
+- [x] `components/maze/play-mode.tsx` — Step3 컨테이너 + P4 재사용 인터페이스
+- [x] `client-shell.tsx` — Step3 라우팅, 1↔2↔3 전이
+- [x] i18n `maze.step3` + `maze.play*`/`maze.win*` 키 11개 (ko/en)
+- [ ] dev 시각 점검 — Step3 활성/비활성 / 이동(키보드·D-pad) / 벽 충돌·경계 / 승리 모달 / fog(반경 1·3·6) / 다크·라이트 / 32×32·64×64
+
+## Px (P3b 이후 · P4 이전) — 에디터 UX 패스 (별도 task)
+
+- [ ] (a) **재클릭 토글로 지우개 도구 대체** — 같은 도구 재클릭 시 그 셀의 타일을 `EMPTY`로 되돌리는 cycle. dca-down-calculator의 "tax 4-button deselect-on-reclick" 패턴 응용. 지우개 버튼 제거 검토.
+- [ ] (b) **Step1에 "벽 그리기 / 길 파기" 모드 선택** — "길 파기"는 그리드가 전부 `WALL`로 시작(carve 방식). 디자인 워크플로우 옵션. `MazeProject`에 `editorMode?: "wall" | "carve"` 같은 필드 추가 검토.
 
 ## P4 — 숏링크 공유 (D1 · API) + live 전환
 
@@ -93,6 +105,7 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [ ] **테마 시스템** — `MazeTheme`의 `"sprite-dungeon"` 활성화. 타일 스프라이트 세트 교체.
 - [ ] **공유 API rate limit** — `maze` 저장 POST에 IP 해시 기반 rate limit (feedback `RATE_LIMIT_WINDOW_MS` 패턴 재사용).
 - [ ] **인기 미로 랭킹** — `created_at` 인덱스 + 조회수/플레이수 컬럼 기반 랭킹 보드.
+- [ ] **모바일 스와이프 조작** — V1은 D-pad only(정밀 1칸 이동). 스와이프는 한 swipe당 칸 수 정의가 모호해 V1 제외. 효능감 검증 후 D-pad + 스와이프 병행 검토.
 - [ ] **외곽 EMPTY = 둘레 고속도로 — soft 디자인 hint 후보** — 규칙2는 clamp으로 자동 충족이라 강제 안 함. 단 외곽 한 줄이 모두 EMPTY면 BFS상 둘레가 사실상 고속도로처럼 작동해 의도치 않은 트리비얼 풀이가 생기기 쉬움. 강제 검증으로 올리지 말고, "외곽이 비어 있어요 — 의도한 디자인인가요?" 톤의 soft hint 배지를 효능감 검증 후 별도 task로 검토.
 
 ## 도메인 결정 (확정)

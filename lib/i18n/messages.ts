@@ -461,6 +461,7 @@ export type Messages = {
     description: string;
     step1: string;
     step2: string;
+    step3: string;
     settingsIntro: string;
     sizeLabel: string;
     fogLabel: string;
@@ -489,6 +490,16 @@ export type Messages = {
     validationRuleEndpoints: string;
     validationRuleReachability: string;
     validationSkipped: string;
+    playNotReadyHint: string;
+    playIntro: string;
+    playControlsUp: string;
+    playControlsDown: string;
+    playControlsLeft: string;
+    playControlsRight: string;
+    playRestart: string;
+    playBackToEdit: string;
+    winTitle: string;
+    winMessage: string;
   };
   feedback: {
     button: string;
@@ -1016,6 +1027,7 @@ export const messages: Record<Locale, Messages> = {
       description: "픽셀 격자로 나만의 미로를 설계하고 링크로 공유하세요.",
       step1: "설정",
       step2: "그리기",
+      step3: "플레이",
       settingsIntro:
         "맵 크기와 시야 옵션을 정하세요. 그리기를 시작하면 크기는 바꿀 수 없습니다.",
       sizeLabel: "맵 크기",
@@ -1047,6 +1059,17 @@ export const messages: Record<Locale, Messages> = {
       validationRuleEndpoints: "시작점·도착점",
       validationRuleReachability: "도달 가능성",
       validationSkipped: "검증 보류",
+      playNotReadyHint:
+        "플레이를 시작하려면 그리기 단계의 검증을 먼저 통과해야 합니다.",
+      playIntro: "방향키 또는 WASD, 아래 D-pad로 이동하세요.",
+      playControlsUp: "위로 이동",
+      playControlsDown: "아래로 이동",
+      playControlsLeft: "왼쪽으로 이동",
+      playControlsRight: "오른쪽으로 이동",
+      playRestart: "다시 플레이",
+      playBackToEdit: "편집으로 돌아가기",
+      winTitle: "탈출 성공!",
+      winMessage: "도착점에 도달했습니다.",
     },
     feedback: {
       button: "피드백",
@@ -1610,6 +1633,7 @@ export const messages: Record<Locale, Messages> = {
       description: "Design your own maze on a pixel grid and share it via link.",
       step1: "Settings",
       step2: "Draw",
+      step3: "Play",
       settingsIntro:
         "Choose the map size and visibility options. Size is locked once you start drawing.",
       sizeLabel: "Map size",
@@ -1641,6 +1665,17 @@ export const messages: Record<Locale, Messages> = {
       validationRuleEndpoints: "Start & goal",
       validationRuleReachability: "Reachability",
       validationSkipped: "Skipped",
+      playNotReadyHint:
+        "Pass the draw-step validation before you can play.",
+      playIntro: "Arrow keys, WASD, or the D-pad below to move.",
+      playControlsUp: "Move up",
+      playControlsDown: "Move down",
+      playControlsLeft: "Move left",
+      playControlsRight: "Move right",
+      playRestart: "Play again",
+      playBackToEdit: "Back to editor",
+      winTitle: "Escaped!",
+      winMessage: "You reached the goal.",
     },
     feedback: {
       button: "Feedback",

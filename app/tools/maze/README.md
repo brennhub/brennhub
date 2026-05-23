@@ -10,7 +10,7 @@
 
 출처: 외부 기획서 (Brenn 수령, brennhub 외부 기획서 필터 7개 적용).
 
-## 화면 구조 (V1 — 2-step)
+## 화면 구조 (V1 — 3-step)
 
 언어 창조기의 step-by-step UX 패턴 재사용 (도구 간 일관성).
 
@@ -23,6 +23,13 @@
 - 시작점은 1개(새로 찍으면 이동), 도착점은 여러 개 배치 가능.
 - **완결성 검증 패널** — 도구 팔레트 아래에 라이브 배지. 통과 시 "플레이 가능", 실패 시 critical 사유 + 펼침 시 규칙별 상태. 검증 모듈은 `lib/maze/validate.ts` 순수 함수 + `useMemo(grid)` 라이브 재계산.
 - Step2 → Step1 되돌아가기 시 "맵 초기화" 확인 다이얼로그 → 맵 전면 리셋 (Padding/Crop 없음).
+
+### Step 3 — 플레이
+- 검증 통과 시에만 활성화 (StepNav `disabledSteps`).
+- 시작점에서 출발, 4방향 이동. 키보드(방향키 / WASD) + 화면 D-pad(데스크탑·모바일 공통).
+- 이동 규약: `r,c`를 `[0, size-1]` clamp + WALL 진입 차단 + EMPTY/START/GOAL 통과. **BFS(검증)와 동일한 `isPassable` 단일 헬퍼 호출** — 통과성 정의 공유.
+- 도착점 도달 시 승리 모달 → 다시 플레이 / 편집으로 돌아가기.
+- Fog of War가 켜져 있으면 플레이어 주변 `fogRadius` 칸 원형 시야만 밝게, 나머지는 암전. 격자선도 시야 안 영역에서만 표시.
 
 ## 기술 스택
 
@@ -107,25 +114,30 @@ app/tools/maze/
   README.md / BACKLOG.md / CHANGELOG.md   # P1 완료
   migrations/001_maze.sql                  # P1 완료 — D1 공유 테이블
   page.tsx                                 # P2 완료 — Server Component shell
-  client-shell.tsx                         # P2 완료 + P3a useMemo 검증 — 상태·스텝·도구 오케스트레이션
+  client-shell.tsx                         # P2 완료 + P3a useMemo + P3b Step3 라우팅
 lib/maze/
   types.ts                                 # P2 완료 — TileType / MazeProject + 상수 (위 canonical)
-  grid.ts                                  # P2 완료 — 격자 헬퍼 (emptyGrid/cloneGrid/findStart 등)
+  grid.ts                                  # P2 완료 + P3b isPassable 단일 헬퍼 — 격자 헬퍼 + 통과성 단일 출처
   storage.ts                               # P2 완료 — localStorage load/save/migrate
   validate.ts                              # P3a 완료 — 완결성 검증 (BFS·엔드포인트). 규칙2 = clamp 자동 충족
+  play.ts                                  # P3b 완료 — PlayState / applyMove / isWin (순수 결정론)
   render/
-    types.ts                               # P2.1 완료 — RenderEngine / TileRenderer / ThemePalette + ready? 훅
+    types.ts                               # P2.1 완료 + P3b renderPlayer — RenderEngine 인터페이스
     icons.ts                               # P2.1 완료 — lucide v1.14.0 iconNode 임베드 (User/Flag, ISC)
-    default.ts                             # P2.1 완료 — V1 default 엔진 (Path2D stroke)
+    default.ts                             # P2.1 완료 + P3b playerTint/Icon + renderPlayer 구현
     index.ts                               # P2.1 완료 — selectEngine 진입점 (V2 sprite-dungeon 분기 자리)
   share.ts                                 # P4 — short_id 생성 · payload 직렬화
 components/maze/
-  step-nav.tsx                             # P2 완료 — 2스텝 네비게이션
+  step-nav.tsx                             # P2 완료 + P3b 3-step 확장 (Step = 1|2|3 + disabledSteps)
   settings-panel.tsx                       # P2 완료 — Step1 설정 (크기·fog)
   tool-palette.tsx                         # P2 완료 — Step2 도구 팔레트
   maze-grid.tsx                            # P2 완료 + P2.1 재배선 — engine 오케스트레이션 only (fillRect 직접 호출 0)
   reset-confirm-dialog.tsx                 # P2 완료 — 맵 초기화 확인 모달
   validation-panel.tsx                     # P3a 완료 — Step2 검증 배지 + 펼침 상세
+  play-canvas.tsx                          # P3b 완료 — Step3 캔버스 (fog 시야 안 셀+격자선만)
+  play-controls.tsx                        # P3b 완료 — D-pad + 키보드(방향키 preventDefault)
+  play-mode.tsx                            # P3b 완료 — Step3 컨테이너 (P4 재사용 인터페이스)
+  win-dialog.tsx                           # P3b 완료 — 승리 모달
 app/api/maze/
   route.ts                                 # P4 — 공유 저장/조회 (runtime="edge" 금지)
 ```

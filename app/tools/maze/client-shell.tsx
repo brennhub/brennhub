@@ -13,6 +13,7 @@ import { ToolPalette, type Tool } from "@/components/maze/tool-palette";
 import { MazeGrid } from "@/components/maze/maze-grid";
 import { ResetConfirmDialog } from "@/components/maze/reset-confirm-dialog";
 import { ValidationPanel } from "@/components/maze/validation-panel";
+import { PlayMode } from "@/components/maze/play-mode";
 
 export function MazeClientShell() {
   const t = useMessages();
@@ -56,12 +57,25 @@ export function MazeClientShell() {
     setStep(2);
   }, []);
 
-  // StepNav 클릭 — 2→1은 맵 초기화 확인 다이얼로그를 거친다.
+  // StepNav 클릭 — 1↔2↔3 전이.
+  //  - 2/3 → 1: 맵 초기화 확인 다이얼로그.
+  //  - 1 → 2: 격자 빌드(handleStart).
+  //  - 2 → 3: 검증 통과 시에만 (Step3 disabled 처리로 막지만 방어).
+  //  - 3 → 2: 그대로 복귀 (편집 재개).
   const handleStepNav = useCallback(
     (next: Step) => {
       if (next === step) return;
-      if (next === 2) handleStart();
-      else setConfirmOpen(true);
+      if (next === 1) {
+        setConfirmOpen(true);
+        return;
+      }
+      if (next === 2) {
+        if (step === 1) handleStart();
+        else setStep(2);
+        return;
+      }
+      // next === 3
+      setStep(3);
     },
     [step, handleStart],
   );
@@ -122,8 +136,9 @@ export function MazeClientShell() {
 
       <StepNav
         step={step}
-        labels={[tm.step1, tm.step2]}
+        labels={[tm.step1, tm.step2, tm.step3]}
         onStep={handleStepNav}
+        disabledSteps={validation.ok ? undefined : [3]}
       />
 
       <div className="mt-6">
@@ -153,6 +168,9 @@ export function MazeClientShell() {
               onPaint={handlePaint}
             />
           </div>
+        )}
+        {step === 3 && (
+          <PlayMode project={project} onBackToEdit={() => setStep(2)} />
         )}
       </div>
 
