@@ -2,6 +2,40 @@
 
 주요 결정 / 이정표.
 
+## [0.10.0] — 2026-05-23
+
+### Changed (Phase A — 직사각 그리드 내부 데이터모델 일반화)
+
+`MazeProject.size: 16|32|64` → `width`/`height: number` 분리. **동작 무변화** — UI는 정사각 프리셋 버튼 유지(`(s) => onSizeChange(s, s)`). 비정사각 UI 도입은 Phase B (0.11.0).
+
+- **`lib/maze/types.ts`** — `schemaVersion: 1 → 2`. `MazeSize` 유니온 타입·`SIZES`·`DEFAULT_SIZE` 제거. 신규: `DIM_MIN=3` / `DIM_MAX=128` / `DEFAULT_WIDTH=32` / `DEFAULT_HEIGHT=32` / `SIZE_PRESETS = [16,32,64]` (Phase A 프리셋 호환). `MazeProject`에 `width`/`height` 필드. 인덱싱 모델: `grid[height][width]` 헤더 주석 명시.
+- **`lib/maze/storage.ts` migrate v1 → v2** — `const { size, ...rest } = raw` 명시 destructure로 stale `size` 필드 제거(스프레드만 쓰면 raw의 추론 프로퍼티가 통과돼 v2 객체에 잔류, 사용자 정정 반영). v1 데이터의 grid는 size×size = width×height라 데이터 변환 0 — 메타데이터만. `isValidDim` 가드(`DIM_MIN..DIM_MAX` 정수).
+- **`lib/maze/grid.ts`** — `emptyGrid(width, height)` / `isValidGrid(value, width, height)`. `newProject`에 `width`/`height` 기본값.
+- **`lib/maze/validate.ts`** — `anyGoalReachable`·`bfsDistanceMap` 경계 `r < height && c < width` 분리. `scoreMaze`의 `size = grid.length` → `height = grid.length`. 점수 산식·`SCORE_TUNING` 무변경 — 비율 기반이라 임의 W·H에서도 의미 유지.
+- **`lib/maze/play.ts`** — `applyMove` 경계 `nr < height && nc < width` 분리.
+- **`lib/maze/viewport.ts`** — `zoomLimits` / `fitView` / `clampPan` / `clampCellPx` / `zoomAtCursor` / `cellFromCanvasPx` / `cameraFollow` 모두 `width`/`height` 두 인자. `zoomLimits.min = min(displayPx/width, displayPx/height)` (양 차원 fit).
+- **`render/types.ts` `drawGridLines`** — `(ctx, panX, panY, cellPx, size)` → `(ctx, panX, panY, cellPx, width, height)`. default 엔진 격자선 2-loop을 width(세로선)·height(가로선) 분리.
+- **`maze-grid.tsx`** — `size: MazeSize` props → `width, height: number`. 렌더 루프·휠 줌·핀치줌·포인터 역매핑·clamp 모두 width/height. RenderRect의 `size: cellPx` 프로퍼티는 그대로(rect.size = 셀 변 픽셀, 별 의미).
+- **`play-canvas.tsx`** — `size` → `width, height`. `cell = min(displayPx/width, displayPx/height)` fit 기준. 정사각이면 둘 다 같아 동작 무변화. P3e-2 카메라 적용은 후속.
+- **`play-mode.tsx`** — `<PlayCanvas width height>` 전달.
+- **`client-shell.tsx`** — `pendingSize: MazeSize` → `pendingDims: { width, height }`. `applySizeChange(width, height)` / `handleSizeChange(width, height)` / `handleResetGrid` `emptyGrid(p.width, p.height)` / 줌 핸들러·`handleViewChange` 모두 양 차원. `MazeGrid`/`ZoomControls`/`SettingsPanel` props 갱신.
+- **`settings-panel.tsx`** — `width, height` props. Phase A UI 무변화: `SIZE_PRESETS` 정사각 버튼이 `onSizeChange(s, s)` 호출. 활성 표시는 `isSquare && width === s`.
+
+### Decided
+
+- **schemaVersion bump = 2** — `size` 필드 의미 폐기, `width`/`height` 도입. v1 → v2는 메타데이터 변환만(grid 데이터 무변경).
+- **migrate: `const { size, ...rest } = raw`** — 사용자 정정 반영. `{...raw, schemaVersion:2, width:size, height:size}`는 raw의 추론 프로퍼티 size를 통과시켜 v2 객체에 stale 필드 잔류. destructure로 명시 제거.
+- **점수 재보정 불필요** — A(detour)·B(corridor·texture)·total 모두 비율/밀도 기반. 임의 W·H에서도 STAR_THRESHOLDS 의미 유지.
+- **인덱싱 모델: `grid[row=height_index][col=width_index]`** — 헤더 주석 명시. row/col 변수명 일관.
+- **Phase A 범위 = 내부 일반화만** — UI(settings-panel)는 정사각 프리셋 유지. Phase B에서 W·H NumberStepper UI + 비정사각 캔버스 처리 + 가시 셀 컬링.
+
+### Notes
+
+- 회귀 0: 16/32/64 정사각 그리기·검증·점수·플레이·fog·undo/redo·길 commit·줌·팬 모두 변경 없음.
+- v1 → v2 자동 migrate — 기존 사용자 localStorage 드래프트 손실 없이 복원. DevTools에서 `schemaVersion: 2`·`width`·`height` 존재·`size` 없음 확인.
+- 점수 알고리즘 / `SCORE_TUNING` / commit 알고리즘 / pathMarks 로직 / play.ts 이동·승리 — 무변경.
+- P3e-2 플레이 카메라 — `viewport.ts` `cameraFollow`를 호출하도록 play-canvas 본격 적용은 별도 task. Phase A에선 시그니처 일반화만.
+
 ## [0.9.0] — 2026-05-23
 
 ### Added (P3e-1 — 편집 줌/팬 + 변환 인프라)

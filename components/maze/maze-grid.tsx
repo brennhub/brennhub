@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useTheme } from "@/components/theme-provider";
-import type { MazeSize, MazeTheme, TileType } from "@/lib/maze/types";
+import type { MazeTheme, TileType } from "@/lib/maze/types";
 import { selectEngine } from "@/lib/maze/render";
 import {
   cellFromCanvasPx,
@@ -20,7 +20,10 @@ const WHEEL_ZOOM_FACTOR = 1.1;
 
 type Props = {
   grid: TileType[][];
-  size: MazeSize;
+  /** 그리드 가로 칸 수 (0.10.0 직사각 일반화). */
+  width: number;
+  /** 그리드 세로 칸 수. */
+  height: number;
   theme: MazeTheme;
   pathMarks?: ReadonlySet<string>;
   /** 줌·팬 상태 (P3e-1) — client-shell이 소유, viewport.ts가 산술 담당. */
@@ -45,7 +48,8 @@ type Props = {
  */
 export function MazeGrid({
   grid,
-  size,
+  width,
+  height,
   theme: mazeTheme,
   pathMarks,
   view,
@@ -130,10 +134,10 @@ export function MazeGrid({
 
       engine.clearBackground(ctx, DISPLAY_PX);
       const { cellPx, panX, panY } = view;
-      for (let r = 0; r < size; r += 1) {
+      for (let r = 0; r < height; r += 1) {
         const row = grid[r];
         if (!row) continue;
-        for (let c = 0; c < size; c += 1) {
+        for (let c = 0; c < width; c += 1) {
           engine.renderTile(ctx, row[c], engine.palette, {
             x: panX + c * cellPx,
             y: panY + r * cellPx,
@@ -147,7 +151,7 @@ export function MazeGrid({
           const r = Number(rs);
           const c = Number(cs);
           if (!Number.isFinite(r) || !Number.isFinite(c)) continue;
-          if (r < 0 || r >= size || c < 0 || c >= size) continue;
+          if (r < 0 || r >= height || c < 0 || c >= width) continue;
           engine.renderPathMark(ctx, engine.palette, {
             x: panX + c * cellPx,
             y: panY + r * cellPx,
@@ -155,14 +159,14 @@ export function MazeGrid({
           });
         }
       }
-      engine.drawGridLines(ctx, panX, panY, cellPx, size);
+      engine.drawGridLines(ctx, panX, panY, cellPx, width, height);
     };
     void draw();
 
     return () => {
       cancelled = true;
     };
-  }, [grid, size, mazeTheme, colorMode, pathMarks, view]);
+  }, [grid, width, height, mazeTheme, colorMode, pathMarks, view]);
 
   // 휠 줌 — addEventListener with {passive:false}. React onWheel은 passive 처리될 수
   // 있어 preventDefault가 안 먹음. 페이지 스크롤 차단 위해 직접 등록.
@@ -173,14 +177,14 @@ export function MazeGrid({
       e.preventDefault();
       const v = viewRef.current;
       const factor = e.deltaY < 0 ? WHEEL_ZOOM_FACTOR : 1 / WHEEL_ZOOM_FACTOR;
-      const newCellPx = clampCellPx(v.cellPx * factor, size, DISPLAY_PX);
+      const newCellPx = clampCellPx(v.cellPx * factor, width, height, DISPLAY_PX);
       if (newCellPx === v.cellPx) return;
       const { x, y } = clientToCanvasPx(e.clientX, e.clientY);
-      onViewChange(zoomAtCursor(v, x, y, newCellPx, size, DISPLAY_PX));
+      onViewChange(zoomAtCursor(v, x, y, newCellPx, width, height, DISPLAY_PX));
     };
     canvas.addEventListener("wheel", onWheel, { passive: false });
     return () => canvas.removeEventListener("wheel", onWheel);
-  }, [size, onViewChange, clientToCanvasPx]);
+  }, [width, height, onViewChange, clientToCanvasPx]);
 
   // 스페이스 keydown/keyup — 일시 손도구.
   useEffect(() => {
@@ -230,7 +234,7 @@ export function MazeGrid({
       const count = activePointersRef.current.size;
       if (count === 1) {
         if (isPanMode()) return; // 1포인터 팬 모드 — 그리기 안 함
-        const cell = cellFromCanvasPx(x, y, viewRef.current, size);
+        const cell = cellFromCanvasPx(x, y, viewRef.current, width, height);
         if (!cell) return;
         drawingRef.current = true;
         lastCellRef.current = `${cell.r},${cell.c}`;
@@ -251,7 +255,7 @@ export function MazeGrid({
       }
       // 3+ 포인터는 무시 (멀티터치 의도 명확치 않음).
     },
-    [clientToCanvasPx, size, onPaint, finalizeStroke],
+    [clientToCanvasPx, width, height, onPaint, finalizeStroke],
   );
 
   const handlePointerMove = useCallback(
@@ -275,7 +279,8 @@ export function MazeGrid({
         const scale = dist / a.initialDist;
         const newCellPx = clampCellPx(
           a.initialView.cellPx * scale,
-          size,
+          width,
+          height,
           DISPLAY_PX,
         );
         // anchor center 기준 줌
@@ -284,7 +289,8 @@ export function MazeGrid({
           a.centerX,
           a.centerY,
           newCellPx,
-          size,
+          width,
+          height,
           DISPLAY_PX,
         );
         // center 이동분만큼 추가 팬
@@ -294,7 +300,8 @@ export function MazeGrid({
           zoomed.panX + dxCenter,
           zoomed.panY + dyCenter,
           zoomed.cellPx,
-          size,
+          width,
+          height,
           DISPLAY_PX,
         );
         onViewChange({
@@ -314,14 +321,15 @@ export function MazeGrid({
             v.panX + dx,
             v.panY + dy,
             v.cellPx,
-            size,
+            width,
+            height,
             DISPLAY_PX,
           );
           onViewChange({ cellPx: v.cellPx, panX: clamped.panX, panY: clamped.panY });
           return;
         }
         if (!drawingRef.current) return;
-        const cell = cellFromCanvasPx(x, y, viewRef.current, size);
+        const cell = cellFromCanvasPx(x, y, viewRef.current, width, height);
         if (!cell) return;
         const key = `${cell.r},${cell.c}`;
         if (key === lastCellRef.current) return;
@@ -329,7 +337,7 @@ export function MazeGrid({
         onPaint(cell.r, cell.c, false);
       }
     },
-    [clientToCanvasPx, size, onPaint, onViewChange],
+    [clientToCanvasPx, width, height, onPaint, onViewChange],
   );
 
   const handlePointerEnd = useCallback(

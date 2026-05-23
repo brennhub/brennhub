@@ -127,22 +127,25 @@ export function createDefaultEngine(dark: boolean): RenderEngine {
       ctx.fillStyle = p.pathMarkTint;
       ctx.fillRect(rect.x, rect.y, rect.size, rect.size);
     },
-    drawGridLines(ctx, panX, panY, cellPx, size) {
-      // 격자선은 grid 영역 안에서만 stroke — panX/panY가 음수면 격자가 캔버스 좌상단을
-      // 넘어가고, 양수면 작은 grid가 가운데 정렬. 어느 쪽이든 grid 변의 두 끝점이
-      // 명시 픽셀. lineWidth=1 일정(줌 영향 없음 — 명시 cellPx 모델 효과).
+    drawGridLines(ctx, panX, panY, cellPx, width, height) {
+      // 격자선은 grid 영역 안에서만 stroke. lineWidth=1 일정(줌 영향 없음 — 명시
+      // cellPx 모델 효과). 0.10.0 직사각 일반화 — width/height 분리.
       ctx.strokeStyle = palette.gridLine;
       ctx.lineWidth = 1;
       ctx.beginPath();
       const x0 = panX;
       const y0 = panY;
-      const x1 = panX + size * cellPx;
-      const y1 = panY + size * cellPx;
-      for (let i = 0; i <= size; i += 1) {
+      const x1 = panX + width * cellPx;
+      const y1 = panY + height * cellPx;
+      // 세로선 (width+1개): x = i*cellPx, i ∈ [0, width].
+      for (let i = 0; i <= width; i += 1) {
         const x = Math.round(panX + i * cellPx) + 0.5;
-        const y = Math.round(panY + i * cellPx) + 0.5;
         ctx.moveTo(x, y0);
         ctx.lineTo(x, y1);
+      }
+      // 가로선 (height+1개): y = j*cellPx, j ∈ [0, height].
+      for (let j = 0; j <= height; j += 1) {
+        const y = Math.round(panY + j * cellPx) + 0.5;
         ctx.moveTo(x0, y);
         ctx.lineTo(x1, y);
       }

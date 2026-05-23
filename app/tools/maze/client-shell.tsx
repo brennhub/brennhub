@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/provider";
-import { TILE, type MazeProject, type MazeSize, type TileType } from "@/lib/maze/types";
+import { TILE, type MazeProject, type TileType } from "@/lib/maze/types";
 import { cloneGrid, emptyGrid, findStart, newProject } from "@/lib/maze/grid";
 import { loadProject, saveProject } from "@/lib/maze/storage";
 import { scoreMaze, validateMaze } from "@/lib/maze/validate";
@@ -74,15 +74,20 @@ export function MazeClientShell() {
   // P3c-1: 그리드 초기화 모달.
   const [resetGridOpen, setResetGridOpen] = useState(false);
   // P3d: 사이즈 변경 확인 다이얼로그 — 비어있지 않은 그리드에서만 사용.
-  const [pendingSize, setPendingSize] = useState<MazeSize | null>(null);
+  // P3d 사이즈 변경 확인 다이얼로그 + 0.10.0 직사각 일반화 — width/height 분리.
+  const [pendingDims, setPendingDims] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const [history, setHistory] = useState<GridHistory>(EMPTY_HISTORY);
   const [pathMarks, setPathMarks] = useState<ReadonlySet<string>>(EMPTY_MARKS);
   const strokeFillRef = useRef<TileType | null>(null);
   const pathStrokeModeRef = useRef<PathStrokeMode | null>(null);
   // P3e-1: 줌·팬 transient view 상태. localStorage 미저장 (schemaVersion 영향 0).
-  const [view, setView] = useState<ViewState>(() =>
-    fitView(newProject().size, CANVAS_DISPLAY_PX),
-  );
+  const [view, setView] = useState<ViewState>(() => {
+    const p = newProject();
+    return fitView(p.width, p.height, CANVAS_DISPLAY_PX);
+  });
   // P3e-1: 손도구 모드 — 활성 시 1포인터/마우스도 팬.
   const [handMode, setHandMode] = useState(false);
 
@@ -92,10 +97,10 @@ export function MazeClientShell() {
     const loaded = loadProject();
     setProject(
       loaded.grid.length === 0
-        ? { ...loaded, grid: emptyGrid(loaded.size) }
+        ? { ...loaded, grid: emptyGrid(loaded.width, loaded.height) }
         : loaded,
     );
-    setView(fitView(loaded.size, CANVAS_DISPLAY_PX));
+    setView(fitView(loaded.width, loaded.height, CANVAS_DISPLAY_PX));
     setHydrated(true);
   }, []);
 
@@ -112,31 +117,30 @@ export function MazeClientShell() {
   }, []);
 
   // 사이즈 변경 클릭 — 비어있으면 즉시, 아니면 확인 다이얼로그.
-  // history·marks·view 모두 새로 — 다른 사이즈 grid 참조 stroke는 복원 불가하고
-  // view는 새 사이즈의 fit으로 리셋해야 컨트롤 한계가 의미 있음.
-  const applySizeChange = useCallback((size: MazeSize) => {
-    setProject((p) => ({ ...p, size, grid: emptyGrid(size) }));
+  // 0.10.0 직사각 일반화 — width/height 양 차원 받음. history·marks·view 모두 새로.
+  const applySizeChange = useCallback((width: number, height: number) => {
+    setProject((p) => ({ ...p, width, height, grid: emptyGrid(width, height) }));
     setHistory(EMPTY_HISTORY);
     setPathMarks(EMPTY_MARKS);
-    setView(fitView(size, CANVAS_DISPLAY_PX));
+    setView(fitView(width, height, CANVAS_DISPLAY_PX));
   }, []);
 
   const handleSizeChange = useCallback(
-    (size: MazeSize) => {
-      if (size === project.size) return;
+    (width: number, height: number) => {
+      if (width === project.width && height === project.height) return;
       if (isGridEmpty(project.grid)) {
-        applySizeChange(size);
+        applySizeChange(width, height);
         return;
       }
-      setPendingSize(size);
+      setPendingDims({ width, height });
     },
-    [project.size, project.grid, isGridEmpty, applySizeChange],
+    [project.width, project.height, project.grid, isGridEmpty, applySizeChange],
   );
 
   const handleConfirmSizeChange = useCallback(() => {
-    if (pendingSize !== null) applySizeChange(pendingSize);
-    setPendingSize(null);
-  }, [pendingSize, applySizeChange]);
+    if (pendingDims !== null) applySizeChange(pendingDims.width, pendingDims.height);
+    setPendingDims(null);
+  }, [pendingDims, applySizeChange]);
 
   const handleFogToggle = useCallback((on: boolean) => {
     setProject((p) => ({ ...p, fogOfWar: on }));
@@ -293,7 +297,7 @@ export function MazeClientShell() {
         ].slice(-HISTORY_DEPTH),
         future: [],
       }));
-      return { ...p, grid: emptyGrid(p.size) };
+      return { ...p, grid: emptyGrid(p.width, p.height) };
     });
     setPathMarks(EMPTY_MARKS);
     setResetGridOpen(false);
@@ -310,9 +314,8 @@ export function MazeClientShell() {
         ].slice(-HISTORY_DEPTH),
         future: [],
       }));
-      const size = p.grid.length;
-      const grid: TileType[][] = Array.from({ length: size }, (_, r) =>
-        Array.from({ length: size }, (_, c) => {
+      const grid: TileType[][] = Array.from({ length: p.height }, (_, r) =>
+        Array.from({ length: p.width }, (_, c) => {
           const cur = p.grid[r][c];
           if (cur === TILE.START || cur === TILE.GOAL) return cur;
           return pathMarks.has(`${r},${c}`) ? TILE.EMPTY : TILE.WALL;
@@ -323,11 +326,12 @@ export function MazeClientShell() {
     setPathMarks(EMPTY_MARKS);
   }, [pathMarks]);
 
-  // 줌 컨트롤 (P3e-1) — 버튼은 캔버스 중앙 기준 줌(zoomAtCursor에 center 전달).
+  // 줌 컨트롤 (P3e-1, 0.10.0 width/height 일반화) — 버튼은 캔버스 중앙 기준 줌.
   const handleZoomIn = useCallback(() => {
     const newCellPx = clampCellPx(
       view.cellPx * ZOOM_BUTTON_FACTOR,
-      project.size,
+      project.width,
+      project.height,
       CANVAS_DISPLAY_PX,
     );
     if (newCellPx === view.cellPx) return;
@@ -337,16 +341,18 @@ export function MazeClientShell() {
         CANVAS_DISPLAY_PX / 2,
         CANVAS_DISPLAY_PX / 2,
         newCellPx,
-        project.size,
+        project.width,
+        project.height,
         CANVAS_DISPLAY_PX,
       ),
     );
-  }, [view, project.size]);
+  }, [view, project.width, project.height]);
 
   const handleZoomOut = useCallback(() => {
     const newCellPx = clampCellPx(
       view.cellPx / ZOOM_BUTTON_FACTOR,
-      project.size,
+      project.width,
+      project.height,
       CANVAS_DISPLAY_PX,
     );
     if (newCellPx === view.cellPx) return;
@@ -356,31 +362,37 @@ export function MazeClientShell() {
         CANVAS_DISPLAY_PX / 2,
         CANVAS_DISPLAY_PX / 2,
         newCellPx,
-        project.size,
+        project.width,
+        project.height,
         CANVAS_DISPLAY_PX,
       ),
     );
-  }, [view, project.size]);
+  }, [view, project.width, project.height]);
 
   const handleFit = useCallback(() => {
-    setView(fitView(project.size, CANVAS_DISPLAY_PX));
-  }, [project.size]);
+    setView(fitView(project.width, project.height, CANVAS_DISPLAY_PX));
+  }, [project.width, project.height]);
 
   // view 변경 외부 핸들러 — maze-grid가 휠/핀치/팬으로 view를 갱신할 때 호출.
-  // 잘못된 view(한계 밖)가 들어와도 한 번 더 clamp — 방어.
   const handleViewChange = useCallback(
     (next: ViewState) => {
-      const cellPx = clampCellPx(next.cellPx, project.size, CANVAS_DISPLAY_PX);
+      const cellPx = clampCellPx(
+        next.cellPx,
+        project.width,
+        project.height,
+        CANVAS_DISPLAY_PX,
+      );
       const { panX, panY } = clampPan(
         next.panX,
         next.panY,
         cellPx,
-        project.size,
+        project.width,
+        project.height,
         CANVAS_DISPLAY_PX,
       );
       setView({ cellPx, panX, panY });
     },
-    [project.size],
+    [project.width, project.height],
   );
 
   // 키보드 단축키 — 만들기 단계(step === 1) 한정.
@@ -434,7 +446,8 @@ export function MazeClientShell() {
           // 가변/contextual은 그리드 아래(PathCommitButton·ValidationPanel).
           <div className="space-y-4">
             <SettingsPanel
-              size={project.size}
+              width={project.width}
+              height={project.height}
               fogOfWar={project.fogOfWar}
               fogRadius={project.fogRadius}
               onSizeChange={handleSizeChange}
@@ -457,7 +470,8 @@ export function MazeClientShell() {
             <div className="relative mx-auto max-w-[512px]">
               <MazeGrid
                 grid={project.grid}
-                size={project.size}
+                width={project.width}
+                height={project.height}
                 theme={project.theme}
                 pathMarks={pathMarks}
                 view={view}
@@ -467,8 +481,12 @@ export function MazeClientShell() {
               />
               <ZoomControls
                 cellPx={view.cellPx}
-                minCellPx={zoomLimits(project.size, CANVAS_DISPLAY_PX).min}
-                maxCellPx={zoomLimits(project.size, CANVAS_DISPLAY_PX).max}
+                minCellPx={
+                  zoomLimits(project.width, project.height, CANVAS_DISPLAY_PX).min
+                }
+                maxCellPx={
+                  zoomLimits(project.width, project.height, CANVAS_DISPLAY_PX).max
+                }
                 handMode={handMode}
                 onToggleHand={() => setHandMode((v) => !v)}
                 onZoomIn={handleZoomIn}
@@ -499,12 +517,12 @@ export function MazeClientShell() {
       />
       {/* 사이즈 변경 확인 모달 (0.8.0 P3d) — 비어있지 않은 grid에서만 트리거. */}
       <ResetConfirmDialog
-        open={pendingSize !== null}
+        open={pendingDims !== null}
         title={tm.sizeChangeTitle}
         message={tm.sizeChangeMessage}
         confirmLabel={tm.sizeChangeConfirm}
         onConfirm={handleConfirmSizeChange}
-        onCancel={() => setPendingSize(null)}
+        onCancel={() => setPendingDims(null)}
       />
     </main>
   );

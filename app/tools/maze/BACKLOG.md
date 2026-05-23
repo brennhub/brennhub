@@ -2,7 +2,7 @@
 
 Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
-단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX (undo/redo·재클릭 토글·초기화) · **P3c-2** 길 그리기 + 벽 생성 · **P3d** 만들기 단계 통합 · **P3e-1** 편집 줌/팬 + 변환 인프라 · **P3e-2** 플레이 카메라 · **P4** 숏링크 공유.
+단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX · **P3c-2** 길 그리기 + 벽 생성 · **P3d** 만들기 단계 통합 · **P3e-1** 편집 줌/팬 + 변환 인프라 · **P3f-A** 직사각 내부 일반화 · **P3f-B** 비정사각 UI · **P3e-2** 플레이 카메라 · **P4** 숏링크 공유.
 
 ## P1 — 스캐폴딩 (인프라/골격) — 완료 (CHANGELOG `[0.1.0]`)
 
@@ -124,6 +124,28 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] play-canvas drawGridLines 새 시그니처 호환 (panX=0, panY=0)
 - [x] i18n 4키 — viewZoomIn / viewZoomOut / viewFit / viewHand (ko/en)
 - [ ] dev 시각 점검 — 16맵 컨트롤 비활성·32/64맵 줌인 한계(16맵 셀 크기)·줌아웃 한계(fit)·휠 커서 중심·모바일 핀치/팬·스페이스 일시 손도구·손도구 토글·우상단 오버레이가 셀 그리기 가리는지
+
+## P3f-A — 직사각 그리드 내부 일반화 — 완료 (CHANGELOG `[0.10.0]`)
+
+- [x] schemaVersion 1 → 2 + storage migrate (v1 size → v2 width/height, stale size 명시 destructure 제거)
+- [x] types.ts — width/height + DIM_MIN/MAX, MazeSize/SIZES/DEFAULT_SIZE 폐기, SIZE_PRESETS 호환
+- [x] grid.ts — emptyGrid(width, height) + isValidGrid(value, width, height)
+- [x] validate.ts — BFS/scoreMaze 차원 분리 (`r < height && c < width`)
+- [x] play.ts — applyMove 경계 분리
+- [x] viewport.ts — width/height 양 인자 (zoomLimits·fitView·clampPan·zoomAtCursor·cellFromCanvasPx·cameraFollow)
+- [x] render/types.ts·default.ts — drawGridLines(panX, panY, cellPx, width, height)
+- [x] maze-grid·play-canvas·play-mode·client-shell·settings-panel 모두 props/state width/height
+- [x] settings-panel UI 무변경 — 정사각 프리셋 (s, s) 호출
+- [ ] dev 검증 — 16/32/64 정사각 회귀 0 / v1 localStorage 자동 migrate (DevTools 확인)
+
+## P3f-B — 비정사각 UI + 캔버스 처리 + 가시 셀 컬링 (Phase B)
+
+- [ ] settings-panel — W·H NumberStepper UI (DIM_MIN..DIM_MAX). Phase A 프리셋과 병행.
+- [ ] **스테퍼 단발 변경 vs 다이얼로그 충돌 해소** — 스테퍼는 pending 값만 편집 → 단일 적용 액션이 다이얼로그 1회→wipe. +/− 클릭마다 다이얼로그 뜨지 않게.
+- [ ] 비정사각 캔버스 처리 — fit cellPx + clampPan 가운데 정렬 (이미 viewport.ts 일반화됨, 시각 검증만)
+- [ ] 가시 셀 컬링 — maze-grid·play-canvas 줌인 시 viewport 밖 셀 skip. 128×128 성능 보완.
+- [ ] 비정사각 점수 archetype 검증 — 32×64 등 console.log raw total 측정
+- [ ] dev 검증 — 50×150 / 128×4 / 3×128 비정사각 그리기·플레이·점수·줌·팬
 
 ## P3e-2 — 플레이 카메라 (변환 재사용)
 
