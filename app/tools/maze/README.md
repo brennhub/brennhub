@@ -21,6 +21,7 @@
 ### Step 2 — 그리기
 - 도구 4종(벽 / 지우개 / 시작점 / 도착점)을 골라 격자를 클릭·드래그로 칠한다.
 - 시작점은 1개(새로 찍으면 이동), 도착점은 여러 개 배치 가능.
+- **완결성 검증 패널** — 도구 팔레트 아래에 라이브 배지. 통과 시 "플레이 가능", 실패 시 critical 사유 + 펼침 시 규칙별 상태. 검증 모듈은 `lib/maze/validate.ts` 순수 함수 + `useMemo(grid)` 라이브 재계산.
 - Step2 → Step1 되돌아가기 시 "맵 초기화" 확인 다이얼로그 → 맵 전면 리셋 (Padding/Crop 없음).
 
 ## 기술 스택
@@ -80,6 +81,8 @@ export type MazeProject = {
 
 > **Fog of War는 canonical 타입에 포함** — 기획서상 MVP 기능(기능 3)이므로 `fogOfWar`/`fogRadius`를 처음부터 `MazeProject`에 둔다. fog 렌더(P3)에서 필드 추가로 인한 schema 마이그레이션을 피하기 위함.
 
+> **규칙2(외곽 폐쇄) = boundary clamp 자동 충족** — 검증 모듈에서 명시 체크 없음. 플레이어 좌표가 BFS·이동 모두 `[0, size-1]` clamp이라 grid 밖 탈출이 물리적으로 불가능. 기획서 의도("맵 밖으로 나가는 구역 없음")는 결과적으로 동일 달성. 외곽이 EMPTY인 경우 BFS 통과성 == P3b 이동 통과성으로 일관 (검증의 통과는 곧 플레이 가능성과 일치).
+
 ## 공유 저장 (D1)
 
 `migrations/001_maze.sql` — `maze` 테이블:
@@ -104,11 +107,12 @@ app/tools/maze/
   README.md / BACKLOG.md / CHANGELOG.md   # P1 완료
   migrations/001_maze.sql                  # P1 완료 — D1 공유 테이블
   page.tsx                                 # P2 완료 — Server Component shell
-  client-shell.tsx                         # P2 완료 — 상태·스텝·도구 오케스트레이션
+  client-shell.tsx                         # P2 완료 + P3a useMemo 검증 — 상태·스텝·도구 오케스트레이션
 lib/maze/
   types.ts                                 # P2 완료 — TileType / MazeProject + 상수 (위 canonical)
   grid.ts                                  # P2 완료 — 격자 헬퍼 (emptyGrid/cloneGrid/findStart 등)
   storage.ts                               # P2 완료 — localStorage load/save/migrate
+  validate.ts                              # P3a 완료 — 완결성 검증 (BFS·엔드포인트). 규칙2 = clamp 자동 충족
   render/
     types.ts                               # P2.1 완료 — RenderEngine / TileRenderer / ThemePalette + ready? 훅
     icons.ts                               # P2.1 완료 — lucide v1.14.0 iconNode 임베드 (User/Flag, ISC)
@@ -121,6 +125,7 @@ components/maze/
   tool-palette.tsx                         # P2 완료 — Step2 도구 팔레트
   maze-grid.tsx                            # P2 완료 + P2.1 재배선 — engine 오케스트레이션 only (fillRect 직접 호출 0)
   reset-confirm-dialog.tsx                 # P2 완료 — 맵 초기화 확인 모달
+  validation-panel.tsx                     # P3a 완료 — Step2 검증 배지 + 펼침 상세
 app/api/maze/
   route.ts                                 # P4 — 공유 저장/조회 (runtime="edge" 금지)
 ```

@@ -49,5 +49,8 @@ next-env.d.ts
 .wrangler/
 .dev.vars
 
-# saju-naming 빌드 캐시 (rutopio CSV 다운로드)
-app/tools/saju-naming/scripts/data/.cache/
+# saju-naming 빌드 캐시 (rutopio CSV 다운로드) — regenerable, not for repo
+/app/tools/saju-naming/scripts/data/.cache/
+
+# local-only assets (screenshots dropped during dev)
+/screenshots/

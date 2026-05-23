@@ -480,6 +480,17 @@ export type Messages = {
     resetMessage: string;
     resetConfirm: string;
     resetCancel: string;
+    validationTitlePass: string;
+    validationTitleFail: string;
+    validationNoStart: string;
+    validationMultiStart: string;
+    validationNoGoal: string;
+    validationUnreachable: string;
+    validationExpand: string;
+    validationCollapse: string;
+    validationRuleEndpoints: string;
+    validationRuleReachability: string;
+    validationSkipped: string;
   };
   feedback: {
     button: string;
@@ -1029,6 +1040,17 @@ export const messages: Record<Locale, Messages> = {
         "설정으로 돌아가면 지금까지 그린 맵이 모두 초기화됩니다. 계속할까요?",
       resetConfirm: "초기화하고 돌아가기",
       resetCancel: "취소",
+      validationTitlePass: "플레이 가능",
+      validationTitleFail: "검증 실패",
+      validationNoStart: "시작점이 없습니다",
+      validationMultiStart: "시작점이 여러 개입니다",
+      validationNoGoal: "도착점이 없습니다",
+      validationUnreachable: "도착점에 도달할 수 없습니다",
+      validationExpand: "상세 보기",
+      validationCollapse: "닫기",
+      validationRuleEndpoints: "시작점·도착점",
+      validationRuleReachability: "도달 가능성",
+      validationSkipped: "검증 보류",
     },
     feedback: {
       button: "피드백",
@@ -1614,6 +1636,17 @@ export const messages: Record<Locale, Messages> = {
         "Going back to settings will reset everything you've drawn. Continue?",
       resetConfirm: "Reset and go back",
       resetCancel: "Cancel",
+      validationTitlePass: "Ready to play",
+      validationTitleFail: "Validation failed",
+      validationNoStart: "No start tile placed",
+      validationMultiStart: "Multiple start tiles found",
+      validationNoGoal: "No goal tile placed",
+      validationUnreachable: "No goal is reachable from start",
+      validationExpand: "Details",
+      validationCollapse: "Hide",
+      validationRuleEndpoints: "Start & goal",
+      validationRuleReachability: "Reachability",
+      validationSkipped: "Skipped",
     },
     feedback: {
       button: "Feedback",
