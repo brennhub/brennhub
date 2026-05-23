@@ -1,6 +1,6 @@
 "use client";
 
-import { Redo2, Trash2, Undo2 } from "lucide-react";
+import { Redo2, RefreshCw, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMessages } from "@/lib/i18n/provider";
 
@@ -46,7 +46,7 @@ export function EditorControls({
         </ControlButton>
       </div>
       <ControlButton label={t.editorResetGrid} onClick={onResetGrid}>
-        <Trash2 className="size-4" />
+        <RefreshCw className="size-4" />
       </ControlButton>
     </div>
   );

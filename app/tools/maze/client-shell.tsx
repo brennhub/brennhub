@@ -164,8 +164,6 @@ export function MazeClientShell() {
               p.grid[r][c] === TILE.WALL ? TILE.EMPTY : TILE.WALL;
           }
           nextTile = strokeFillRef.current ?? TILE.WALL;
-        } else if (activeTool === "eraser") {
-          nextTile = TILE.EMPTY;
         } else if (activeTool === "goal") {
           // 재클릭 토글.
           nextTile = p.grid[r][c] === TILE.GOAL ? TILE.EMPTY : TILE.GOAL;

@@ -2,6 +2,28 @@
 
 주요 결정 / 이정표.
 
+## [0.6.1] — 2026-05-23
+
+### Removed
+
+- **지우개 도구** — 벽 재클릭 토글(0.6.0)이 벽 지우기를 대체하므로 불필요. 깔끔 제거:
+  - `Tool` 타입에서 `"eraser"` 제외.
+  - `ToolPalette`의 eraser 버튼 제거.
+  - `handlePaint`의 eraser 분기 제거.
+  - i18n `maze.toolEraser` 키 제거 (Messages 타입 + ko/en).
+  - grep 잔여 0 확인. `activeTool` 초기값은 `"wall"`이라 eraser로 fallback 경로 없음.
+
+### Changed
+
+- **초기화 버튼 아이콘** — `Trash2` → `RefreshCw`. "초기화 = 처음으로 돌리기" 의미가 휴지통보다 정확.
+- **시작점 아이콘 정합** — 도구 팔레트 시작점 = `Smile` → `User`. P2.1 렌더러가 캔버스에 그리는 `User` 아이콘과 동일. 도착점은 둘 다 `Flag`로 이미 일치.
+- **공유 아이콘 상수** `lib/maze/icons.ts` — `MAZE_TOOL_ICONS` map(WALL/START/GOAL). 도구 팔레트와 렌더러(`lib/maze/render/icons.ts` iconNode)는 출력 형식이 다르지만 둘 다 lucide-react v1.14.0 단일 출처라 시각 일관 자동. V2에서 아이콘 교체 시 두 곳을 함께 갱신해야 함을 주석에 명문화.
+
+### Notes
+
+- handlePaint 로직 / undo·redo / 초기화 / 점수 / fog / Step3 — 모두 무변경 (회귀 0).
+- 패치 버전 — 신규 기능 0, UI 정리만.
+
 ## [0.6.0] — 2026-05-23
 
 ### Added (P3c-1 — 에디터 UX: undo/redo · 벽 재클릭 토글 · 초기화)
