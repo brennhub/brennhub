@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMessages } from "@/lib/i18n/provider";
 import type { Dir } from "@/lib/maze/play";
@@ -10,6 +17,9 @@ type Props = {
   onMove: (dir: Dir) => void;
   /** 승리 후엔 입력 비활성 — 모달이 떠 있으므로. */
   disabled?: boolean;
+  /** 사운드 음소거 상태 (0.13.0). 전역 localStorage 영속 — play-mode가 관리. */
+  muted: boolean;
+  onToggleMute: () => void;
 };
 
 const KEY_TO_DIR: Record<string, Dir> = {
@@ -33,7 +43,12 @@ const KEY_TO_DIR: Record<string, Dir> = {
  * 키보드: window keydown 리스너. 방향키는 preventDefault — 페이지 스크롤 방지.
  * D-pad: 데스크탑·모바일 공통으로 항상 표시 (입력 가이드 + 터치 입력).
  */
-export function PlayControls({ onMove, disabled }: Props) {
+export function PlayControls({
+  onMove,
+  disabled,
+  muted,
+  onToggleMute,
+}: Props) {
   const t = useMessages().maze;
 
   useEffect(() => {
@@ -52,7 +67,27 @@ export function PlayControls({ onMove, disabled }: Props) {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-muted-foreground">{t.playIntro}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">{t.playIntro}</p>
+        {/* 사운드 음소거 토글 (0.13.0) — 사운드 사용자 발견·차단 모두 빠르게. */}
+        <button
+          type="button"
+          onClick={onToggleMute}
+          aria-label={muted ? t.soundUnmute : t.soundMute}
+          aria-pressed={muted}
+          title={muted ? t.soundUnmute : t.soundMute}
+          className={cn(
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors",
+            "hover:bg-muted hover:text-foreground",
+          )}
+        >
+          {muted ? (
+            <VolumeX className="size-4" />
+          ) : (
+            <Volume2 className="size-4" />
+          )}
+        </button>
+      </div>
       <div
         role="group"
         aria-label="d-pad"
