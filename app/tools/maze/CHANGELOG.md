@@ -2,6 +2,42 @@
 
 주요 결정 / 이정표.
 
+## [0.5.1] — 2026-05-23
+
+### Fixed (P3a-2 후속 교정 — 어긋난 것 3건)
+
+- **검증/점수 패널 위치 — 그리드 위 → 아래**. 패널 높이가 바뀔 때(✗ ↔ 통과 ↔ weakness 펼침/접힘)
+  그리드가 위아래로 밀려 사용자가 그리던 셀 위치를 잃던 문제 해소. `client-shell.tsx` Step2 분기에서
+  `<ValidationPanel>`을 `<MazeGrid>` 뒤로 이동.
+- **Fog of War 원형 렌더 — 셀 양자화 제거**. 기존 셀 단위 `(r-pr)² + (c-pc)² ≤ R²` 가드는 작은
+  반경에서 십자/계단 모양으로 각져 보였음. `play-canvas.tsx` fog ON 분기를 **픽셀 단위 `ctx.arc + ctx.clip()`** 로
+  재작성 — player 셀 중심에서 `fogRadius × cell` 픽셀 반경의 진짜 원형. 단위 "칸" 의미는 그대로 유지(UX 변화 0).
+- **도착점 도구 동작 정리**:
+  - 드래그 금지 → **클릭 1회 = 깃발 1개** (기존엔 벽처럼 드래그로 연속 배치).
+  - 기존 깃발 재클릭 시 삭제 (토글).
+  - 시작점(드래그로 1개 이동)·벽·지우개(드래그)는 현행 그대로.
+
+### Changed (구조)
+
+- **`MazeGrid.onPaint` 시그니처 확장**: `(r,c) → (r,c,isInitial: boolean)`. `pointerdown`은 `true`,
+  `pointermove`는 `false`. `client-shell.handlePaint`가 도구별로 드래그 허용 여부 판단 (현재는 goal만 차단).
+- **`play-canvas.tsx` 렌더 분기 단순화** — fog ON 시 셀별 `visible()` 가드 + fog 전용 grid-line 셀별
+  루프 **둘 다 제거**. 클립이 자르므로 fog ON/OFF 모두 동일한 `renderAll()`(clearBg → tiles → player → gridLines)을
+  호출, fog ON 분기는 그 호출을 `ctx.save() / arc / clip / restore`로 감싸기만.
+
+### Decided
+
+- **fog 원형 = Canvas Clip 마스크** (옵션 A 셀 가드 / 옵션 C globalCompositeOperation 대비). 진짜 원형 + 코드 단순화 둘 다.
+- **반경 정의 `radius_px = fogRadius * cell`** — "칸" 단위 의미 유지. 기존 값(1·3·6)에서 사용자 UX 변화 없음.
+- **`isInitial` flag 패턴** — maze-grid가 activeTool을 알 필요 없게 client-shell이 도구별 정책 결정.
+  V2에서 다른 도구(트랩·열쇠 등)도 드래그 금지하려면 같은 분기 한 줄 추가로 가능.
+
+### Notes
+
+- fog는 순수 시각 — 이동·충돌·BFS·점수 로직 영향 0 (`play.ts`/`grid.ts`/`validate.ts` 무변경).
+- 점수 알고리즘/임계값 보류 (P3a-2 1차안 그대로). archetype 실측 보정은 별도 task.
+- 에디터 UX 신규 기능(undo/redo·벽 재클릭 삭제·초기화·길 그리기 모드)은 P3c 별도 task — 본 patch에서 미구현.
+
 ## [0.5.0] — 2026-05-22
 
 ### Added (P3a-2 — 미로 품질 점수 시스템)
