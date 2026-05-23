@@ -21,7 +21,10 @@
 ### Step 2 — 그리기
 - 도구 4종(벽 / 지우개 / 시작점 / 도착점)을 골라 격자를 클릭·드래그로 칠한다.
 - 시작점은 1개(새로 찍으면 이동), 도착점은 여러 개 배치 가능.
-- **완결성 검증 패널** — 도구 팔레트 아래에 라이브 배지. 통과 시 "플레이 가능", 실패 시 critical 사유 + 펼침 시 규칙별 상태. 검증 모듈은 `lib/maze/validate.ts` 순수 함수 + `useMemo(grid)` 라이브 재계산.
+- **완결성·품질 패널** — 도구 팔레트 아래에 라이브 배지.
+  - 미통과: ✗ + critical 사유 + 펼침 시 규칙별 상태.
+  - 통과: 별점 ★1–5 + "플레이 가능" 마크 + 차원 바 3개(경로 우회도 / 복도성 / 갈림길·막다른 길) + 약점 안내(있을 때만).
+  - 점수는 게이팅 X — Step3 활성 조건은 완결성 통과만. 점수는 디자인 가이드. 모듈 `lib/maze/validate.ts` 순수 함수, `useMemo(grid)` 라이브 재계산. 튜닝은 `SCORE_TUNING` 한 블록.
 - Step2 → Step1 되돌아가기 시 "맵 초기화" 확인 다이얼로그 → 맵 전면 리셋 (Padding/Crop 없음).
 
 ### Step 3 — 플레이
@@ -119,7 +122,7 @@ lib/maze/
   types.ts                                 # P2 완료 — TileType / MazeProject + 상수 (위 canonical)
   grid.ts                                  # P2 완료 + P3b isPassable 단일 헬퍼 — 격자 헬퍼 + 통과성 단일 출처
   storage.ts                               # P2 완료 — localStorage load/save/migrate
-  validate.ts                              # P3a 완료 — 완결성 검증 (BFS·엔드포인트). 규칙2 = clamp 자동 충족
+  validate.ts                              # P3a + P3a-2 완료 — 완결성 검증 + 미로 품질 점수 (SCORE_TUNING)
   play.ts                                  # P3b 완료 — PlayState / applyMove / isWin (순수 결정론)
   render/
     types.ts                               # P2.1 완료 + P3b renderPlayer — RenderEngine 인터페이스
@@ -133,7 +136,7 @@ components/maze/
   tool-palette.tsx                         # P2 완료 — Step2 도구 팔레트
   maze-grid.tsx                            # P2 완료 + P2.1 재배선 — engine 오케스트레이션 only (fillRect 직접 호출 0)
   reset-confirm-dialog.tsx                 # P2 완료 — 맵 초기화 확인 모달
-  validation-panel.tsx                     # P3a 완료 — Step2 검증 배지 + 펼침 상세
+  validation-panel.tsx                     # P3a + P3a-2 — Step2 배지: 미통과 사유 / 통과 시 별점·차원 바·약점
   play-canvas.tsx                          # P3b 완료 — Step3 캔버스 (fog 시야 안 셀+격자선만)
   play-controls.tsx                        # P3b 완료 — D-pad + 키보드(방향키 preventDefault)
   play-mode.tsx                            # P3b 완료 — Step3 컨테이너 (P4 재사용 인터페이스)

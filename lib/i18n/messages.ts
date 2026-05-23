@@ -490,6 +490,14 @@ export type Messages = {
     validationRuleEndpoints: string;
     validationRuleReachability: string;
     validationSkipped: string;
+    scoreLabel: string;
+    scoreStarsAria: string;
+    scoreDimDetour: string;
+    scoreDimCorridors: string;
+    scoreDimTexture: string;
+    weakLowDetour: string;
+    weakNoCorridors: string;
+    weakNoTexture: string;
     playNotReadyHint: string;
     playIntro: string;
     playControlsUp: string;
@@ -1059,6 +1067,17 @@ export const messages: Record<Locale, Messages> = {
       validationRuleEndpoints: "시작점·도착점",
       validationRuleReachability: "도달 가능성",
       validationSkipped: "검증 보류",
+      scoreLabel: "미로 점수",
+      scoreStarsAria: "별 5개 중 {n}개",
+      scoreDimDetour: "경로 우회도",
+      scoreDimCorridors: "복도성",
+      scoreDimTexture: "갈림길·막다른 길",
+      weakLowDetour:
+        "우회도가 낮습니다 — 벽을 더 채워 길을 꼬아보세요.",
+      weakNoCorridors:
+        "벽이 거의 없습니다 — 길을 좁혀 미로를 만들어보세요.",
+      weakNoTexture:
+        "갈림길도 막다른 길도 없습니다 — 단조로워요.",
       playNotReadyHint:
         "플레이를 시작하려면 그리기 단계의 검증을 먼저 통과해야 합니다.",
       playIntro: "방향키 또는 WASD, 아래 D-pad로 이동하세요.",
@@ -1665,6 +1684,17 @@ export const messages: Record<Locale, Messages> = {
       validationRuleEndpoints: "Start & goal",
       validationRuleReachability: "Reachability",
       validationSkipped: "Skipped",
+      scoreLabel: "Maze score",
+      scoreStarsAria: "{n} of 5 stars",
+      scoreDimDetour: "Detour",
+      scoreDimCorridors: "Corridor structure",
+      scoreDimTexture: "Branches & dead ends",
+      weakLowDetour:
+        "Detour is low — add walls to twist the path.",
+      weakNoCorridors:
+        "Hardly any walls — narrow the paths to form a maze.",
+      weakNoTexture:
+        "No branches or dead ends — the path feels flat.",
       playNotReadyHint:
         "Pass the draw-step validation before you can play.",
       playIntro: "Arrow keys, WASD, or the D-pad below to move.",

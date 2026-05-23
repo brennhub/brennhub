@@ -6,7 +6,7 @@ import { useMessages } from "@/lib/i18n/provider";
 import { TILE, type MazeProject, type MazeSize } from "@/lib/maze/types";
 import { cloneGrid, emptyGrid, findStart, newProject } from "@/lib/maze/grid";
 import { loadProject, saveProject } from "@/lib/maze/storage";
-import { validateMaze } from "@/lib/maze/validate";
+import { scoreMaze, validateMaze } from "@/lib/maze/validate";
 import { StepNav, type Step } from "@/components/maze/step-nav";
 import { SettingsPanel } from "@/components/maze/settings-panel";
 import { ToolPalette, type Tool } from "@/components/maze/tool-palette";
@@ -91,6 +91,29 @@ export function MazeClientShell() {
   // 규칙2(외곽 폐쇄)는 boundary clamp으로 자동 충족 — validate에서 별도 체크 없음.
   // P3b 플레이어 이동도 동일 clamp 규약을 따른다(BFS 통과성 == 이동 통과성).
   const validation = useMemo(() => validateMaze(project.grid), [project.grid]);
+  // 품질 점수 (P3a-2) — 완결성 통과 시에만 산출. 게이팅 X — Step3 활성 조건은
+  // validation.ok 그대로. 점수는 보여주기만 (별점·차원 바·약점 안내).
+  const score = useMemo(
+    () => (validation.ok ? scoreMaze(project.grid) : null),
+    [project.grid, validation.ok],
+  );
+
+  // archetype 임계값 보정용 콘솔 신호 (P3a-2 1차안).
+  // UI는 차원별 norm만 노출 — composite total(sqrt(A·B))은 패널에 안 보인다.
+  // 4개 archetype(빈 들판/벽 허술/외길/제대로 된 미로) total을 손계산 없이 읽기 위한 임시 신호.
+  // **P4 live 전 제거** (BACKLOG: "dev archetype 임계값 보정용 콘솔 신호 제거").
+  useEffect(() => {
+    if (!score) return;
+     
+    console.log("[maze score]", {
+      A: score.detour.norm,
+      B_corridor: score.corridor.norm,
+      B_texture: score.texture.norm,
+      total: score.total,
+      stars: score.stars,
+      weakness: score.weakness,
+    });
+  }, [score]);
 
   // 셀 페인트 — 활성 도구에 따라 타일 결정.
   const handlePaint = useCallback(
@@ -160,7 +183,7 @@ export function MazeClientShell() {
               activeTool={activeTool}
               onToolChange={setActiveTool}
             />
-            <ValidationPanel result={validation} />
+            <ValidationPanel result={validation} score={score} />
             <MazeGrid
               grid={project.grid}
               size={project.size}
