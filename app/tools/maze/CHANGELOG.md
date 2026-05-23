@@ -2,6 +2,62 @@
 
 주요 결정 / 이정표.
 
+## [0.14.0] — 2026-05-23
+
+### Added (P4a — 숏링크 공유 + ?id= 진입)
+
+D1 + 6자 숏링크. **registry 여전히 coming-soon** — 라이브 전환은 P4b (archetype 보정 + main 머지).
+
+- **`lib/maze/share.ts` (신규)** — `generateShortId` (6자 알파넘, Web Crypto), `isValidShortId`, `parseSharedPayload` (JSON.parse + `migrateSharedPayload`), `isValidPayload`.
+- **`app/api/maze/route.ts` (신규)** — POST `/api/maze`. D1 binding `MAZE_DB`. 충돌 시 1회 retry. IP SHA-256 해시 기반 30s rate limit (feedback 패턴). `runtime="edge"` 명시 안 함. payload 1MB 상한.
+- **`migrations/001_maze.sql` 갱신** — `ip_hash TEXT` 컬럼 + 인덱스 `idx_maze_ip_hash(ip_hash, created_at DESC)` — rate limit 쿼리용.
+- **`storage.ts` migrate 재구조 (잔손질 1 반영)** — `migrateOrNull` (internal, 폐기 null) + `migrate` (loadProject용 newProject fallback) + **`migrateSharedPayload` (export, 공유용, grid empty도 null)**. 숏링크 = 영구 스냅샷이라 sharedProject도 localStorage 드래프트와 같은 migrate 경로 → 향후 schema bump 시 구 숏링크 안 깨짐. v1→v2→v3 두 단계 이미 거쳤기에 필수.
+- **`app/tools/maze/page.tsx`** — Server Component. `searchParams.id` → `isValidShortId` 가드 → `getCloudflareContext().env.MAZE_DB` D1 fetch → `parseSharedPayload` (try/catch 손상 row 방어) → `sharedProject` prop. ?id 없으면 기존 만들기.
+- **`components/maze/shared-not-found.tsx` (신규)** — server-rendered fallback. 손상·만료·잘못된 id 한 화면 + "내 미로 만들기" 링크.
+- **`client-shell.tsx` shared 모드**:
+  - `sharedProject` 있으면: localStorage hydrate skip · persist skip · `step=2` 강제 · StepNav 숨김 · WinDialog "내 미로 만들기" 라벨로 `/tools/maze` navigate (id 제거).
+  - 없으면 기존 흐름.
+  - V1 = read-only play. 리믹스/복사 편집은 V2 BACKLOG.
+- **`components/maze/share-controls.tsx` (신규)** — 만들기 단계 ValidationPanel 아래. `validation.ok` 시만 노출. POST → 6자 id → URL + 복사 버튼. loading/error/ready 상태. rate limit 별도 메시지.
+- **`PlayMode`·`WinDialog` `backLabel` props** — shared 모드에 "내 미로 만들기"로 override + 동작 `router.push("/tools/maze")`.
+- **`wrangler.jsonc`** — `MAZE_DB` binding (prod `brennhub-maze` + env.preview `brennhub-maze-dev`). database_id placeholder — **사용자 핸드오프**.
+- **i18n 10키** (ko/en) — share*·sharedBuildOwn.
+
+### Decided
+
+- **D1 스키마 = JSON 블롭** — schemaVersion 자체가 payload 안. 향후 maze schema bump가 D1 변경 0.
+- **migrate 3분기 구조** — 호출자가 폐기 fallback 결정 (newProject vs not-found).
+- **V1 = read-only play** — 사용자 명시. 리믹스 V2.
+- **공유 = 스냅샷 불변** — id당 payload 영구.
+- **registry coming-soon 유지** — P4a는 dev 검증. 라이브 전환 P4b.
+- **share-controls 위치 = ValidationPanel 아래** — PathCommitButton 패턴 일관.
+
+### Notes — D1 생성 핸드오프
+
+```bash
+# 1. 데이터베이스 생성 (Cloudflare 계정 권한 필요 — 사용자 실행)
+wrangler d1 create brennhub-maze       # 출력의 database_id = <PROD_UUID>
+wrangler d1 create brennhub-maze-dev   # 출력의 database_id = <DEV_UUID>
+
+# 2. wrangler.jsonc 양쪽 placeholder 교체:
+#    top-level "REPLACE_WITH_PROD_MAZE_DB_ID" → <PROD_UUID>
+#    env.preview "REPLACE_WITH_DEV_MAZE_DB_ID" → <DEV_UUID>
+
+# 3. 마이그레이션 적용 (prod + preview 양쪽)
+wrangler d1 execute brennhub-maze --remote --file=app/tools/maze/migrations/001_maze.sql
+wrangler d1 execute brennhub-maze-dev --remote --env=preview --file=app/tools/maze/migrations/001_maze.sql
+
+# 4. feat/maze → dev 머지 + push → dev.brennhub.com 자동 배포로 검증
+```
+
+placeholder 그대로면 API가 500(`DB_UNAVAILABLE`) 반환 — 명확한 실패 시그널.
+
+### Notes — 회귀 0
+
+- 점수 / SCORE_TUNING / commit / validate / pathMarks / play.ts / viewport / 카메라 / 사운드 — 무변경.
+- `/tools/maze` route emit 형식: 정적(`○`) → 동적(`ƒ`) (searchParams 사용). 정상.
+- `loadProject` 무변경 — `migrate` wrap이 기존 newProject fallback 유지.
+
 ## [0.13.0] — 2026-05-23
 
 ### Added (플레이 사운드 — 합성)

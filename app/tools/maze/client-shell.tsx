@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMessages } from "@/lib/i18n/provider";
 import { TILE, type MazeProject, type TileType } from "@/lib/maze/types";
 import { cloneGrid, emptyGrid, findStart, newProject } from "@/lib/maze/grid";
@@ -16,6 +17,7 @@ import { ValidationPanel } from "@/components/maze/validation-panel";
 import { EditorControls } from "@/components/maze/editor-controls";
 import { PathCommitButton } from "@/components/maze/path-commit-button";
 import { ZoomControls } from "@/components/maze/zoom-controls";
+import { ShareControls } from "@/components/maze/share-controls";
 import { PlayMode } from "@/components/maze/play-mode";
 import {
   clampCellPx,
@@ -68,16 +70,35 @@ const ZOOM_BUTTON_FACTOR = 1.2;
  *   step=1: 만들기 (설정 컨트롤 + 그리기 + 검증·점수, 한 화면)
  *   step=2: 플레이 (validation.ok 시에만 활성)
  *
+ * 0.14.0 (P4a): `?id=XXX` 진입 시 server component(page.tsx)가 sharedProject prop
+ * 전달. shared 모드면:
+ *   - localStorage hydrate skip (자신의 드래프트 영향 0)
+ *   - persist skip (공유 미로를 자기 localStorage에 덮어쓰지 않음)
+ *   - StepNav 숨김 (만들기↔플레이 토글 의미 X)
+ *   - step=2 강제 (PlayMode 직행)
+ *   - WinDialog "편집으로 돌아가기" → "내 미로 만들기" (/tools/maze navigate, id 제거)
+ *
  * 이전 3-step 흐름의 "Step1→Step2 진입 시 grid build" / "Step2→Step1 reset 다이얼로그"는
  * 사라지고, hydrate 시 빈 grid면 자동 채움 + 사이즈 변경 시 확인 다이얼로그로 흐름 통합.
  */
-export function MazeClientShell() {
+type Props = {
+  /** P4a 0.14.0: ?id= 진입 시 server-side D1 fetch 결과. 있으면 read-only play 모드. */
+  sharedProject?: MazeProject;
+};
+
+export function MazeClientShell({ sharedProject }: Props = {}) {
   const t = useMessages();
   const tm = t.maze;
+  const router = useRouter();
+  const isShared = sharedProject !== undefined;
 
-  const [project, setProject] = useState<MazeProject>(() => newProject());
-  const [hydrated, setHydrated] = useState(false);
-  const [step, setStep] = useState<Step>(1);
+  const [project, setProject] = useState<MazeProject>(
+    () => sharedProject ?? newProject(),
+  );
+  // shared 모드면 hydrate 즉시 완료 (localStorage 무시).
+  const [hydrated, setHydrated] = useState(isShared);
+  // shared면 PlayMode 직행 (step=2).
+  const [step, setStep] = useState<Step>(isShared ? 2 : 1);
   const [activeTool, setActiveTool] = useState<Tool>("wall");
   // P3c-1: 그리드 초기화 모달.
   const [resetGridOpen, setResetGridOpen] = useState(false);
@@ -92,16 +113,18 @@ export function MazeClientShell() {
   const strokeFillRef = useRef<TileType | null>(null);
   const pathStrokeModeRef = useRef<PathStrokeMode | null>(null);
   // P3e-1: 줌·팬 transient view 상태. localStorage 미저장 (schemaVersion 영향 0).
+  // shared 모드면 sharedProject 차원으로 fit, 일반 모드면 newProject 차원(hydrate에서 갱신).
   const [view, setView] = useState<ViewState>(() => {
-    const p = newProject();
+    const p = sharedProject ?? newProject();
     return fitView(p.width, p.height, CANVAS_DISPLAY_PX);
   });
   // P3e-1: 손도구 모드 — 활성 시 1포인터/마우스도 팬.
   const [handMode, setHandMode] = useState(false);
 
   // hydrate — 빈 grid면 emptyGrid로 자동 채움. 새 만들기 워크플로 시작 가능.
-  // (0.8.0 P3d: 이전엔 Step1 진입 후 startButton 클릭으로 채워졌으나, 통합 화면엔 진입점 없음.)
+  // shared 모드(?id 진입)는 localStorage 무시 — 자신의 드래프트 보존.
   useEffect(() => {
+    if (isShared) return;
     const loaded = loadProject();
     setProject(
       loaded.grid.length === 0
@@ -110,13 +133,14 @@ export function MazeClientShell() {
     );
     setView(fitView(loaded.width, loaded.height, CANVAS_DISPLAY_PX));
     setHydrated(true);
-  }, []);
+  }, [isShared]);
 
   // persist — hydrate 이후 변경분만 저장 (pathMarks는 transient라 미저장).
+  // shared 모드는 persist skip — 공유 미로를 자기 localStorage에 덮어쓰지 않음.
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || isShared) return;
     saveProject(project);
-  }, [project, hydrated]);
+  }, [project, hydrated, isShared]);
 
   // 그리드가 "비어있는지" 판정 — 빈 배열 또는 모든 셀 EMPTY. 사이즈 변경 모달 분기에 사용.
   const isGridEmpty = useCallback((grid: TileType[][]): boolean => {
@@ -459,12 +483,15 @@ export function MazeClientShell() {
         <p className="mt-2 text-muted-foreground">{tm.description}</p>
       </header>
 
-      <StepNav
-        step={step}
-        labels={[tm.step1, tm.step2]}
-        onStep={handleStepNav}
-        disabledSteps={validation.ok ? undefined : [2]}
-      />
+      {/* shared 모드는 StepNav 숨김 — 만들기 ↔ 플레이 토글 의미 X (read-only play). */}
+      {!isShared && (
+        <StepNav
+          step={step}
+          labels={[tm.step1, tm.step2]}
+          onStep={handleStepNav}
+          disabledSteps={validation.ok ? undefined : [2]}
+        />
+      )}
 
       <div className="mt-6">
         {step === 1 && (
@@ -532,10 +559,20 @@ export function MazeClientShell() {
               onCommit={handleCommitWalls}
             />
             <ValidationPanel result={validation} score={score} />
+            {/* 공유 링크 생성 (P4a 0.14.0) — validation.ok 시만 노출. */}
+            <ShareControls visible={validation.ok} project={project} />
           </div>
         )}
         {step === 2 && (
-          <PlayMode project={project} onBackToEdit={() => setStep(1)} />
+          <PlayMode
+            project={project}
+            // shared 모드: WinDialog "내 미로 만들기" → /tools/maze navigate(id 제거).
+            // 일반 모드: setStep(1) 만들기 복귀.
+            onBackToEdit={
+              isShared ? () => router.push("/tools/maze") : () => setStep(1)
+            }
+            backLabel={isShared ? tm.sharedBuildOwn : undefined}
+          />
         )}
       </div>
 

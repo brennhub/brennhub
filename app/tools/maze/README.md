@@ -136,6 +136,7 @@ lib/maze/
   validate.ts                              # P3a + P3a-2 완료 — 완결성 검증 + 미로 품질 점수 (SCORE_TUNING)
   viewport.ts                              # P3e-1 + 0.10.0 — 뷰포트 변환 (width/height 일반화)
   sound.ts                                 # 0.13.0 — 플레이 사운드 (Web Audio 합성, 음원 파일 0)
+  share.ts                                 # 0.14.0 — 6자 숏링크 + parseSharedPayload (P4a)
   play.ts                                  # P3b 완료 — PlayState / applyMove / isWin (순수 결정론)
   render/
     types.ts                               # P2.1 완료 + P3b renderPlayer — RenderEngine 인터페이스
@@ -153,6 +154,10 @@ components/maze/
   editor-controls.tsx                      # P3c-1 — Step2 undo/redo/초기화 컨트롤 row
   path-commit-button.tsx                   # P3c-2 — 길 도구 활성 시 노출되는 "벽 생성" 버튼
   zoom-controls.tsx                        # P3e-1 — 캔버스 우상단 줌·손도구 오버레이
+  share-controls.tsx                       # P4a — 공유 링크 생성 + URL 복사 (만들기 단계)
+  shared-not-found.tsx                     # P4a — ?id 조회 실패 server-rendered fallback
+app/api/maze/
+  route.ts                                 # P4a — POST 공유 생성 (D1 MAZE_DB, IP rate limit)
   play-canvas.tsx                          # P3b 완료 — Step3 캔버스 (fog 시야 안 셀+격자선만)
   play-controls.tsx                        # P3b 완료 — D-pad + 키보드(방향키 preventDefault)
   play-mode.tsx                            # P3b 완료 — Step3 컨테이너 (P4 재사용 인터페이스)
