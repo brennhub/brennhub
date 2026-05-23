@@ -2,6 +2,20 @@
 
 주요 결정 / 이정표.
 
+## [0.10.1] — 2026-05-23
+
+### Changed (UI 정리 3건)
+
+- **줌 컨트롤 캔버스 밖으로** — 캔버스 우상단 absolute 오버레이가 셀 그리기를 가리던 문제 해소. flex row 안에서 캔버스와 나란히 우측 외부 배치. 모바일 좁은 폭에선 flex-wrap으로 아래로 떨어짐. ZoomControls 내부의 `absolute top-2 right-2` 제거, `bg-card/90 backdrop-blur` → `bg-card` 단순화.
+- **줌 불가 맵에선 컨트롤 자체 미렌더** — `Math.max(width, height) <= ZOOM_REFERENCE_SIZE` 조건. 기존엔 disabled 버튼만 보였는데 위젯 자체 숨김으로 시각 정리. client-shell에서 `viewport.ts` `ZOOM_REFERENCE_SIZE` import 후 조건부 렌더.
+- **fog 토글 같은 row** — `fogOfWar` ON 시 시야 반경 컨트롤이 아래 별도 row로 떨어져 세로 레이아웃이 밀리던 문제 해소. settings-panel에서 토글 오른쪽 같은 row 안에 가로 배치(`flex-wrap items-center`). fog ON 시 row 폭만 늘어나고 세로 무변.
+- **플레이어 점유 셀 타일 마커 skip** — `play-canvas.tsx` renderTile 루프에서 `(r === player.r && c === player.c)` 셀은 skip. 시작점 발자국이 플레이어 아래로 비치던 겹침 해소. 플레이어가 떠난 셀은 다시 마커 보임. 0.7.1의 "시작 자국 보존" 메타포는 떠나는 사람의 *흔적*에 한정 — 같은 칸에선 사람만 표시.
+
+### Notes
+
+- 점수·commit·validate·play.ts·viewport 로직 무변경 (동작은 시각만).
+- 데이터모델·schemaVersion 무변경 (0.10.0 Phase A 위 패치).
+
 ## [0.10.0] — 2026-05-23
 
 ### Changed (Phase A — 직사각 그리드 내부 데이터모델 일반화)

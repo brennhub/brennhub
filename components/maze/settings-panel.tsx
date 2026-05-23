@@ -63,10 +63,11 @@ export function SettingsPanel({
         </div>
       </div>
 
-      {/* Fog of War + 시야 반경. fog toggle/radius는 grid 영향 0이라 즉시 반영. */}
-      <div className="space-y-3 rounded-lg border border-border p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
+      {/* Fog of War + 시야 반경. 0.10.1: 반경 컨트롤을 같은 row 안 토글 오른쪽으로 —
+          fog ON 시 row 폭만 늘어나고 세로 레이아웃은 안 밀림. */}
+      <div className="rounded-lg border border-border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <label
               htmlFor="maze-fog"
               className="text-sm font-medium text-foreground"
@@ -83,38 +84,41 @@ export function SettingsPanel({
             onCheckedChange={onFogToggle}
             aria-label={t.fogLabel}
           />
-        </div>
-        {fogOfWar && (
-          <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
-            <label htmlFor="maze-fog-radius" className="text-sm text-foreground">
-              {t.fogRadiusLabel}
-            </label>
-            <div className="w-24">
-              <NumberStepper
-                id="maze-fog-radius"
-                value={String(fogRadius)}
-                showBigStep={false}
-                smallStep={1}
-                bigStep={1}
-                min={FOG_RADIUS.MIN}
-                max={FOG_RADIUS.MAX}
-                inputMode="numeric"
-                aria-label={t.fogRadiusLabel}
-                maxReachedMessage={t.fogRadiusMax}
-                minReachedMessage={t.fogRadiusMin}
-                onStep={(n) => onFogRadiusChange(n)}
-                onInputChange={(txt) => {
-                  const n = parseInt(txt, 10);
-                  if (Number.isFinite(n)) {
-                    onFogRadiusChange(
-                      Math.min(FOG_RADIUS.MAX, Math.max(FOG_RADIUS.MIN, n)),
-                    );
-                  }
-                }}
-              />
+          {fogOfWar && (
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="maze-fog-radius"
+                className="text-sm text-foreground"
+              >
+                {t.fogRadiusLabel}
+              </label>
+              <div className="w-24">
+                <NumberStepper
+                  id="maze-fog-radius"
+                  value={String(fogRadius)}
+                  showBigStep={false}
+                  smallStep={1}
+                  bigStep={1}
+                  min={FOG_RADIUS.MIN}
+                  max={FOG_RADIUS.MAX}
+                  inputMode="numeric"
+                  aria-label={t.fogRadiusLabel}
+                  maxReachedMessage={t.fogRadiusMax}
+                  minReachedMessage={t.fogRadiusMin}
+                  onStep={(n) => onFogRadiusChange(n)}
+                  onInputChange={(txt) => {
+                    const n = parseInt(txt, 10);
+                    if (Number.isFinite(n)) {
+                      onFogRadiusChange(
+                        Math.min(FOG_RADIUS.MAX, Math.max(FOG_RADIUS.MIN, n)),
+                      );
+                    }
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

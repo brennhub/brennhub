@@ -69,6 +69,9 @@ export function PlayCanvas({
           const row = grid[r];
           if (!row) continue;
           for (let c = 0; c < width; c += 1) {
+            // 0.10.1: 플레이어 점유 셀의 타일 마커(시작점 발자국 등)는 그리지 않음 —
+            // 플레이어 위에 겹쳐 비치던 문제 해소. 플레이어가 떠난 셀은 다시 보임.
+            if (r === player.r && c === player.c) continue;
             engine.renderTile(ctx, row[c], engine.palette, {
               x: c * cell,
               y: r * cell,
