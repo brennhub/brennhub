@@ -473,6 +473,9 @@ export type Messages = {
     fogRadiusLabel: string;
     fogRadiusMax: string;
     fogRadiusMin: string;
+    playViewSpanLabel: string;
+    playViewSpanMax: string;
+    playViewSpanMin: string;
     sizeChangeTitle: string;
     sizeChangeMessage: string;
     sizeChangeConfirm: string;
@@ -1065,6 +1068,9 @@ export const messages: Record<Locale, Messages> = {
       fogRadiusLabel: "시야 반경 (칸)",
       fogRadiusMax: "최대 시야 반경입니다",
       fogRadiusMin: "최소 시야 반경입니다",
+      playViewSpanLabel: "플레이 시야 거리 (칸)",
+      playViewSpanMax: "최대 시야 거리입니다 (전체 보임)",
+      playViewSpanMin: "최소 시야 거리입니다 (가장 가까이)",
       sizeChangeTitle: "사이즈 변경",
       sizeChangeMessage:
         "사이즈를 바꾸면 그리드의 모든 셀이 새 크기로 다시 생성됩니다. 지금까지 그린 내용은 사라집니다.",
@@ -1701,6 +1707,9 @@ export const messages: Record<Locale, Messages> = {
       fogRadiusLabel: "Vision radius (tiles)",
       fogRadiusMax: "Maximum vision radius",
       fogRadiusMin: "Minimum vision radius",
+      playViewSpanLabel: "Play view span (tiles)",
+      playViewSpanMax: "Maximum span (entire grid visible)",
+      playViewSpanMin: "Minimum span (closest)",
       sizeChangeTitle: "Change size",
       sizeChangeMessage:
         "Changing size regenerates the grid at the new dimensions. Anything drawn will be lost.",

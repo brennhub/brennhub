@@ -68,6 +68,7 @@ export function PlayMode({ project, onBackToEdit }: Props) {
         player={state.player}
         fogOfWar={project.fogOfWar}
         fogRadius={project.fogRadius}
+        playViewSpan={project.playViewSpan}
       />
       <PlayControls onMove={handleMove} disabled={state.won} />
       <WinDialog

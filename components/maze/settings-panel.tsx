@@ -6,12 +6,16 @@ import { Switch } from "@/components/switch";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/lib/i18n/provider";
 import { DIM_MAX, DIM_MIN, FOG_RADIUS, SIZE_PRESETS } from "@/lib/maze/types";
+import { ZOOM_REFERENCE_SIZE } from "@/lib/maze/viewport";
 
 type Props = {
   width: number;
   height: number;
   fogOfWar: boolean;
   fogRadius: number;
+  /** 플레이 시야 거리 (P3e-2 0.12.0) — 캔버스 한 변 보이는 칸 수. [16, max(W,H)]. */
+  playViewSpan: number;
+  onPlayViewSpanChange: (n: number) => void;
   /**
    * 사이즈 변경 요청. client-shell이 그리드 빈/비어있지 않음 판정 후 즉시 적용 또는
    * 확인 다이얼로그 분기. 본 컴포넌트는 단순 콜백만.
@@ -42,6 +46,8 @@ export function SettingsPanel({
   height,
   fogOfWar,
   fogRadius,
+  playViewSpan,
+  onPlayViewSpanChange,
   onSizeChange,
   onFogToggle,
   onFogRadiusChange,
@@ -155,8 +161,9 @@ export function SettingsPanel({
         </div>
       </div>
 
-      {/* Fog of War + 시야 반경. 0.10.1: 같은 row 안 가로 배치. */}
-      <div className="rounded-lg border border-border p-4">
+      {/* Fog of War + 시야 반경 (0.10.1 같은 row) + 플레이 시야 거리 (P3e-2 별도 row).
+          둘 다 "플레이 시 보이는 방식" 설정이라 한 카드. */}
+      <div className="space-y-3 rounded-lg border border-border p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <label
@@ -210,6 +217,42 @@ export function SettingsPanel({
             </div>
           )}
         </div>
+
+        {/* 플레이 시야 거리 — max(W,H) ≤ 16(줌 의미 0)이면 row 자체 미렌더. */}
+        {Math.max(width, height) > ZOOM_REFERENCE_SIZE && (
+          <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
+            <label
+              htmlFor="maze-play-view-span"
+              className="text-sm font-medium text-foreground"
+            >
+              {t.playViewSpanLabel}
+            </label>
+            <div className="w-28">
+              <NumberStepper
+                id="maze-play-view-span"
+                value={String(playViewSpan)}
+                showBigStep={false}
+                smallStep={1}
+                bigStep={1}
+                min={ZOOM_REFERENCE_SIZE}
+                max={Math.max(width, height)}
+                inputMode="numeric"
+                aria-label={t.playViewSpanLabel}
+                maxReachedMessage={t.playViewSpanMax}
+                minReachedMessage={t.playViewSpanMin}
+                onStep={(n) => onPlayViewSpanChange(n)}
+                onInputChange={(txt) => {
+                  const n = parseInt(txt, 10);
+                  if (Number.isFinite(n)) {
+                    const lo = ZOOM_REFERENCE_SIZE;
+                    const hi = Math.max(width, height);
+                    onPlayViewSpanChange(Math.min(hi, Math.max(lo, n)));
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

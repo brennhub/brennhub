@@ -1,5 +1,5 @@
 /** localStorage 스키마 버전. 의미 변경 시 +1 + storage.ts migrate() 갱신. */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /**
  * 타일 종류 — 정수로 저장한다.
@@ -40,6 +40,16 @@ export const SIZE_PRESETS: readonly number[] = [16, 32, 64];
 /** Fog of War 가시 반경 — 정수·칸 단위. */
 export const FOG_RADIUS = { MIN: 1, MAX: 6, DEFAULT: 3 } as const;
 
+/**
+ * 플레이 시야 거리 최솟값 (P3e-2 0.12.0) — 캔버스 한 변에 최소 16칸 보임.
+ *
+ * 의미: `viewport.ts ZOOM_REFERENCE_SIZE`와 같은 16. 편집 줌인 한계(셀 크기)와
+ * 플레이 시야 최소 거리(칸 수)가 같은 16칸 단위라 의미 일관 — 별도 상수 두지 않고
+ * viewport.ts에서 import해 단일 출처 유지.
+ *
+ * 최대값은 `max(width, height)` (그리드 fit) — runtime에 계산.
+ */
+
 /** 타일 테마 — V1은 "default"만 사용. "sprite-dungeon"은 V2 테마 시스템. */
 export type MazeTheme = "default" | "sprite-dungeon";
 
@@ -65,6 +75,13 @@ export type MazeProject = {
   fogRadius: number;
   /** 타일 테마 — V1 "default" 고정. */
   theme: MazeTheme;
+  /**
+   * 플레이 시야 거리 (P3e-2 0.12.0) — 캔버스 한 변에 보이는 칸 수.
+   * 범위 `[16, max(width, height)]`. 작을수록 가까이(셀 크게), 클수록 멀리(셀 작게).
+   * `max(width, height) ≤ 16`이면 줌 의미 0 — UI 컨트롤 미렌더, 런타임 fit으로 자동 정렬.
+   * 사이즈 변경 시 `client-shell` `applySizeChange`가 새 범위로 clamp해 저장값 일관 유지.
+   */
+  playViewSpan: number;
   /** grid[height][width] 정수 격자. 설정 단계에선 빈 배열 가능. */
   grid: TileType[][];
 };

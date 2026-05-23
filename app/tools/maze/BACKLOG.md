@@ -151,13 +151,21 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [ ] 비정사각 점수 archetype 검증 — 32×64 정통 미로로 console.log raw total 측정 가이드 (별도 task)
 - [ ] play-canvas 가시 셀 컬링 — 플레이 카메라(P3e-2)와 함께 적용
 
-## P3e-2 — 플레이 카메라 (변환 재사용)
+## P3e-2 — 플레이 카메라 + 제작자 설정 시야 거리 — 완료 (CHANGELOG `[0.12.0]`)
 
-- [ ] play-canvas에 `cameraFollow(player, size, cellPx, displayPx)` 적용 — viewport.ts 재사용, 자체 산술 0
-- [ ] 32·64맵에서 `cellPx = displayPx / 16` 고정, 16맵은 카메라 비활성 (cellPx = displayPx / 16 동일)
-- [ ] 플레이어 이동 시 즉시 카메라 스냅 (보간 없음)
-- [ ] fog 원형 clip이 카메라 변환 후 좌표계에서도 정상 (clip center = panX + (player.c + 0.5) × cellPx)
-- [ ] dev 시각 점검 — 32·64맵 카메라 follow / 가장자리 클램프 / 16맵 회귀 0
+원 plan "16칸 고정"을 사용자 요구대로 가변 `playViewSpan` 필드로 개정.
+
+- [x] `MazeProject.playViewSpan: number` + `schemaVersion 2 → 3` migrate (v2→v3 기본 16)
+- [x] storage clamp `[16, max(W,H)]` 손상값·stale 방어
+- [x] settings-panel 시야 거리 NumberStepper row — `max(W,H) > 16`일 때만 렌더
+- [x] play-canvas cameraFollow 적용 — viewport.ts 무변경, 호출자만 신규
+- [x] play-canvas 가시 셀 컬링 (Phase B 미뤘던 것)
+- [x] fog clip center 카메라 변환 보정
+- [x] 플레이어 셀 마커 skip (0.10.1) 유지
+- [x] applySizeChange에 playViewSpan clamp 추가 — stale 저장값 정렬 (사용자 정정)
+- [x] handlePlayViewSpanChange 즉시 적용 (grid 영향 0)
+- [x] i18n 3키 (ko/en)
+- [ ] dev 시각 점검 — v2→v3 migrate / 16×16 row 미렌더 / 32 N=16↔32 / 64 N=16/32/64 / 비정사각 / fog+카메라 / "다시 플레이" / 64×64 N=16 컬링 성능
 
 ## Px — 등급 flavored 네이밍 (점수 튜닝 안정화 후)
 

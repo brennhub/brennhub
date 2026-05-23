@@ -7,6 +7,7 @@ import {
   type MazeProject,
   type TileType,
 } from "./types";
+import { ZOOM_REFERENCE_SIZE } from "./viewport";
 
 /**
  * 단일 통과성 술어 — BFS(검증)와 플레이어 이동이 반드시 같은 정의를 쓰도록 강제.
@@ -82,6 +83,8 @@ export function newProject(): MazeProject {
     fogOfWar: false,
     fogRadius: FOG_RADIUS.DEFAULT,
     theme: "default",
+    // 플레이 시야 거리 기본 = 16 (가장 가까이). 32/64 그리드는 카메라 추적, 16은 자동 fit.
+    playViewSpan: ZOOM_REFERENCE_SIZE,
     grid: [],
   };
 }
