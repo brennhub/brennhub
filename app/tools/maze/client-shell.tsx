@@ -126,7 +126,7 @@ export function MazeClientShell() {
     setView(fitView(width, height, CANVAS_DISPLAY_PX));
   }, []);
 
-  const handleSizeChange = useCallback(
+  const handleDimsChange = useCallback(
     (width: number, height: number) => {
       if (width === project.width && height === project.height) return;
       if (isGridEmpty(project.grid)) {
@@ -451,7 +451,7 @@ export function MazeClientShell() {
               height={project.height}
               fogOfWar={project.fogOfWar}
               fogRadius={project.fogRadius}
-              onSizeChange={handleSizeChange}
+              onSizeChange={handleDimsChange}
               onFogToggle={handleFogToggle}
               onFogRadiusChange={handleFogRadiusChange}
             />

@@ -134,10 +134,16 @@ export function MazeGrid({
 
       engine.clearBackground(ctx, DISPLAY_PX);
       const { cellPx, panX, panY } = view;
-      for (let r = 0; r < height; r += 1) {
+      // Phase B: 가시 셀 컬링 — 줌인 시 viewport 밖 셀 skip. 128×128 줌인 시
+      // 16384 → 수백 셀로 절약. 줌아웃 fit이면 컬링 영역이 grid 전체와 같아 효과 0.
+      const rMin = Math.max(0, Math.floor(-panY / cellPx));
+      const rMax = Math.min(height, Math.ceil((DISPLAY_PX - panY) / cellPx));
+      const cMin = Math.max(0, Math.floor(-panX / cellPx));
+      const cMax = Math.min(width, Math.ceil((DISPLAY_PX - panX) / cellPx));
+      for (let r = rMin; r < rMax; r += 1) {
         const row = grid[r];
         if (!row) continue;
-        for (let c = 0; c < width; c += 1) {
+        for (let c = cMin; c < cMax; c += 1) {
           engine.renderTile(ctx, row[c], engine.palette, {
             x: panX + c * cellPx,
             y: panY + r * cellPx,
@@ -151,7 +157,7 @@ export function MazeGrid({
           const r = Number(rs);
           const c = Number(cs);
           if (!Number.isFinite(r) || !Number.isFinite(c)) continue;
-          if (r < 0 || r >= height || c < 0 || c >= width) continue;
+          if (r < rMin || r >= rMax || c < cMin || c >= cMax) continue;
           engine.renderPathMark(ctx, engine.palette, {
             x: panX + c * cellPx,
             y: panY + r * cellPx,

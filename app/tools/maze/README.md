@@ -15,8 +15,8 @@
 ### Step 1 — 만들기 (설정 + 그리기 + 검증·점수, 한 화면)
 
 **그리드 위 (고정 높이만)**:
-- **SettingsPanel** — 맵 크기 16/32/64 + Fog of War 토글 + 시야 반경(1~6).
-  - 사이즈 변경: 비어있지 않은 grid에서 다른 사이즈 클릭 시 확인 다이얼로그 → 확정 시 `{ size, grid, history, marks }` 모두 새로. 빈 grid면 즉시 변경. fog 토글·반경은 grid 영향 0이라 항상 즉시.
+- **SettingsPanel** — 가로·세로 NumberStepper(DIM_MIN=3 / DIM_MAX=128) + 정사각 프리셋 [16×16][32×32][64×64] + Fog of War 토글 + 시야 반경(1~6). 비정사각(50×150 등) 지원 (0.11.0).
+  - 사이즈 변경: 스테퍼는 local pending state로 편집 → 명시 [적용] 버튼이 확정 (스테퍼 +/− 단발마다 다이얼로그 뜨는 것 차단). 프리셋 클릭은 즉시. 비어있지 않은 grid면 ResetConfirmDialog → 확정 시 `{ width, height, grid, history, marks, view }` 모두 새로. 빈 grid면 즉시. fog 토글·반경은 grid 영향 0이라 항상 즉시.
 - **ToolPalette** — 도구 4종(벽 / **길** / 시작점 / 도착점). 0.6.1에서 지우개 제거(벽 재클릭 토글이 대체). 시작점 아이콘 = Footprints (0.7.1 — 플레이어 User와 시각 분리).
 - **EditorControls** — undo / redo / 그리드 초기화(휴지통).
 
