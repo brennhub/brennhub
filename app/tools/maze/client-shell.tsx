@@ -23,6 +23,7 @@ import {
   fitView,
   zoomAtCursor,
   zoomLimits,
+  ZOOM_REFERENCE_SIZE,
   type ViewState,
 } from "@/lib/maze/viewport";
 
@@ -465,34 +466,39 @@ export function MazeClientShell() {
               onRedo={redo}
               onResetGrid={() => setResetGridOpen(true)}
             />
-            {/* 캔버스 + ZoomControls 오버레이 — relative wrapper, ZoomControls는 absolute.
-                그리드 위 row를 안 늘림 (P3d 모바일 우려 직결, P3e-1 핵심 결정). */}
-            <div className="relative mx-auto max-w-[512px]">
-              <MazeGrid
-                grid={project.grid}
-                width={project.width}
-                height={project.height}
-                theme={project.theme}
-                pathMarks={pathMarks}
-                view={view}
-                onViewChange={handleViewChange}
-                handMode={handMode}
-                onPaint={handlePaint}
-              />
-              <ZoomControls
-                cellPx={view.cellPx}
-                minCellPx={
-                  zoomLimits(project.width, project.height, CANVAS_DISPLAY_PX).min
-                }
-                maxCellPx={
-                  zoomLimits(project.width, project.height, CANVAS_DISPLAY_PX).max
-                }
-                handMode={handMode}
-                onToggleHand={() => setHandMode((v) => !v)}
-                onZoomIn={handleZoomIn}
-                onZoomOut={handleZoomOut}
-                onFit={handleFit}
-              />
+            {/* 캔버스 + ZoomControls (0.10.1) — flex row 배치, 컨트롤은 캔버스 외부 우측.
+                줌 컨트롤이 셀 그리기를 가리던 0.9.0 문제 해소.
+                줌 불가 맵(max(w,h) ≤ ZOOM_REFERENCE_SIZE)은 컨트롤 자체 미렌더. */}
+            <div className="flex flex-wrap items-start justify-center gap-2">
+              <div className="w-full max-w-[512px]">
+                <MazeGrid
+                  grid={project.grid}
+                  width={project.width}
+                  height={project.height}
+                  theme={project.theme}
+                  pathMarks={pathMarks}
+                  view={view}
+                  onViewChange={handleViewChange}
+                  handMode={handMode}
+                  onPaint={handlePaint}
+                />
+              </div>
+              {Math.max(project.width, project.height) > ZOOM_REFERENCE_SIZE && (
+                <ZoomControls
+                  cellPx={view.cellPx}
+                  minCellPx={
+                    zoomLimits(project.width, project.height, CANVAS_DISPLAY_PX).min
+                  }
+                  maxCellPx={
+                    zoomLimits(project.width, project.height, CANVAS_DISPLAY_PX).max
+                  }
+                  handMode={handMode}
+                  onToggleHand={() => setHandMode((v) => !v)}
+                  onZoomIn={handleZoomIn}
+                  onZoomOut={handleZoomOut}
+                  onFit={handleFit}
+                />
+              )}
             </div>
             <PathCommitButton
               visible={activeTool === "path" && pathMarks.size > 0}

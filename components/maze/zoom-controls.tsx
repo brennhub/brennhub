@@ -40,8 +40,10 @@ export function ZoomControls({
   const canZoomOut = cellPx > minCellPx + 0.001;
   const canFit = Math.abs(cellPx - minCellPx) > 0.001;
 
+  // 0.10.1: 캔버스 외부(우측) 배치로 이동 — 셀 그리기를 가리지 않게.
+  // 호출자가 flex row 안에 캔버스와 나란히 둠. absolute 클래스 제거.
   return (
-    <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 rounded-md border border-border bg-card/90 p-1 shadow-sm backdrop-blur-sm">
+    <div className="flex flex-col gap-1 self-start rounded-md border border-border bg-card p-1 shadow-sm">
       <ControlButton
         label={t.viewHand}
         onClick={onToggleHand}
