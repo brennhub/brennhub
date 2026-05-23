@@ -26,11 +26,12 @@ type Props = {
 /**
  * Step3 플레이 캔버스 — 읽기 전용 렌더(포인터 입력 없음, 이동은 controls 측).
  *
- * 렌더 3-단계는 maze-grid 패턴 재사용 — clearBackground / fog ON 시 검정 배경 →
- * 셀별 renderTile (시야 안만) → 플레이어 renderPlayer → grid lines (시야 안만).
- *
- * fog ON: blackout 영역에 grid line이 비치지 않도록 grid lines도 시야 영역 안에서만 그림.
- * fog OFF: 전체 그림 (Step2 maze-grid와 동일).
+ * fog ON: 검정 배경 전체 → **픽셀 단위 원형 ctx.clip()** → 그 안에 전체 렌더.
+ *   클립이 자르므로 셀별 visible 가드 / fog 전용 grid-line 루프 모두 불필요 —
+ *   진짜 원형(셀 양자화 없음). 반경 = `fogRadius × cell` 픽셀, 단위 "칸" 의미 유지.
+ *   P3a-2 후속 교정: 기존 셀 단위 `(r-pr)² + (c-pc)² ≤ R²` 가드가 작은 반경에서
+ *   각져 보이던 문제 해소.
+ * fog OFF: clearBackground → 셀별 renderTile → renderPlayer → 전체 grid lines.
  */
 export function PlayCanvas({
   grid,
@@ -64,66 +65,50 @@ export function PlayCanvas({
       if (engine.ready) await engine.ready();
       if (cancelled) return;
 
-      // fog ON → 검정 배경(blackout). OFF → engine.clearBackground.
-      if (fogOfWar) {
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, DISPLAY_PX, DISPLAY_PX);
-      } else {
+      // 전체 렌더 — fog ON 분기에서는 픽셀 단위 원형 clip이 자르므로 셀 가시성
+      // 가드 없이 모든 셀을 그린다 (코드 분기 단순화).
+      const renderAll = () => {
         engine.clearBackground(ctx, DISPLAY_PX);
-      }
-
-      // 시야 판정 — 유클리드 거리 ≤ fogRadius (원형 시야).
-      const r2 = fogRadius * fogRadius;
-      const visible = (r: number, c: number): boolean => {
-        if (!fogOfWar) return true;
-        const dr = r - player.r;
-        const dc = c - player.c;
-        return dr * dr + dc * dc <= r2;
-      };
-
-      // 타일 렌더 — 시야 안만.
-      for (let r = 0; r < size; r += 1) {
-        const row = grid[r];
-        if (!row) continue;
-        for (let c = 0; c < size; c += 1) {
-          if (!visible(r, c)) continue;
-          engine.renderTile(ctx, row[c], engine.palette, {
-            x: c * cell,
-            y: r * cell,
-            size: cell,
-          });
-        }
-      }
-
-      // 플레이어 마커 — 항상 시야 안(자기 자신).
-      engine.renderPlayer(ctx, engine.palette, {
-        x: player.c * cell,
-        y: player.r * cell,
-        size: cell,
-      });
-
-      // 격자선 — fog ON이면 시야 안 셀별로만 stroke, OFF면 전체.
-      if (fogOfWar) {
-        ctx.strokeStyle = engine.palette.gridLine;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
         for (let r = 0; r < size; r += 1) {
+          const row = grid[r];
+          if (!row) continue;
           for (let c = 0; c < size; c += 1) {
-            if (!visible(r, c)) continue;
-            const x = Math.round(c * cell) + 0.5;
-            const y = Math.round(r * cell) + 0.5;
-            // 셀 사각형 4변 — 인접 셀이 그리는 변과 중복되지만 시야 경계가
-            // 깔끔히 끊겨 blackout이 강조됨 (셀별 closed rect 선호).
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + cell, y);
-            ctx.lineTo(x + cell, y + cell);
-            ctx.lineTo(x, y + cell);
-            ctx.lineTo(x, y);
+            engine.renderTile(ctx, row[c], engine.palette, {
+              x: c * cell,
+              y: r * cell,
+              size: cell,
+            });
           }
         }
-        ctx.stroke();
-      } else {
+        engine.renderPlayer(ctx, engine.palette, {
+          x: player.c * cell,
+          y: player.r * cell,
+          size: cell,
+        });
         engine.drawGridLines(ctx, DISPLAY_PX, size);
+      };
+
+      if (fogOfWar) {
+        // 1. 검정 배경 전체 (blackout).
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, DISPLAY_PX, DISPLAY_PX);
+        // 2. 픽셀 단위 원형 클립 — player 셀 중심, 반경 = fogRadius칸 거리.
+        //    셀 양자화 없이 진짜 원형. 단위 "칸" 의미는 기존 UX 그대로.
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(
+          (player.c + 0.5) * cell,
+          (player.r + 0.5) * cell,
+          fogRadius * cell,
+          0,
+          Math.PI * 2,
+        );
+        ctx.clip();
+        // 3. 클립 안에 전체 렌더 — clip이 자른다.
+        renderAll();
+        ctx.restore();
+      } else {
+        renderAll();
       }
     };
     void draw();

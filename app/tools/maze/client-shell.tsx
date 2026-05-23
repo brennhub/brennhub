@@ -116,8 +116,12 @@ export function MazeClientShell() {
   }, [score]);
 
   // 셀 페인트 — 활성 도구에 따라 타일 결정.
+  // isInitial: pointerdown(true) vs pointermove(false) — 도구별 드래그 허용 분기.
   const handlePaint = useCallback(
-    (r: number, c: number) => {
+    (r: number, c: number, isInitial: boolean) => {
+      // 도착점은 클릭 1회 = 깃발 1개. 드래그(pointermove) 무시 — P3a-2 후속 교정.
+      if (activeTool === "goal" && !isInitial) return;
+
       setProject((p) => {
         const grid = cloneGrid(p.grid);
         if (activeTool === "wall") {
@@ -125,10 +129,10 @@ export function MazeClientShell() {
         } else if (activeTool === "eraser") {
           grid[r][c] = TILE.EMPTY;
         } else if (activeTool === "goal") {
-          // 도착점은 여러 개 배치 가능.
-          grid[r][c] = TILE.GOAL;
+          // 재클릭 삭제 토글 — 기존 GOAL이면 EMPTY, 아니면 GOAL.
+          grid[r][c] = grid[r][c] === TILE.GOAL ? TILE.EMPTY : TILE.GOAL;
         } else {
-          // 시작점은 1개만 — 기존 시작점을 비우고 새 위치로 이동.
+          // 시작점은 1개만 — 기존 시작점을 비우고 새 위치로 이동(드래그 가능).
           const prev = findStart(grid);
           if (prev) grid[prev.r][prev.c] = TILE.EMPTY;
           grid[r][c] = TILE.START;
@@ -183,13 +187,16 @@ export function MazeClientShell() {
               activeTool={activeTool}
               onToolChange={setActiveTool}
             />
-            <ValidationPanel result={validation} score={score} />
+            {/* 그리드를 위, 검증·점수 패널을 아래로 — 패널 높이 변화(✗ ↔ 통과 ↔
+                weakness)가 그리드를 밀어 사용자가 그리던 셀 위치를 잃지 않게.
+                P3a-2 후속 교정. */}
             <MazeGrid
               grid={project.grid}
               size={project.size}
               theme={project.theme}
               onPaint={handlePaint}
             />
+            <ValidationPanel result={validation} score={score} />
           </div>
         )}
         {step === 3 && (

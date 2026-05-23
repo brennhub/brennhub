@@ -13,8 +13,12 @@ type Props = {
   size: MazeSize;
   /** MazeProject.theme — V1은 "default" 고정. V2 sprite-dungeon 분기점. */
   theme: MazeTheme;
-  /** 셀 페인트 — 적용 타일은 client-shell이 활성 도구로 결정. */
-  onPaint: (r: number, c: number) => void;
+  /**
+   * 셀 페인트 — 적용 타일은 client-shell이 활성 도구로 결정.
+   * `isInitial=true`는 pointerdown(클릭 시작), `false`는 pointermove(드래그 진행) —
+   * client-shell이 도구별로 드래그 허용 여부를 판단(P3a-2 후속: 도착점은 클릭 1회만).
+   */
+  onPaint: (r: number, c: number, isInitial: boolean) => void;
 };
 
 /**
@@ -100,7 +104,7 @@ export function MazeGrid({ grid, size, theme: mazeTheme, onPaint }: Props) {
       const { r, c } = cellFromEvent(e);
       drawingRef.current = true;
       lastCellRef.current = `${r},${c}`;
-      onPaint(r, c);
+      onPaint(r, c, true);
     },
     [cellFromEvent, onPaint],
   );
@@ -113,7 +117,7 @@ export function MazeGrid({ grid, size, theme: mazeTheme, onPaint }: Props) {
       // 같은 셀 위 연속 이동은 무시 — 셀당 페인트 1회.
       if (key === lastCellRef.current) return;
       lastCellRef.current = key;
-      onPaint(r, c);
+      onPaint(r, c, false);
     },
     [cellFromEvent, onPaint],
   );
