@@ -2,7 +2,7 @@
 
 Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
-단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX · **P3c-2** 길 그리기 + 벽 생성 · **P3d** 만들기 단계 통합 · **P3e-1** 편집 줌/팬 + 변환 인프라 · **P3f-A** 직사각 내부 일반화 · **P3f-B** 비정사각 UI · **P3e-2** 플레이 카메라 · **P4** 숏링크 공유.
+단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX · **P3c-2** 길 그리기 + 벽 생성 · **P3d** 만들기 단계 통합 · **P3e-1** 편집 줌/팬 + 변환 인프라 · **P3f-A** 직사각 내부 일반화 · **P3f-B** 비정사각 UI · **P3e-2** 플레이 카메라 · **사운드** · **P4a** 숏링크 공유 · **P4b** 보정 + 라이브.
 
 ## P1 — 스캐폴딩 (인프라/골격) — 완료 (CHANGELOG `[0.1.0]`)
 
@@ -217,14 +217,33 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] i18n 4키 (ko/en) — toolPath / commitWallsButton / commitWallsHint + icons.ts PATH 매핑
 - [ ] dev 시각 점검 — 길 stroke + 토글 / 벽 생성 commit / undo·redo grid+marks 양쪽 / 마크 위 다른 도구 페인트 시 마크 유지 / 검증·점수 commit 후 갱신 / 0.6.1 회귀 확인
 
-## P4 — 숏링크 공유 (D1 · API) + live 전환
+## P4a — 숏링크 공유 (D1 · API) — 완료 (CHANGELOG `[0.14.0]`)
 
-- [ ] D1 데이터베이스 생성 (`brennhub-maze` / `brennhub-maze-dev`) + `wrangler.jsonc` top-level·`env.preview` 양쪽 `MAZE_DB` binding 배선 + `001_maze.sql` 적용
-- [ ] `lib/maze/share.ts` — `short_id`(6자) 생성 · `MazeProject` payload 직렬화/역직렬화
-- [ ] 공유 API `app/api/maze/route.ts` — 저장(POST)/조회(GET). **`export const runtime = "edge"` 금지** (BRENNHUB.md §7)
-- [ ] `page.tsx` — `?m=<short_id>` searchParams 서버 fetch → 공유된 미로 로드
-- [ ] 숏링크 발급/복사 UI
-- [ ] `tools-registry.ts` status `"coming-soon"` → `"live"` 전환 + `hasPage` 정리
+- [x] `001_maze.sql` 갱신 (ip_hash 컬럼 + 인덱스)
+- [x] `wrangler.jsonc` MAZE_DB binding placeholder (prod + env.preview)
+- [x] `lib/maze/share.ts` — generateShortId / isValidShortId / parseSharedPayload / isValidPayload
+- [x] `storage.ts` migrate 재구조 — migrateOrNull / migrate (loadProject) / **migrateSharedPayload export** (잔손질 1)
+- [x] `app/api/maze/route.ts` POST — D1 insert, 충돌 retry, IP rate limit 30s, runtime="edge" 금지
+- [x] `app/tools/maze/page.tsx` — searchParams ?id + D1 fetch + parseSharedPayload + try/catch fallback
+- [x] `shared-not-found.tsx` server-rendered fallback
+- [x] `client-shell.tsx` sharedProject prop — hydrate/persist skip, step=2 강제, StepNav 숨김
+- [x] `share-controls.tsx` — validation.ok 시 노출, POST → URL + 복사
+- [x] PlayMode·WinDialog `backLabel` props — shared 모드에 "내 미로 만들기"
+- [x] i18n 10키 (ko/en)
+- [x] registry 여전히 coming-soon 유지 — 라이브 P4b
+- [ ] **사용자 핸드오프**: `wrangler d1 create brennhub-maze`/`brennhub-maze-dev` + database_id placeholder 교체 + 마이그레이션 적용 (`--remote` 옵션)
+- [ ] dev 검증 — 공유 생성·?id= 진입·rate limit·not-found fallback·shared 모드 PlayMode
+
+## P4b — STAR_THRESHOLDS archetype 보정 + 라이브 전환 + main 머지 (별도 task)
+
+- [ ] dev에서 archetype 5개 (빈 들판/벽 허술/외길/정통 미로/비정사각 정교) 만들어 `[maze score]` console.log 측정
+- [ ] STAR_THRESHOLDS 자문 검토 (claude 안 제시 → 사용자 확정) → SCORE_TUNING 갱신
+- [ ] `client-shell.tsx` archetype 보정용 console.log useEffect 제거 (P3a-2 BACKLOG 항목)
+- [ ] `tools-registry.ts` maze status `coming-soon` → `live`
+- [ ] README/TOOLS.md 인덱스 라이브 표기
+- [ ] CHANGELOG `[1.0.0]` — 라이브 milestone
+- [ ] feat/maze → dev 머지+push (마지막 dev 점검)
+- [ ] **feat/maze → main 머지+push** (Cloudflare 자동 prod 배포 — 라이브)
 
 ## V2 후보 (효능감 검증 후 별도 task)
 

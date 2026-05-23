@@ -532,6 +532,16 @@ export type Messages = {
     soundUnmute: string;
     winTitle: string;
     winMessage: string;
+    shareButton: string;
+    shareGenerating: string;
+    shareUrlLabel: string;
+    shareCopyButton: string;
+    shareCopiedToast: string;
+    shareErrorGeneric: string;
+    shareErrorRateLimit: string;
+    shareNotFoundTitle: string;
+    shareNotFoundMessage: string;
+    sharedBuildOwn: string;
   };
   feedback: {
     button: string;
@@ -1137,6 +1147,17 @@ export const messages: Record<Locale, Messages> = {
       playBackToEdit: "편집으로 돌아가기",
       soundMute: "소리 끄기",
       soundUnmute: "소리 켜기",
+      shareButton: "공유 링크 만들기",
+      shareGenerating: "생성 중...",
+      shareUrlLabel: "공유 링크",
+      shareCopyButton: "복사",
+      shareCopiedToast: "복사됨",
+      shareErrorGeneric: "공유 링크 생성에 실패했습니다.",
+      shareErrorRateLimit: "잠시 후 다시 시도해주세요.",
+      shareNotFoundTitle: "미로를 찾을 수 없습니다",
+      shareNotFoundMessage:
+        "공유 링크가 잘못되었거나 삭제된 미로입니다.",
+      sharedBuildOwn: "내 미로 만들기",
       winTitle: "탈출 성공!",
       winMessage: "도착점에 도달했습니다.",
     },
@@ -1780,6 +1801,17 @@ export const messages: Record<Locale, Messages> = {
       playBackToEdit: "Back to editor",
       soundMute: "Mute",
       soundUnmute: "Unmute",
+      shareButton: "Create share link",
+      shareGenerating: "Generating...",
+      shareUrlLabel: "Share link",
+      shareCopyButton: "Copy",
+      shareCopiedToast: "Copied",
+      shareErrorGeneric: "Failed to create share link.",
+      shareErrorRateLimit: "Please try again in a moment.",
+      shareNotFoundTitle: "Maze not found",
+      shareNotFoundMessage:
+        "The share link is invalid or the maze was removed.",
+      sharedBuildOwn: "Build your own maze",
       winTitle: "Escaped!",
       winMessage: "You reached the goal.",
     },

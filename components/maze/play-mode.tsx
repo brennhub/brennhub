@@ -16,8 +16,13 @@ import { WinDialog } from "./win-dialog";
 
 type Props = {
   project: MazeProject;
-  /** "편집으로 돌아가기" — Step2로 복귀시킨다 (client-shell에서 처리). */
+  /**
+   * "편집으로 돌아가기" 동작. 일반 모드 = setStep(1) (만들기 복귀).
+   * shared 모드(P4a 0.14.0) = /tools/maze navigate (id 제거, 새 미로 만들기).
+   */
   onBackToEdit: () => void;
+  /** 백 액션 라벨 — shared 모드면 "내 미로 만들기", 일반은 default("편집으로 돌아가기"). */
+  backLabel?: string;
 };
 
 /**
@@ -36,7 +41,7 @@ type Props = {
  *   - else → playMove()
  * play.ts(순수 결정론)는 무변경 — 사운드는 컴포넌트 트리거만.
  */
-export function PlayMode({ project, onBackToEdit }: Props) {
+export function PlayMode({ project, onBackToEdit, backLabel }: Props) {
   const t = useMessages().maze;
   const [state, setState] = useState<PlayState | null>(() =>
     initialPlayState(project.grid),
@@ -117,6 +122,7 @@ export function PlayMode({ project, onBackToEdit }: Props) {
         open={state.won}
         onRestart={handleRestart}
         onBackToEdit={onBackToEdit}
+        backLabel={backLabel}
       />
     </div>
   );

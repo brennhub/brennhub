@@ -8,6 +8,8 @@ type Props = {
   open: boolean;
   onRestart: () => void;
   onBackToEdit: () => void;
+  /** 백 액션 라벨 override. shared 모드(P4a) = "내 미로 만들기", default = "편집으로 돌아가기". */
+  backLabel?: string;
 };
 
 /**
@@ -15,7 +17,7 @@ type Props = {
  * ResetConfirmDialog 패턴 재사용 (overlay + ESC + scroll lock).
  * ESC는 "편집으로 돌아가기"와 동작 동일 (덜 파괴적인 기본 동작).
  */
-export function WinDialog({ open, onRestart, onBackToEdit }: Props) {
+export function WinDialog({ open, onRestart, onBackToEdit, backLabel }: Props) {
   const t = useMessages().maze;
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -57,7 +59,7 @@ export function WinDialog({ open, onRestart, onBackToEdit }: Props) {
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-3">
           <Button type="button" variant="outline" size="sm" onClick={onBackToEdit}>
-            {t.playBackToEdit}
+            {backLabel ?? t.playBackToEdit}
           </Button>
           <Button type="button" size="sm" onClick={onRestart}>
             {t.playRestart}
