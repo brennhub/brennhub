@@ -462,6 +462,12 @@ export type Messages = {
     step1: string;
     step2: string;
     sizeLabel: string;
+    widthLabel: string;
+    heightLabel: string;
+    dimMaxReached: string;
+    dimMinReached: string;
+    applySize: string;
+    presetsLabel: string;
     fogLabel: string;
     fogDescription: string;
     fogRadiusLabel: string;
@@ -1047,6 +1053,12 @@ export const messages: Record<Locale, Messages> = {
       step1: "만들기",
       step2: "플레이",
       sizeLabel: "맵 크기",
+      widthLabel: "가로",
+      heightLabel: "세로",
+      dimMaxReached: "최대 128칸입니다",
+      dimMinReached: "최소 3칸입니다",
+      applySize: "적용",
+      presetsLabel: "프리셋",
       fogLabel: "시야 제한",
       fogDescription:
         "플레이할 때 시작점 주변만 보이도록 시야를 제한합니다.",
@@ -1677,6 +1689,12 @@ export const messages: Record<Locale, Messages> = {
       step1: "Build",
       step2: "Play",
       sizeLabel: "Map size",
+      widthLabel: "Width",
+      heightLabel: "Height",
+      dimMaxReached: "Maximum is 128",
+      dimMinReached: "Minimum is 3",
+      applySize: "Apply",
+      presetsLabel: "Presets",
       fogLabel: "Fog of War",
       fogDescription:
         "Limits visibility to a radius around the start when playing.",

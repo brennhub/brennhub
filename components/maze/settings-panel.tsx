@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { NumberStepper } from "@/components/number-stepper";
 import { Switch } from "@/components/switch";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/lib/i18n/provider";
-import { FOG_RADIUS, SIZE_PRESETS } from "@/lib/maze/types";
+import { DIM_MAX, DIM_MIN, FOG_RADIUS, SIZE_PRESETS } from "@/lib/maze/types";
 
 type Props = {
   width: number;
@@ -12,20 +13,29 @@ type Props = {
   fogOfWar: boolean;
   fogRadius: number;
   /**
-   * 사이즈 변경 요청 — 통합 화면(0.8.0 P3d)에선 비어있지 않은 그리드면 client-shell이
-   * 확인 다이얼로그 분기. 빈 그리드면 즉시 변경. 본 컴포넌트는 단순 콜백만.
-   * 0.10.0(Phase A): 정사각 프리셋 버튼은 (s, s)로 W·H 동일 호출.
-   * Phase B에서 W·H NumberStepper 추가 시 같은 콜백 재사용.
+   * 사이즈 변경 요청. client-shell이 그리드 빈/비어있지 않음 판정 후 즉시 적용 또는
+   * 확인 다이얼로그 분기. 본 컴포넌트는 단순 콜백만.
+   *
+   * Phase B(0.11.0) 호출 경로:
+   *   1) 스테퍼 편집 → [적용] 버튼 클릭 → onSizeChange(localW, localH).
+   *      스테퍼 +/− 단발마다 다이얼로그 뜨는 것 차단 (사용자 명시 요구).
+   *   2) 프리셋 quick-pick → onSizeChange(s, s). 단일 액션이라 즉시.
    */
   onSizeChange: (width: number, height: number) => void;
   onFogToggle: (on: boolean) => void;
   onFogRadiusChange: (radius: number) => void;
 };
 
+function clampDim(n: number): number {
+  return Math.min(DIM_MAX, Math.max(DIM_MIN, n));
+}
+
 /**
- * 사이즈 / Fog of War 설정 패널.
- * 0.10.0 Phase A: 내부 모델은 width/height 분리이나 UI는 정사각 프리셋 버튼 유지.
- * Phase B(0.11.0)에서 W·H NumberStepper UI 추가.
+ * 사이즈(가로·세로) / Fog of War 설정 패널.
+ *
+ * Phase B(0.11.0): W·H NumberStepper(`DIM_MIN..DIM_MAX`) + 정사각 프리셋 quick-pick.
+ * 스테퍼는 local pending state로 편집 — [적용] 버튼이 명시 확정. 비어있지 않은 그리드면
+ * client-shell이 ResetConfirmDialog로 분기 (변경 1회당 다이얼로그 1회).
  */
 export function SettingsPanel({
   width,
@@ -37,14 +47,96 @@ export function SettingsPanel({
   onFogRadiusChange,
 }: Props) {
   const t = useMessages().maze;
+
+  // 스테퍼 pending 값 — 부모 width/height와 분리. 적용 전엔 grid에 영향 0.
+  const [localW, setLocalW] = useState(width);
+  const [localH, setLocalH] = useState(height);
+
+  // 부모 값이 외부에서 바뀌면(프리셋 클릭, undo 등) 스테퍼 동기화.
+  useEffect(() => setLocalW(width), [width]);
+  useEffect(() => setLocalH(height), [height]);
+
   const isSquare = width === height;
+  const hasPendingChange = localW !== width || localH !== height;
+
+  const handleApply = () => {
+    if (!hasPendingChange) return;
+    onSizeChange(localW, localH);
+  };
 
   return (
     <div className="space-y-4">
+      {/* 가로·세로 스테퍼 + 적용. */}
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="space-y-1">
+          <label
+            htmlFor="maze-width"
+            className="block text-sm font-medium text-foreground"
+          >
+            {t.widthLabel}
+          </label>
+          <div className="w-28">
+            <NumberStepper
+              id="maze-width"
+              value={String(localW)}
+              showBigStep={false}
+              smallStep={1}
+              bigStep={1}
+              min={DIM_MIN}
+              max={DIM_MAX}
+              inputMode="numeric"
+              aria-label={t.widthLabel}
+              maxReachedMessage={t.dimMaxReached}
+              minReachedMessage={t.dimMinReached}
+              onStep={(n) => setLocalW(clampDim(n))}
+              onInputChange={(txt) => {
+                const n = parseInt(txt, 10);
+                if (Number.isFinite(n)) setLocalW(clampDim(n));
+              }}
+            />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <label
+            htmlFor="maze-height"
+            className="block text-sm font-medium text-foreground"
+          >
+            {t.heightLabel}
+          </label>
+          <div className="w-28">
+            <NumberStepper
+              id="maze-height"
+              value={String(localH)}
+              showBigStep={false}
+              smallStep={1}
+              bigStep={1}
+              min={DIM_MIN}
+              max={DIM_MAX}
+              inputMode="numeric"
+              aria-label={t.heightLabel}
+              maxReachedMessage={t.dimMaxReached}
+              minReachedMessage={t.dimMinReached}
+              onStep={(n) => setLocalH(clampDim(n))}
+              onInputChange={(txt) => {
+                const n = parseInt(txt, 10);
+                if (Number.isFinite(n)) setLocalH(clampDim(n));
+              }}
+            />
+          </div>
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          disabled={!hasPendingChange}
+          onClick={handleApply}
+        >
+          {t.applySize}
+        </Button>
+      </div>
+
+      {/* 정사각 프리셋 quick-pick — 클릭이 한 변경이라 즉시 onSizeChange. */}
       <div className="space-y-2">
-        <span className="text-sm font-medium text-foreground">
-          {t.sizeLabel}
-        </span>
+        <span className="text-sm text-muted-foreground">{t.presetsLabel}</span>
         <div className="flex flex-wrap gap-1.5">
           {SIZE_PRESETS.map((s) => {
             const active = isSquare && width === s;
@@ -63,8 +155,7 @@ export function SettingsPanel({
         </div>
       </div>
 
-      {/* Fog of War + 시야 반경. 0.10.1: 반경 컨트롤을 같은 row 안 토글 오른쪽으로 —
-          fog ON 시 row 폭만 늘어나고 세로 레이아웃은 안 밀림. */}
+      {/* Fog of War + 시야 반경. 0.10.1: 같은 row 안 가로 배치. */}
       <div className="rounded-lg border border-border p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">

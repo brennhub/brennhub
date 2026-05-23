@@ -138,14 +138,18 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] settings-panel UI 무변경 — 정사각 프리셋 (s, s) 호출
 - [ ] dev 검증 — 16/32/64 정사각 회귀 0 / v1 localStorage 자동 migrate (DevTools 확인)
 
-## P3f-B — 비정사각 UI + 캔버스 처리 + 가시 셀 컬링 (Phase B)
+## P3f-B — 비정사각 UI + 캔버스 처리 + 가시 셀 컬링 — 완료 (CHANGELOG `[0.11.0]`)
 
-- [ ] settings-panel — W·H NumberStepper UI (DIM_MIN..DIM_MAX). Phase A 프리셋과 병행.
-- [ ] **스테퍼 단발 변경 vs 다이얼로그 충돌 해소** — 스테퍼는 pending 값만 편집 → 단일 적용 액션이 다이얼로그 1회→wipe. +/− 클릭마다 다이얼로그 뜨지 않게.
-- [ ] 비정사각 캔버스 처리 — fit cellPx + clampPan 가운데 정렬 (이미 viewport.ts 일반화됨, 시각 검증만)
-- [ ] 가시 셀 컬링 — maze-grid·play-canvas 줌인 시 viewport 밖 셀 skip. 128×128 성능 보완.
-- [ ] 비정사각 점수 archetype 검증 — 32×64 등 console.log raw total 측정
-- [ ] dev 검증 — 50×150 / 128×4 / 3×128 비정사각 그리기·플레이·점수·줌·팬
+- [x] settings-panel — W·H NumberStepper (DIM_MIN..DIM_MAX) + 정사각 프리셋 quick-pick
+- [x] 스테퍼 ↔ 다이얼로그 충돌 해소 — local pending state + 명시 [적용] 버튼이 1회 onSizeChange 호출
+- [x] 외부 변경(프리셋·undo) 시 useEffect로 local 동기화
+- [x] 비정사각 캔버스 처리 — viewport.ts (Phase A에서 일반화됨) 활용. 시각 검증 dev에서.
+- [x] 가시 셀 컬링 — maze-grid에 [rMin,rMax)×[cMin,cMax) 범위 산출, renderTile/renderPathMark 둘 다 컬링
+- [x] client-shell handleSizeChange → handleDimsChange 이름 변경
+- [x] i18n 7키 (ko/en) — widthLabel/heightLabel/applySize/presetsLabel/dimMaxReached/dimMinReached
+- [ ] dev 검증 — W·H 경계 3·128 / 50×150·128×4·3×128 비정사각 / 128×128 컬링 매끄러움 / 16/32/64 회귀 0
+- [ ] 비정사각 점수 archetype 검증 — 32×64 정통 미로로 console.log raw total 측정 가이드 (별도 task)
+- [ ] play-canvas 가시 셀 컬링 — 플레이 카메라(P3e-2)와 함께 적용
 
 ## P3e-2 — 플레이 카메라 (변환 재사용)
 

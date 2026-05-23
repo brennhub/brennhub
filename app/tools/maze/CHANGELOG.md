@@ -2,6 +2,37 @@
 
 주요 결정 / 이정표.
 
+## [0.11.0] — 2026-05-23
+
+### Added (Phase B — 임의 W·H UI + 가시 셀 컬링)
+
+0.10.0 Phase A 내부 일반화 위에 비정사각 그리드 UI 노출. 캔버스 변환은 Phase A에서 이미 양 차원 지원 — Phase B는 사용자 진입점(스테퍼·프리셋) + 컬링.
+
+- **`settings-panel.tsx` W·H NumberStepper** — `widthLabel`/`heightLabel` 각각 `DIM_MIN(3)..DIM_MAX(128)` `NumberStepper` (fogRadius 패턴 재사용). 정사각 프리셋 quick-pick `[16×16][32×32][64×64]` 별도 row 유지.
+- **스테퍼 ↔ 다이얼로그 충돌 해소** — 스테퍼는 `localW`/`localH` **local pending state**로만 편집(부모 grid 무영향). **명시 [적용] 버튼**이 변경 확정 — `hasPendingChange` 조건일 때만 활성. 버튼 클릭 → `onSizeChange(localW, localH)` 1회 호출 → client-shell이 빈/비어있지 않음 판정. 스테퍼 +/− 단발마다 다이얼로그 뜨는 것 차단(사용자 명시 요구).
+- **외부 변경 동기화** — props `width`/`height` 변경 시 `useEffect`로 local 동기화. 프리셋 quick-pick은 직접 `onSizeChange(s, s)` 즉시 호출 → 부모 갱신 → local도 따라옴.
+- **가시 셀 컬링 (`maze-grid.tsx`)** — `view.panX/panY/cellPx` 기준 `[rMin,rMax)×[cMin,cMax)` 가시 범위 계산. renderTile/renderPathMark 루프 모두 컬링 적용. 128×128 줌인 시 16384 → 수백 셀로 절약. 줌아웃 fit 시 컬링 영역 = grid 전체라 효과 0(자연 fallback).
+- **i18n 신규 7키** (ko/en): `widthLabel`/`heightLabel`/`applySize`/`presetsLabel`/`dimMaxReached`/`dimMinReached` + (`sizeLabel` 유지).
+
+### Changed
+
+- `client-shell.tsx` `handleSizeChange` → `handleDimsChange` 이름 변경 (의미 명확화 — 단일 size 아닌 두 차원 변경).
+- 비정사각 캔버스 — Phase A `viewport.ts` `clampPan`이 이미 양 차원 가운데 정렬 처리. Phase B에서 처음 실제 비정사각 W·H가 들어오니 50×150·128×4·3×128 케이스 시각 검증 필요(레터박스 = 캔버스 배경색).
+
+### Decided
+
+- **명시 적용 버튼 (옵션 A)** — blur 자동 적용(B)·디바운스(C)·Enter(D) 대비 의도 가장 명확. 사용자가 W·H 조정 의도가 확실할 때만 다이얼로그.
+- **스테퍼는 local pending state** — 부모 project.width/height와 분리. 외부 변경(프리셋·undo) 시 useEffect로 동기화. 단일 출처는 부모, local은 임시 편집 버퍼.
+- **프리셋 클릭은 즉시 적용** (Phase A 흐름 유지) — 한 클릭이 한 변경이라 다이얼로그 1회 흐름과 일관.
+- **가시 셀 컬링은 maze-grid만** — play-canvas는 플레이 카메라(P3e-2)가 있어야 viewport 밖 셀이 의미. 카메라와 함께 P3e-2에서 적용.
+
+### Notes
+
+- 점수 산식 / `SCORE_TUNING` / commit / pathMarks / play.ts 이동·승리 / `viewport.ts` 산술 모듈 — 무변경.
+- 데이터모델 · schemaVersion — 무변경 (Phase A로 끝).
+- 16/32/64 정사각 회귀 0 — 프리셋 quick-pick이 (s, s) 호출, 기존 흐름 유지.
+- 비정사각 archetype(예 32×64 정통 미로)으로 점수 콘솔 로그 측정은 dev 점검 시 가이드.
+
 ## [0.10.1] — 2026-05-23
 
 ### Changed (UI 정리 3건)
