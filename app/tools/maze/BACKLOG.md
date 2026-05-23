@@ -167,6 +167,21 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] i18n 3키 (ko/en)
 - [ ] dev 시각 점검 — v2→v3 migrate / 16×16 row 미렌더 / 32 N=16↔32 / 64 N=16/32/64 / 비정사각 / fog+카메라 / "다시 플레이" / 64×64 N=16 컬링 성능
 
+## 사운드 — 완료 (CHANGELOG `[0.13.0]`)
+
+- [x] `lib/maze/sound.ts` singleton — Web Audio 합성, AudioContext lazy + idempotent resume
+- [x] move(40ms sine) / blocked(100ms triangle) / win(C major 3음 분산) — 짧고 무난
+- [x] move 50ms 스로틀 + blocked 같은 방향 1회 억제 (오토리핏 드론 차단)
+- [x] 음소거 토글 + localStorage 영속 (전역, MazeProject 무관)
+- [x] PlayMode mount init (autoplay 우회) + 매 호출 idempotent resume (iOS Safari 폴백)
+- [x] play.ts 무변경 — 사운드는 play-mode 컴포넌트가 applyMove 결과 비교로 트리거
+- [x] i18n 2키 (ko/en) — soundMute / soundUnmute
+- [ ] dev 점검 — autoplay 정책 / 모바일 (iOS Safari) / blocked 억제 (방향키 오토리핏) / 음소거 영속 / 플레이 카메라·fog 회귀 0
+
+## 배경음 — 보류 (BACKLOG)
+
+- [ ] 사용자 dev 점검 후 결정. 합성 제너러티브 앰비언트 vs 음원 파일(외부 인프라). "어설픈 배경음보다 없는 게 나음" 원칙.
+
 ## Px — 등급 flavored 네이밍 (점수 튜닝 안정화 후)
 
 - [ ] 별점에 등급 라벨 부여 — 예: ★1 = "들판", ★2 = "산책로", ★3 = "미로", ★4 = "던전", ★5 = "고문실" (가칭, 톤은 별도 결정). UI 헤드라인에 별점 옆 표시. **선행 조건**: 위 "dev archetype 실측 임계값 보정" 완료 — 임계값이 흔들리는 상태에선 라벨이 잘못 붙음.

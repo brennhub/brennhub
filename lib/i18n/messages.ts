@@ -528,6 +528,8 @@ export type Messages = {
     playControlsRight: string;
     playRestart: string;
     playBackToEdit: string;
+    soundMute: string;
+    soundUnmute: string;
     winTitle: string;
     winMessage: string;
   };
@@ -1133,6 +1135,8 @@ export const messages: Record<Locale, Messages> = {
       playControlsRight: "오른쪽으로 이동",
       playRestart: "다시 플레이",
       playBackToEdit: "편집으로 돌아가기",
+      soundMute: "소리 끄기",
+      soundUnmute: "소리 켜기",
       winTitle: "탈출 성공!",
       winMessage: "도착점에 도달했습니다.",
     },
@@ -1774,6 +1778,8 @@ export const messages: Record<Locale, Messages> = {
       playControlsRight: "Move right",
       playRestart: "Play again",
       playBackToEdit: "Back to editor",
+      soundMute: "Mute",
+      soundUnmute: "Unmute",
       winTitle: "Escaped!",
       winMessage: "You reached the goal.",
     },

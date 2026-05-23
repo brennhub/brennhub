@@ -40,6 +40,7 @@
 - 시작점에서 출발, 4방향 이동. 키보드(방향키 / WASD) + 화면 D-pad(데스크탑·모바일 공통). 카메라가 플레이어 추적 (cellPx > fit) 또는 정지+가운데 (cellPx ≤ fit) — `cameraFollow`+`clampPan` 자동 분기.
 - 이동 규약: `r,c`를 `[0, size-1]` clamp + WALL 진입 차단 + EMPTY/START/GOAL 통과. **BFS(검증)와 동일한 `isPassable` 단일 헬퍼 호출** — 통과성 정의 공유.
 - 도착점 도달 시 승리 모달 → 다시 플레이 / 편집으로 돌아가기.
+- **사운드 (0.13.0)** — Web Audio 합성 (음원 파일 0). 이동(짧은 sine) / 벽 부딪힘(thud) / 승리(C major 짧은 모티프). 음소거 토글 우상단(D-pad 위), 전역 localStorage 영속.
 - **시작점 vs 플레이어 시각 분리** (0.7.1) — 시작점 타일 = Footprints(남은 자국, 보존), 플레이어 마커 = User(움직이는 사람). 출발점에서 떠난 메타포.
 - Fog of War가 켜져 있으면 플레이어 주변 `fogRadius` 칸 원형 시야만 밝게, 나머지는 암전. 격자선도 시야 안 영역에서만 표시.
 
@@ -134,6 +135,7 @@ lib/maze/
   icons.ts                                 # 0.6.1 — 도구 팔레트 아이콘 단일 출처 (렌더러와 cross-ref)
   validate.ts                              # P3a + P3a-2 완료 — 완결성 검증 + 미로 품질 점수 (SCORE_TUNING)
   viewport.ts                              # P3e-1 + 0.10.0 — 뷰포트 변환 (width/height 일반화)
+  sound.ts                                 # 0.13.0 — 플레이 사운드 (Web Audio 합성, 음원 파일 0)
   play.ts                                  # P3b 완료 — PlayState / applyMove / isWin (순수 결정론)
   render/
     types.ts                               # P2.1 완료 + P3b renderPlayer — RenderEngine 인터페이스

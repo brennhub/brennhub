@@ -2,6 +2,44 @@
 
 주요 결정 / 이정표.
 
+## [0.13.0] — 2026-05-23
+
+### Added (플레이 사운드 — 합성)
+
+플레이 모드 3개 효과음 (이동·벽·승리) + 음소거 토글. **Web Audio API 합성**, 음원 파일 0 — 라이선스·번들·CDN 모두 무. brennhub "small, sharp, opinionated" + 단일 스택 정신 일관. 배경음은 BACKLOG.
+
+- **`lib/maze/sound.ts` (신규)** — `SoundController` singleton. AudioContext lazy 생성·idempotent resume·in-module 상태. API: `playMove` / `playBlocked(dir)` / `playWin` / `setMuted` / `isMuted` / `init`.
+- **합성 캐릭터**:
+  - **move**: sine 440Hz, 40ms, gain 0.07 — 매우 짧고 subtle
+  - **blocked**: triangle 200Hz, 100ms, gain 0.10 — 살짝 길고 낮은 thud
+  - **win**: C5/E5/G5 분산 (C major), 각 150ms × 3음, 100ms 간격, gain 0.16 — 짧은 모티프 1회
+  - 모두 5ms attack + linear decay envelope으로 click 차단
+- **연속 발화 억제 (잔손질 1 반영)**:
+  - **move 50ms 스로틀** — `lastMoveAt: number`. 키 오토리핏으로 사운드 쌓이지 않게
+  - **blocked 같은 방향 1회** — `lastBlockedDir: Dir | null`. 방향키를 벽 쪽으로 누르고 있어도 첫 부딪힘만 발화 (thud 드론 차단). 성공 이동·다른 방향 차단 시 리셋
+- **`play.ts` 무변경 — 순수 결정론 유지**. 사운드는 `play-mode` 컴포넌트가 `applyMove` 결과 비교로 트리거. blocked 감지 = `next === prev` (same object reference, P3b 결정 + 0.10.0 Phase A 후에도 `play.ts` L58/64/66 `return state` 유지 확인됨, 잔손질 2)
+- **음소거 토글**:
+  - 기본 ON(사운드 켜짐) — 새 사용자가 기능 발견. 끄는 수단(우상단 Volume 아이콘)이 눈에 잘 띔
+  - `localStorage` 키 `brennhub-maze-sound-muted` — **사용자 전역 설정**. `MazeProject` 무관, **schemaVersion 영향 0**, 공유 미로(P4)에 따라가지 않음
+  - UI: `PlayControls` 안내 텍스트 행 우측에 `Volume2`/`VolumeX` 아이콘 토글
+- **autoplay 정책 우회**: `PlayMode` mount `useEffect`에서 `sound.init()` — StepNav "플레이" 클릭(user gesture) 후속. 매 사운드 호출이 `init()` 재호출 (idempotent resume) — iOS Safari 등 edge용 폴백
+- **i18n 신규 2키** (ko/en) — `soundMute` / `soundUnmute`
+
+### Decided
+
+- **합성음 채택** — 음원 파일은 라이선스·번들·CDN·R2 추가 → 단일 스택 정신 위반. BRENNHUB.md 광고·외부 인프라 금기와 정신 일관. 짧은 효과음 3개는 OscillatorNode + envelope으로 충분.
+- **배경음은 BACKLOG** — "가능하면" 명시. 어설픈 합성 앰비언트보다 없는 게 나음. dev 점검 후 사용자 판단.
+- **음소거 default ON** — 새 사용자 기능 발견. 토글이 눈에 잘 띄어 즉시 끄기 가능.
+- **사운드 = 사용자 전역 설정, project 무관** — schemaVersion 영향 0. P4 숏링크 공유 시 수신자 본인 muted 설정 적용 (공유자 설정 무관).
+- **`play.ts` 순수 유지** — `applyMove`는 새 state 반환만, 사운드 호출 X. 호출자(play-mode)가 결과 비교로 이벤트 추론.
+- **blocked 억제 = 같은 방향 1회** (사용자 잔손질 1) — 시간 스로틀만으론 thud(100ms) 이상 간격이라도 오토리핏 시 겹침. 방향별 발화 추적이 자연 (성공 이동 또는 방향 전환 시 재발화).
+- **applyMove same-object 반환 확인** (사용자 잔손질 2) — `play.ts` L58/64/66 모두 `return state` 보장. P3b 결정 후 직사각 리팩터에도 유지. blocked 감지 정상.
+
+### Notes
+
+- 점수 / SCORE_TUNING / commit / validate / pathMarks / `play.ts` 이동·승리 / viewport.ts / 카메라 / Phase B UI — 무변경.
+- API route 미생성. AI 미사용 — 합성 = 결정론 파라미터.
+
 ## [0.12.0] — 2026-05-23
 
 ### Added (P3e-2 — 플레이 카메라 + 제작자 설정 시야 거리)
