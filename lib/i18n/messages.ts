@@ -251,6 +251,7 @@ export type Messages = {
       sellBasisLabel: string;
       sellBasisTooltip: string;
       summaryTitle: string;
+      totalInvestLabel: string;
       totalProceedsLabel: string;
       totalSharesLabel: string;
       avgSellPriceLabel: string;
@@ -266,6 +267,7 @@ export type Messages = {
       colSellAmount: string;
       colCumSellAmount: string;
       colRealizedPnl: string;
+      colCumRealizedPnl: string;
       legendCompleted: string;
       legendNextSell: string;
       legendReset: string;
@@ -848,6 +850,7 @@ export const messages: Record<Locale, Messages> = {
         sellBasisTooltip:
           "매도가 사다리의 시작 기준. 평단가 기준: 평단가에서 회차별 상승. 현재가 기준: 현재가에서 회차별 상승. 1회차부터 상승률이 적용됩니다.",
         summaryTitle: "최종 결과 요약",
+        totalInvestLabel: "총 투자금",
         totalProceedsLabel: "총 매도금",
         totalSharesLabel: "총 매도 주식수",
         avgSellPriceLabel: "평균 매도가",
@@ -863,6 +866,7 @@ export const messages: Record<Locale, Messages> = {
         colSellAmount: "매도금",
         colCumSellAmount: "누적 매도금",
         colRealizedPnl: "실현 손익",
+        colCumRealizedPnl: "누적 손익",
         legendCompleted: "매도 완료",
         legendNextSell: "다음 매도",
         legendReset: "리셋",
@@ -1499,6 +1503,7 @@ export const messages: Record<Locale, Messages> = {
         sellBasisTooltip:
           "Starting point of the sell-price ladder. Avg Cost: rises per round from your average cost. Current Price: rises per round from the current price. The rise applies from round 1.",
         summaryTitle: "Summary",
+        totalInvestLabel: "Total Invested",
         totalProceedsLabel: "Total Proceeds",
         totalSharesLabel: "Total Shares Sold",
         avgSellPriceLabel: "Avg Sell Price",
@@ -1514,6 +1519,7 @@ export const messages: Record<Locale, Messages> = {
         colSellAmount: "Sell Amount",
         colCumSellAmount: "Cum Sell Amount",
         colRealizedPnl: "Realized P&L",
+        colCumRealizedPnl: "Cumulative P&L",
         legendCompleted: "Sold",
         legendNextSell: "Next Sell",
         legendReset: "Reset",
