@@ -48,3 +48,9 @@ next-env.d.ts
 .open-next/
 .wrangler/
 .dev.vars
+
+# tool-specific local caches (regenerable, not for repo)
+/app/tools/saju-naming/scripts/data/.cache/
+
+# local-only assets (screenshots dropped during dev)
+/screenshots/

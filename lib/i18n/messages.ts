@@ -458,6 +458,91 @@ export type Messages = {
     unmappedNote: string;
     goToSlots: string;
   };
+  maze: {
+    title: string;
+    description: string;
+    step1: string;
+    step2: string;
+    sizeLabel: string;
+    widthLabel: string;
+    heightLabel: string;
+    dimMaxReached: string;
+    dimMinReached: string;
+    applySize: string;
+    presetsLabel: string;
+    fogLabel: string;
+    fogDescription: string;
+    fogRadiusLabel: string;
+    fogRadiusMax: string;
+    fogRadiusMin: string;
+    playViewSpanLabel: string;
+    playViewSpanMax: string;
+    playViewSpanMin: string;
+    sizeChangeTitle: string;
+    sizeChangeMessage: string;
+    sizeChangeConfirm: string;
+    viewZoomIn: string;
+    viewZoomOut: string;
+    viewFit: string;
+    viewHand: string;
+    toolWall: string;
+    toolPath: string;
+    toolStart: string;
+    toolGoal: string;
+    commitWallsButton: string;
+    commitWallsHint: string;
+    resetTitle: string;
+    resetMessage: string;
+    resetConfirm: string;
+    resetCancel: string;
+    resetGridTitle: string;
+    resetGridMessage: string;
+    resetGridConfirm: string;
+    editorUndo: string;
+    editorRedo: string;
+    editorResetGrid: string;
+    validationTitlePass: string;
+    validationTitleFail: string;
+    validationNoStart: string;
+    validationMultiStart: string;
+    validationNoGoal: string;
+    validationUnreachable: string;
+    validationExpand: string;
+    validationCollapse: string;
+    validationRuleEndpoints: string;
+    validationRuleReachability: string;
+    validationSkipped: string;
+    scoreLabel: string;
+    scoreStarsAria: string;
+    scoreDimDetour: string;
+    scoreDimCorridors: string;
+    scoreDimTexture: string;
+    weakLowDetour: string;
+    weakNoCorridors: string;
+    weakNoTexture: string;
+    playNotReadyHint: string;
+    playIntro: string;
+    playControlsUp: string;
+    playControlsDown: string;
+    playControlsLeft: string;
+    playControlsRight: string;
+    playRestart: string;
+    playBackToEdit: string;
+    soundMute: string;
+    soundUnmute: string;
+    winTitle: string;
+    winMessage: string;
+    shareButton: string;
+    shareGenerating: string;
+    shareUrlLabel: string;
+    shareCopyButton: string;
+    shareCopiedToast: string;
+    shareErrorGeneric: string;
+    shareErrorRateLimit: string;
+    shareNotFoundTitle: string;
+    shareNotFoundMessage: string;
+    sharedBuildOwn: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -471,6 +556,7 @@ export type Messages = {
     toolSajuNaming: string;
     toolLineupBuilder: string;
     toolLanguageMaker: string;
+    toolMaze: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -980,6 +1066,101 @@ export const messages: Record<Locale, Messages> = {
       unmappedNote: "매핑되지 않은 글자는 회색 원문으로 표시됩니다.",
       goToSlots: "문자 만들기로",
     },
+    maze: {
+      title: "픽셀 미로 만들기",
+      description: "픽셀 격자로 나만의 미로를 설계하고 링크로 공유하세요.",
+      step1: "만들기",
+      step2: "플레이",
+      sizeLabel: "맵 크기",
+      widthLabel: "가로",
+      heightLabel: "세로",
+      dimMaxReached: "최대 128칸입니다",
+      dimMinReached: "최소 3칸입니다",
+      applySize: "적용",
+      presetsLabel: "프리셋",
+      fogLabel: "시야 제한",
+      fogDescription:
+        "플레이할 때 시작점 주변만 보이도록 시야를 제한합니다.",
+      fogRadiusLabel: "시야 반경 (칸)",
+      fogRadiusMax: "최대 시야 반경입니다",
+      fogRadiusMin: "최소 시야 반경입니다",
+      playViewSpanLabel: "플레이 시야 거리 (칸)",
+      playViewSpanMax: "최대 시야 거리입니다 (전체 보임)",
+      playViewSpanMin: "최소 시야 거리입니다 (가장 가까이)",
+      sizeChangeTitle: "사이즈 변경",
+      sizeChangeMessage:
+        "사이즈를 바꾸면 그리드의 모든 셀이 새 크기로 다시 생성됩니다. 지금까지 그린 내용은 사라집니다.",
+      sizeChangeConfirm: "변경",
+      viewZoomIn: "확대",
+      viewZoomOut: "축소",
+      viewFit: "맞춤",
+      viewHand: "손도구 (스페이스 + 드래그)",
+      toolWall: "벽",
+      toolPath: "길",
+      toolStart: "시작점",
+      toolGoal: "도착점",
+      commitWallsButton: "벽 생성",
+      commitWallsHint:
+        "그린 길을 제외한 칸이 모두 벽이 됩니다. 시작점·도착점은 유지.",
+      resetTitle: "맵 초기화",
+      resetMessage:
+        "설정으로 돌아가면 지금까지 그린 맵이 모두 초기화됩니다. 계속할까요?",
+      resetConfirm: "초기화하고 돌아가기",
+      resetCancel: "취소",
+      resetGridTitle: "그리드 초기화",
+      resetGridMessage:
+        "그리드의 모든 셀이 빈 칸으로 초기화됩니다. 사이즈와 시야 설정은 유지됩니다. 실행취소(Undo) 가능합니다.",
+      resetGridConfirm: "초기화",
+      editorUndo: "실행취소",
+      editorRedo: "다시실행",
+      editorResetGrid: "초기화",
+      validationTitlePass: "플레이 가능",
+      validationTitleFail: "검증 실패",
+      validationNoStart: "시작점이 없습니다",
+      validationMultiStart: "시작점이 여러 개입니다",
+      validationNoGoal: "도착점이 없습니다",
+      validationUnreachable: "도착점에 도달할 수 없습니다",
+      validationExpand: "상세 보기",
+      validationCollapse: "닫기",
+      validationRuleEndpoints: "시작점·도착점",
+      validationRuleReachability: "도달 가능성",
+      validationSkipped: "검증 보류",
+      scoreLabel: "미로 점수",
+      scoreStarsAria: "별 5개 중 {n}개",
+      scoreDimDetour: "경로 우회도",
+      scoreDimCorridors: "복도성",
+      scoreDimTexture: "갈림길·막다른 길",
+      weakLowDetour:
+        "우회도가 낮습니다 — 벽을 더 채워 길을 꼬아보세요.",
+      weakNoCorridors:
+        "벽이 거의 없습니다 — 길을 좁혀 미로를 만들어보세요.",
+      weakNoTexture:
+        "갈림길도 막다른 길도 없습니다 — 단조로워요.",
+      playNotReadyHint:
+        "플레이를 시작하려면 그리기 단계의 검증을 먼저 통과해야 합니다.",
+      playIntro: "방향키 또는 WASD, 아래 D-pad로 이동하세요.",
+      playControlsUp: "위로 이동",
+      playControlsDown: "아래로 이동",
+      playControlsLeft: "왼쪽으로 이동",
+      playControlsRight: "오른쪽으로 이동",
+      playRestart: "다시 플레이",
+      playBackToEdit: "편집으로 돌아가기",
+      soundMute: "소리 끄기",
+      soundUnmute: "소리 켜기",
+      shareButton: "공유 링크 만들기",
+      shareGenerating: "생성 중...",
+      shareUrlLabel: "공유 링크",
+      shareCopyButton: "복사",
+      shareCopiedToast: "복사됨",
+      shareErrorGeneric: "공유 링크 생성에 실패했습니다.",
+      shareErrorRateLimit: "잠시 후 다시 시도해주세요.",
+      shareNotFoundTitle: "미로를 찾을 수 없습니다",
+      shareNotFoundMessage:
+        "공유 링크가 잘못되었거나 삭제된 미로입니다.",
+      sharedBuildOwn: "내 미로 만들기",
+      winTitle: "탈출 성공!",
+      winMessage: "도착점에 도달했습니다.",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -993,6 +1174,7 @@ export const messages: Record<Locale, Messages> = {
       toolSajuNaming: "사주 작명",
       toolLineupBuilder: "축구 베스트 일레븐 만들기",
       toolLanguageMaker: "언어 창조기",
+      toolMaze: "픽셀 미로 만들기",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -1043,6 +1225,10 @@ export const messages: Record<Locale, Messages> = {
         name: "언어 창조기",
         description:
           "픽셀로 문자를 그리고 입력값에 1:1로 매핑해 나만의 언어를 만들고 실시간 변환·공유",
+      },
+      maze: {
+        name: "픽셀 미로 만들기",
+        description: "픽셀 격자로 미로를 설계하고 풀이하며 링크로 공유",
       },
     },
   },
@@ -1534,6 +1720,101 @@ export const messages: Record<Locale, Messages> = {
       unmappedNote: "Unmapped characters appear as gray original text.",
       goToSlots: "Go to characters",
     },
+    maze: {
+      title: "Pixel Maze Maker",
+      description: "Design your own maze on a pixel grid and share it via link.",
+      step1: "Build",
+      step2: "Play",
+      sizeLabel: "Map size",
+      widthLabel: "Width",
+      heightLabel: "Height",
+      dimMaxReached: "Maximum is 128",
+      dimMinReached: "Minimum is 3",
+      applySize: "Apply",
+      presetsLabel: "Presets",
+      fogLabel: "Fog of War",
+      fogDescription:
+        "Limits visibility to a radius around the start when playing.",
+      fogRadiusLabel: "Vision radius (tiles)",
+      fogRadiusMax: "Maximum vision radius",
+      fogRadiusMin: "Minimum vision radius",
+      playViewSpanLabel: "Play view span (tiles)",
+      playViewSpanMax: "Maximum span (entire grid visible)",
+      playViewSpanMin: "Minimum span (closest)",
+      sizeChangeTitle: "Change size",
+      sizeChangeMessage:
+        "Changing size regenerates the grid at the new dimensions. Anything drawn will be lost.",
+      sizeChangeConfirm: "Change",
+      viewZoomIn: "Zoom in",
+      viewZoomOut: "Zoom out",
+      viewFit: "Fit",
+      viewHand: "Hand tool (space + drag)",
+      toolWall: "Wall",
+      toolPath: "Path",
+      toolStart: "Start",
+      toolGoal: "Goal",
+      commitWallsButton: "Generate walls",
+      commitWallsHint:
+        "Cells outside your path become walls. Start and goal are preserved.",
+      resetTitle: "Reset map",
+      resetMessage:
+        "Going back to settings will reset everything you've drawn. Continue?",
+      resetConfirm: "Reset and go back",
+      resetCancel: "Cancel",
+      resetGridTitle: "Clear grid",
+      resetGridMessage:
+        "All cells will be cleared. Size and fog settings stay. This action can be undone.",
+      resetGridConfirm: "Clear",
+      editorUndo: "Undo",
+      editorRedo: "Redo",
+      editorResetGrid: "Clear grid",
+      validationTitlePass: "Ready to play",
+      validationTitleFail: "Validation failed",
+      validationNoStart: "No start tile placed",
+      validationMultiStart: "Multiple start tiles found",
+      validationNoGoal: "No goal tile placed",
+      validationUnreachable: "No goal is reachable from start",
+      validationExpand: "Details",
+      validationCollapse: "Hide",
+      validationRuleEndpoints: "Start & goal",
+      validationRuleReachability: "Reachability",
+      validationSkipped: "Skipped",
+      scoreLabel: "Maze score",
+      scoreStarsAria: "{n} of 5 stars",
+      scoreDimDetour: "Detour",
+      scoreDimCorridors: "Corridor structure",
+      scoreDimTexture: "Branches & dead ends",
+      weakLowDetour:
+        "Detour is low — add walls to twist the path.",
+      weakNoCorridors:
+        "Hardly any walls — narrow the paths to form a maze.",
+      weakNoTexture:
+        "No branches or dead ends — the path feels flat.",
+      playNotReadyHint:
+        "Pass the draw-step validation before you can play.",
+      playIntro: "Arrow keys, WASD, or the D-pad below to move.",
+      playControlsUp: "Move up",
+      playControlsDown: "Move down",
+      playControlsLeft: "Move left",
+      playControlsRight: "Move right",
+      playRestart: "Play again",
+      playBackToEdit: "Back to editor",
+      soundMute: "Mute",
+      soundUnmute: "Unmute",
+      shareButton: "Create share link",
+      shareGenerating: "Generating...",
+      shareUrlLabel: "Share link",
+      shareCopyButton: "Copy",
+      shareCopiedToast: "Copied",
+      shareErrorGeneric: "Failed to create share link.",
+      shareErrorRateLimit: "Please try again in a moment.",
+      shareNotFoundTitle: "Maze not found",
+      shareNotFoundMessage:
+        "The share link is invalid or the maze was removed.",
+      sharedBuildOwn: "Build your own maze",
+      winTitle: "Escaped!",
+      winMessage: "You reached the goal.",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -1547,6 +1828,7 @@ export const messages: Record<Locale, Messages> = {
       toolSajuNaming: "Saju Naming",
       toolLineupBuilder: "Football Best XI Builder",
       toolLanguageMaker: "Language Maker",
+      toolMaze: "Pixel Maze Maker",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -1597,6 +1879,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Language Maker",
         description:
           "Create your own language — draw pixel glyphs, map them to any input, convert text in real time",
+      },
+      maze: {
+        name: "Pixel Maze Maker",
+        description:
+          "Design pixel-grid mazes, solve them, and share via link",
       },
     },
   },
