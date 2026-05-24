@@ -458,6 +458,19 @@ export type Messages = {
     unmappedNote: string;
     goToSlots: string;
   };
+  shooter: {
+    title: string;
+    description: string;
+    startButton: string;
+    scoreLabel: string;
+    livesLabel: string;
+    highScoreLabel: string;
+    newHighScore: string;
+    gameOverTitle: string;
+    restartButton: string;
+    controlsHintDesktop: string;
+    controlsHintMobile: string;
+  };
   maze: {
     title: string;
     description: string;
@@ -562,6 +575,7 @@ export type Messages = {
     toolLineupBuilder: string;
     toolLanguageMaker: string;
     toolMaze: string;
+    toolShooter: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -1172,6 +1186,19 @@ export const messages: Record<Locale, Messages> = {
       winTitle: "탈출 성공!",
       winMessage: "도착점에 도달했습니다.",
     },
+    shooter: {
+      title: "아케이드 슈터",
+      description: "우주 함대를 격추하는 세로 스크롤 슈팅 게임",
+      startButton: "시작",
+      scoreLabel: "점수",
+      livesLabel: "생명",
+      highScoreLabel: "최고점",
+      newHighScore: "신기록",
+      gameOverTitle: "게임 오버",
+      restartButton: "다시 시작",
+      controlsHintDesktop: "← → 이동 / 스페이스 발사",
+      controlsHintMobile: "화면 좌우를 눌러 이동 (자동 발사)",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -1186,6 +1213,7 @@ export const messages: Record<Locale, Messages> = {
       toolLineupBuilder: "축구 베스트 일레븐 만들기",
       toolLanguageMaker: "언어 창조기",
       toolMaze: "픽셀 미로 만들기",
+      toolShooter: "아케이드 슈터",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -1240,6 +1268,10 @@ export const messages: Record<Locale, Messages> = {
       maze: {
         name: "픽셀 미로 만들기",
         description: "픽셀 격자로 미로를 설계하고 풀이하며 링크로 공유",
+      },
+      shooter: {
+        name: "아케이드 슈터",
+        description: "우주 함대를 격추하는 세로 스크롤 슈팅 게임",
       },
     },
   },
@@ -1832,6 +1864,19 @@ export const messages: Record<Locale, Messages> = {
       winTitle: "Escaped!",
       winMessage: "You reached the goal.",
     },
+    shooter: {
+      title: "Arcade Shooter",
+      description: "Top-down arcade shoot-'em-up — blast the alien fleet",
+      startButton: "Start",
+      scoreLabel: "Score",
+      livesLabel: "Lives",
+      highScoreLabel: "Best",
+      newHighScore: "New best",
+      gameOverTitle: "Game Over",
+      restartButton: "Restart",
+      controlsHintDesktop: "← → to move / Space to fire",
+      controlsHintMobile: "Tap and hold left/right (auto-fire)",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -1846,6 +1891,7 @@ export const messages: Record<Locale, Messages> = {
       toolLineupBuilder: "Football Best XI Builder",
       toolLanguageMaker: "Language Maker",
       toolMaze: "Pixel Maze Maker",
+      toolShooter: "Arcade Shooter",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -1901,6 +1947,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Pixel Maze Maker",
         description:
           "Design pixel-grid mazes, solve them, and share via link",
+      },
+      shooter: {
+        name: "Arcade Shooter",
+        description:
+          "Top-down arcade shoot-'em-up — blast the alien fleet for high scores",
       },
     },
   },

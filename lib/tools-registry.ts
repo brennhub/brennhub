@@ -66,4 +66,12 @@ export const tools: Tool[] = [
     // hasPage: live 후에도 [slug] fallback 충돌 방지로 유지 (P2 결정 명문화).
     hasPage: true,
   },
+  {
+    id: "shooter",
+    slug: "shooter",
+    status: "live",
+    createdAt: "2026-05-24",
+    // 전용 page.tsx 존재 — [slug] fallback이 정적 경로를 emit하지 않도록 hasPage:true.
+    hasPage: true,
+  },
 ];

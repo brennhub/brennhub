@@ -12,6 +12,7 @@ const TOOLS = [
   "lineup-builder",
   "language-maker",
   "maze",
+  "shooter",
 ] as const;
 const CATEGORIES = ["feature", "improvement", "complaint", "other"] as const;
 
