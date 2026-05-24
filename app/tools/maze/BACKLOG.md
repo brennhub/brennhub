@@ -84,8 +84,8 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] `validation-panel.tsx` — 별점 + 차원 바 3개 + weakness 안내
 - [x] `client-shell.tsx` — useMemo(scoreMaze) 라이브 재계산
 - [x] i18n score* / weak* 8키 (ko/en)
-- [ ] **dev archetype 실측 임계값 보정 (필수)** — 빈 들판/벽 허술/외길 복도/제대로 된 미로 4종을 *실제로 만들어* total 측정, STAR_THRESHOLDS·CORRIDOR_BASE_WEIGHT·TEXTURE_SATURATION 보정. STAR_THRESHOLDS[2]=0.72는 추정치 0.707·0.734 사이 0.027 폭에 끼워넣은 fragile 값 — 좋은 미로가 0.72 밑이면 외길과 ★3 뭉쳐 원불만 재발. 보정용 콘솔 신호는 `client-shell.tsx` `useEffect([score])` `console.log("[maze score]", ...)` — 브라우저 콘솔에서 archetype별 raw total 읽을 수 있음.
-- [ ] **archetype 보정용 콘솔 신호 제거** — P4 live 전. `client-shell.tsx`의 `console.log("[maze score]", ...)` useEffect를 통째로 제거. prod 콘솔 노이즈 방지.
+- [x] **dev archetype 실측 임계값 보정 (필수)** — 1.0.0에서 6종 archetype(빈 들판/살짝 굽은 길/적당한 미로/구불구불 외길/정통 분기 미로/크고 복잡한 미로) 실측 → `STAR_THRESHOLDS = [0.2, 0.49, 0.71, 0.88]` 확정.
+- [x] **archetype 보정용 콘솔 신호 제거** — 1.0.0에서 `client-shell.tsx` `useEffect([score]) console.log("[maze score]", ...)` 통째 제거.
 
 ## P3b — 플레이 · Fog 렌더 — 완료 (CHANGELOG `[0.4.0]`)
 
@@ -234,16 +234,15 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [ ] **사용자 핸드오프**: `wrangler d1 create brennhub-maze`/`brennhub-maze-dev` + database_id placeholder 교체 + 마이그레이션 적용 (`--remote` 옵션)
 - [ ] dev 검증 — 공유 생성·?id= 진입·rate limit·not-found fallback·shared 모드 PlayMode
 
-## P4b — STAR_THRESHOLDS archetype 보정 + 라이브 전환 + main 머지 (별도 task)
+## P4b — STAR_THRESHOLDS archetype 보정 + 라이브 전환 + main 머지 — 완료 (CHANGELOG `[1.0.0]`)
 
-- [ ] dev에서 archetype 5개 (빈 들판/벽 허술/외길/정통 미로/비정사각 정교) 만들어 `[maze score]` console.log 측정
-- [ ] STAR_THRESHOLDS 자문 검토 (claude 안 제시 → 사용자 확정) → SCORE_TUNING 갱신
-- [ ] `client-shell.tsx` archetype 보정용 console.log useEffect 제거 (P3a-2 BACKLOG 항목)
-- [ ] `tools-registry.ts` maze status `coming-soon` → `live`
-- [ ] README/TOOLS.md 인덱스 라이브 표기
-- [ ] CHANGELOG `[1.0.0]` — 라이브 milestone
-- [ ] feat/maze → dev 머지+push (마지막 dev 점검)
-- [ ] **feat/maze → main 머지+push** (Cloudflare 자동 prod 배포 — 라이브)
+- [x] dev에서 archetype 6종 (빈 들판/살짝 굽은 길/적당한 미로/구불구불 외길/정통 분기 미로/크고 복잡한 미로) 만들어 `[maze score]` console.log 측정
+- [x] STAR_THRESHOLDS 자문 검토 (claude 안 제시 → 사용자 확정) → SCORE_TUNING 갱신: `[0.2, 0.49, 0.71, 0.88]`
+- [x] `client-shell.tsx` archetype 보정용 console.log useEffect 제거 (P3a-2 BACKLOG 항목)
+- [x] `tools-registry.ts` maze status `coming-soon` → `live`
+- [x] CHANGELOG `[1.0.0]` — 라이브 milestone
+- [ ] feat/maze → dev 머지+push (마지막 dev 점검 — 사용자 수동)
+- [ ] **feat/maze → main 머지+push** (Cloudflare 자동 prod 배포 — 라이브, 사용자 수동)
 
 ## V2 후보 (효능감 검증 후 별도 task)
 

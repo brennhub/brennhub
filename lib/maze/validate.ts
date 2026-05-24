@@ -6,10 +6,9 @@ import { TILE, type TileType } from "./types";
  *
  * 본 블록만 수정하면 점수 분포가 바뀐다 — 로직 변경 없이 재튜닝 가능.
  *
- * **fragile 1차안**: 외길 0.707 · 미로 0.734 추정치 사이 폭이 0.027 — STAR_THRESHOLDS[2]=0.72는
- * 그 좁은 폭에 끼워넣은 값. dev archetype 4개(빈 들판/벽 허술/외길/제대로 된 미로)를
- * 실제로 만들어 total 실측 후 보정 필수 (BACKLOG 항목). 좋은 미로가 0.72 밑으로 떨어지면
- * 외길과 ★3 뭉쳐 사용자 원불만(허접/좋은 미로 구분 X) 재발.
+ * **6종 아키타입 미로로 보정 완료 (1.0.0)**: dev에서 실측한 6개 미로 — 빈 들판 ·
+ * 살짝 굽은 길 · 적당한 미로 · 구불구불 외길 · 정통 분기 미로 · 크고 복잡한 미로 —
+ * total 측정 후 STAR_THRESHOLDS 확정. 외길과 정통 미로가 ★3/★4로 분리되도록 조정.
  */
 const SCORE_TUNING = {
   // A: 경로 우회도
@@ -20,7 +19,7 @@ const SCORE_TUNING = {
   TEXTURE_SATURATION: 0.15,
   // 합성 = sqrt(A * B). "둘 다 있어야 점수" — 가산식 역전 차단.
   // 가중치 상수(WEIGHT_DETOUR / WEIGHT_TOPOLOGY)는 가중 기하평균이 역전 부활시키므로 미사용.
-  STAR_THRESHOLDS: [0.2, 0.4, 0.72, 0.85] as const,
+  STAR_THRESHOLDS: [0.2, 0.49, 0.71, 0.88] as const,
   WEAKNESS_THRESHOLD: 0.3,
   // 트리비얼 가드 — manhattan ≤ 이 값이면 미로라 부르기 어려움. 강제 ★1.
   TRIVIAL_MANHATTAN: 1,
