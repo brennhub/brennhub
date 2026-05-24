@@ -211,20 +211,6 @@ export function MazeClientShell({ sharedProject }: Props = {}) {
     [project.grid, validation.ok],
   );
 
-  // archetype 임계값 보정용 콘솔 신호 (P3a-2). P4 live 전 제거.
-  useEffect(() => {
-    if (!score) return;
-     
-    console.log("[maze score]", {
-      A: score.detour.norm,
-      B_corridor: score.corridor.norm,
-      B_texture: score.texture.norm,
-      total: score.total,
-      stars: score.stars,
-      weakness: score.weakness,
-    });
-  }, [score]);
-
   const handlePaint = useCallback(
     (r: number, c: number, isInitial: boolean) => {
       if (activeTool === "goal" && !isInitial) return;

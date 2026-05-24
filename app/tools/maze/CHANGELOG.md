@@ -2,6 +2,31 @@
 
 주요 결정 / 이정표.
 
+## [1.0.0] — 2026-05-24
+
+### Released (P4b — 정식 런칭)
+
+P1 스캐폴딩부터 P4a 숏링크까지 합쳐 maze 도구를 정식 출시. tools-registry status `coming-soon` → `live`. dev 검증 완료 후 사용자가 feat/maze → main 머지로 brennhub.com 배포.
+
+### Changed
+
+- **STAR_THRESHOLDS 보정** — `[0.2, 0.4, 0.72, 0.85]` → `[0.2, 0.49, 0.71, 0.88]`. dev에서 6종 아키타입 미로(빈 들판 · 살짝 굽은 길 · 적당한 미로 · 구불구불 외길 · 정통 분기 미로 · 크고 복잡한 미로) 실측 후 확정. P3a-2 1차안의 fragile 임계값(0.72) 보정 — 외길(★3)과 정통 미로(★4) 분리됨.
+- `lib/maze/validate.ts` SCORE_TUNING 헤더 주석 "fragile 1차안" → "6종 아키타입 미로로 보정 완료" 갱신.
+- **tools-registry maze status** — `"coming-soon"` → `"live"`. 메인 카탈로그 카드 활성화. `hasPage: true` 유지 (P2 결정 — `[slug]` fallback 충돌 방지).
+
+### Removed
+
+- **archetype 보정용 콘솔 로그** — `client-shell.tsx`의 `console.log("[maze score]", ...)` useEffect 통째 제거 (P3a-2 BACKLOG 항목 — boot strap 후 prod 노이즈 방지).
+
+### Notes — 회귀 0
+
+- 점수 산식 / SCORE_TUNING 다른 상수 / commit / validate / pathMarks / play.ts / viewport / 카메라 / 사운드 / D1 / share / 공유 흐름 — 모두 무변경.
+- STAR_THRESHOLDS 변경은 튜닝 값만 — 새 임계값 매핑: `total<0.20 → ★1, <0.49 → ★2, <0.71 → ★3, <0.88 → ★4, ≥0.88 → ★5`.
+
+### Milestone
+
+P1(스캐폴딩) · P2(에디터) · P3a(검증) · P3a-2(점수) · P3b(플레이·fog) · P3c-1(undo/redo·재클릭) · P3c-2(길·벽 생성) · P3d(단계 통합) · P3e-1(편집 줌·viewport) · P3f(직사각 일반화) · P3e-2(플레이 카메라) · 사운드 · P4a(숏링크) · P4b(보정·라이브) 완성. 다음은 main 머지 → brennhub.com 정식 배포 (사용자 수동).
+
 ## [0.14.0] — 2026-05-23
 
 ### Added (P4a — 숏링크 공유 + ?id= 진입)

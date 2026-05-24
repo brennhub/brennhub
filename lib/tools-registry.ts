@@ -60,9 +60,10 @@ export const tools: Tool[] = [
   {
     id: "maze",
     slug: "maze",
-    status: "coming-soon",
+    status: "live",
     createdAt: "2026-05-22",
-    // 전용 에디터 페이지(P2)는 있으나 공유(P4) 전까지 coming-soon 유지.
+    // 0.14.0(P4a)에서 D1·숏링크 + 1.0.0(P4b)에서 STAR_THRESHOLDS 보정·라이브 전환.
+    // hasPage: live 후에도 [slug] fallback 충돌 방지로 유지 (P2 결정 명문화).
     hasPage: true,
   },
 ];
