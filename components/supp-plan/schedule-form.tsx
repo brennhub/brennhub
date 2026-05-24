@@ -318,6 +318,9 @@ export function ScheduleForm({
                 showBigStep={false}
                 inputMode="decimal"
                 aria-label={tp.capsules}
+                // 1.0.1: onInputChange가 sanitize(replace) 변환 — 비숫자 입력 시
+                // 기존 즉시 sanitize되어 표시되는 동작 보존.
+                syncWhileFocused
               />
             </Field>
             <Field
