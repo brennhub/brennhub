@@ -5,6 +5,7 @@ import {
   DIM_MIN,
   FOG_RADIUS,
   SCHEMA_VERSION,
+  TIME_LIMIT,
   type MazeProject,
   type MazeTheme,
   type TileType,
@@ -24,11 +25,12 @@ function isValidDim(n: unknown): n is number {
  * Schema versions:
  *   v1 (P1~0.9.x): `size: 16|32|64` 정사각
  *   v2 (0.10.0~0.11.0): `width`/`height: number` 분리 (DIM_MIN..DIM_MAX)
- *   v3 (0.12.0+): `playViewSpan: number` 추가 — 플레이 시야 거리 (캔버스 한 변 보이는 칸 수)
+ *   v3 (0.12.0~1.0.x): `playViewSpan: number` 추가 — 플레이 시야 거리
+ *   v4 (1.1.0+): `timeLimitSec: number | null` 추가 — 제한 시간 (null=타이머 없음)
  *
- * v1 → v2: width=height=size로 변환. grid는 이미 size×size = width×height라 데이터
- * 변환 없음 — 메타데이터만. `size` 필드는 destructure로 명시 제거.
- * v2 → v3: `playViewSpan = 16` 강제 (사용자 명시 — 구 프로젝트 기본 = 가장 가까이).
+ * v1 → v2: width=height=size로 변환. `size` destructure 명시 제거.
+ * v2 → v3: `playViewSpan = 16` 강제 (구 프로젝트 기본 = 가장 가까이).
+ * v3 → v4: `timeLimitSec = null` (기존 미로는 타이머 없음).
  */
 /**
  * 핵심 migrate — schema 폐기 시 null 반환.
@@ -58,8 +60,17 @@ function migrateOrNull(raw: unknown): MazeProject | null {
     // v2 → v3: playViewSpan = 16 강제.
     return migrateOrNull({
       ...d,
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: 3,
       playViewSpan: ZOOM_REFERENCE_SIZE,
+    });
+  }
+
+  if (version === 3) {
+    // v3 → v4: timeLimitSec = null (기존 미로는 타이머 없음).
+    return migrateOrNull({
+      ...d,
+      schemaVersion: SCHEMA_VERSION,
+      timeLimitSec: null,
     });
   }
 
@@ -99,6 +110,18 @@ function migrateOrNull(raw: unknown): MazeProject | null {
     Math.max(maxSpan, ZOOM_REFERENCE_SIZE),
   );
 
+  // timeLimitSec — null(타이머 없음) 또는 [TIME_LIMIT.MIN, TIME_LIMIT.MAX] 정수.
+  // 손상값(undefined·string·범위 밖 등)은 null fallback (안전 = 타이머 무).
+  const timeLimitSec: number | null =
+    d.timeLimitSec === null
+      ? null
+      : typeof d.timeLimitSec === "number" &&
+          Number.isInteger(d.timeLimitSec) &&
+          d.timeLimitSec >= TIME_LIMIT.MIN &&
+          d.timeLimitSec <= TIME_LIMIT.MAX
+        ? d.timeLimitSec
+        : null;
+
   return {
     id: typeof d.id === "string" && d.id.length > 0 ? d.id : newMazeId(),
     schemaVersion: SCHEMA_VERSION,
@@ -108,6 +131,7 @@ function migrateOrNull(raw: unknown): MazeProject | null {
     fogRadius,
     theme,
     playViewSpan,
+    timeLimitSec,
     grid,
   };
 }

@@ -1,5 +1,5 @@
 /** localStorage 스키마 버전. 의미 변경 시 +1 + storage.ts migrate() 갱신. */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 /**
  * 타일 종류 — 정수로 저장한다.
@@ -39,6 +39,14 @@ export const SIZE_PRESETS: readonly number[] = [16, 32, 64];
 
 /** Fog of War 가시 반경 — 정수·칸 단위. */
 export const FOG_RADIUS = { MIN: 1, MAX: 6, DEFAULT: 3 } as const;
+
+/**
+ * 제한 시간 (P5a 1.1.0) — 초 단위.
+ * MIN=10s (시작·도착 클릭만으론 부족하지 않은 최소), MAX=900s(15분, 큰 미로도 충분),
+ * DEFAULT=60s (toggle ON 시 32×32 정통 미로 기준).
+ * null = 타이머 없음 (`MazeProject.timeLimitSec` 의미).
+ */
+export const TIME_LIMIT = { MIN: 10, MAX: 900, DEFAULT: 60 } as const;
 
 /**
  * 플레이 시야 거리 최솟값 (P3e-2 0.12.0) — 캔버스 한 변에 최소 16칸 보임.
@@ -82,6 +90,12 @@ export type MazeProject = {
    * 사이즈 변경 시 `client-shell` `applySizeChange`가 새 범위로 clamp해 저장값 일관 유지.
    */
   playViewSpan: number;
+  /**
+   * 제한 시간 (P5a 1.1.0) — 초 단위 또는 `null` (타이머 없음).
+   * `null`이면 플레이 시 카운트다운 X. 양수면 [TIME_LIMIT.MIN, TIME_LIMIT.MAX].
+   * P5a는 데이터 모델·UI만 — 실제 플레이 카운트다운·게임오버는 P5b에서.
+   */
+  timeLimitSec: number | null;
   /** grid[height][width] 정수 격자. 설정 단계에선 빈 배열 가능. */
   grid: TileType[][];
 };

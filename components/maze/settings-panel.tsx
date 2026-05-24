@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NumberStepper } from "@/components/number-stepper";
 import { Switch } from "@/components/switch";
 import { Button } from "@/components/ui/button";
 import { useMessages } from "@/lib/i18n/provider";
-import { DIM_MAX, DIM_MIN, FOG_RADIUS, SIZE_PRESETS } from "@/lib/maze/types";
+import {
+  DIM_MAX,
+  DIM_MIN,
+  FOG_RADIUS,
+  SIZE_PRESETS,
+  TIME_LIMIT,
+} from "@/lib/maze/types";
 import { ZOOM_REFERENCE_SIZE } from "@/lib/maze/viewport";
 
 type Props = {
@@ -16,6 +22,9 @@ type Props = {
   /** 플레이 시야 거리 (P3e-2 0.12.0) — 캔버스 한 변 보이는 칸 수. [16, max(W,H)]. */
   playViewSpan: number;
   onPlayViewSpanChange: (n: number) => void;
+  /** 제한 시간 (P5a 1.1.0) — 초 또는 null(타이머 없음). */
+  timeLimitSec: number | null;
+  onTimeLimitChange: (n: number | null) => void;
   /**
    * 사이즈 변경 요청. client-shell이 그리드 빈/비어있지 않음 판정 후 즉시 적용 또는
    * 확인 다이얼로그 분기. 본 컴포넌트는 단순 콜백만.
@@ -48,6 +57,8 @@ export function SettingsPanel({
   fogRadius,
   playViewSpan,
   onPlayViewSpanChange,
+  timeLimitSec,
+  onTimeLimitChange,
   onSizeChange,
   onFogToggle,
   onFogRadiusChange,
@@ -57,6 +68,26 @@ export function SettingsPanel({
   // 스테퍼 pending 값 — 부모 width/height와 분리. 적용 전엔 grid에 영향 0.
   const [localW, setLocalW] = useState(width);
   const [localH, setLocalH] = useState(height);
+
+  // 제한 시간 toggle on/off 시 직전 값 캐시 — off→on 복원에 사용.
+  // timeLimitSec가 number면 직접 ref 동기화 (사용자 입력값 추적).
+  const lastTimeLimitRef = useRef<number>(timeLimitSec ?? TIME_LIMIT.DEFAULT);
+  useEffect(() => {
+    if (timeLimitSec !== null) lastTimeLimitRef.current = timeLimitSec;
+  }, [timeLimitSec]);
+
+  const handleTimeLimitToggle = (on: boolean) => {
+    if (on) {
+      onTimeLimitChange(lastTimeLimitRef.current);
+    } else {
+      onTimeLimitChange(null);
+    }
+  };
+
+  const handleTimeLimitValueChange = (n: number) => {
+    const clamped = Math.min(TIME_LIMIT.MAX, Math.max(TIME_LIMIT.MIN, n));
+    onTimeLimitChange(clamped);
+  };
 
   // 부모 값이 외부에서 바뀌면(프리셋 클릭, undo 등) 스테퍼 동기화.
   useEffect(() => setLocalW(width), [width]);
@@ -253,6 +284,59 @@ export function SettingsPanel({
             </div>
           </div>
         )}
+      </div>
+
+      {/* 시간 제한 (P5a 1.1.0) — 별도 카드. toggle off면 stepper 미렌더.
+          toggle on/off 시 lastTimeLimitRef로 직전 값 캐시·복원. */}
+      <div className="space-y-3 rounded-lg border border-border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <label
+              htmlFor="maze-time-limit"
+              className="text-sm font-medium text-foreground"
+            >
+              {t.timeLimitLabel}
+            </label>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {t.timeLimitDescription}
+            </p>
+          </div>
+          <Switch
+            id="maze-time-limit"
+            checked={timeLimitSec !== null}
+            onCheckedChange={handleTimeLimitToggle}
+            aria-label={t.timeLimitLabel}
+          />
+          {timeLimitSec !== null && (
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="maze-time-limit-value"
+                className="text-sm text-foreground"
+              >
+                {t.timeLimitValueLabel}
+              </label>
+              <div className="w-28">
+                <NumberStepper
+                  id="maze-time-limit-value"
+                  value={String(timeLimitSec)}
+                  smallStep={10}
+                  bigStep={60}
+                  min={TIME_LIMIT.MIN}
+                  max={TIME_LIMIT.MAX}
+                  inputMode="numeric"
+                  aria-label={t.timeLimitValueLabel}
+                  maxReachedMessage={t.timeLimitMaxReached}
+                  minReachedMessage={t.timeLimitMinReached}
+                  onStep={(n) => handleTimeLimitValueChange(n)}
+                  onInputChange={(txt) => {
+                    const n = parseInt(txt, 10);
+                    if (Number.isFinite(n)) handleTimeLimitValueChange(n);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

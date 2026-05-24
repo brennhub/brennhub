@@ -2,7 +2,7 @@
 
 Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
-단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX · **P3c-2** 길 그리기 + 벽 생성 · **P3d** 만들기 단계 통합 · **P3e-1** 편집 줌/팬 + 변환 인프라 · **P3f-A** 직사각 내부 일반화 · **P3f-B** 비정사각 UI · **P3e-2** 플레이 카메라 · **사운드** · **P4a** 숏링크 공유 · **P4b** 보정 + 라이브.
+단계: **P1** 스캐폴딩 · **P2** 그리드 에디터 · **P3a** 완결성 검증 · **P3a-2** 미로 점수 · **P3b** 플레이·Fog 렌더 · **P3c-1** 에디터 UX · **P3c-2** 길 그리기 + 벽 생성 · **P3d** 만들기 단계 통합 · **P3e-1** 편집 줌/팬 + 변환 인프라 · **P3f-A** 직사각 내부 일반화 · **P3f-B** 비정사각 UI · **P3e-2** 플레이 카메라 · **사운드** · **P4a** 숏링크 공유 · **P4b** 보정 + 라이브 · **P5a** 제한 시간 데이터 모델·UI · **P5b** 플레이 카운트다운·게임오버.
 
 ## P1 — 스캐폴딩 (인프라/골격) — 완료 (CHANGELOG `[0.1.0]`)
 
@@ -241,8 +241,32 @@ dev 시각 검증에서 발견. 기획서 V1 매핑(시작점 = `User` 아이콘
 - [x] `client-shell.tsx` archetype 보정용 console.log useEffect 제거 (P3a-2 BACKLOG 항목)
 - [x] `tools-registry.ts` maze status `coming-soon` → `live`
 - [x] CHANGELOG `[1.0.0]` — 라이브 milestone
-- [ ] feat/maze → dev 머지+push (마지막 dev 점검 — 사용자 수동)
-- [ ] **feat/maze → main 머지+push** (Cloudflare 자동 prod 배포 — 라이브, 사용자 수동)
+- [x] feat/maze → dev 머지+push (마지막 dev 점검 완료)
+- [x] **feat/maze → main 머지+push** (1.0.0 정식 런칭, prod 배포)
+
+## P5a — 제한 시간 데이터 모델 + 만들기 UI — 완료 (CHANGELOG `[1.1.0]`)
+
+- [x] `MazeProject.timeLimitSec: number | null` 추가 (null=타이머 없음)
+- [x] `SCHEMA_VERSION 3 → 4` + storage.ts migrateOrNull v3→v4 분기 (`timeLimitSec=null` 강제)
+- [x] v4 검증에 timeLimitSec 가드 (null 또는 [MIN,MAX] 정수, 손상값 null fallback)
+- [x] **share.ts 무수정 확인** — parseSharedPayload·isValidPayload가 migrateSharedPayload 경유, 자동 호환
+- [x] `TIME_LIMIT = { MIN: 10, MAX: 900, DEFAULT: 60 }` 상수
+- [x] grid.ts newProject default `timeLimitSec: null`
+- [x] settings-panel 시간 제한 카드 (Switch + NumberStepper, toggle on/off 값 캐시)
+- [x] client-shell `handleTimeLimitChange` 콜백
+- [x] i18n 5키 ko/en (정보량 통일)
+- [ ] dev 검증 — v3→v4 자동 migrate / 옛 공유 미로 ?id= 진입 / 만들기 UI toggle/stepper / 플레이 무영향 / 점수·검증 무변경
+
+## P5b — 플레이 카운트다운 + 게임오버 + 결과 화면 + 사운드 (별도 task)
+
+P5b 완료 후 P5a + P5b 함께 main 머지 (미완성 prod 노출 차단).
+
+- [ ] 플레이 모드 카운트다운 UI (HUD)
+- [ ] 시간 초과 시 게임오버 처리
+- [ ] 결과 화면: 도착 시 걸린 시간 + 남은 제한 시간 표시
+- [ ] 게임오버 사운드 ("안타까움" 톤, sound.ts 합성 확장)
+- [ ] 다시 플레이 시 타이머 리셋
+- [ ] `timeLimitSec=null` 미로는 카운트다운·게임오버 없음 (기존 흐름 유지)
 
 ## V2 후보 (효능감 검증 후 별도 task)
 

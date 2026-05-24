@@ -85,6 +85,8 @@ export function newProject(): MazeProject {
     theme: "default",
     // 플레이 시야 거리 기본 = 16 (가장 가까이). 32/64 그리드는 카메라 추적, 16은 자동 fit.
     playViewSpan: ZOOM_REFERENCE_SIZE,
+    // 제한 시간 기본 = null (타이머 없음, P5a 1.1.0). 사용자가 만들기에서 toggle ON 시 적용.
+    timeLimitSec: null,
     grid: [],
   };
 }

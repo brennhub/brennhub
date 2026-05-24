@@ -2,6 +2,46 @@
 
 주요 결정 / 이정표.
 
+## [1.1.0] — 2026-05-24
+
+### Added (P5a — 제한 시간 데이터 모델 + 만들기 UI)
+
+플레이 카운트다운·게임오버·결과 화면·사운드는 **P5b 별도 task**. P5a는 필드 + 마이그레이션 + 만들기 설정까지. **dev only 배포** — main 머지는 P5b 완료 후.
+
+- **`MazeProject.timeLimitSec: number | null`** 추가. null = 타이머 없음. 양수면 `[TIME_LIMIT.MIN, TIME_LIMIT.MAX]` 초.
+- **`SCHEMA_VERSION 3 → 4`** + **v3→v4 마이그레이션**. 기존 미로는 `timeLimitSec=null` (타이머 없음) 자동 부여 — 옛 localStorage 드래프트·D1 공유 payload 모두 깨지지 않음.
+- **`TIME_LIMIT = { MIN: 10, MAX: 900, DEFAULT: 60 }` 상수** (`lib/maze/types.ts`):
+  - MIN 10s: 시작·도착 클릭만으론 부족하지 않은 최소
+  - MAX 900s (15분): 큰 미로(128×128)도 충분
+  - DEFAULT 60s: toggle ON 시 32×32 정통 미로 기준
+- **storage.ts migrate 재구조**:
+  - `migrateOrNull` v3→v4 분기 추가 (`timeLimitSec: null` 강제)
+  - v4 검증에 `timeLimitSec` 가드 (null 또는 정수 [MIN, MAX], 손상값 null fallback)
+  - **share.ts 무수정** — `parseSharedPayload`·`isValidPayload`가 둘 다 `migrateSharedPayload` 경유, 그 함수가 `migrateOrNull` 공유 → 자동 호환 (잔손질 1 검증 완료).
+- **만들기 UI — 시간 제한 카드 (`settings-panel.tsx`)**:
+  - 위치: Fog of War 카드 아래 별도 카드. 의미 분리(fog=시각, 시간=시간 제약) 명확
+  - Switch + NumberStepper (smallStep=10, bigStep=60)
+  - toggle off → stepper 미렌더 / toggle on → DEFAULT 또는 직전 값
+  - **toggle on/off 시 값 캐시** (`lastTimeLimitRef`): off→on 시 사용자가 직전에 설정한 값 복원
+- **`client-shell.handleTimeLimitChange(n: number | null)`** — 즉시 setProject (grid 영향 0).
+- **`grid.ts newProject` default = `timeLimitSec: null`**.
+- **i18n 5키 ko/en** — timeLimitLabel·timeLimitDescription·timeLimitValueLabel·timeLimitMaxReached·timeLimitMinReached. ko/en 정보량 통일(둘 다 "시간 초과 시 게임 오버" 취지 포함, 잔손질 2).
+
+### Decided
+
+- **Q1: `timeLimitSec: number | null`** — boolean+number 두 필드 동기화 부담·0 sentinel 의미 충돌 회피. 단일 필드 명확.
+- **Q2: 초 단위, 10~900s, DEFAULT 60s** — 작은 미로 의미 보장 + 큰 미로 풀 시간 충분.
+- **Q3: settings-panel 안 별도 카드** — fog와 의미 분리. toggle on/off 시 값 캐시.
+- **Q4: v3→v4 마이그레이션 자동, share.ts 무수정** — migrateOrNull 단일 경로 검증 완료.
+- **Q5: dev only 배포** — P5b 완료 후 main 머지로 완성 기능 prod 진입. 사용자가 미완성 상태 경험 차단.
+- **registry·share·page·api 무변경** — 데이터 모델 + 만들기 UI만.
+
+### Notes
+
+- play.ts·play-mode·play-canvas·win-dialog·sound — 무변경. **플레이에서 timeLimitSec 무시** (P5b 영역).
+- 점수 산식·SCORE_TUNING·commit·validate·pathMarks·viewport·카메라 — 무변경.
+- 기존 v3 미로(localStorage + D1 공유)는 v4 migrate 후 `timeLimitSec: null`로 정상 작동.
+
 ## [1.0.0] — 2026-05-24
 
 ### Released (P4b — 정식 런칭)
