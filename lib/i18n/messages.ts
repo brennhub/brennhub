@@ -478,6 +478,11 @@ export type Messages = {
     playViewSpanLabel: string;
     playViewSpanMax: string;
     playViewSpanMin: string;
+    timeLimitLabel: string;
+    timeLimitDescription: string;
+    timeLimitValueLabel: string;
+    timeLimitMaxReached: string;
+    timeLimitMinReached: string;
     sizeChangeTitle: string;
     sizeChangeMessage: string;
     sizeChangeConfirm: string;
@@ -1087,6 +1092,12 @@ export const messages: Record<Locale, Messages> = {
       playViewSpanLabel: "플레이 시야 거리 (칸)",
       playViewSpanMax: "최대 시야 거리입니다 (전체 보임)",
       playViewSpanMin: "최소 시야 거리입니다 (가장 가까이)",
+      timeLimitLabel: "시간 제한",
+      timeLimitDescription:
+        "플레이 시 제한 시간이 흐르고, 시간 초과 시 게임 오버.",
+      timeLimitValueLabel: "시간 (초)",
+      timeLimitMaxReached: "최대 900초입니다",
+      timeLimitMinReached: "최소 10초입니다",
       sizeChangeTitle: "사이즈 변경",
       sizeChangeMessage:
         "사이즈를 바꾸면 그리드의 모든 셀이 새 크기로 다시 생성됩니다. 지금까지 그린 내용은 사라집니다.",
@@ -1741,6 +1752,12 @@ export const messages: Record<Locale, Messages> = {
       playViewSpanLabel: "Play view span (tiles)",
       playViewSpanMax: "Maximum span (entire grid visible)",
       playViewSpanMin: "Minimum span (closest)",
+      timeLimitLabel: "Time limit",
+      timeLimitDescription:
+        "Limit play time. Game over if exceeded.",
+      timeLimitValueLabel: "Time (sec)",
+      timeLimitMaxReached: "Maximum is 900 seconds",
+      timeLimitMinReached: "Minimum is 10 seconds",
       sizeChangeTitle: "Change size",
       sizeChangeMessage:
         "Changing size regenerates the grid at the new dimensions. Anything drawn will be lost.",

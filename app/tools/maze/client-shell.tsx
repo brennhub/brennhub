@@ -200,6 +200,13 @@ export function MazeClientShell({ sharedProject }: Props = {}) {
     }));
   }, []);
 
+  // 제한 시간 (P5a 1.1.0) — grid 영향 0이라 즉시 적용. null=타이머 없음.
+  // settings-panel이 이미 NumberStepper에서 [MIN, MAX] clamp하지만 방어 X
+  // (이 콜백은 toggle on/off 또는 stepper 값 변경 두 경로만, 둘 다 검증된 값).
+  const handleTimeLimitChange = useCallback((n: number | null) => {
+    setProject((p) => ({ ...p, timeLimitSec: n }));
+  }, []);
+
   // StepNav 클릭 — 만들기 ↔ 플레이. 같은 step이면 no-op.
   const handleStepNav = useCallback((next: Step) => {
     setStep(next);
@@ -491,6 +498,8 @@ export function MazeClientShell({ sharedProject }: Props = {}) {
               fogRadius={project.fogRadius}
               playViewSpan={project.playViewSpan}
               onPlayViewSpanChange={handlePlayViewSpanChange}
+              timeLimitSec={project.timeLimitSec}
+              onTimeLimitChange={handleTimeLimitChange}
               onSizeChange={handleDimsChange}
               onFogToggle={handleFogToggle}
               onFogRadiusChange={handleFogRadiusChange}
