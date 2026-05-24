@@ -2,39 +2,6 @@
 
 주요 결정 / 이정표.
 
-## [1.0.1] — 2026-05-24
-
-### Fixed (hotfix — NumberStepper 두 자리 수 입력 버그)
-
-prod 1.0.0부터 있던 버그. 만들기 화면 숫자 입력(가로·세로·안개 반경·시야 거리·시간 제한) 칸이 keystroke마다 부모가 `parseInt + clamp` → string prop 강제 동기화 → 두 자리 수 입력 불가. 예: "15"를 치면 "1"이 MIN으로 즉시 튕김.
-
-- **`components/number-stepper.tsx` (공유 컴포넌트)**:
-  - `localText` state 추가 — input 표시 버퍼. focused 동안엔 외부 `value` prop 변경에도 사용자 입력 보존.
-  - `useEffect([value, focused, syncWhileFocused])` — focused가 아닐 때만 동기화 (default). focused 중엔 사용자 raw 입력 살림.
-  - `onChange`: `setLocalText` + `onInputChange` 둘 다 호출 (keystroke 호출은 그대로 — 다른 도구의 live 갱신 동작 유지).
-  - `onBlur`: `setFocused(false)` + `setLocalText(value)` 강제 동기화 → blur 시 parent의 clamp 결과로 input 정리.
-  - `onKeyDown Enter`: preventDefault + `currentTarget.blur()` → 즉시 commit + 표시 정리.
-  - `displayValue = focused ? localText : (displayFormatter ? formatter(value) : value)` — focused 중엔 raw, blur 후엔 formatted (기존 displayFormatter 동작 보존).
-- **`syncWhileFocused?: boolean` prop 추가** (default `false`). `true`면 focused 중에도 외부 value 동기화 → invalid 입력 즉시 튕김(기존 동작). 부모가 사용자 입력을 변환된 결과 state에 묶는 경우 사용.
-- **소비처 영향**:
-  - **maze** (W·H·fogRadius·playViewSpan·timeLimit, 5곳): default(`false`) — 두 자리 수 입력 자유. blur 시 clamp 결과로 정리.
-  - **stock-sim** (dca-down·split-sell, 11곳) / **lineup-builder** (1곳): value prop이 raw setState 결과라 동기화 deltas 0 → 회귀 0.
-  - **supp-plan** (time-stepper hour·minute, schedule-form capsules, 3곳): `syncWhileFocused={true}` 명시 — invalid 입력 즉시 튕김 기존 동작 보존.
-
-### Decided
-
-- `onInputChange` 호출은 **keystroke 유지** (blur/Enter로 옮기면 stock-sim·supp-plan·lineup-builder live 갱신 회귀).
-- clamp/parse 로직은 **NumberStepper 안에 두지 않음** — 각 도구 부모 책임 (기존 contract 유지).
-- `syncWhileFocused` default `false` — 새 동작(maze 버그 해소). opt-in으로 기존 동작 보존(supp-plan).
-- 빈 칸 NaN 처리·empty fallback은 hotfix 범위 밖 — 부모가 처리.
-
-### Notes — 회귀 0
-
-- 점수·SCORE_TUNING·validate·play.ts·viewport·사운드·share·API·D1 — 무변경.
-- stock-sim·lineup-builder live 갱신 — 동작 동일 (value prop = onInputChange 결과 raw, 동기화 deltas 0).
-- supp-plan time-stepper invalid 입력 즉시 튕김 — opt-in으로 보존.
-- maze 1.0.0 prod 사용자 두 자리 수 입력 가능 — 즉시 해소.
-
 ## [1.0.0] — 2026-05-24
 
 ### Released (P4b — 정식 런칭)

@@ -24,6 +24,9 @@
 ## 2026-05-19
 - **컨벤션 명문화 (OpenNext runtime)** — API route 파일에 `export const runtime = "edge"` 금지. BRENNHUB.md § 7 + PATTERNS.md § D1/Cloudflare 명시. 근거: saju-naming Task 39 진단 시리즈 (0.5.0~0.6.2, 5+1 시도 후 매듭, `f7fb99c`).
 
+## 2026-05-24
+- **NumberStepper 공유 컴포넌트 수정** — focused 중 외부 `value` prop 동기화 skip (default). 부모가 keystroke마다 `parseInt + clamp` → string prop 강제 동기화 → 두 자리 수 입력 불가하던 buggy 패턴(maze 만들기 W·H·fogRadius·playViewSpan·timeLimit) 해소. `localText` 표시 버퍼 + blur/Enter 시 `value`로 강제 정리. `onInputChange` 호출은 keystroke 그대로(stock-sim·lineup-builder live 갱신 보존). `syncWhileFocused?: boolean` opt-in 추가 — supp-plan 3곳(time-stepper hour·minute, schedule-form capsules)이 사용자 입력을 변환된 결과 state에 묶어 invalid 입력 즉시 튕김이 의도 동작인 케이스라 명시 적용. 도구별 영향 = maze 두 자리 수 입력 가능 · supp-plan 즉시 튕김 보존 · stock-sim·lineup-builder 회귀 0.
+
 ## 2026-05-20
 - **개발 체계 명문화** — feat 브랜치 정책 도입 (feat 분기는 항상 main에서 → `dev` 통합 staging / `main` prod 직결), Cloudflare Git Integration 자동 배포 메커니즘 명문화 (`main` → brennhub.com / `dev` → dev.brennhub.com), 수동 deploy 명령 (`npm run deploy` / `wrangler deploy`) 금지. 계기: 2026-05-20 lineup-builder prod 배포 사고 (dev → main 직접 머지로 미완성 혼입 + Cloudflare 자동 배포). BRENNHUB.md § 5/6/7 + AGENTS.md 반영.
 - **(보강) feat 브랜치 long-lived 전환** — feat 패턴 short-lived(`feat/<tool>-<task>`, task별 분기·삭제) → long-lived(`feat/<tool>`, 도구당 1개 유지)로 정정. 솔로 빌더 관리 부담 ↓. BRENNHUB.md § 6/7 + AGENTS.md 반영.
