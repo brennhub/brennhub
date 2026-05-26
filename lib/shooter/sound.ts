@@ -43,10 +43,28 @@ function saveMuted(muted: boolean): void {
   }
 }
 
+/**
+ * 짧은 impulse response — exponential decay noise. ConvolverNode 입력용.
+ * 게임 폭발/타격 잔향용 (room reverb처럼 짧고 dense).
+ */
+function createImpulseBuffer(c: AudioContext, durationSec: number, decay = 2.5): AudioBuffer {
+  const len = Math.max(1, Math.floor(c.sampleRate * durationSec));
+  const buf = c.createBuffer(2, len, c.sampleRate);
+  for (let ch = 0; ch < 2; ch += 1) {
+    const data = buf.getChannelData(ch);
+    for (let i = 0; i < len; i += 1) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+  }
+  return buf;
+}
+
 export function createSoundController(): SoundController {
   let ctx: AudioContext | null = null;
   let muted = loadMuted();
   let masterGain: GainNode | null = null;
+  let convolver: ConvolverNode | null = null;
+  let reverbReturn: GainNode | null = null;
 
   const ensureCtx = (): AudioContext | null => {
     if (typeof window === "undefined") return null;
@@ -58,8 +76,17 @@ export function createSoundController(): SoundController {
       if (!AC) return null;
       ctx = new AC();
       masterGain = ctx.createGain();
-      masterGain.gain.value = muted ? 0 : 0.35;
+      masterGain.gain.value = muted ? 0 : 0.5;
       masterGain.connect(ctx.destination);
+
+      // Reverb bus — 짧은 impulse (300ms)로 게임 공간감.
+      // 각 sfx가 dry → masterGain + wet → convolver → reverbReturn → masterGain.
+      convolver = ctx.createConvolver();
+      convolver.buffer = createImpulseBuffer(ctx, 0.3, 2.5);
+      reverbReturn = ctx.createGain();
+      reverbReturn.gain.value = 0.35; // wet level
+      convolver.connect(reverbReturn);
+      reverbReturn.connect(masterGain);
     }
     return ctx;
   };
@@ -85,51 +112,71 @@ export function createSoundController(): SoundController {
   };
 
   /**
-   * 발사음 — 3-layer (click + body + tail). ~120ms.
-   * - L1: highpass noise click (5ms) — laser energy attack
-   * - L2: square body 180→50Hz (130ms) — 묵직한 발사 base
-   * - L3: sine tail 720→200Hz (110ms) — 슈팅 캐릭터
+   * 발사음 — 4-layer + reverb send.
+   * - L1 sub thump: sine 90→40Hz (kick drum-ish 무게)
+   * - L2 click: highpass(2.5kHz) noise (sharp attack)
+   * - L3 body: square detuned 2 layers (-10/+10 cents) — 풍부함
+   * - L4 tail: sine 680→180Hz (슈팅 캐릭터 유지)
    */
   const playShoot = (): void => {
     if (muted) return;
     const c = ensureCtx();
     if (!c || !masterGain) return;
     const mg = masterGain;
+    const cv = convolver;
     const t = now();
 
-    // L1: click
-    const noise = makeNoise(c, 0.018);
-    const noiseFilter = c.createBiquadFilter();
-    noiseFilter.type = "highpass";
-    noiseFilter.frequency.value = 2200;
-    const noiseGain = c.createGain();
-    noiseGain.gain.setValueAtTime(0.45, t);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
-    noise.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(mg);
-    noise.start(t);
+    // L1 sub thump — kick feel
+    const thump = c.createOscillator();
+    const thumpGain = c.createGain();
+    thump.type = "sine";
+    thump.frequency.setValueAtTime(90, t);
+    thump.frequency.exponentialRampToValueAtTime(40, t + 0.08);
+    thumpGain.gain.setValueAtTime(0.001, t);
+    thumpGain.gain.exponentialRampToValueAtTime(0.6, t + 0.004);
+    thumpGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    thump.connect(thumpGain);
+    thumpGain.connect(mg);
+    if (cv) thumpGain.connect(cv);
+    thump.start(t);
+    thump.stop(t + 0.11);
 
-    // L2: body
-    const body = c.createOscillator();
-    const bodyGain = c.createGain();
-    body.type = "square";
-    body.frequency.setValueAtTime(180, t);
-    body.frequency.exponentialRampToValueAtTime(50, t + 0.11);
-    bodyGain.gain.setValueAtTime(0.001, t);
-    bodyGain.gain.exponentialRampToValueAtTime(0.32, t + 0.008);
-    bodyGain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
-    body.connect(bodyGain);
-    bodyGain.connect(mg);
-    body.start(t);
-    body.stop(t + 0.14);
+    // L2 click — sharp attack
+    const click = makeNoise(c, 0.012);
+    const clickFilter = c.createBiquadFilter();
+    clickFilter.type = "highpass";
+    clickFilter.frequency.value = 2500;
+    const clickGain = c.createGain();
+    clickGain.gain.setValueAtTime(0.4, t);
+    clickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.015);
+    click.connect(clickFilter);
+    clickFilter.connect(clickGain);
+    clickGain.connect(mg);
+    click.start(t);
 
-    // L3: tail
+    // L3 body — detuned square 2 layers
+    for (const detune of [-10, 10]) {
+      const body = c.createOscillator();
+      const bodyGain = c.createGain();
+      body.type = "square";
+      body.frequency.setValueAtTime(220, t);
+      body.frequency.exponentialRampToValueAtTime(70, t + 0.1);
+      body.detune.value = detune;
+      bodyGain.gain.setValueAtTime(0.001, t);
+      bodyGain.gain.exponentialRampToValueAtTime(0.2, t + 0.006);
+      bodyGain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      body.connect(bodyGain);
+      bodyGain.connect(mg);
+      body.start(t);
+      body.stop(t + 0.13);
+    }
+
+    // L4 tail
     const tail = c.createOscillator();
     const tailGain = c.createGain();
     tail.type = "sine";
-    tail.frequency.setValueAtTime(720, t);
-    tail.frequency.exponentialRampToValueAtTime(200, t + 0.1);
+    tail.frequency.setValueAtTime(680, t);
+    tail.frequency.exponentialRampToValueAtTime(180, t + 0.1);
     tailGain.gain.setValueAtTime(0.001, t);
     tailGain.gain.exponentialRampToValueAtTime(0.22, t + 0.005);
     tailGain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
@@ -140,60 +187,81 @@ export function createSoundController(): SoundController {
   };
 
   /**
-   * 적 격추음 — 3-layer punch (sub + filtered noise + mid). ~200ms.
-   * - L1: sub-bass sine 80→35Hz (200ms) — 진동·무게
-   * - L2: lowpass noise (180ms, cut 900Hz) — 폭발 잔향
-   * - L3: square mid 220→70Hz (140ms) — punch attack
+   * 적 격추음 — 4-layer explosion + strong reverb send.
+   * - L1 sub kick: sine 120→28Hz (250ms) — 폭발 무게
+   * - L2 explosion noise: lowpass(1200→200Hz) (300ms) — 두꺼운 폭발 본체
+   * - L3 crack: highpass(3.5kHz) noise burst (12ms) — sharp impact
+   * - L4 mid punch: square detuned 3 layers (-15/0/+15 cents) — body
    */
   const playHit = (): void => {
     if (muted) return;
     const c = ensureCtx();
     if (!c || !masterGain) return;
     const mg = masterGain;
+    const cv = convolver;
     const t = now();
 
-    // L1: sub-bass
+    // L1 sub kick
     const sub = c.createOscillator();
     const subGain = c.createGain();
     sub.type = "sine";
-    sub.frequency.setValueAtTime(80, t);
-    sub.frequency.exponentialRampToValueAtTime(35, t + 0.18);
+    sub.frequency.setValueAtTime(120, t);
+    sub.frequency.exponentialRampToValueAtTime(28, t + 0.25);
     subGain.gain.setValueAtTime(0.001, t);
-    subGain.gain.exponentialRampToValueAtTime(0.5, t + 0.006);
-    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    subGain.gain.exponentialRampToValueAtTime(0.75, t + 0.005);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
     sub.connect(subGain);
     subGain.connect(mg);
+    if (cv) subGain.connect(cv);
     sub.start(t);
-    sub.stop(t + 0.21);
+    sub.stop(t + 0.31);
 
-    // L2: filtered noise (lowpass로 두꺼운 폭발)
-    const noise = makeNoise(c, 0.18);
-    const noiseFilter = c.createBiquadFilter();
-    noiseFilter.type = "lowpass";
-    noiseFilter.frequency.setValueAtTime(900, t);
-    noiseFilter.frequency.exponentialRampToValueAtTime(300, t + 0.15);
-    noiseFilter.Q.value = 1.2;
-    const noiseGain = c.createGain();
-    noiseGain.gain.setValueAtTime(0.55, t);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-    noise.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(mg);
+    // L2 explosion noise
+    const noise = makeNoise(c, 0.32);
+    const nFilter = c.createBiquadFilter();
+    nFilter.type = "lowpass";
+    nFilter.frequency.setValueAtTime(1200, t);
+    nFilter.frequency.exponentialRampToValueAtTime(200, t + 0.28);
+    nFilter.Q.value = 1.5;
+    const nGain = c.createGain();
+    nGain.gain.setValueAtTime(0.65, t);
+    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    noise.connect(nFilter);
+    nFilter.connect(nGain);
+    nGain.connect(mg);
+    if (cv) nGain.connect(cv);
     noise.start(t);
 
-    // L3: mid punch
-    const mid = c.createOscillator();
-    const midGain = c.createGain();
-    mid.type = "square";
-    mid.frequency.setValueAtTime(220, t);
-    mid.frequency.exponentialRampToValueAtTime(70, t + 0.12);
-    midGain.gain.setValueAtTime(0.001, t);
-    midGain.gain.exponentialRampToValueAtTime(0.32, t + 0.008);
-    midGain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
-    mid.connect(midGain);
-    midGain.connect(mg);
-    mid.start(t);
-    mid.stop(t + 0.15);
+    // L3 crack — high-freq sharp click
+    const crack = makeNoise(c, 0.012);
+    const crackFilter = c.createBiquadFilter();
+    crackFilter.type = "highpass";
+    crackFilter.frequency.value = 3500;
+    const crackGain = c.createGain();
+    crackGain.gain.setValueAtTime(0.45, t);
+    crackGain.gain.exponentialRampToValueAtTime(0.001, t + 0.015);
+    crack.connect(crackFilter);
+    crackFilter.connect(crackGain);
+    crackGain.connect(mg);
+    crack.start(t);
+
+    // L4 mid punch — detuned square 3 layers
+    for (const detune of [-15, 0, 15]) {
+      const mid = c.createOscillator();
+      const midGain = c.createGain();
+      mid.type = "square";
+      mid.frequency.setValueAtTime(180, t);
+      mid.frequency.exponentialRampToValueAtTime(60, t + 0.15);
+      mid.detune.value = detune;
+      midGain.gain.setValueAtTime(0.001, t);
+      midGain.gain.exponentialRampToValueAtTime(0.2, t + 0.008);
+      midGain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      mid.connect(midGain);
+      midGain.connect(mg);
+      if (cv) midGain.connect(cv);
+      mid.start(t);
+      mid.stop(t + 0.19);
+    }
   };
 
   /** 픽업음 — 짧은 ascending arpeggio (C-E-G). */
@@ -257,7 +325,7 @@ export function createSoundController(): SoundController {
     setMuted(next: boolean) {
       muted = next;
       saveMuted(next);
-      if (masterGain) masterGain.gain.value = muted ? 0 : 0.35;
+      if (masterGain) masterGain.gain.value = muted ? 0 : 0.5;
     },
     isMuted() {
       return muted;
