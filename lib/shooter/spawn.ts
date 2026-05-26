@@ -5,6 +5,7 @@
  * sequenceIndex++ → WAVE_SEQUENCE wrap (loopCount++) + startMs 리셋.
  */
 
+import { DIFFICULTY_MODS } from "./data/difficulty";
 import { ENEMIES } from "./data/enemies";
 import { WAVE_SEQUENCE, WAVES } from "./data/waves";
 import type { EnemyEntity, GameState } from "./types";
@@ -13,12 +14,14 @@ export function tickSpawn(state: GameState): void {
   const wave = WAVES[state.wave.defId];
   if (!wave) return;
 
+  const mod = DIFFICULTY_MODS[state.difficulty];
   const localMs = state.elapsedMs - state.wave.startMs;
 
-  // delay 도달한 enemy push.
+  // delay 도달한 enemy push (difficulty delayMult 적용).
   while (state.wave.spawnedCount < wave.enemies.length) {
     const slot = wave.enemies[state.wave.spawnedCount];
-    if (slot.delayMs > localMs) break;
+    const effectiveDelay = slot.delayMs * mod.delayMult;
+    if (effectiveDelay > localMs) break;
     const def = ENEMIES[slot.defId];
     if (def) {
       const entity: EnemyEntity = {
@@ -29,7 +32,8 @@ export function tickSpawn(state: GameState): void {
         visual: def.visual,
         alive: true,
         defId: def.id,
-        hp: def.hp,
+        // hpMult 적용 — 1주 미만이 되지 않게 max 1 보장.
+        hp: Math.max(1, Math.round(def.hp * mod.hpMult)),
         lastFireMs: 0,
         spawnedAtMs: state.elapsedMs,
         baseX: slot.spawnAt.x,

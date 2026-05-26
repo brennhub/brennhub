@@ -6,9 +6,9 @@ import { useMessages } from "@/lib/i18n/provider";
 import { GameCanvas } from "@/components/shooter/game-canvas";
 import { Hud } from "@/components/shooter/hud";
 import {
-  INITIAL_LIVES,
   LOGICAL_H,
   LOGICAL_W,
+  type Difficulty,
   type GameState,
   type HudSnapshot,
   type Intent,
@@ -17,6 +17,7 @@ import {
   makeInitialState,
   startGameLoop,
   type GameLoopHandle,
+  type SoundEvents,
 } from "@/lib/shooter/loop";
 import { CompositeInput } from "@/lib/shooter/input/composite";
 import { KeyboardInput } from "@/lib/shooter/input/keyboard";
@@ -24,6 +25,13 @@ import { TouchInput } from "@/lib/shooter/input/touch";
 import { emptyIntent, type InputController } from "@/lib/shooter/input/types";
 import { buildVisualAssets, type VisualAssets } from "@/lib/shooter/visual/raster";
 import { scoreStorage } from "@/lib/shooter/storage/localStorage";
+import { createSoundController, type SoundController } from "@/lib/shooter/sound";
+import {
+  DEFAULT_DIFFICULTY,
+  DIFFICULTIES,
+  DIFFICULTY_MODS,
+  DIFFICULTY_STORAGE_KEY,
+} from "@/lib/shooter/data/difficulty";
 
 /**
  * 아케이드 슈터 client orchestrator.
@@ -39,7 +47,8 @@ import { scoreStorage } from "@/lib/shooter/storage/localStorage";
  *   3. input controller start (keyboard + touch composite)
  *   4. startGameLoop — gameStateRef 소비 + onHudChange 콜백으로 HUD 갱신
  *
- * 게임오버 시 onGameOver에서 scoreStorage.saveScore. 재시작은 loop.restart() — ref 교체.
+ * 사운드는 user gesture 후 AudioContext.resume — handleStart에서 호출.
+ * 난이도는 localStorage 영속 (마지막 선택 기억).
  */
 export function ShooterClientShell() {
   const messages = useMessages();
@@ -47,33 +56,27 @@ export function ShooterClientShell() {
   const tCommon = messages.toolCommon;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const gameStateRef = useRef<GameState>(makeInitialState());
+  const gameStateRef = useRef<GameState>(makeInitialState(DEFAULT_DIFFICULTY));
   const highScoreRef = useRef<number>(0);
   const inputRef = useRef<InputController | null>(null);
   const loopRef = useRef<GameLoopHandle | null>(null);
   const assetsRef = useRef<VisualAssets | null>(null);
+  const soundRef = useRef<SoundController | null>(null);
 
   const [hud, setHud] = useState<HudSnapshot>(() => ({
     score: 0,
-    lives: INITIAL_LIVES,
+    lives: DIFFICULTY_MODS[DEFAULT_DIFFICULTY].initialLives,
     status: "playing",
     highScore: 0,
     isNewHighScore: false,
   }));
   const [ready, setReady] = useState(false);
   const [startedOnce, setStartedOnce] = useState(false);
-  // startedOnce를 closure에서 매 frame 읽기 위한 mirror. set 함수가 inline으로 갱신.
+  const [difficulty, setDifficulty] = useState<Difficulty>(DEFAULT_DIFFICULTY);
+  const [muted, setMuted] = useState(false);
   const startedOnceRef = useRef(false);
 
-  /**
-   * 캔버스 DPR-aware resize. 논리 좌표 360×640 유지.
-   *
-   * 핵심: backing scale을 LOGICAL_W의 **정수배**로 강제 (`Math.ceil` 후 max(1)).
-   * 분수 scale(예: 480/360=1.333)이면 픽셀 grid가 sub-px 정렬돼 nearest로도
-   * 깨져 보임. 정수 scale로 backing pixel과 sprite cell이 정확히 일치하게.
-   * backing이 cssW*dpr보다 살짝 큰 경우 브라우저가 CSS로 다운스케일하지만,
-   * `image-rendering: pixelated` CSS로 nearest 강제라 grid 보존.
-   */
+  /** DPR-aware canvas resize — 정수 scale 강제 + image-rendering: pixelated. */
   const fitCanvas = useCallback((canvas: HTMLCanvasElement) => {
     const dpr = window.devicePixelRatio || 1;
     const cssW = canvas.clientWidth || LOGICAL_W;
@@ -85,10 +88,12 @@ export function ShooterClientShell() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    // cssH는 aspect-ratio로 결정 — fitCanvas는 ref만 검증.
+    void cssH;
     return ctx;
   }, []);
 
-  // 부팅 — assets 빌드 + 최고점 로드.
+  // 부팅 — assets 빌드 + 최고점 로드 + 사운드 컨트롤러 생성 + 난이도 hydrate.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -99,7 +104,30 @@ export function ShooterClientShell() {
       if (cancelled) return;
       assetsRef.current = assets;
       highScoreRef.current = hs;
-      setHud((prev) => ({ ...prev, highScore: hs }));
+
+      const snd = createSoundController();
+      soundRef.current = snd;
+      setMuted(snd.isMuted());
+
+      let initialDifficulty: Difficulty = DEFAULT_DIFFICULTY;
+      try {
+        const raw = localStorage.getItem(DIFFICULTY_STORAGE_KEY);
+        if (raw && (DIFFICULTIES as string[]).includes(raw)) {
+          initialDifficulty = raw as Difficulty;
+        }
+      } catch {
+        // ignore
+      }
+      setDifficulty(initialDifficulty);
+      gameStateRef.current = makeInitialState(initialDifficulty);
+
+      setHud({
+        score: 0,
+        lives: DIFFICULTY_MODS[initialDifficulty].initialLives,
+        status: "playing",
+        highScore: hs,
+        isNewHighScore: false,
+      });
       setReady(true);
     })();
     return () => {
@@ -117,7 +145,6 @@ export function ShooterClientShell() {
     const ctx = fitCanvas(canvas);
     if (!ctx) return;
 
-    // input: keyboard + touch composite.
     const input = new CompositeInput([
       new KeyboardInput(),
       new TouchInput(() => canvas),
@@ -125,7 +152,6 @@ export function ShooterClientShell() {
     input.start();
     inputRef.current = input;
 
-    // ResizeObserver — 컨테이너 크기/DPR 변화 시 backing store 재설정.
     let pendingFit = false;
     const ro = new ResizeObserver(() => {
       if (pendingFit) return;
@@ -137,11 +163,20 @@ export function ShooterClientShell() {
     });
     ro.observe(canvas);
 
-    // 루프 시작 — getIntent는 startedOnce 전엔 빈 intent (자동 발사 방지).
     const getIntent = (): Intent => {
       if (!startedOnceRef.current) return emptyIntent();
       return input.getIntent();
     };
+
+    // 사운드 이벤트 → controller 메서드. update의 fixed-step에서 호출되므로
+    // ref로 항상 최신 controller (mute 토글 등) 접근.
+    const soundEvents: SoundEvents = {
+      onShoot: () => soundRef.current?.playShoot(),
+      onHit: () => soundRef.current?.playHit(),
+      onPickup: () => soundRef.current?.playPickup(),
+      onGameOver: () => soundRef.current?.playGameOver(),
+    };
+
     const loop = startGameLoop({
       canvas,
       ctx,
@@ -150,8 +185,8 @@ export function ShooterClientShell() {
       assets,
       highScoreRef,
       onHudChange: setHud,
-      // 시작 버튼 누르기 전엔 update skip — spawn 진행으로 생명 깎이는 버그 방지.
       isPaused: () => !startedOnceRef.current,
+      sound: soundEvents,
       onGameOver: (finalScore) => {
         void scoreStorage.saveScore(finalScore).then(async () => {
           const updated = await scoreStorage.getHighScore();
@@ -170,18 +205,48 @@ export function ShooterClientShell() {
     };
   }, [ready, fitCanvas]);
 
-  const handleStart = useCallback(() => {
-    startedOnceRef.current = true;
-    setStartedOnce(true);
-    // 캔버스에 포커스 — 키보드 입력 즉시 받게.
-    canvasRef.current?.focus();
+  const handleDifficultyChange = useCallback((d: Difficulty) => {
+    setDifficulty(d);
+    // 시작 전이므로 ref를 새 difficulty로 재구성 + HUD 즉시 반영.
+    gameStateRef.current = makeInitialState(d);
+    setHud((prev) => ({
+      ...prev,
+      lives: DIFFICULTY_MODS[d].initialLives,
+      score: 0,
+      status: "playing",
+      isNewHighScore: false,
+    }));
+    try {
+      localStorage.setItem(DIFFICULTY_STORAGE_KEY, d);
+    } catch {
+      // ignore
+    }
   }, []);
 
-  const handleRestart = useCallback(() => {
-    loopRef.current?.restart();
+  const handleStart = useCallback(() => {
+    // user gesture 직후 AudioContext.resume.
+    void soundRef.current?.resume();
+    // 현 difficulty로 state 재구성 보장 (난이도 picker 후 시작 사이에 다른 변경 없게).
+    loopRef.current?.restart(difficulty);
     startedOnceRef.current = true;
     setStartedOnce(true);
     canvasRef.current?.focus();
+  }, [difficulty]);
+
+  const handleRestart = useCallback(() => {
+    void soundRef.current?.resume();
+    loopRef.current?.restart(difficulty);
+    startedOnceRef.current = true;
+    setStartedOnce(true);
+    canvasRef.current?.focus();
+  }, [difficulty]);
+
+  const handleToggleMute = useCallback(() => {
+    const snd = soundRef.current;
+    if (!snd) return;
+    const next = !snd.isMuted();
+    snd.setMuted(next);
+    setMuted(next);
   }, []);
 
   return (
@@ -206,9 +271,13 @@ export function ShooterClientShell() {
       <div className="space-y-3">
         <Hud
           hud={hud}
-          onRestart={handleRestart}
           startedOnce={startedOnce}
+          difficulty={difficulty}
+          onDifficultyChange={handleDifficultyChange}
           onStart={handleStart}
+          onRestart={handleRestart}
+          muted={muted}
+          onToggleMute={handleToggleMute}
         />
         <div className="mx-auto w-full max-w-[368px] rounded-md border border-zinc-800 bg-black p-1 sm:max-w-[428px] lg:max-w-[488px]">
           <GameCanvas ref={canvasRef}>

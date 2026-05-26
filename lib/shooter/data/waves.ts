@@ -98,18 +98,145 @@ const WAVE_SWARM: WaveDef = {
   })(),
 };
 
+// ─── wave-funnel ──────────────────────────────────────────────
+// drifter 양쪽에서 안쪽으로 모이는 형태. 좌측 5(rt) + 우측 5(lt).
+// y 차이로 stagger 시각.
+const WAVE_FUNNEL: WaveDef = {
+  id: "funnel",
+  enemies: [
+    ...Array.from({ length: 5 }, (_, i) => ({
+      defId: "drifter-rt",
+      spawnAt: { x: 30, y: TOP_Y - i * 22 },
+      delayMs: 500 + i * 280,
+    })),
+    ...Array.from({ length: 5 }, (_, i) => ({
+      defId: "drifter-lt",
+      spawnAt: { x: LOGICAL_W - 30, y: TOP_Y - i * 22 },
+      delayMs: 500 + i * 280,
+    })),
+  ],
+};
+
+// ─── wave-wall ────────────────────────────────────────────────
+// ghost 10마리 동시 spawn 가로 완벽 정렬. 빠른 straight 하강 — 벽.
+// hsine 대신 별도 ghost movement는 한 종이라 wall엔 빠른 bug straight 차용.
+// (대신 동시 spawn + 완전 정렬로 wall 시각)
+const WAVE_WALL: WaveDef = {
+  id: "wall",
+  enemies: Array.from({ length: 10 }, (_, i) => ({
+    defId: "bug",
+    spawnAt: { x: evenX(i, 10, 25), y: TOP_Y },
+    delayMs: 600 + i * 50, // 거의 동시 (50ms stagger)
+  })),
+};
+
+// ─── wave-cross ───────────────────────────────────────────────
+// 좌상→우하 4 (drifter-rt, 좌 spawn) + 우상→좌하 4 (drifter-lt, 우 spawn).
+// 화면 가운데서 X자 교차.
+const WAVE_CROSS: WaveDef = {
+  id: "cross",
+  enemies: [
+    ...Array.from({ length: 4 }, (_, i) => ({
+      defId: "drifter-rt",
+      spawnAt: { x: 40, y: TOP_Y - i * 30 },
+      delayMs: 500 + i * 250,
+    })),
+    ...Array.from({ length: 4 }, (_, i) => ({
+      defId: "drifter-lt",
+      spawnAt: { x: LOGICAL_W - 40, y: TOP_Y - i * 30 },
+      delayMs: 500 + i * 250,
+    })),
+  ],
+};
+
+// ─── wave-rain ────────────────────────────────────────────────
+// 14마리 mixed 무작위 x, 빠른 spawn rate. 결정론 위해 hardcoded 순열.
+const WAVE_RAIN: WaveDef = {
+  id: "rain",
+  enemies: (() => {
+    // hardcoded x ratios + defs — 결정론, random 없음.
+    const order: { defId: string; xRatio: number }[] = [
+      { defId: "ghost", xRatio: 0.15 },
+      { defId: "diver", xRatio: 0.85 },
+      { defId: "ghost", xRatio: 0.55 },
+      { defId: "bug", xRatio: 0.3 },
+      { defId: "ghost", xRatio: 0.7 },
+      { defId: "diver", xRatio: 0.2 },
+      { defId: "bug", xRatio: 0.45 },
+      { defId: "ghost", xRatio: 0.9 },
+      { defId: "ghost", xRatio: 0.1 },
+      { defId: "diver", xRatio: 0.6 },
+      { defId: "bug", xRatio: 0.75 },
+      { defId: "ghost", xRatio: 0.35 },
+      { defId: "diver", xRatio: 0.5 },
+      { defId: "bug", xRatio: 0.25 },
+    ];
+    return order.map((o, i) => ({
+      defId: o.defId,
+      spawnAt: { x: LOGICAL_W * o.xRatio, y: TOP_Y },
+      delayMs: 400 + i * 180,
+    }));
+  })(),
+};
+
+// ─── wave-boss-rush ───────────────────────────────────────────
+// 가운데 bug cluster (4) 천천히 + diver 5마리 측면 dive + 마지막 bug 3 wall.
+const WAVE_BOSS_RUSH: WaveDef = {
+  id: "boss-rush",
+  enemies: [
+    // 가운데 bug cluster 4
+    ...Array.from({ length: 4 }, (_, i) => ({
+      defId: "bug",
+      spawnAt: { x: LOGICAL_W / 2 + (i - 1.5) * 28, y: TOP_Y - 20 },
+      delayMs: 400 + i * 100,
+    })),
+    // 측면 diver 5 (좌·우 번갈아)
+    ...Array.from({ length: 5 }, (_, i) => ({
+      defId: "diver",
+      spawnAt: {
+        x: i % 2 === 0 ? 40 : LOGICAL_W - 40,
+        y: TOP_Y,
+      },
+      delayMs: 1400 + i * 400,
+    })),
+    // 마무리 bug wall 3
+    ...Array.from({ length: 3 }, (_, i) => ({
+      defId: "bug",
+      spawnAt: { x: evenX(i, 3, 50), y: TOP_Y },
+      delayMs: 4500 + i * 100,
+    })),
+  ],
+};
+
 export const WAVES: Record<string, WaveDef> = {
   line: WAVE_LINE,
   v: WAVE_V,
   zigzag: WAVE_ZIGZAG,
   dive: WAVE_DIVE,
   swarm: WAVE_SWARM,
+  funnel: WAVE_FUNNEL,
+  wall: WAVE_WALL,
+  cross: WAVE_CROSS,
+  rain: WAVE_RAIN,
+  "boss-rush": WAVE_BOSS_RUSH,
 };
 
 /**
- * 진행 순서 — 클리어 시마다 다음. 마지막(swarm) 클리어 시 wrap → loopCount++.
- * 난이도 증가는 BACKLOG (loopCount 기반 속도/HP 보정).
+ * 진행 순서 — 클리어 시마다 다음. 마지막 클리어 시 wrap → loopCount++.
+ * 난이도(쉬움/중간/어려움)는 DIFFICULTY_MODS로 직교 적용 (별도).
+ * 10 wave 시퀀스 — 단조롭지 않게 형태·속도 변주 섞음.
  */
-export const WAVE_SEQUENCE = ["line", "v", "zigzag", "dive", "swarm"] as const;
+export const WAVE_SEQUENCE = [
+  "line",
+  "v",
+  "zigzag",
+  "dive",
+  "funnel",
+  "swarm",
+  "wall",
+  "cross",
+  "rain",
+  "boss-rush",
+] as const;
 
 export const INITIAL_WAVE_ID = WAVE_SEQUENCE[0];

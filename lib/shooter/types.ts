@@ -78,7 +78,9 @@ export type EnemyMovement =
   /** 직선 하강. baseX 고정, y만 descendSpeed로 증가. */
   | { kind: "straight"; descendSpeed: number }
   /** 빠른 다이브. 처음 가속 → 일정 속도로 하강. accel은 px/s². */
-  | { kind: "diver"; accel: number; maxSpeed: number };
+  | { kind: "diver"; accel: number; maxSpeed: number }
+  /** 대각선 드리프트 — vx(부호로 방향) + descendSpeed. funnel·cross wave용. */
+  | { kind: "drift"; vx: number; descendSpeed: number };
 
 /** 적 정의 — 데이터로 enemy 인스턴스를 만든다. MVP는 weapon 미부여. */
 export type EnemyDef = {
@@ -129,6 +131,9 @@ export type PickupEntity = Entity & {
   spawnedAtMs: number;
 };
 
+/** 난이도 — 시작 화면에서 선택. spawn delay / hp / speed / 초기 lives에 영향. */
+export type Difficulty = "easy" | "normal" | "hard";
+
 /** 게임 상태 — mutable ref가 owner. React state 아님. */
 export type GameState = {
   status: "playing" | "gameover";
@@ -143,6 +148,7 @@ export type GameState = {
   score: number;
   lives: number;
   wave: WaveProgress;
+  difficulty: Difficulty;
   /** entity id auto-increment. */
   nextEntityId: number;
 };

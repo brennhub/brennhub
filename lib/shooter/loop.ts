@@ -10,6 +10,7 @@
  */
 
 import { aabbHits } from "./collision";
+import { DEFAULT_DIFFICULTY, DIFFICULTY_MODS } from "./data/difficulty";
 import { ENEMIES } from "./data/enemies";
 import {
   PICKUP_DEFS,
@@ -24,7 +25,6 @@ import { WEAPONS } from "./data/weapons";
 import { INITIAL_WAVE_ID } from "./data/waves";
 import { tickSpawn } from "./spawn";
 import {
-  INITIAL_LIVES,
   LOGICAL_H,
   LOGICAL_W,
   MAX_LIVES,
@@ -32,6 +32,7 @@ import {
   PLAYER_INVULNERABLE_MS,
   PLAYER_MIN_Y_RATIO,
   STEP_MS,
+  type Difficulty,
   type EnemyEntity,
   type GameState,
   type HudSnapshot,
@@ -72,8 +73,9 @@ const RAPID_FIRE_FACTOR = 0.35;
 /** multi-shot spread 각도 (각 ±). */
 const MULTI_SHOT_SPREAD_DEG = 14;
 
-export function makeInitialState(): GameState {
+export function makeInitialState(difficulty: Difficulty = DEFAULT_DIFFICULTY): GameState {
   const weapon = WEAPONS.pulse;
+  const mod = DIFFICULTY_MODS[difficulty];
   const player: PlayerState = {
     id: "player",
     pos: { x: PLAYER_START_X, y: PLAYER_START_Y },
@@ -96,7 +98,7 @@ export function makeInitialState(): GameState {
     projectiles: [],
     pickups: [],
     score: 0,
-    lives: INITIAL_LIVES,
+    lives: mod.initialLives,
     wave: {
       defId: INITIAL_WAVE_ID,
       sequenceIndex: 0,
@@ -104,16 +106,31 @@ export function makeInitialState(): GameState {
       startMs: 0,
       spawnedCount: 0,
     },
+    difficulty,
     nextEntityId: 1,
   };
 }
 
-export function update(state: GameState, intent: Intent, dtMs: number): GameState {
+/** 사운드 이벤트 콜백 — update가 발사·hit·픽업·게임오버 발생 시 호출. */
+export type SoundEvents = {
+  onShoot?: () => void;
+  onHit?: () => void;
+  onPickup?: () => void;
+  onGameOver?: () => void;
+};
+
+export function update(
+  state: GameState,
+  intent: Intent,
+  dtMs: number,
+  sound?: SoundEvents,
+): GameState {
   if (state.status !== "playing") return state;
 
   const dtSec = dtMs / 1000;
   state.tick += 1;
   state.elapsedMs += dtMs;
+  const mod = DIFFICULTY_MODS[state.difficulty];
 
   // --- 플레이어 이동 (4방향) ---
   let vx = 0;
@@ -157,10 +174,12 @@ export function update(state: GameState, intent: Intent, dtMs: number): GameStat
       } else {
         spawnProjectiles(state, px, py, w.projectile, -1, 0);
       }
+      sound?.onShoot?.();
     }
   }
 
-  // --- 적 이동 (movement kind 분기) ---
+  // --- 적 이동 (movement kind 분기, difficulty speedMult 적용) ---
+  const sp = mod.speedMult;
   for (const e of state.enemies) {
     const def = ENEMIES[e.defId];
     if (!def) continue;
@@ -169,24 +188,31 @@ export function update(state: GameState, intent: Intent, dtMs: number): GameStat
       case "hsine": {
         const phase = ((state.elapsedMs - e.spawnedAtMs) % m.periodMs) / m.periodMs;
         e.pos.x = e.baseX + Math.sin(phase * Math.PI * 2) * m.amplitudePx;
-        e.pos.y += m.descendSpeed * dtSec;
+        e.pos.y += m.descendSpeed * sp * dtSec;
         break;
       }
       case "straight": {
-        // baseX 고정, y만 증가.
-        e.pos.y += m.descendSpeed * dtSec;
+        e.pos.y += m.descendSpeed * sp * dtSec;
         break;
       }
       case "diver": {
-        // 가속 → maxSpeed 도달까지. vel.y로 누적 관리 (다른 movement는 vel 미사용).
-        e.vel.y = Math.min(m.maxSpeed, e.vel.y + m.accel * dtSec);
+        e.vel.y = Math.min(m.maxSpeed * sp, e.vel.y + m.accel * sp * dtSec);
         e.pos.y += e.vel.y * dtSec;
         break;
       }
+      case "drift": {
+        e.pos.x += m.vx * sp * dtSec;
+        e.pos.y += m.descendSpeed * sp * dtSec;
+        break;
+      }
     }
+    // y 하단 통과 또는 x 양쪽 빠짐 → despawn + (y 빠지면 데미지)
     if (e.pos.y > ENEMY_DESPAWN_Y) {
       e.alive = false;
-      damagePlayer(state);
+      damagePlayer(state, sound);
+    } else if (e.pos.x < -40 || e.pos.x > LOGICAL_W + 40) {
+      // drift가 양옆으로 빠지는 경우 — 데미지 없이 사라짐.
+      e.alive = false;
     }
   }
 
@@ -218,6 +244,7 @@ export function update(state: GameState, intent: Intent, dtMs: number): GameStat
       if (aabbHits(p, e)) {
         e.hp -= p.damage;
         p.alive = false;
+        sound?.onHit?.();
         if (e.hp <= 0) {
           e.alive = false;
           const def = ENEMIES[e.defId];
@@ -235,7 +262,7 @@ export function update(state: GameState, intent: Intent, dtMs: number): GameStat
       if (!p.alive || p.ownerSide !== "enemy") continue;
       if (aabbHits(p, state.player)) {
         p.alive = false;
-        damagePlayer(state);
+        damagePlayer(state, sound);
         break;
       }
     }
@@ -247,7 +274,7 @@ export function update(state: GameState, intent: Intent, dtMs: number): GameStat
       if (!e.alive) continue;
       if (aabbHits(e, state.player)) {
         e.alive = false;
-        damagePlayer(state);
+        damagePlayer(state, sound);
         break;
       }
     }
@@ -259,6 +286,7 @@ export function update(state: GameState, intent: Intent, dtMs: number): GameStat
     if (aabbHits(pk, state.player)) {
       applyPickupEffect(state, pk.kind);
       pk.alive = false;
+      sound?.onPickup?.();
     }
   }
 
@@ -279,12 +307,13 @@ export function update(state: GameState, intent: Intent, dtMs: number): GameStat
   return state;
 }
 
-function damagePlayer(state: GameState): void {
+function damagePlayer(state: GameState, sound?: SoundEvents): void {
   state.lives -= 1;
   state.player.invulnerableUntilMs = state.elapsedMs + PLAYER_INVULNERABLE_MS;
   if (state.lives <= 0) {
     state.lives = 0;
     state.status = "gameover";
+    sound?.onGameOver?.();
   }
 }
 
@@ -474,7 +503,8 @@ function hudEquals(a: HudSnapshot, b: HudSnapshot): boolean {
 
 export type GameLoopHandle = {
   stop: () => void;
-  restart: () => void;
+  /** 새 difficulty로 ref 교체 — 시작 화면에서 난이도 변경 가능. */
+  restart: (difficulty?: Difficulty) => void;
 };
 
 export type GameLoopOpts = {
@@ -488,10 +518,22 @@ export type GameLoopOpts = {
   onGameOver?: (finalScore: number) => void;
   /** true 반환 시 update skip (render만). */
   isPaused?: () => boolean;
+  /** update 내부에서 호출되는 사운드 이벤트 콜백. */
+  sound?: SoundEvents;
 };
 
 export function startGameLoop(opts: GameLoopOpts): GameLoopHandle {
-  const { ctx, getIntent, stateRef, assets, highScoreRef, onHudChange, onGameOver, isPaused } = opts;
+  const {
+    ctx,
+    getIntent,
+    stateRef,
+    assets,
+    highScoreRef,
+    onHudChange,
+    onGameOver,
+    isPaused,
+    sound,
+  } = opts;
   let rafId = 0;
   let lastTimestamp: number | null = null;
   let accumulator = 0;
@@ -515,7 +557,7 @@ export function startGameLoop(opts: GameLoopOpts): GameLoopHandle {
       const intent = getIntent();
       let steps = 0;
       while (accumulator >= STEP_MS && steps < MAX_STEPS_PER_TICK) {
-        update(stateRef.current, intent, STEP_MS);
+        update(stateRef.current, intent, STEP_MS, sound);
         accumulator -= STEP_MS;
         steps += 1;
       }
@@ -544,8 +586,8 @@ export function startGameLoop(opts: GameLoopOpts): GameLoopHandle {
     stop: () => {
       if (rafId) cancelAnimationFrame(rafId);
     },
-    restart: () => {
-      stateRef.current = makeInitialState();
+    restart: (difficulty?: Difficulty) => {
+      stateRef.current = makeInitialState(difficulty ?? stateRef.current.difficulty);
       accumulator = 0;
       lastTimestamp = null;
       gameOverFired = false;

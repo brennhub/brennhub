@@ -36,4 +36,24 @@ export const ENEMIES: Record<string, EnemyDef> = {
     visual: { kind: "lucide-raster", iconId: "bug", tint: "#fb923c", size: 34 },
     movement: { kind: "diver", accel: 220, maxSpeed: 280 },
   },
+  // 좌→우 드리프트 (funnel·cross wave용). ghost violet 톤 재사용.
+  "drifter-rt": {
+    id: "drifter-rt",
+    hp: 1,
+    speed: 80,
+    scoreValue: 150,
+    hitbox: { w: 28, h: 28 },
+    visual: { kind: "lucide-raster", iconId: "ghost", tint: "#a78bfa", size: 36 },
+    movement: { kind: "drift", vx: 70, descendSpeed: 55 },
+  },
+  // 우→좌 드리프트. 같은 visual.
+  "drifter-lt": {
+    id: "drifter-lt",
+    hp: 1,
+    speed: 80,
+    scoreValue: 150,
+    hitbox: { w: 28, h: 28 },
+    visual: { kind: "lucide-raster", iconId: "ghost", tint: "#a78bfa", size: 36 },
+    movement: { kind: "drift", vx: -70, descendSpeed: 55 },
+  },
 };

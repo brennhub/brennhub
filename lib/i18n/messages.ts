@@ -470,6 +470,12 @@ export type Messages = {
     restartButton: string;
     controlsHintDesktop: string;
     controlsHintMobile: string;
+    difficultyLabel: string;
+    difficultyEasy: string;
+    difficultyNormal: string;
+    difficultyHard: string;
+    soundMute: string;
+    soundUnmute: string;
   };
   maze: {
     title: string;
@@ -1198,6 +1204,12 @@ export const messages: Record<Locale, Messages> = {
       restartButton: "다시 시작",
       controlsHintDesktop: "방향키·WASD로 4방향 이동 / 스페이스 발사",
       controlsHintMobile: "화면 좌우를 눌러 이동 (자동 발사)",
+      difficultyLabel: "난이도",
+      difficultyEasy: "쉬움",
+      difficultyNormal: "보통",
+      difficultyHard: "어려움",
+      soundMute: "소리 끄기",
+      soundUnmute: "소리 켜기",
     },
     feedback: {
       button: "피드백",
@@ -1876,6 +1888,12 @@ export const messages: Record<Locale, Messages> = {
       restartButton: "Restart",
       controlsHintDesktop: "Arrow keys or WASD to move / Space to fire",
       controlsHintMobile: "Tap and hold left/right (auto-fire)",
+      difficultyLabel: "Difficulty",
+      difficultyEasy: "Easy",
+      difficultyNormal: "Normal",
+      difficultyHard: "Hard",
+      soundMute: "Mute",
+      soundUnmute: "Unmute",
     },
     feedback: {
       button: "Feedback",
