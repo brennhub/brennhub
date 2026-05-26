@@ -66,61 +66,134 @@ export function createSoundController(): SoundController {
 
   const now = (): number => ctx?.currentTime ?? 0;
 
-  /** 발사음 — 짧은 sawtooth + 빠른 high→low pitch sweep. ~80ms. */
+  /** 길이가 noise buffer source 만들기 — utility (반복 패턴 1회 정의). */
+  const makeNoise = (
+    c: AudioContext,
+    durationSec: number,
+    decay = true,
+  ): AudioBufferSourceNode => {
+    const len = Math.max(1, Math.floor(c.sampleRate * durationSec));
+    const buffer = c.createBuffer(1, len, c.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < len; i += 1) {
+      const env = decay ? 1 - i / len : 1;
+      data[i] = (Math.random() * 2 - 1) * env;
+    }
+    const src = c.createBufferSource();
+    src.buffer = buffer;
+    return src;
+  };
+
+  /**
+   * 발사음 — 3-layer (click + body + tail). ~120ms.
+   * - L1: highpass noise click (5ms) — laser energy attack
+   * - L2: square body 180→50Hz (130ms) — 묵직한 발사 base
+   * - L3: sine tail 720→200Hz (110ms) — 슈팅 캐릭터
+   */
   const playShoot = (): void => {
     if (muted) return;
     const c = ensureCtx();
     if (!c || !masterGain) return;
+    const mg = masterGain;
     const t = now();
-    const osc = c.createOscillator();
-    const g = c.createGain();
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(880, t);
-    osc.frequency.exponentialRampToValueAtTime(220, t + 0.08);
-    g.gain.setValueAtTime(0.001, t);
-    g.gain.exponentialRampToValueAtTime(0.35, t + 0.005);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-    osc.connect(g);
-    g.connect(masterGain);
-    osc.start(t);
-    osc.stop(t + 0.1);
+
+    // L1: click
+    const noise = makeNoise(c, 0.018);
+    const noiseFilter = c.createBiquadFilter();
+    noiseFilter.type = "highpass";
+    noiseFilter.frequency.value = 2200;
+    const noiseGain = c.createGain();
+    noiseGain.gain.setValueAtTime(0.45, t);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(mg);
+    noise.start(t);
+
+    // L2: body
+    const body = c.createOscillator();
+    const bodyGain = c.createGain();
+    body.type = "square";
+    body.frequency.setValueAtTime(180, t);
+    body.frequency.exponentialRampToValueAtTime(50, t + 0.11);
+    bodyGain.gain.setValueAtTime(0.001, t);
+    bodyGain.gain.exponentialRampToValueAtTime(0.32, t + 0.008);
+    bodyGain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+    body.connect(bodyGain);
+    bodyGain.connect(mg);
+    body.start(t);
+    body.stop(t + 0.14);
+
+    // L3: tail
+    const tail = c.createOscillator();
+    const tailGain = c.createGain();
+    tail.type = "sine";
+    tail.frequency.setValueAtTime(720, t);
+    tail.frequency.exponentialRampToValueAtTime(200, t + 0.1);
+    tailGain.gain.setValueAtTime(0.001, t);
+    tailGain.gain.exponentialRampToValueAtTime(0.22, t + 0.005);
+    tailGain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+    tail.connect(tailGain);
+    tailGain.connect(mg);
+    tail.start(t);
+    tail.stop(t + 0.12);
   };
 
-  /** 적 격추음 — white noise burst + low pitch hit. ~100ms. */
+  /**
+   * 적 격추음 — 3-layer punch (sub + filtered noise + mid). ~200ms.
+   * - L1: sub-bass sine 80→35Hz (200ms) — 진동·무게
+   * - L2: lowpass noise (180ms, cut 900Hz) — 폭발 잔향
+   * - L3: square mid 220→70Hz (140ms) — punch attack
+   */
   const playHit = (): void => {
     if (muted) return;
     const c = ensureCtx();
     if (!c || !masterGain) return;
+    const mg = masterGain;
     const t = now();
-    // noise burst (BufferSource)
-    const bufferSize = Math.floor(c.sampleRate * 0.08);
-    const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i += 1) {
-      // 시간이 지날수록 amplitude 감소
-      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
-    }
-    const noise = c.createBufferSource();
-    noise.buffer = buffer;
-    const ng = c.createGain();
-    ng.gain.setValueAtTime(0.5, t);
-    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-    noise.connect(ng);
-    ng.connect(masterGain);
+
+    // L1: sub-bass
+    const sub = c.createOscillator();
+    const subGain = c.createGain();
+    sub.type = "sine";
+    sub.frequency.setValueAtTime(80, t);
+    sub.frequency.exponentialRampToValueAtTime(35, t + 0.18);
+    subGain.gain.setValueAtTime(0.001, t);
+    subGain.gain.exponentialRampToValueAtTime(0.5, t + 0.006);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    sub.connect(subGain);
+    subGain.connect(mg);
+    sub.start(t);
+    sub.stop(t + 0.21);
+
+    // L2: filtered noise (lowpass로 두꺼운 폭발)
+    const noise = makeNoise(c, 0.18);
+    const noiseFilter = c.createBiquadFilter();
+    noiseFilter.type = "lowpass";
+    noiseFilter.frequency.setValueAtTime(900, t);
+    noiseFilter.frequency.exponentialRampToValueAtTime(300, t + 0.15);
+    noiseFilter.Q.value = 1.2;
+    const noiseGain = c.createGain();
+    noiseGain.gain.setValueAtTime(0.55, t);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(mg);
     noise.start(t);
-    // 베이스 thud
-    const osc = c.createOscillator();
-    const og = c.createGain();
-    osc.type = "square";
-    osc.frequency.setValueAtTime(180, t);
-    osc.frequency.exponentialRampToValueAtTime(60, t + 0.09);
-    og.gain.setValueAtTime(0.001, t);
-    og.gain.exponentialRampToValueAtTime(0.25, t + 0.01);
-    og.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-    osc.connect(og);
-    og.connect(masterGain);
-    osc.start(t);
-    osc.stop(t + 0.11);
+
+    // L3: mid punch
+    const mid = c.createOscillator();
+    const midGain = c.createGain();
+    mid.type = "square";
+    mid.frequency.setValueAtTime(220, t);
+    mid.frequency.exponentialRampToValueAtTime(70, t + 0.12);
+    midGain.gain.setValueAtTime(0.001, t);
+    midGain.gain.exponentialRampToValueAtTime(0.32, t + 0.008);
+    midGain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+    mid.connect(midGain);
+    midGain.connect(mg);
+    mid.start(t);
+    mid.stop(t + 0.15);
   };
 
   /** 픽업음 — 짧은 ascending arpeggio (C-E-G). */
