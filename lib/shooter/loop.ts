@@ -51,7 +51,7 @@ export function makeInitialState(): GameState {
     pos: { x: PLAYER_START_X, y: PLAYER_START_Y },
     vel: { x: 0, y: 0 },
     hitbox: { w: 24, h: 24 },
-    visual: { kind: "lucide-raster", iconId: "rocket", tint: "#fbbf24", size: 36 },
+    visual: { kind: "sprite", spriteId: "player-1", width: 40, height: 40 },
     alive: true,
     weapon,
     lastFireMs: -Infinity,

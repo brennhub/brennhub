@@ -11,20 +11,30 @@
 
 import type { LucideIconId } from "../types";
 import { getIconPaths, ICON_NODES } from "./icons";
+import {
+  bakePixelSprite,
+  SPRITES,
+  SPRITE_CELL_PX,
+  type SpriteId,
+} from "./pixel-sprites";
 
 export type VisualAssets = {
   /** key = `${iconId}|${tint}`. */
   lucide: Map<string, ImageBitmap>;
+  /** key = SpriteId. */
+  sprites: Map<SpriteId, ImageBitmap>;
 };
 
 export const RASTER_SIZE = 64; // 베이킹 해상도 (논리 px 기준 충분히 큰 크기)
 
-/** 데이터(enemies/weapons)에서 사용하는 (iconId, tint) 조합 — 컴파일 타임에 enumerate. */
+/** 데이터(enemies)에서 사용하는 (iconId, tint) 조합 — 컴파일 타임에 enumerate. */
 export const ASSET_MANIFEST: { iconId: LucideIconId; tint: string }[] = [
   { iconId: "ghost", tint: "#a78bfa" }, // violet — 적1
   { iconId: "bug", tint: "#f87171" }, // red — 적2
-  { iconId: "rocket", tint: "#fbbf24" }, // amber — 플레이어 (적과 색상 분리)
 ];
+
+/** 픽셀 sprite 베이킹 대상 — pixel-sprites.ts의 SPRITES 전부. */
+const SPRITE_MANIFEST: SpriteId[] = ["player-1", "projectile-pulse"];
 
 export function assetKey(iconId: LucideIconId, tint: string): string {
   return `${iconId}|${tint}`;
@@ -62,13 +72,20 @@ function bakeIcon(iconId: LucideIconId, tint: string): OffscreenCanvas {
  */
 export async function buildVisualAssets(): Promise<VisualAssets> {
   const lucide = new Map<string, ImageBitmap>();
+  const sprites = new Map<SpriteId, ImageBitmap>();
   if (typeof OffscreenCanvas === "undefined" || typeof createImageBitmap === "undefined") {
-    return { lucide };
+    return { lucide, sprites };
   }
   for (const { iconId, tint } of ASSET_MANIFEST) {
     const off = bakeIcon(iconId, tint);
     const bmp = await createImageBitmap(off);
     lucide.set(assetKey(iconId, tint), bmp);
   }
-  return { lucide };
+  for (const id of SPRITE_MANIFEST) {
+    const sp = SPRITES[id];
+    const off = bakePixelSprite(sp, SPRITE_CELL_PX);
+    const bmp = await createImageBitmap(off);
+    sprites.set(id, bmp);
+  }
+  return { lucide, sprites };
 }

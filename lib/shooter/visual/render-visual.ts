@@ -6,9 +6,10 @@
  */
 
 import type { Vec2, Visual } from "../types";
+import type { SpriteId } from "./pixel-sprites";
 import { assetKey, type VisualAssets } from "./raster";
 
-/** pos는 entity 중심 좌표. visual.size는 한 변 px (논리 좌표). */
+/** pos는 entity 중심 좌표. visual.size는 한 변 px (논리 좌표). sprite는 width/height 분리. */
 export function drawVisual(
   ctx: CanvasRenderingContext2D,
   visual: Visual,
@@ -30,7 +31,7 @@ export function drawVisual(
   if (visual.kind === "lucide-raster") {
     const bmp = assets.lucide.get(assetKey(visual.iconId, visual.tint));
     if (!bmp) {
-      // 사전 베이킹 누락 — primitive fallback (콘솔 경고는 dev에서만).
+      // 사전 베이킹 누락 — primitive fallback.
       ctx.fillStyle = visual.tint;
       ctx.fillRect(pos.x - visual.size / 2, pos.y - visual.size / 2, visual.size, visual.size);
       return;
@@ -39,7 +40,27 @@ export function drawVisual(
     ctx.drawImage(bmp, pos.x - half, pos.y - half, visual.size, visual.size);
     return;
   }
-  // sprite — MVP 미사용. fallback rect.
-  ctx.fillStyle = "#e4e4e7";
-  ctx.fillRect(pos.x - visual.size / 2, pos.y - visual.size / 2, visual.size, visual.size);
+  // sprite — 픽셀아트 도트 매트릭스 베이킹된 ImageBitmap. smoothing off로 픽셀 선명.
+  const bmp = assets.sprites.get(visual.spriteId as SpriteId);
+  if (!bmp) {
+    // 베이킹 누락 — fallback rect (id가 unknown 또는 부팅 전).
+    ctx.fillStyle = "#e4e4e7";
+    ctx.fillRect(
+      pos.x - visual.width / 2,
+      pos.y - visual.height / 2,
+      visual.width,
+      visual.height,
+    );
+    return;
+  }
+  const prevSmoothing = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(
+    bmp,
+    pos.x - visual.width / 2,
+    pos.y - visual.height / 2,
+    visual.width,
+    visual.height,
+  );
+  ctx.imageSmoothingEnabled = prevSmoothing;
 }

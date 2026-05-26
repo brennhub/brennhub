@@ -12,18 +12,20 @@ export type Vec2 = { x: number; y: number };
 export type Hitbox = { w: number; h: number };
 
 /** 사전 등록된 lucide 아이콘 식별자 — raster 캐시 키. */
-export type LucideIconId = "ghost" | "bug" | "rocket";
+export type LucideIconId = "ghost" | "bug";
 
 /**
  * Visual 추상화 — 3 variant union.
  * - `primitive`: rect/circle (탄·fallback)
  * - `lucide-raster`: 부팅 시 (iconId, tint) 조합별로 ImageBitmap 베이킹 → render는 drawImage만
- * - `sprite`: PNG 등 외부 자산 (MVP는 미사용, 인터페이스만)
+ * - `sprite`: 픽셀 도트 매트릭스를 부팅 시 OffscreenCanvas에 베이킹 → drawImage.
+ *   비율이 정사각이 아니므로 width/height 분리 (size 단일값 X). spriteId는
+ *   pixel-sprites.ts의 SpriteId 유니온과 일치.
  */
 export type Visual =
   | { kind: "primitive"; shape: "rect" | "circle"; color: string; size: number }
   | { kind: "lucide-raster"; iconId: LucideIconId; tint: string; size: number }
-  | { kind: "sprite"; spriteId: string; size: number };
+  | { kind: "sprite"; spriteId: string; width: number; height: number };
 
 /** 모든 동적 객체의 베이스. pos는 중심 좌표. */
 export type Entity = {

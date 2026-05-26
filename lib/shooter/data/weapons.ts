@@ -15,7 +15,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
       damage: 1,
       ownerSide: "player",
       hitbox: { w: 4, h: 12 },
-      visual: { kind: "primitive", shape: "rect", color: "#fde047", size: 6 },
+      visual: { kind: "sprite", spriteId: "projectile-pulse", width: 8, height: 20 },
     },
   },
 };
