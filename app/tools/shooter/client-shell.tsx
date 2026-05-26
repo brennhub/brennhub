@@ -140,6 +140,8 @@ export function ShooterClientShell() {
       assets,
       highScoreRef,
       onHudChange: setHud,
+      // 시작 버튼 누르기 전엔 update skip — spawn 진행으로 생명 깎이는 버그 방지.
+      isPaused: () => !startedOnceRef.current,
       onGameOver: (finalScore) => {
         void scoreStorage.saveScore(finalScore).then(async () => {
           const updated = await scoreStorage.getHighScore();
@@ -190,8 +192,26 @@ export function ShooterClientShell() {
           startedOnce={startedOnce}
           onStart={handleStart}
         />
-        <div className="rounded-md border border-zinc-800 bg-black p-2">
-          <GameCanvas ref={canvasRef} />
+        <div className="mx-auto w-full max-w-[368px] rounded-md border border-zinc-800 bg-black p-1 sm:max-w-[428px] lg:max-w-[488px]">
+          <GameCanvas ref={canvasRef}>
+            {!startedOnce && ready && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-amber-300/80">
+                  {t.startButton}
+                </p>
+              </div>
+            )}
+            {startedOnce && hud.status === "gameover" && (
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 backdrop-blur-[1px]">
+                <p className="text-2xl font-bold uppercase tracking-[0.15em] text-rose-300">
+                  {t.gameOverTitle}
+                </p>
+                <p className="tnum text-sm text-zinc-300">
+                  {t.scoreLabel} {hud.score}
+                </p>
+              </div>
+            )}
+          </GameCanvas>
         </div>
         <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
           <span className="hidden sm:inline">{t.controlsHintDesktop}</span>

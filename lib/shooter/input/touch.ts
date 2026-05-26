@@ -26,12 +26,23 @@ export class TouchInput implements InputController {
     const x = e.clientX - rect.left;
     const side = x < rect.width / 2 ? "left" : "right";
     this.active.set(e.pointerId, side);
+    // pointer가 캔버스 영역을 벗어나도 hold가 유지되도록 capture.
+    try {
+      el.setPointerCapture(e.pointerId);
+    } catch {
+      // 일부 환경(jsdom 등)에서 미지원 — silent.
+    }
     this.recompute();
     e.preventDefault();
   };
 
   private onPointerEnd = (e: PointerEvent) => {
     if (this.active.delete(e.pointerId)) {
+      try {
+        this.target?.releasePointerCapture(e.pointerId);
+      } catch {
+        // 이미 release된 경우 — silent.
+      }
       this.recompute();
     }
   };

@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, type ReactNode } from "react";
 import { LOGICAL_H, LOGICAL_W } from "@/lib/shooter/types";
 
 /**
@@ -10,6 +10,8 @@ import { LOGICAL_H, LOGICAL_W } from "@/lib/shooter/types";
  * - touch-action: none → 모바일 hold 시 스크롤·핀치 차단.
  * - tabIndex=0 + outline none → 클릭으로 키보드 포커스 얻을 수 있게.
  * - 컨테이너는 aspect-ratio로 LOGICAL_W:LOGICAL_H 유지.
+ * - 데스크탑은 컨테이너 폭을 더 크게 (sm/lg breakpoint), 모바일은 360 유지.
+ * - children — 캔버스 위에 absolute로 띄울 overlay (게임오버 dim 등).
  *
  * 모바일 zone hint는 캔버스 위에 overlay 2장(좌/우 반투명).
  */
@@ -17,14 +19,16 @@ import { LOGICAL_H, LOGICAL_W } from "@/lib/shooter/types";
 type Props = {
   className?: string;
   showTouchHint?: boolean;
+  children?: ReactNode;
 };
 
 export const GameCanvas = forwardRef<HTMLCanvasElement, Props>(
-  function GameCanvas({ className, showTouchHint = true }, ref) {
+  function GameCanvas({ className, showTouchHint = true, children }, ref) {
     return (
       <div
         className={
-          "relative mx-auto w-full max-w-[360px] select-none " + (className ?? "")
+          "relative mx-auto w-full max-w-[360px] select-none sm:max-w-[420px] lg:max-w-[480px] " +
+          (className ?? "")
         }
         style={{ aspectRatio: `${LOGICAL_W} / ${LOGICAL_H}` }}
       >
@@ -32,7 +36,7 @@ export const GameCanvas = forwardRef<HTMLCanvasElement, Props>(
           ref={ref}
           tabIndex={0}
           aria-label="Arcade Shooter game canvas"
-          className="absolute inset-0 h-full w-full touch-none rounded-md outline-none ring-0 focus-visible:ring-2 focus-visible:ring-blue-400"
+          className="absolute inset-0 h-full w-full touch-none rounded-md outline-none ring-0 focus-visible:ring-2 focus-visible:ring-amber-400"
           style={{ imageRendering: "auto" }}
         />
         {showTouchHint && (
@@ -40,15 +44,16 @@ export const GameCanvas = forwardRef<HTMLCanvasElement, Props>(
             <div
               aria-hidden
               className="pointer-events-none absolute left-0 top-0 h-full w-1/2 rounded-l-md border border-transparent sm:hidden"
-              style={{ background: "linear-gradient(to right, rgba(96,165,250,0.06), rgba(0,0,0,0))" }}
+              style={{ background: "linear-gradient(to right, rgba(251,191,36,0.06), rgba(0,0,0,0))" }}
             />
             <div
               aria-hidden
               className="pointer-events-none absolute right-0 top-0 h-full w-1/2 rounded-r-md border border-transparent sm:hidden"
-              style={{ background: "linear-gradient(to left, rgba(96,165,250,0.06), rgba(0,0,0,0))" }}
+              style={{ background: "linear-gradient(to left, rgba(251,191,36,0.06), rgba(0,0,0,0))" }}
             />
           </>
         )}
+        {children}
       </div>
     );
   },

@@ -51,7 +51,7 @@ export function makeInitialState(): GameState {
     pos: { x: PLAYER_START_X, y: PLAYER_START_Y },
     vel: { x: 0, y: 0 },
     hitbox: { w: 24, h: 24 },
-    visual: { kind: "lucide-raster", iconId: "rocket", tint: "#60a5fa", size: 36 },
+    visual: { kind: "lucide-raster", iconId: "rocket", tint: "#fbbf24", size: 36 },
     alive: true,
     weapon,
     lastFireMs: -Infinity,
@@ -310,10 +310,12 @@ export type GameLoopOpts = {
   onHudChange: (snap: HudSnapshot) => void;
   /** 게임오버 시 1회 호출 (최종 점수 저장 등). */
   onGameOver?: (finalScore: number) => void;
+  /** true 반환 시 update skip (render만). 시작 전 화면 / 미래 일시정지용. */
+  isPaused?: () => boolean;
 };
 
 export function startGameLoop(opts: GameLoopOpts): GameLoopHandle {
-  const { ctx, getIntent, stateRef, assets, highScoreRef, onHudChange, onGameOver } = opts;
+  const { ctx, getIntent, stateRef, assets, highScoreRef, onHudChange, onGameOver, isPaused } = opts;
   let rafId = 0;
   let lastTimestamp: number | null = null;
   let accumulator = 0;
@@ -330,18 +332,24 @@ export function startGameLoop(opts: GameLoopOpts): GameLoopHandle {
     }
     const dt = ts - lastTimestamp;
     lastTimestamp = ts;
-    accumulator += dt;
 
-    const intent = getIntent();
-    let steps = 0;
-    while (accumulator >= STEP_MS && steps < MAX_STEPS_PER_TICK) {
-      update(stateRef.current, intent, STEP_MS);
-      accumulator -= STEP_MS;
-      steps += 1;
-    }
-    // 누적된 dt가 너무 크면 (탭 백그라운드 등) 버림 — 스파이럴 방지.
-    if (accumulator > STEP_MS * MAX_STEPS_PER_TICK) {
+    // Paused면 update skip + accumulator 드레인 (resume 시 큰 dt step 방지).
+    // render는 계속 — starfield 흐름은 tick 기반이라 시각 효과는 유지.
+    if (isPaused?.()) {
       accumulator = 0;
+    } else {
+      accumulator += dt;
+      const intent = getIntent();
+      let steps = 0;
+      while (accumulator >= STEP_MS && steps < MAX_STEPS_PER_TICK) {
+        update(stateRef.current, intent, STEP_MS);
+        accumulator -= STEP_MS;
+        steps += 1;
+      }
+      // 누적된 dt가 너무 크면 (탭 백그라운드 등) 버림 — 스파이럴 방지.
+      if (accumulator > STEP_MS * MAX_STEPS_PER_TICK) {
+        accumulator = 0;
+      }
     }
 
     render(ctx, stateRef.current, assets);
