@@ -1,25 +1,21 @@
 /**
- * 웨이브 spawn 진행 + 같은 웨이브 무한 반복.
+ * 웨이브 spawn 진행 + sequence 순회.
  *
- * 현 wave의 spawn 큐를 elapsed - startMs와 대조해 새 적 인스턴스 push.
- * 큐 소진 + 화면에 적 0이면 같은 wave 재스폰 (loopCount++, startMs 리셋).
+ * 현 wave 큐를 elapsed - startMs와 대조해 신규 적 push. 큐 소진 + 화면 클리어 시
+ * sequenceIndex++ → WAVE_SEQUENCE wrap (loopCount++) + startMs 리셋.
  */
 
 import { ENEMIES } from "./data/enemies";
-import { WAVES } from "./data/waves";
+import { WAVE_SEQUENCE, WAVES } from "./data/waves";
 import type { EnemyEntity, GameState } from "./types";
 
-/**
- * GameState를 mutate — wave 진행 + 신규 적 push.
- * 반환값 없음 (in-place).
- */
 export function tickSpawn(state: GameState): void {
   const wave = WAVES[state.wave.defId];
   if (!wave) return;
 
   const localMs = state.elapsedMs - state.wave.startMs;
 
-  // 큐에서 delay 도달한 항목 push.
+  // delay 도달한 enemy push.
   while (state.wave.spawnedCount < wave.enemies.length) {
     const slot = wave.enemies[state.wave.spawnedCount];
     if (slot.delayMs > localMs) break;
@@ -43,12 +39,18 @@ export function tickSpawn(state: GameState): void {
     state.wave.spawnedCount += 1;
   }
 
-  // 큐 소진 + 화면 클리어 → 같은 웨이브 재스폰.
+  // 큐 소진 + 화면 클리어 → 다음 wave.
   if (
     state.wave.spawnedCount >= wave.enemies.length &&
     state.enemies.length === 0
   ) {
-    state.wave.loopCount += 1;
+    const nextIndex = (state.wave.sequenceIndex + 1) % WAVE_SEQUENCE.length;
+    // 한 바퀴 돌면 loopCount++ (난이도 증가 자리 — 현재는 시각만)
+    if (nextIndex === 0) {
+      state.wave.loopCount += 1;
+    }
+    state.wave.sequenceIndex = nextIndex;
+    state.wave.defId = WAVE_SEQUENCE[nextIndex];
     state.wave.startMs = state.elapsedMs;
     state.wave.spawnedCount = 0;
   }

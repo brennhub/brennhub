@@ -11,13 +11,21 @@ export interface InputController {
 }
 
 export function emptyIntent(): Intent {
-  return { moveLeft: false, moveRight: false, fire: false };
+  return {
+    moveLeft: false,
+    moveRight: false,
+    moveUp: false,
+    moveDown: false,
+    fire: false,
+  };
 }
 
 export function orIntent(a: Intent, b: Intent): Intent {
   return {
     moveLeft: a.moveLeft || b.moveLeft,
     moveRight: a.moveRight || b.moveRight,
+    moveUp: a.moveUp || b.moveUp,
+    moveDown: a.moveDown || b.moveDown,
     fire: a.fire || b.fire,
   };
 }

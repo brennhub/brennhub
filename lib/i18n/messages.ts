@@ -1196,7 +1196,7 @@ export const messages: Record<Locale, Messages> = {
       newHighScore: "신기록",
       gameOverTitle: "게임 오버",
       restartButton: "다시 시작",
-      controlsHintDesktop: "← → 이동 / 스페이스 발사",
+      controlsHintDesktop: "방향키·WASD로 4방향 이동 / 스페이스 발사",
       controlsHintMobile: "화면 좌우를 눌러 이동 (자동 발사)",
     },
     feedback: {
@@ -1874,7 +1874,7 @@ export const messages: Record<Locale, Messages> = {
       newHighScore: "New best",
       gameOverTitle: "Game Over",
       restartButton: "Restart",
-      controlsHintDesktop: "← → to move / Space to fire",
+      controlsHintDesktop: "Arrow keys or WASD to move / Space to fire",
       controlsHintMobile: "Tap and hold left/right (auto-fire)",
     },
     feedback: {

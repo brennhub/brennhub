@@ -29,10 +29,18 @@ export type VisualAssets = {
 // 충분히 큰 source. 36~38 logical px로 draw 시 다운스케일 충분 + DPR 정수배에서도 정보 손실 최소.
 export const RASTER_SIZE = 128;
 
-/** 데이터(enemies)에서 사용하는 (iconId, tint) 조합 — 컴파일 타임에 enumerate. */
+/** 데이터(enemies + pickups)에서 사용하는 (iconId, tint) 조합 — 컴파일 타임에 enumerate. */
 export const ASSET_MANIFEST: { iconId: LucideIconId; tint: string }[] = [
-  { iconId: "ghost", tint: "#a78bfa" }, // violet — 적1
-  { iconId: "bug", tint: "#f87171" }, // red — 적2
+  // 적
+  { iconId: "ghost", tint: "#a78bfa" }, // violet — ghost
+  { iconId: "bug", tint: "#f87171" }, // red — bug
+  { iconId: "bug", tint: "#fb923c" }, // orange — diver (재사용)
+  // 아이템 — pickups.ts와 동기화
+  { iconId: "shield", tint: "#22d3ee" }, // cyan — 무적
+  { iconId: "zap", tint: "#facc15" }, // yellow — 속사
+  { iconId: "sparkles", tint: "#c084fc" }, // purple — 멀티샷
+  { iconId: "coins", tint: "#fbbf24" }, // amber — 점수 보너스
+  { iconId: "heart", tint: "#f43f5e" }, // rose — 생명
 ];
 
 /** 픽셀 sprite 베이킹 대상 — pixel-sprites.ts의 SPRITES 전부. */

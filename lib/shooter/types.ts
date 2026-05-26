@@ -12,7 +12,22 @@ export type Vec2 = { x: number; y: number };
 export type Hitbox = { w: number; h: number };
 
 /** 사전 등록된 lucide 아이콘 식별자 — raster 캐시 키. */
-export type LucideIconId = "ghost" | "bug";
+export type LucideIconId =
+  | "ghost"
+  | "bug"
+  | "shield"
+  | "zap"
+  | "sparkles"
+  | "coins"
+  | "heart";
+
+/** 아이템 종류 — 화면에 떠다니다 플레이어가 먹으면 효과 발동. */
+export type PickupKind =
+  | "shield"        // 일정 시간 무적
+  | "rapid-fire"    // 일정 시간 cooldown 단축
+  | "multi-shot"    // 일정 시간 3-way 발사
+  | "score-bonus"   // 즉시 점수 추가
+  | "extra-life";   // 즉시 생명 +1 (max 캡)
 
 /**
  * Visual 추상화 — 3 variant union.
@@ -56,17 +71,25 @@ export type WeaponDef = {
   projectile: ProjectilePattern;
 };
 
+/** 적 이동 패턴 — 시간 기반 함수로 enemy 위치 결정. spawn.ts에서 enemy에 def.movement 복사. */
+export type EnemyMovement =
+  /** 좌우 사인파 + 일정 하강. amplitudePx, periodMs, descendSpeed(px/s). */
+  | { kind: "hsine"; amplitudePx: number; periodMs: number; descendSpeed: number }
+  /** 직선 하강. baseX 고정, y만 descendSpeed로 증가. */
+  | { kind: "straight"; descendSpeed: number }
+  /** 빠른 다이브. 처음 가속 → 일정 속도로 하강. accel은 px/s². */
+  | { kind: "diver"; accel: number; maxSpeed: number };
+
 /** 적 정의 — 데이터로 enemy 인스턴스를 만든다. MVP는 weapon 미부여. */
 export type EnemyDef = {
   id: string;
   hp: number;
-  speed: number; // px/sec
+  speed: number; // px/sec — info용 (실제 이동은 movement가 결정)
   scoreValue: number;
   visual: Visual;
   hitbox: Hitbox;
   weapon?: WeaponDef;
-  /** 이동 패턴 — MVP는 hsine(좌우 사인파 + 천천히 하강)만. */
-  movement: { kind: "hsine"; amplitudePx: number; periodMs: number; descendSpeed: number };
+  movement: EnemyMovement;
 };
 
 /** 웨이브 정의 — spawn 큐. */
@@ -79,6 +102,10 @@ export type PlayerState = Entity & {
   weapon: WeaponDef;
   lastFireMs: number;
   invulnerableUntilMs: number;
+  /** rapid-fire power-up 종료 시각. > elapsedMs면 cooldown 단축 적용. */
+  rapidFireUntilMs: number;
+  /** multi-shot power-up 종료 시각. > elapsedMs면 3-way spread 발사. */
+  multiShotUntilMs: number;
 };
 
 export type EnemyEntity = Entity & {
@@ -96,6 +123,12 @@ export type ProjectileEntity = Entity & {
   damage: number;
 };
 
+/** 화면에 떠다니는 아이템. 플레이어와 충돌 시 효과 적용 후 despawn. */
+export type PickupEntity = Entity & {
+  kind: PickupKind;
+  spawnedAtMs: number;
+};
+
 /** 게임 상태 — mutable ref가 owner. React state 아님. */
 export type GameState = {
   status: "playing" | "gameover";
@@ -106,6 +139,7 @@ export type GameState = {
   player: PlayerState;
   enemies: EnemyEntity[];
   projectiles: ProjectileEntity[];
+  pickups: PickupEntity[];
   score: number;
   lives: number;
   wave: WaveProgress;
@@ -115,11 +149,13 @@ export type GameState = {
 
 export type WaveProgress = {
   defId: string;
-  /** 0부터 — 같은 웨이브 클리어할 때마다 ++. MVP는 같은 wave 무한 반복. */
+  /** WAVE_SEQUENCE 인덱스. 클리어 시 sequenceIndex++, 시퀀스 끝나면 loopCount++ + reset. */
+  sequenceIndex: number;
+  /** 전체 시퀀스 한 바퀴 돌 때마다 ++. */
   loopCount: number;
-  /** 현 loop 시작 ms. spawn delay 계산 기준. */
+  /** 현 wave 시작 ms. spawn delay 계산 기준. */
   startMs: number;
-  /** 현 loop에서 spawn한 적 수. */
+  /** 현 wave에서 spawn한 적 수. */
   spawnedCount: number;
 };
 
@@ -136,6 +172,8 @@ export type HudSnapshot = {
 export type Intent = {
   moveLeft: boolean;
   moveRight: boolean;
+  moveUp: boolean;
+  moveDown: boolean;
   fire: boolean;
 };
 
@@ -154,3 +192,9 @@ export const PLAYER_INVULNERABLE_MS = 1500;
 
 /** 초기 생명. */
 export const INITIAL_LIVES = 3;
+
+/** 최대 생명 (extra-life 픽업 캡). */
+export const MAX_LIVES = 5;
+
+/** 플레이어 y 이동 가능 범위. 위쪽은 적 spawn 영역 침범 방지. */
+export const PLAYER_MIN_Y_RATIO = 0.35;

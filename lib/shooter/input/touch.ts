@@ -8,7 +8,14 @@ import { emptyIntent, type InputController } from "./types";
  * 다중 터치 OK (좌·우 동시 hold 가능, 마지막 이동 우선).
  */
 export class TouchInput implements InputController {
-  private intent: Intent = { moveLeft: false, moveRight: false, fire: true };
+  // moveUp/Down은 터치에서 미지원 (2-zone hold만). 모바일 세로 이동은 BACKLOG.
+  private intent: Intent = {
+    moveLeft: false,
+    moveRight: false,
+    moveUp: false,
+    moveDown: false,
+    fire: true,
+  };
   private active = new Map<number, "left" | "right">();
   private target: HTMLElement | null = null;
 

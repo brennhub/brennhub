@@ -40,6 +40,16 @@ export class KeyboardInput implements InputController {
       case "D":
         this.intent.moveRight = pressed;
         break;
+      case "ArrowUp":
+      case "w":
+      case "W":
+        this.intent.moveUp = pressed;
+        break;
+      case "ArrowDown":
+      case "s":
+      case "S":
+        this.intent.moveDown = pressed;
+        break;
       case " ":
       case "Spacebar":
         this.intent.fire = pressed;
