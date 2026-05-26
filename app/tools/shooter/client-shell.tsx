@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useMessages } from "@/lib/i18n/provider";
 import { GameCanvas } from "@/components/shooter/game-canvas";
 import { Hud } from "@/components/shooter/hud";
@@ -41,7 +42,9 @@ import { scoreStorage } from "@/lib/shooter/storage/localStorage";
  * 게임오버 시 onGameOver에서 scoreStorage.saveScore. 재시작은 loop.restart() — ref 교체.
  */
 export function ShooterClientShell() {
-  const t = useMessages().shooter;
+  const messages = useMessages();
+  const t = messages.shooter;
+  const tCommon = messages.toolCommon;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gameStateRef = useRef<GameState>(makeInitialState());
@@ -176,6 +179,14 @@ export function ShooterClientShell() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-6">
+      <div className="mb-3">
+        <Link
+          href="/"
+          className="text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+        >
+          {tCommon.back}
+        </Link>
+      </div>
       <header className="mb-4">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           {t.title}
