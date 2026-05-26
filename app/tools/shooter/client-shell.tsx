@@ -65,19 +65,26 @@ export function ShooterClientShell() {
   // startedOnce를 closure에서 매 frame 읽기 위한 mirror. set 함수가 inline으로 갱신.
   const startedOnceRef = useRef(false);
 
-  /** 캔버스 DPR-aware resize. 논리 좌표 360×640 유지. */
+  /**
+   * 캔버스 DPR-aware resize. 논리 좌표 360×640 유지.
+   *
+   * 핵심: backing scale을 LOGICAL_W의 **정수배**로 강제 (`Math.ceil` 후 max(1)).
+   * 분수 scale(예: 480/360=1.333)이면 픽셀 grid가 sub-px 정렬돼 nearest로도
+   * 깨져 보임. 정수 scale로 backing pixel과 sprite cell이 정확히 일치하게.
+   * backing이 cssW*dpr보다 살짝 큰 경우 브라우저가 CSS로 다운스케일하지만,
+   * `image-rendering: pixelated` CSS로 nearest 강제라 grid 보존.
+   */
   const fitCanvas = useCallback((canvas: HTMLCanvasElement) => {
     const dpr = window.devicePixelRatio || 1;
     const cssW = canvas.clientWidth || LOGICAL_W;
     const cssH = canvas.clientHeight || LOGICAL_H;
-    canvas.width = Math.round(cssW * dpr);
-    canvas.height = Math.round(cssH * dpr);
+    const needPx = cssW * dpr;
+    const scale = Math.max(1, Math.ceil(needPx / LOGICAL_W));
+    canvas.width = LOGICAL_W * scale;
+    canvas.height = LOGICAL_H * scale;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
-    // 논리 좌표가 캔버스 CSS 크기와 일치하도록 scale.
-    const sx = canvas.width / LOGICAL_W;
-    const sy = canvas.height / LOGICAL_H;
-    ctx.setTransform(sx, 0, 0, sy, 0, 0);
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
     return ctx;
   }, []);
 

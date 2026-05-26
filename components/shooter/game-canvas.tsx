@@ -37,7 +37,9 @@ export const GameCanvas = forwardRef<HTMLCanvasElement, Props>(
           tabIndex={0}
           aria-label="Arcade Shooter game canvas"
           className="absolute inset-0 h-full w-full touch-none rounded-md outline-none ring-0 focus-visible:ring-2 focus-visible:ring-amber-400"
-          style={{ imageRendering: "auto" }}
+          // 브라우저의 backing → CSS scale도 nearest로 강제. 픽셀 grid 보존.
+          // sprite·lucide raster 모두 영향 — 적은 RASTER_SIZE 128로 high-res 베이크.
+          style={{ imageRendering: "pixelated" }}
         />
         {showTouchHint && (
           <>

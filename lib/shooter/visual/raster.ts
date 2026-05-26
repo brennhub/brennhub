@@ -25,7 +25,9 @@ export type VisualAssets = {
   sprites: Map<SpriteId, ImageBitmap>;
 };
 
-export const RASTER_SIZE = 64; // 베이킹 해상도 (논리 px 기준 충분히 큰 크기)
+// CSS image-rendering:pixelated 모드에서도 적(ghost/bug) stroke가 깔끔하도록
+// 충분히 큰 source. 36~38 logical px로 draw 시 다운스케일 충분 + DPR 정수배에서도 정보 손실 최소.
+export const RASTER_SIZE = 128;
 
 /** 데이터(enemies)에서 사용하는 (iconId, tint) 조합 — 컴파일 타임에 enumerate. */
 export const ASSET_MANIFEST: { iconId: LucideIconId; tint: string }[] = [
