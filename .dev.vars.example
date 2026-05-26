@@ -1,0 +1,14 @@
+# brennhub 로컬 개발용 환경변수 예시. 실제 값을 `.dev.vars`에 채우고 사용.
+# `.dev.vars`는 `.gitignore` 등재 (절대 commit X).
+# prod/preview 시크릿은 `wrangler secret put <NAME>` (+ `--env preview`)로 등록.
+
+# Google OAuth 2.0 — feat/auth 1-A~B
+# 발급: Google Cloud Console → APIs & Services → Credentials → Create OAuth 2.0 Client ID (Web application)
+# Authorized redirect URIs: https://brennhub.com/api/auth/google/callback,
+#                           https://dev.brennhub.com/api/auth/google/callback,
+#                           http://localhost:3000/api/auth/google/callback (로컬 dev)
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=
+
+# 세션 cookie 서명 + state HMAC. 32바이트 hex 권장 (`openssl rand -hex 32`).
+AUTH_SESSION_SECRET=
