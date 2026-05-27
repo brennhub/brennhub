@@ -25,6 +25,7 @@ const CODE_MAP: Record<string, ErrorKey> = {
   id_token_unverified_email: "idTokenUnverifiedEmail",
   db_error: "dbError",
   internal: "internal",
+  not_admin: "notAdmin",
 };
 
 const AUTO_DISMISS_MS = 5000;

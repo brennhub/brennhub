@@ -16,6 +16,9 @@ export interface AuthUser {
   email: string;
   name: string | null;
   avatar_url: string | null;
+  // 1-A (2026-05-27): admin 권한. 1=admin, 0=일반. middleware는 자체 SQL 사용,
+  // 본 필드는 UI 측 조건 표시(예: admin 메뉴) 등 향후 활용.
+  is_admin: number;
 }
 
 export interface GoogleProfile {
@@ -137,7 +140,7 @@ export async function getUserFromHeaders(
   const sessionId = await sha256Hex(cookieValue);
   const row = await db
     .prepare(
-      "SELECT u.id AS id, u.google_sub AS google_sub, u.email AS email, u.name AS name, u.avatar_url AS avatar_url " +
+      "SELECT u.id AS id, u.google_sub AS google_sub, u.email AS email, u.name AS name, u.avatar_url AS avatar_url, u.is_admin AS is_admin " +
         "FROM sessions s JOIN users u ON s.user_id = u.id " +
         "WHERE s.id = ? AND s.expires_at > ?",
     )

@@ -613,6 +613,7 @@ export type Messages = {
       idTokenUnverifiedEmail: string;
       dbError: string;
       internal: string;
+      notAdmin: string;
     };
   };
   privacy: {
@@ -1301,6 +1302,7 @@ export const messages: Record<Locale, Messages> = {
         idTokenUnverifiedEmail: "이메일 미인증 계정입니다. Google 계정에서 이메일 인증 후 다시 시도해주세요.",
         dbError: "서버 저장에 실패했습니다. 잠시 후 다시 시도해주세요.",
         internal: "서버 설정 오류입니다. 관리자에게 문의해주세요.",
+        notAdmin: "관리자 권한이 필요합니다.",
       },
     },
     privacy: {
@@ -2083,6 +2085,7 @@ export const messages: Record<Locale, Messages> = {
         idTokenUnverifiedEmail: "Email not verified. Verify your email on your Google account and try again.",
         dbError: "Server save failed. Please try again shortly.",
         internal: "Server configuration error. Please contact the admin.",
+        notAdmin: "Admin access required.",
       },
     },
     privacy: {
