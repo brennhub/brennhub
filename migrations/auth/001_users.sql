@@ -1,7 +1,9 @@
 -- brennhub auth: users 테이블 (1-A, 2026-05-20+).
 -- 도메인: 횡단 인프라 (도구 무관). D1 binding: AUTH_DB (database_name: brennhub-auth / brennhub-auth-dev).
--- 적용: Brenn 수동 `wrangler d1 execute brennhub-auth --remote --file=migrations/auth/001_users.sql`
---      (preview env 동일 `--env preview --remote`).
+-- 적용: Brenn 수동.
+--   prod    : `wrangler d1 execute brennhub-auth     --remote --file=migrations/auth/001_users.sql`
+--   preview : `wrangler d1 execute brennhub-auth-dev --remote --file=migrations/auth/001_users.sql`
+--   (`--env preview` flag는 D1을 안 바꿈 — DB 이름을 첫 인자로 직접 지정 필수.)
 
 CREATE TABLE IF NOT EXISTS users (
   id            TEXT    PRIMARY KEY,           -- random 16-byte hex (app 생성)
