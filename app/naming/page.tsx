@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+
+const TITLE = "사주 작명 — 정확한 명리학으로 이름을 짓습니다";
+const DESCRIPTION = "환각 없는 사주 계산과 81수리로 아이 이름을 추천합니다.";
+const URL = `${SITE_URL}/naming`;
 
 export const metadata: Metadata = {
-  title: "사주 작명 — 정확한 명리학으로 이름을 짓습니다",
-  description:
-    "환각 없는 사주 계산과 81수리로 아이 이름을 추천합니다.",
+  title: TITLE,
+  description: DESCRIPTION,
   keywords: [
     "사주 작명",
     "작명",
@@ -13,6 +17,16 @@ export const metadata: Metadata = {
     "81수리",
     "한자 이름",
   ],
+  alternates: { canonical: URL },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: URL,
+    siteName: SITE_NAME,
+    type: "website",
+    locale: "ko_KR",
+  },
+  twitter: { card: "summary", title: TITLE, description: DESCRIPTION },
 };
 
 export default function NamingLandingPage() {
