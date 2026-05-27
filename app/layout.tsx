@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LoginButton } from "@/components/auth/login-button";
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
+import { SiteFooter } from "@/components/site-footer";
 import { DEFAULT_LOCALE } from "@/lib/i18n/types";
 
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('brennhub-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
@@ -66,6 +67,7 @@ export default function RootLayout({
                 </Suspense>
                 {children}
                 <FeedbackButton />
+                <SiteFooter />
               </CurrencyProvider>
             </ColorSchemeProvider>
           </LocaleProvider>

@@ -615,6 +615,35 @@ export type Messages = {
       internal: string;
     };
   };
+  privacy: {
+    title: string;
+    lastUpdated: string;
+    intro: string;
+    collection: {
+      heading: string;
+      description: string;
+      columns: {
+        item: string;
+        source: string;
+        purpose: string;
+        retention: string;
+      };
+      rows: Array<{
+        item: string;
+        source: string;
+        purpose: string;
+        retention: string;
+      }>;
+    };
+    purpose: { heading: string; body: string };
+    retention: { heading: string; body: string };
+    thirdParty: { heading: string; body: string };
+    rights: { heading: string; body: string };
+    contact: { heading: string; body: string; email: string };
+  };
+  footer: {
+    privacy: string;
+  };
   tools: Record<string, { name: string; description: string }>;
 };
 
@@ -1273,6 +1302,91 @@ export const messages: Record<Locale, Messages> = {
         dbError: "서버 저장에 실패했습니다. 잠시 후 다시 시도해주세요.",
         internal: "서버 설정 오류입니다. 관리자에게 문의해주세요.",
       },
+    },
+    privacy: {
+      title: "개인정보 처리방침",
+      lastUpdated: "최종 수정: 2026-05-12",
+      intro:
+        "BrennHub은 로그인 기능 제공에 필요한 최소한의 정보만 수집합니다. 이 페이지는 어떤 정보를 받아 어디에 쓰는지, 얼마나 보관하는지를 코드 수준에서 명확히 밝힙니다.",
+      collection: {
+        heading: "1. 수집 항목",
+        description:
+          "Google 로그인을 통해 받는 정보와, 로그인 과정에서 서버가 생성하는 데이터입니다.",
+        columns: {
+          item: "항목",
+          source: "출처",
+          purpose: "이용 목적",
+          retention: "보유 기간",
+        },
+        rows: [
+          {
+            item: "이메일",
+            source: "Google id_token (email)",
+            purpose: "로그인 식별, UI 표시",
+            retention: "계정 유지 동안",
+          },
+          {
+            item: "이름",
+            source: "Google id_token (name)",
+            purpose: "UI 표시",
+            retention: "계정 유지 동안",
+          },
+          {
+            item: "Google 계정 ID (sub)",
+            source: "Google id_token (sub)",
+            purpose: "사용자 매핑 영구 키",
+            retention: "계정 유지 동안",
+          },
+          {
+            item: "프로필 사진 URL",
+            source: "Google id_token (picture)",
+            purpose: "DB에 저장하지만 현재 UI에서 사용하지 않음",
+            retention: "계정 유지 동안",
+          },
+          {
+            item: "brennhub_session 쿠키",
+            source: "서버 생성 (32-byte 난수)",
+            purpose: "로그인 세션 유지",
+            retention: "30일",
+          },
+          {
+            item: "auth_state 쿠키",
+            source: "서버 생성 (HMAC 토큰)",
+            purpose: "로그인 과정 CSRF 방어",
+            retention: "10분",
+          },
+          {
+            item: "브라우저 정보 (User-Agent)",
+            source: "요청 헤더 (로그인 시점)",
+            purpose: "비정상 접근 감지 / 감사",
+            retention: "세션과 동일 (30일)",
+          },
+        ],
+      },
+      purpose: {
+        heading: "2. 이용 목적",
+        body: "수집한 정보는 로그인 식별과 세션 유지를 위해서만 사용합니다. 도구별 개인 데이터 저장 기능은 향후 단계에서 별도 안내합니다. 광고, 분석, 외부 트래커 용도로는 사용하지 않습니다.",
+      },
+      retention: {
+        heading: "3. 보유 기간",
+        body: "계정이 유지되는 동안 사용자 정보를 보관합니다. 로그인 세션은 30일 후 만료되며, 로그아웃 시 즉시 삭제됩니다. 로그인 과정의 임시 토큰(auth_state)은 10분 후 만료됩니다.",
+      },
+      thirdParty: {
+        heading: "4. 제3자 제공",
+        body: "수집한 정보를 제3자에게 제공하지 않습니다. Google은 인증 제공자(OAuth identity provider)로서 로그인 시점에 정보를 전달하는 주체이며, BrennHub이 정보를 외부로 내보내는 행위는 없습니다.",
+      },
+      rights: {
+        heading: "5. 이용자 권리",
+        body: "본인의 정보 열람, 수정, 삭제를 요청할 수 있습니다. 계정 삭제를 요청하면 사용자 정보와 모든 세션 기록이 즉시 삭제됩니다. 아래 연락처로 요청해주세요.",
+      },
+      contact: {
+        heading: "6. 연락처",
+        body: "본 처리방침과 개인정보 관련 문의는 다음 이메일로 보내주세요.",
+        email: "brennhub.co@gmail.com",
+      },
+    },
+    footer: {
+      privacy: "개인정보 처리방침",
     },
     tools: {
       "email-diag": {
@@ -1970,6 +2084,91 @@ export const messages: Record<Locale, Messages> = {
         dbError: "Server save failed. Please try again shortly.",
         internal: "Server configuration error. Please contact the admin.",
       },
+    },
+    privacy: {
+      title: "Privacy Policy",
+      lastUpdated: "Last updated: 2026-05-12",
+      intro:
+        "BrennHub collects only the minimum information needed to provide sign-in. This page spells out exactly what we receive, where it's used, and how long it's kept — straight from the code.",
+      collection: {
+        heading: "1. What we collect",
+        description:
+          "Information received via Google sign-in, plus data the server generates during the sign-in process.",
+        columns: {
+          item: "Item",
+          source: "Source",
+          purpose: "Purpose",
+          retention: "Retention",
+        },
+        rows: [
+          {
+            item: "Email",
+            source: "Google id_token (email)",
+            purpose: "Account identification, UI display",
+            retention: "While account exists",
+          },
+          {
+            item: "Name",
+            source: "Google id_token (name)",
+            purpose: "UI display",
+            retention: "While account exists",
+          },
+          {
+            item: "Google account ID (sub)",
+            source: "Google id_token (sub)",
+            purpose: "Stable user mapping key",
+            retention: "While account exists",
+          },
+          {
+            item: "Profile picture URL",
+            source: "Google id_token (picture)",
+            purpose: "Stored in DB but not currently shown in the UI",
+            retention: "While account exists",
+          },
+          {
+            item: "brennhub_session cookie",
+            source: "Server-generated (32-byte random)",
+            purpose: "Maintain sign-in session",
+            retention: "30 days",
+          },
+          {
+            item: "auth_state cookie",
+            source: "Server-generated (HMAC token)",
+            purpose: "CSRF protection during sign-in",
+            retention: "10 minutes",
+          },
+          {
+            item: "User-Agent string",
+            source: "Request header (at sign-in time)",
+            purpose: "Audit / detect abnormal access",
+            retention: "Same as session (30 days)",
+          },
+        ],
+      },
+      purpose: {
+        heading: "2. Purpose of use",
+        body: "Collected information is used solely for sign-in identification and session maintenance. Per-tool personal data storage is a future phase and will be announced separately. We do not use this data for advertising, analytics, or external trackers.",
+      },
+      retention: {
+        heading: "3. Retention",
+        body: "User information is kept while the account exists. Sessions expire after 30 days and are deleted immediately on sign-out. The temporary sign-in token (auth_state) expires after 10 minutes.",
+      },
+      thirdParty: {
+        heading: "4. Third-party sharing",
+        body: "We do not share collected information with third parties. Google acts as an identity provider that delivers information to us at sign-in; BrennHub does not forward any data outward.",
+      },
+      rights: {
+        heading: "5. Your rights",
+        body: "You may request access, correction, or deletion of your information. On account deletion, your user record and all session entries are removed immediately. Contact us at the address below.",
+      },
+      contact: {
+        heading: "6. Contact",
+        body: "Send questions about this policy or your data to the address below.",
+        email: "brennhub.co@gmail.com",
+      },
+    },
+    footer: {
+      privacy: "Privacy Policy",
     },
     tools: {
       "email-diag": {
