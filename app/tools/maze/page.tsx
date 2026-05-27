@@ -4,6 +4,9 @@ import { isValidShortId } from "@/lib/maze/share";
 import type { MazeProject } from "@/lib/maze/types";
 import { MazeClientShell } from "./client-shell";
 import { SharedNotFound } from "@/components/maze/shared-not-found";
+import { toolMetadata } from "@/lib/seo";
+
+export const metadata = toolMetadata("maze");
 
 /**
  * 미로 만들기 + 숏링크 진입 (P4a 0.14.0).

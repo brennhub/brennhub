@@ -13,6 +13,7 @@ import { LoginButton } from "@/components/auth/login-button";
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
 import { SiteFooter } from "@/components/site-footer";
 import { DEFAULT_LOCALE } from "@/lib/i18n/types";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('brennhub-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
 
@@ -27,8 +28,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BrennHub — indie tools by brenn",
-  description: "A factory of small, sharp, opinionated tools.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${SITE_NAME} — indie tools by brenn`,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  alternates: {
+    canonical: SITE_URL,
+    languages: { ko: SITE_URL, en: SITE_URL },
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    url: SITE_URL,
+    title: `${SITE_NAME} — indie tools by brenn`,
+    description: SITE_DESCRIPTION,
+    locale: "ko_KR",
+    alternateLocale: ["en_US"],
+  },
+  twitter: {
+    card: "summary",
+    title: `${SITE_NAME} — indie tools by brenn`,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

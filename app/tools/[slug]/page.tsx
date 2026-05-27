@@ -1,6 +1,17 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { tools } from "@/lib/tools-registry";
+import { toolMetadata } from "@/lib/seo";
 import { ClientSlugPage } from "./client-page";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  return toolMetadata(slug);
+}
 
 export function generateStaticParams() {
   // 전용 page.tsx가 있는 슬러그는 제외 — 그렇지 않으면 [slug]와 전용

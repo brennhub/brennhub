@@ -4,6 +4,9 @@ import type {
   Supplement,
 } from "@/lib/supp-plan/types";
 import { SuppPlanClientShell } from "./client-shell";
+import { toolMetadata } from "@/lib/seo";
+
+export const metadata = toolMetadata("supp-plan");
 
 type SupplementRow = {
   id: string;
