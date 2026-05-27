@@ -24,7 +24,8 @@
 		"binding": "AI"
 	},
 	"vars": {
-		"AI_PROVIDER": "workers-ai"
+		"AI_PROVIDER": "workers-ai",
+		"GOOGLE_OAUTH_CLIENT_ID": "814605358293-0tvp8f2gppdetbb6ugg994l1uavor6r4.apps.googleusercontent.com"
 	},
 	"observability": {
 		"enabled": true,
@@ -90,7 +91,8 @@
 				"binding": "AI"
 			},
 			"vars": {
-				"AI_PROVIDER": "workers-ai"
+				"AI_PROVIDER": "workers-ai",
+				"GOOGLE_OAUTH_CLIENT_ID": "814605358293-0tvp8f2gppdetbb6ugg994l1uavor6r4.apps.googleusercontent.com"
 			},
 			"observability": {
 				"enabled": true,
