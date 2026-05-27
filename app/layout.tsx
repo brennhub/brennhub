@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
+import { headers } from "next/headers";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import "./globals.css";
 import { LocaleProvider } from "@/lib/i18n/provider";
 import { LocaleToggle } from "@/components/locale-toggle";
@@ -9,11 +11,13 @@ import { CurrencyProvider } from "@/components/currency-provider";
 import { FeedbackButton } from "@/components/feedback-button";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { LoginButton } from "@/components/auth/login-button";
+import { LoginButtonClient } from "@/components/auth/login-button-client";
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
+import { UserProvider } from "@/components/auth/user-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { DEFAULT_LOCALE } from "@/lib/i18n/types";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { getUserFromHeaders } from "@/lib/auth/session";
 
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('brennhub-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
 
@@ -54,11 +58,34 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+interface AuthEnv {
+  AUTH_DB?: D1Database;
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // 세션 1회 조회 → UserProvider Context + LoginButton에 공유.
+  // AUTH_DB 미바인딩/DB 오류 → user=null (로그아웃 상태로 graceful).
+  let user = null;
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    const db = (env as unknown as AuthEnv).AUTH_DB;
+    if (db) {
+      const h = await headers();
+      user = await getUserFromHeaders(db, h as unknown as Headers);
+    }
+  } catch (err) {
+    // Next는 prerender 시도 시 cookie 사용을 "Dynamic server usage"로 던짐 (정상 — 본 layout은
+    // 의도적으로 dynamic). 실제 런타임 에러만 로그.
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!msg.includes("Dynamic server usage")) {
+      console.error("[layout] session lookup failed:", err);
+    }
+  }
+
   return (
     <html
       lang="en"
@@ -78,19 +105,19 @@ export default function RootLayout({
           <LocaleProvider>
             <ColorSchemeProvider>
               <CurrencyProvider>
-                <header className="flex justify-end items-center gap-3 px-4 pt-4 sm:px-6">
-                  <ThemeToggle />
-                  <LocaleToggle />
+                <UserProvider user={user}>
+                  <header className="flex justify-end items-center gap-3 px-4 pt-4 sm:px-6">
+                    <ThemeToggle />
+                    <LocaleToggle />
+                    <LoginButtonClient />
+                  </header>
                   <Suspense fallback={null}>
-                    <LoginButton />
+                    <AuthErrorToast />
                   </Suspense>
-                </header>
-                <Suspense fallback={null}>
-                  <AuthErrorToast />
-                </Suspense>
-                {children}
-                <FeedbackButton />
-                <SiteFooter />
+                  {children}
+                  <FeedbackButton />
+                  <SiteFooter />
+                </UserProvider>
               </CurrencyProvider>
             </ColorSchemeProvider>
           </LocaleProvider>
