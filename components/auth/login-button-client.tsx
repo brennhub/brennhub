@@ -6,21 +6,19 @@
  * - 로그인 상태  : 이름(없으면 email) + 로그아웃 form (POST, prefetch 방어)
  *
  * Next Link 미사용 — /api/auth/google/start는 302 → 외부 origin(Google)이라 plain <a>가 맞음.
+ * user는 UserProvider Context에서 (2-1, 2026-05-27 — 이전엔 prop). layout이 1회 server 조회 후 Context 주입.
  */
 
 import { usePathname } from "next/navigation";
 import { useMessages } from "@/lib/i18n/provider";
-import type { AuthUser } from "@/lib/auth/session";
+import { useCurrentUser } from "./user-provider";
 
-interface Props {
-  user: AuthUser | null;
-}
-
-export function LoginButtonClient({ user }: Props) {
+export function LoginButtonClient() {
   const t = useMessages().auth;
   const pathname = usePathname();
+  const user = useCurrentUser();
 
-  // /admin* 은 별도 basic auth 영역 — Google 로그인 노출 X.
+  // /admin* 은 별도 영역 — 헤더 노출 X.
   if (pathname?.startsWith("/admin")) return null;
 
   if (!user) {
