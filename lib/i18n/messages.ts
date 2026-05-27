@@ -576,6 +576,20 @@ export type Messages = {
     errorRateLimit: string;
     cardIconTooltip: string;
   };
+  auth: {
+    signIn: string;
+    signOut: string;
+    errors: {
+      stateMismatch: string;
+      stateInvalid: string;
+      stateExpired: string;
+      tokenExchangeFailed: string;
+      idTokenInvalid: string;
+      idTokenUnverifiedEmail: string;
+      dbError: string;
+      internal: string;
+    };
+  };
   tools: Record<string, { name: string; description: string }>;
 };
 
@@ -1194,6 +1208,20 @@ export const messages: Record<Locale, Messages> = {
       errorTooLong: "메시지가 너무 깁니다 (최대 2000자)",
       errorRateLimit: "잠시 후 다시 시도해주세요",
       cardIconTooltip: "이 도구 피드백",
+    },
+    auth: {
+      signIn: "로그인",
+      signOut: "로그아웃",
+      errors: {
+        stateMismatch: "로그인 세션이 일치하지 않습니다. 다시 시도해주세요.",
+        stateInvalid: "로그인 검증에 실패했습니다. 다시 시도해주세요.",
+        stateExpired: "로그인 시도가 만료됐어요. 다시 시도해주세요.",
+        tokenExchangeFailed: "Google 인증 통신에 실패했습니다. 잠시 후 다시 시도해주세요.",
+        idTokenInvalid: "Google 토큰 검증에 실패했습니다. 다시 시도해주세요.",
+        idTokenUnverifiedEmail: "이메일 미인증 계정입니다. Google 계정에서 이메일 인증 후 다시 시도해주세요.",
+        dbError: "서버 저장에 실패했습니다. 잠시 후 다시 시도해주세요.",
+        internal: "서버 설정 오류입니다. 관리자에게 문의해주세요.",
+      },
     },
     tools: {
       "email-diag": {
@@ -1847,6 +1875,20 @@ export const messages: Record<Locale, Messages> = {
       errorTooLong: "Message too long (max 2000 chars)",
       errorRateLimit: "Please try again shortly",
       cardIconTooltip: "Feedback for this tool",
+    },
+    auth: {
+      signIn: "Sign in",
+      signOut: "Sign out",
+      errors: {
+        stateMismatch: "Sign-in session mismatch. Please try again.",
+        stateInvalid: "Sign-in verification failed. Please try again.",
+        stateExpired: "Sign-in attempt expired. Please try again.",
+        tokenExchangeFailed: "Google auth communication failed. Please try again shortly.",
+        idTokenInvalid: "Google token verification failed. Please try again.",
+        idTokenUnverifiedEmail: "Email not verified. Verify your email on your Google account and try again.",
+        dbError: "Server save failed. Please try again shortly.",
+        internal: "Server configuration error. Please contact the admin.",
+      },
     },
     tools: {
       "email-diag": {

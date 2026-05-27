@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { LocaleProvider } from "@/lib/i18n/provider";
 import { LocaleToggle } from "@/components/locale-toggle";
@@ -8,6 +9,8 @@ import { CurrencyProvider } from "@/components/currency-provider";
 import { FeedbackButton } from "@/components/feedback-button";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LoginButton } from "@/components/auth/login-button";
+import { AuthErrorToast } from "@/components/auth/auth-error-toast";
 import { DEFAULT_LOCALE } from "@/lib/i18n/types";
 
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('brennhub-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
@@ -51,10 +54,16 @@ export default function RootLayout({
           <LocaleProvider>
             <ColorSchemeProvider>
               <CurrencyProvider>
-                <header className="flex justify-end gap-2 px-4 pt-4 sm:px-6">
+                <header className="flex justify-end items-center gap-3 px-4 pt-4 sm:px-6">
                   <ThemeToggle />
                   <LocaleToggle />
+                  <Suspense fallback={null}>
+                    <LoginButton />
+                  </Suspense>
                 </header>
+                <Suspense fallback={null}>
+                  <AuthErrorToast />
+                </Suspense>
                 {children}
                 <FeedbackButton />
               </CurrencyProvider>
