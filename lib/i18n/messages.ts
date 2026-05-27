@@ -620,6 +620,15 @@ export type Messages = {
   footer: {
     privacy: string;
   };
+  admin: {
+    title: string;
+    dashboardTitle: string;
+    dashboardIntro: string;
+    menu: {
+      dashboard: string;
+      feedback: string;
+    };
+  };
   tools: Record<string, { name: string; description: string }>;
 };
 
@@ -1338,6 +1347,15 @@ export const messages: Record<Locale, Messages> = {
     },
     footer: {
       privacy: "개인정보 처리방침",
+    },
+    admin: {
+      title: "관리자",
+      dashboardTitle: "BrennHub 관리자 대시보드",
+      dashboardIntro: "사이트 운영 메뉴",
+      menu: {
+        dashboard: "대시보드",
+        feedback: "피드백",
+      },
     },
     tools: {
       "email-diag": {
@@ -2091,6 +2109,15 @@ export const messages: Record<Locale, Messages> = {
     },
     footer: {
       privacy: "Privacy Policy",
+    },
+    admin: {
+      title: "Admin",
+      dashboardTitle: "BrennHub Admin Dashboard",
+      dashboardIntro: "Site operations menu",
+      menu: {
+        dashboard: "Dashboard",
+        feedback: "Feedback",
+      },
     },
     tools: {
       "email-diag": {
