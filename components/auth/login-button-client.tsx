@@ -9,7 +9,9 @@
  * user는 UserProvider Context에서 (2-1, 2026-05-27 — 이전엔 prop). layout이 1회 server 조회 후 Context 주입.
  */
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Settings } from "lucide-react";
 import { useMessages } from "@/lib/i18n/provider";
 import { useCurrentUser } from "./user-provider";
 
@@ -36,6 +38,16 @@ export function LoginButtonClient() {
   const displayName = user.name || user.email;
   return (
     <div className="flex items-center gap-2">
+      {user.is_admin === 1 && (
+        <Link
+          href="/admin"
+          aria-label={t.adminPanel}
+          title={t.adminPanel}
+          className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+        >
+          <Settings className="size-4" />
+        </Link>
+      )}
       <span className="text-sm text-zinc-700 dark:text-zinc-200" title={user.email}>
         {displayName}
       </span>
