@@ -42,7 +42,7 @@ export const tools: Tool[] = [
   {
     id: "saju-naming",
     slug: "saju-naming",
-    status: "coming-soon",
+    status: "live",
     createdAt: "2026-05-19",
   },
   {

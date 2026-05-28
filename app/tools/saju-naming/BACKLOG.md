@@ -57,6 +57,8 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 - 영어 fallback도 612자만 가능 (100% 아님). 886자는 한·영 의미 모두 없음.
 - 상세: `docs/learnings/2026-05-19-saju-naming-task-39b-recon.md`.
 
+> **정정 (C-5-2 정찰, 본 표 수치는 0.6.5 정찰 매듭 당시 보존)**: gov 9,460 / 교집합 7,960 / gov-only 1,500 / 영어 cover 613 / 의미 전무 887 / 추천 8,573 / 공식 대비 초과 71자. 적재 구현은 정정값 사용. 상세 `2026-05-19-saju-naming-c5-2-recon.md` 항목 1.
+
 ##### D안 — 적재 정책 [확정]
 
 - 9,443자 (공식 9,389) **전부 D1 적재** — 데이터 보존.
@@ -104,17 +106,20 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
 ##### C-5 — 5-way join + 적재 (7단계 분해)
 
-임계 경로: C-5-1 → C-5-2 → C-5-6 → C-5-7. C-5-3 / C-5-4는 C-5-1과 독립 (병렬 가능).
+임계 경로: C-5-1 → C-5-2 → C-5-6 → C-5-7. C-5-3 / C-5-4는 C-5-1과 독립 (병렬 가능). C-5-3 / C-5-4 외에 C-5-8도 C-5-2와 병렬 시도 가능.
 
 | 단계 | 내용 | 의존 | 추정 | 주의점 |
 |---|---|---|---|---|
 | **C-5-1** ✅ | D1 스키마 설계 — `migrations/003_hanja_full.sql` (DROP + CREATE 신 테이블, 컬럼 12 / index 5) | — | 완료 | 신 테이블 확정 (ALTER 아님 — SQLite NOT NULL 완화 불가). 상세 ↓ §C-5-1 결과 |
-| **C-5-2** | rutopio gov+naver 적재 스크립트 — CSV 파싱 + 코드포인트 정규화 + join. 9,443↔9,389 reconcile | C-5-1 | 0.5d | 한 한자에 음 복수 (가/나 두음 등) → hangeul 다중값 처리 정책 |
-| **C-5-3** | Unihan 추출 스크립트 — 부수(`kRSUnicode`)/획수(`kTotalStrokes`)/영어정의(`kDefinition`). UAX #38 탭 파싱 | — (병렬) | 0.5d | Unihan 8.5MB — repo 미포함, 스크립트가 다운로드 or 캐시 |
-| **C-5-4** | 214부수×5행 자원오행 매핑표 자체 구축 — web_search 정찰 + 작명소 통용 매핑 정리 + 출처 docstring | — (병렬) | 1d | 학파 차이 → 표준안 1개 확정. C-4-A 결정 사항 |
-| **C-5-5** | 원획법(C-4-B) 코드화 — `lib/saju-naming/won-stroke.ts`. 14부수 환원표 + 숫자 한자 룰 | C-5-3 | 0.5d | C-4-B 확정표 그대로. PoC 검증 |
-| **C-5-6** | 별도 bulk INSERT 마이그레이션 생성 (파일명은 C-5-6 진입 시 확정 — `002_hanja_seed.sql` 네이밍과 일관) — 5-way join 결과 bulk INSERT, 배치 분할 | C-5-1~5 | 0.5d | D1 제약: statement 크기 / 변수 수 한도 → 배치 (~수백 row/INSERT). 003은 C-5-1에서 스키마 전용 확정 |
-| **C-5-7** | dev 적재 + 검증 — `wrangler d1 execute`, COUNT 9,443, spot-check, hanja-search/recommend API 회귀 | C-5-6 | 0.5d→1d? | Brenn 수동 apply 가능성. 적재 후 39-C(점수 base) 진입 가능. ⚠️ recommend WHERE 재설계 필요 — 상세 ↓ §C-5-7 보류 |
+| **C-5-2** ✅ | rutopio gov+naver 적재 스크립트 — CSV 파싱 + 코드포인트 정규화 + join. 9,460↔9,389 reconcile (71자 초과, efamily 매칭 필요) 결과: 9,460자 staged JSON 생성 (scripts/data/staged-hanja.json). 71자 미구분 + inname_ok=1 fallback (C-5-8 reconcile 대기). | C-5-1 | 0.5d | 한 한자에 음 복수 (가/나 두음 등) → hangeul 다중값 처리 정책 |
+| **C-5-3** ✅ | Unihan 추출 스크립트 — 부수(`kRSUnicode`)/획수(`kTotalStrokes`)/영어정의(`kDefinition`). UAX #38 탭 파싱 결과: 9,460 한자 staged-unihan.json 생성 (실제 CJK 9,055 부수/획수 100% / 비표준 405 null). kDefinition 채움 83.4%. | — (병렬) | 0.5d | Unihan 8.5MB — repo 미포함, 스크립트가 다운로드 or 캐시 |
+| **C-5-4** ✅ | 214부수×5행 자원오행 매핑표 자체 구축 — web_search 정찰 + 작명소 통용 매핑 정리 + 출처 docstring 결과: 자체 구축 (다수안 + 字源 cross-reference + 학파 plug-in 구조). brennhub AI 학파(ai-default) ~120 만장일치 + ~90 차이 다수안 채택. Advanced 전통 학파 옵션은 별도 task (39-D). | — (병렬) | 1d | 학파 차이 → 표준안 1개 확정. C-4-A 결정 사항 |
+| **C-5-5** ✅ | 원획법(C-4-B) 코드화 — `lib/won-stroke.ts`. 14부수 환원표 + 숫자 한자 룰 결과: C-4-B scope (14부수 + 숫자) 정확 구현. seed 22/25 통과 — 3건(城/熙/燁) base 획수 Unihan ≠ 명리학 차이 (C-4-B scope 밖 한계). | C-5-3 | 0.5d | C-4-B 확정표 그대로. PoC 검증 |
+| **C-5-6** ✅ | 별도 bulk INSERT 마이그레이션 생성 (004/005) — 5-way join 결과 bulk INSERT, 배치 분할 결과: 004 nullable 재생성 + 005 9,460 row bulk INSERT (배치 500/INSERT). 음령오행 = lib/names.ts getSoundOhaeng 재사용. node:sqlite dry-run 검증 (COUNT 9,460 / stroke·won·ja null 405 / ohaeng null 0). | C-5-1~5 | 0.5d | D1 제약: statement 크기 / 변수 수 한도 → 배치 (500 row/INSERT). ✅ 선결 완료: 004_hanja_rebuild.sql (stroke/won_stroke nullable, 비표준 405자 수용) + 음령오행 lib/names.ts 재사용. migration apply(004→005)는 Brenn 수동 |
+| **C-5-7a** ✅ | dev preview 적재 (004+005, COUNT 9,460) + API 회귀 + latency 측정 결과: hanja-search·saju ✅ 정상 / recommend ✗ 전건 실패 — n=1 HTTP 500 (null-stroke), n=2 HTTP 503/1102 (Workers CPU, O(n²) 89M). 상세 `docs/learnings/2026-05-21-saju-naming-c5-7a-api-regression.md` | C-5-6 | 0.5d | Brenn 수동 apply 완료 |
+| **C-5-7b** ◐ | recommend 재설계 — null-stroke 제외 / yongsin SQL 필터 / 81수리 won_stroke 전환 / surie defensive / hanja-search cascade. **n=1·사주필터·null-stroke·won_stroke·cascade ✅** (dev HTTP 검증). **n=2 ❌** — pool² 100만 NameCandidate 배열 materialize → Workers 메모리 503 → C-5-7c로. 상세 `docs/learnings/2026-05-21-saju-naming-c5-7b-recommend-redesign.md` | C-5-7a | 0.5d→1d | F3(calcOhaengScore 음령 중복)는 39-C defer |
+| **C-5-7c** ✅ | recommend n=2 메모리 해결 — `recommendNames` bounded top-N (pool² 배열 materialize 제거, 메모리 O(topN)) + POOL_LIMIT 1000→500 결과: Workers 128MB OOM 해소. dev HTTP 회귀 ✅ (n=1·n=2 200 / 사주 필터 효과 / null-stroke 0 / n=2 p95 193ms). 상세 `docs/learnings/2026-05-21-saju-naming-c5-7c-recommend-bounded.md` | C-5-7b | 0.5d | 근본 원인 = 메모리 단독 (128MB — paid 동일). frequency 무효 → 39-C flag |
+| **C-5-8** ✅ | inname_ok 정확화 — 비표준 405자(plane 10/15, 유효 Unicode CJK 아님 = 출생신고 입력 불가) `inname_ok=0`. 결과: 006 migration `UPDATE WHERE codepoint≥0xA0000`, inname_ok=1 9,460→9,055. 정찰: 권위 출처(법령 별표1)는 한자가 BMP 이미지 7,274개 임베드 → 추출 불가 → **Option B(데이터-검증 가능한 비표준 제외, 안전 방향)** 채택. node:sqlite dry-run 통과, dev apply는 Brenn 수동. 상세 `docs/learnings/2026-05-21-saju-naming-c5-8-inname-ok-reconcile.md` | C-5-2 | 0.5d | "71자 초과" 정정 — 표준 CJK 9,055는 공식 9,389 대비 오히려 334자 부족. 정밀 권위 reconcile → 39-C (비critical) |
 
 ##### C-5-1 결과 — hanja 신 스키마 확정 [완료 2026-05-19]
 
@@ -140,6 +145,21 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
 - [ ] `calcOhaengScore` / `calcSoundScore` base값 재검토 — 현재 base=0. 39-B 풀 데이터 적재 후 실제 점수 분포 측정 → base 재설정.
 - 의존: 39-B C-5 완료 필수 (25자 시드로는 분포 측정 불가).
+- ⚠️ flag: 명리학 획수 정확도 보정 (Unihan kTotalStrokes ↔ 명리학 작명 ~12% 표본 델타 — C-5-5 발견) — 39-C 점수 튜닝 진입 시 또는 별도 task에서 명리학 획수 보정 데이터셋 재검토.
+- ⚠️ flag: `calcOhaengScore`가 `c.ohaeng`(음령오행) 채점 — `calcSoundScore`와 동일 축 이중 채점 (C-5-7b F3 발견). 자원오행(`ja_ohaeng`)은 C-5-7b에서 SQL 필터로 승격 → 오행 점수 축을 자원오행 기반으로 재정합 + 가중치(오행 40%/발음 25%) 재설계 필요.
+- ⚠️ flag: `frequency` 컬럼 전 row default 3 (005 적재 — per-한자 빈도 데이터 없음) → recommend/hanja-search의 `ORDER BY frequency DESC` 무효 (C-5-7c 발견). 빈도 기반 정렬·다양성·점수 가중치는 39-C에서 frequency 데이터 확보 후.
+- [ ] 정밀 권위 inname_ok reconcile (C-5-8 후속, 비critical) — 법령 별표1 「인명용추가한자표」 BMP 이미지 7,274개를 풀커버리지 CJK 폰트 렌더와 픽셀 매칭 → 코드포인트 복원, 교육용 기초한자 1,800자 합집합 = 공식 권위 셋. BrennHub 9,460과 정밀 diff. ~1.5~2d. C-5-8 Option B(비표준 405 안전 제외)가 적용돼 있어 44 UI live 비차단. 정찰 상세: `docs/learnings/2026-05-21-saju-naming-c5-8-inname-ok-reconcile.md`.
+- [ ] 이름 한자 다중음 검색 (Task 44 2단계 Fix A, 비critical) — `hanja` 테이블이 한자당 단일 primary `hangeul`만 보유 → `hanja-search`가 비-primary 음(두음법칙·다중음) 한자를 못 찾음 (Task 44 2단계 dev 검증서 발견: `hanja-search?hangeul=김` 0건). 성씨는 Task 44에서 큐레이션 정적 목록(`lib/surnames.ts`)으로 우회. 이름 한자 검색까지 다중음 지원하려면: `hanja`에 `hangeul_all` 컬럼 추가 (staged-hanja.json엔 이미 있음) + 재적재 migration + `hanja-search` WHERE를 `hangeul_all` 포함 검색으로 확장. 현재 이름 한자 검색은 primary 음으로 충분해 비critical.
+- [ ] 음령오행 상생 방향 가산점 `directionBonus` refinement (음령오행 2단계 후속, 비critical) — 음령오행 상생 채점은 현재 방향 무관(다수안). 방향성 이론("이름→성 방향 상생이 최선, 성→이름 차선")이 정찰서 1회 확인됐으나 verbatim 1차 출처 핀포인트 실패 → "추측 금지" 원칙상 보류. 1차 출처(작명 권위서/sajuforum 등) 확보 시 `relateOhaeng` 위에 상생 내 방향 가산점을 선택적 plug-in으로 추가 (학파 분기 아님, 상생 통과 여부 불변·미세 우열만). 출처 확보 의존. 정찰: `docs/learnings/2026-05-21-saju-naming-sound-ohaeng.md` §5.
+- ◐ 추천 품질 — 경량 가드 적용 (39-C): `lib/name-exclude.ts`(희귀 블록 Ext A/B + 부정 의미 키워드 + 명시 블랙리스트) + `recommendNames` 다양성(`selectDiverse` 첫 글자 distinct). dev 검증 2회 관측(金犴危/金卵㔕) 해소.
+- [ ] frequency 본격 정렬 (39-C 후속, blocked — 자료 의존) — 무료·기계가독 per-한자 빈도 미가용 정찰 확정(대법원=한글 이름순위 per-name / Unihan kFrequency=Unicode 17.0 제거). 작명 빈도 데이터 확보(협의·구매·타 코퍼스) 시 `frequency` 컬럼 populate → recommend route 기존 `ORDER BY frequency DESC` 활성 → 풀-레벨 희귀자 demotion + 빈도 기반 정렬. 현재 stroke ASC 풀 선택의 벽자 편향 근본 해소.
+
+#### 39-D — Advanced 전통 학파 옵션 (자원오행)
+
+- [ ] **Advanced 전통 학파 옵션 추가 — 김기승 / 이재승 / 안태옥 등** — brennhub AI 학파(ai-default)와 사용자 선택 가능. lib `radical-ohaeng.ts` plug-in 구조에 학파별 `RADICAL_OHAENG_*` 매핑 + `School` union 확장 + `SCHOOL_TABLES` 등록. UI Advanced 옵션 디자인 (44 UI live 단계 연계).
+- 의존: C-5-4 ✅ + Brenn 권위서 입수 (김기승 『자원오행 성명학』 / 이재승 2024 KCI 논문 / 안태옥 ksname).
+- 추정: 학파당 0.5d.
+- 주의점: UI Advanced 옵션 디자인 — 44 UI live 단계와 연계. 학파 우열 표기 X (사용자 선택권).
 
 ### Task 40 — 81수리 (수리길흉)
 - [x] `lib/surie.ts` — 원형이정 (元亨利貞) 4격 계산

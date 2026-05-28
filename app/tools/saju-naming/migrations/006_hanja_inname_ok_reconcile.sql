@@ -1,0 +1,26 @@
+-- saju-naming: hanja inname_ok 정확화. C-5-8 (비표준 405자 제외).
+-- 선행: 004_hanja_rebuild.sql + 005_hanja_seed_full.sql (9,460 row, 전부 inname_ok=1).
+--
+-- 배경: 005는 rutopio gov 크롤 9,460자를 전부 inname_ok=1로 적재 (C-5-2 fallback).
+--   공식 인명용 한자 권위 리스트와 reconcile 필요하나, 권위 출처(법령 「가족관계의
+--   등록 등에 관한 규칙」 별표1 인명용추가한자표)는 한자가 BMP 이미지로만 임베드
+--   → 기계 추출 불가 (C-5-8 정찰).
+--
+-- 채택(Option B — 안전 부분 reconcile): plane 10/15 코드포인트(codepoint ≥ 0xA0000)는
+--   유효 Unicode CJK가 아님 → 가족관계등록(출생신고) 시스템 입력 불가 → inname_ok=0.
+--   codepoint ≥ 0xA0000 = plane 10 (U+A0000~, Unicode 미지정 영역, 377자)
+--                       ∪ plane 15 (U+F0000~, 사설영역 SPUA-A, 28자) = 405자.
+--   유효 CJK는 최대 plane 3 (ExtG~I·호환보충) → 0xA0000(655360)은 안전 임계.
+--   범위 == staged-unihan total_strokes=null set (C-5-3 비표준 405자) 교차검증 완료.
+--   대상 목록 감사: scripts/data/staged-inname-ok-reconcile.json (405 codepoint).
+--
+-- 효과: inname_ok=1 9,460 → 9,055 / inname_ok=0 0 → 405.
+--   recommend는 이미 `stroke IS NOT NULL`로 405 비표준 제외 중 → 동작 변화 없음.
+--   본 migration은 inname_ok 컬럼 의미를 정직하게 정합 (officially registerable).
+--
+-- 정밀 권위 reconcile(별표1 BMP 이미지 매핑 + 교육용 기초한자 1,800 합집합)은
+--   별도 후속 task (비critical — Option B 안전 제외 적용 후 44 UI live 비차단).
+--
+-- apply는 Brenn 수동 (dev `--env preview --remote` / prod `--remote`).
+
+UPDATE hanja SET inname_ok = 0 WHERE codepoint >= 655360;

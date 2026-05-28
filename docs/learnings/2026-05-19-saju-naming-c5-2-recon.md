@@ -106,6 +106,8 @@ hangul,consonant,unicode,hanja,meaning,id
   - `hangeul`: gov의 콤마-join을 그대로 쓸지(`락,낙,악,요`) vs 대표음 1개 선택.
   - `meaning`: naver는 읽기별로 의미가 다름 → 대표 1개 vs 전체 join. (자문 thread 결정 사항.)
 
+> **정정 (2026-05-20 C-5-2 본 적재)**: "682 (2회 664 / 3회 15 / 4회 3)"는 gov row 중복 횟수 proxy로, 한 번만 등장하는 복수음자 181자를 누락. gov hangul 콤마-리스트 직접 측정 = 863 (분포 1:8597 / 2:843 / 3:16 / 4:4). build script 검증 통계 참조.
+
 ---
 
 ## 5. 9,460 vs 9,389 reconcile

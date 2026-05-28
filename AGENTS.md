@@ -10,6 +10,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 도구 작업 시 먼저 읽기: `app/tools/<tool>/{README,BACKLOG,CHANGELOG}.md`. 공유 패턴: 루트 `PATTERNS.md`. 인프라 변경 이력: 루트 `CHANGELOG.md`. 도구 목록 인덱스: 루트 `TOOLS.md`. 기존 패턴 재사용 우선.
 
+# Output policy
+
+작업 출력 약식:
+- Plan: 그대로 (단계 + 근거 명시).
+- 실행 중: 한 줄씩 ("X 실행 중", "Y 완료" 수준).
+- 최종 보고: 그대로.
+
 # Push policy
 
 기본: 빌드 통과 + commit 완료 후 자동 push.
