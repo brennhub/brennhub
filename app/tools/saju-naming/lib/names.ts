@@ -183,21 +183,26 @@ export function recommendNames(
       !isExcludedFromRecommend({ character: h.character, meaning: h.meaning }),
   );
 
-  // 3. bounded 버퍼 — 상위 K개만 정렬 유지 (메모리 O(K), pool² 아님; C-5-7c).
-  //    다양성 선별을 위해 topN보다 큰 버퍼 확보 후 최종 선택 (39-C).
+  // 3. 첫 글자(이름 첫 음절)별 버킷 — 상위 perFirstCap개씩 유지 (39-C 다양성).
+  //    score-only 버퍼는 동점 후보가 같은 첫 글자로 가득 차 다양화 불가 →
+  //    첫 글자별로 분리 유지해 동점 클러스터 방지. 메모리 O(distinctFirsts × cap).
   const limit = options.topN;
-  const bufferLimit = Math.min(200, Math.max(limit * 10, 50));
-  const buffer: NameCandidate[] = [];
+  if (limit <= 0) return [];
+  const perFirstCap = Math.max(1, limit);
+  const byFirst = new Map<string, NameCandidate[]>();
   function consider(cand: NameCandidate): void {
-    if (buffer.length < bufferLimit) {
-      buffer.push(cand);
-      buffer.sort((a, b) => b.totalScore - a.totalScore);
-    } else if (
-      bufferLimit > 0 &&
-      cand.totalScore > buffer[buffer.length - 1].totalScore
-    ) {
-      buffer[buffer.length - 1] = cand;
-      buffer.sort((a, b) => b.totalScore - a.totalScore);
+    const first = cand.hangeul[0] ?? "";
+    let arr = byFirst.get(first);
+    if (!arr) {
+      arr = [];
+      byFirst.set(first, arr);
+    }
+    if (arr.length < perFirstCap) {
+      arr.push(cand);
+      arr.sort((a, b) => b.totalScore - a.totalScore);
+    } else if (cand.totalScore > arr[arr.length - 1].totalScore) {
+      arr[arr.length - 1] = cand;
+      arr.sort((a, b) => b.totalScore - a.totalScore);
     }
   }
 
@@ -215,36 +220,35 @@ export function recommendNames(
     }
   }
 
-  // 5. 다양성 선별 — 이름 첫 글자 중복 최소화하며 topN 선택 (39-C).
-  return selectDiverse(buffer, limit);
+  // 5. 다양성 선별 — 첫 글자 distinct 우선 (39-C).
+  return selectDiverse(byFirst, limit);
 }
 
 /**
- * 점수 desc 버퍼에서 topN 선택 — 이름 첫 글자 distinct 우선 (다양성).
- *   1차: 첫 글자 미사용 후보 우선 pick. 2차: 부족분은 점수순 채움(중복 허용).
- *   최종 점수 desc 재정렬 (표시 순서).
+ * 첫 글자별 버킷에서 topN 선택 — 다양성 우선.
+ *   rank 0(각 첫 글자 best)부터 라운드로빈: 같은 rank 후보를 점수순으로 채움 →
+ *   distinct 첫 글자가 먼저 선택됨. topN ≤ distinct 첫 글자 수면 전원 distinct.
+ *   부족 시 rank 1(각 첫 글자 2위)…로 채움. 최종 점수 desc 정렬.
  */
 export function selectDiverse(
-  sorted: NameCandidate[],
+  byFirst: Map<string, NameCandidate[]>,
   limit: number,
 ): NameCandidate[] {
   if (limit <= 0) return [];
+  const buckets = [...byFirst.values()]; // 각 버킷은 점수 desc 정렬됨
   const result: NameCandidate[] = [];
-  const usedFirst = new Set<string>();
-  for (const c of sorted) {
-    if (result.length >= limit) break;
-    const first = c.hangeul[0] ?? "";
-    if (!usedFirst.has(first)) {
-      result.push(c);
-      usedFirst.add(first);
-    }
-  }
-  if (result.length < limit) {
-    const chosen = new Set(result);
-    for (const c of sorted) {
+  let rank = 0;
+  while (result.length < limit) {
+    const tier = buckets
+      .filter((b) => b.length > rank)
+      .map((b) => b[rank]);
+    if (tier.length === 0) break;
+    tier.sort((a, b) => b.totalScore - a.totalScore);
+    for (const c of tier) {
       if (result.length >= limit) break;
-      if (!chosen.has(c)) result.push(c);
+      result.push(c);
     }
+    rank++;
   }
   result.sort((a, b) => b.totalScore - a.totalScore);
   return result;

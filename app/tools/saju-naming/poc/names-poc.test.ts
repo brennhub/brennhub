@@ -97,8 +97,12 @@ const mk = (hangeul: string, totalScore: number): NameCandidate => ({
   totalScore,
   breakdown: "",
 });
-const synth = [mk("수아", 97), mk("수호", 96), mk("수민", 95), mk("가람", 90), mk("나래", 88)];
-const picked = selectDiverse(synth, 3);
+const byFirst = new Map<string, NameCandidate[]>([
+  ["수", [mk("수아", 97), mk("수호", 96), mk("수민", 95)]],
+  ["가", [mk("가람", 90)]],
+  ["나", [mk("나래", 88)]],
+]);
+const picked = selectDiverse(byFirst, 3);
 check("case4 selectDiverse 3개", picked.length === 3);
 check("case4 첫 글자 distinct", new Set(picked.map((c) => c.hangeul[0])).size === 3);
 check("case4 최고점 유지", picked[0].hangeul === "수아");
@@ -107,6 +111,21 @@ const r4 = recommendNames({ ...SUNG, nameLength: 2, topN: 5, db: seed });
 check(
   "case4 recommendNames 첫 글자 distinct",
   new Set(r4.map((c) => c.hangeul[0])).size === r4.length,
+);
+//   case4b — 동점 클러스터 회귀 가드 (dev 39-C 발견): 한 첫 글자(수)가 상위 점수
+//   독식해도 top-3 distinct. 수음 4자(상위 독식 유도) + 가/나.
+const cluster: HanjaEntry[] = [
+  { character: "洙", hangeul: "수", stroke: 9, won_stroke: 9, ohaeng: "수", meaning: "물가 수", frequency: 3 },
+  { character: "銖", hangeul: "수", stroke: 14, won_stroke: 14, ohaeng: "금", meaning: "저울눈 수", frequency: 3 },
+  { character: "琇", hangeul: "수", stroke: 11, won_stroke: 11, ohaeng: "금", meaning: "옥돌 수", frequency: 3 },
+  { character: "秀", hangeul: "수", stroke: 7, won_stroke: 7, ohaeng: "목", meaning: "빼어날 수", frequency: 3 },
+  { character: "佳", hangeul: "가", stroke: 8, won_stroke: 8, ohaeng: "목", meaning: "아름다울 가", frequency: 3 },
+  { character: "奈", hangeul: "나", stroke: 8, won_stroke: 8, ohaeng: "화", meaning: "어찌 나", frequency: 3 },
+];
+const r4b = recommendNames({ ...SUNG, nameLength: 2, topN: 3, db: cluster });
+check(
+  "case4b 클러스터 풀 top3 첫 글자 distinct",
+  new Set(r4b.map((c) => c.hangeul[0])).size === r4b.length,
 );
 
 // case 5 — 대형 합성 풀 500자 n=2 (약 25만 조합) — OOM 회귀 가드.
