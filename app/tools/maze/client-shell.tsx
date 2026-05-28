@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMessages } from "@/lib/i18n/provider";
+import { useCurrentUser } from "@/components/auth/user-provider";
 import { TILE, type MazeProject, type TileType } from "@/lib/maze/types";
 import { cloneGrid, emptyGrid, findStart, newProject } from "@/lib/maze/grid";
-import { loadProject, saveProject } from "@/lib/maze/storage";
+import { getMazeStorage, loadProjectForUser } from "@/lib/maze/storage";
 import { scoreMaze, validateMaze } from "@/lib/maze/validate";
 import { StepNav, type Step } from "@/components/maze/step-nav";
 import { SettingsPanel } from "@/components/maze/settings-panel";
@@ -92,6 +93,10 @@ export function MazeClientShell({ sharedProject }: Props = {}) {
   const router = useRouter();
   const isShared = sharedProject !== undefined;
 
+  const user = useCurrentUser();
+  const isLoggedIn = !!user;
+  const storage = useMemo(() => getMazeStorage(isLoggedIn), [isLoggedIn]);
+
   const [project, setProject] = useState<MazeProject>(
     () => sharedProject ?? newProject(),
   );
@@ -121,26 +126,35 @@ export function MazeClientShell({ sharedProject }: Props = {}) {
   // P3e-1: 손도구 모드 — 활성 시 1포인터/마우스도 팬.
   const [handMode, setHandMode] = useState(false);
 
-  // hydrate — 빈 grid면 emptyGrid로 자동 채움. 새 만들기 워크플로 시작 가능.
-  // shared 모드(?id 진입)는 localStorage 무시 — 자신의 드래프트 보존.
+  // hydrate — 로그인=D1 / 게스트=localStorage. 로그인 상태 변화 시 재로드.
+  // 빈 grid면 emptyGrid로 자동 채움. 자동 이전 없음 (게스트/로그인 분리).
+  // shared 모드(?id 진입)는 storage 우회 — 자신의 드래프트 보존.
   useEffect(() => {
     if (isShared) return;
-    const loaded = loadProject();
-    setProject(
-      loaded.grid.length === 0
-        ? { ...loaded, grid: emptyGrid(loaded.width, loaded.height) }
-        : loaded,
-    );
-    setView(fitView(loaded.width, loaded.height, CANVAS_DISPLAY_PX));
-    setHydrated(true);
-  }, [isShared]);
+    let cancelled = false;
+    setHydrated(false);
+    loadProjectForUser(isLoggedIn).then(({ data }) => {
+      if (cancelled) return;
+      const loaded = data ?? newProject();
+      setProject(
+        loaded.grid.length === 0
+          ? { ...loaded, grid: emptyGrid(loaded.width, loaded.height) }
+          : loaded,
+      );
+      setView(fitView(loaded.width, loaded.height, CANVAS_DISPLAY_PX));
+      setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isShared, isLoggedIn]);
 
   // persist — hydrate 이후 변경분만 저장 (pathMarks는 transient라 미저장).
-  // shared 모드는 persist skip — 공유 미로를 자기 localStorage에 덮어쓰지 않음.
+  // shared 모드는 persist skip — 공유 미로를 자기 저장소에 덮어쓰지 않음.
   useEffect(() => {
     if (!hydrated || isShared) return;
-    saveProject(project);
-  }, [project, hydrated, isShared]);
+    storage.saveProject(project);
+  }, [project, hydrated, isShared, storage]);
 
   // 그리드가 "비어있는지" 판정 — 빈 배열 또는 모든 셀 EMPTY. 사이즈 변경 모달 분기에 사용.
   const isGridEmpty = useCallback((grid: TileType[][]): boolean => {
