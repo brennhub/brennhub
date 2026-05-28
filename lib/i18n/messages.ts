@@ -288,7 +288,6 @@ export type Messages = {
   suppPlan: {
     title: string;
     description: string;
-    local: string;
     disclaimer: string;
     library: string;
     mySchedule: string;
@@ -579,6 +578,7 @@ export type Messages = {
   auth: {
     signIn: string;
     signOut: string;
+    adminPanel: string;
     errors: {
       stateMismatch: string;
       stateInvalid: string;
@@ -943,7 +943,6 @@ export const messages: Record<Locale, Messages> = {
     suppPlan: {
       title: "영양제 플래너",
       description: "약동학 기반 개인 영양제 스케줄링",
-      local: "로컬 저장",
       disclaimer:
         "의학적 조언 아님. 자가 책임으로 사용하세요. 영양제 복용 전 의료진 상담을 권장합니다.",
       library: "영양제 라이브러리",
@@ -1251,6 +1250,7 @@ export const messages: Record<Locale, Messages> = {
     auth: {
       signIn: "로그인",
       signOut: "로그아웃",
+      adminPanel: "관리자",
       errors: {
         stateMismatch: "로그인 세션이 일치하지 않습니다. 다시 시도해주세요.",
         stateInvalid: "로그인 검증에 실패했습니다. 다시 시도해주세요.",
@@ -1705,7 +1705,6 @@ export const messages: Record<Locale, Messages> = {
     suppPlan: {
       title: "Supplement Planner",
       description: "Pharmacokinetics-aware personal supplement scheduling",
-      local: "Local only",
       disclaimer:
         "Not medical advice. Use at your own discretion. Consult a healthcare professional before starting any supplement regimen.",
       library: "Supplement Library",
@@ -2013,6 +2012,7 @@ export const messages: Record<Locale, Messages> = {
     auth: {
       signIn: "Sign in",
       signOut: "Sign out",
+      adminPanel: "Admin",
       errors: {
         stateMismatch: "Sign-in session mismatch. Please try again.",
         stateInvalid: "Sign-in verification failed. Please try again.",

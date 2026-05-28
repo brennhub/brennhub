@@ -211,14 +211,9 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
       </div>
 
       <header className="mb-8">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            {tp.title}
-          </h1>
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-            {tp.local}
-          </span>
-        </div>
+        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          {tp.title}
+        </h1>
         <p className="mt-2 text-zinc-600 dark:text-zinc-400">
           {tp.description}
         </p>
