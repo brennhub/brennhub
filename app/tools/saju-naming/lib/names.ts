@@ -183,65 +183,87 @@ export function recommendNames(
       !isExcludedFromRecommend({ character: h.character, meaning: h.meaning }),
   );
 
-  // 3. 첫 글자(이름 첫 음절)별 버킷 — 상위 perFirstCap개씩 유지 (39-C 다양성).
-  //    score-only 버퍼는 동점 후보가 같은 첫 글자로 가득 차 다양화 불가 →
-  //    첫 글자별로 분리 유지해 동점 클러스터 방지. 메모리 O(distinctFirsts × cap).
+  // 3. bounded 버퍼(score desc) + 첫 글자당 MAX_PER_FIRST 제한 (39-C 다양성).
+  //    동점 후보가 같은 첫 글자로 버퍼를 독식하면 다양화 불가(dev 회귀) →
+  //    첫 글자별 상한을 두어 다양성 확보. 메모리 O(K) 유지(버킷 누적 X → 503 회피).
+  //    capped 첫 글자는 makeCandidate 전에 skip → CPU 절감.
   const limit = options.topN;
   if (limit <= 0) return [];
-  const perFirstCap = Math.max(1, limit);
-  const byFirst = new Map<string, NameCandidate[]>();
+  const K = Math.min(200, Math.max(limit * 10, 50));
+  const MAX_PER_FIRST = 2;
+  const buffer: NameCandidate[] = []; // 점수 desc
+  const firstCount = new Map<string, number>();
+  const atCap = (first: string): boolean =>
+    (firstCount.get(first) ?? 0) >= MAX_PER_FIRST;
+  function insertSorted(cand: NameCandidate): void {
+    let lo = 0;
+    let hi = buffer.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (buffer[mid].totalScore >= cand.totalScore) lo = mid + 1;
+      else hi = mid;
+    }
+    buffer.splice(lo, 0, cand);
+  }
   function consider(cand: NameCandidate): void {
     const first = cand.hangeul[0] ?? "";
-    let arr = byFirst.get(first);
-    if (!arr) {
-      arr = [];
-      byFirst.set(first, arr);
-    }
-    if (arr.length < perFirstCap) {
-      arr.push(cand);
-      arr.sort((a, b) => b.totalScore - a.totalScore);
-    } else if (cand.totalScore > arr[arr.length - 1].totalScore) {
-      arr[arr.length - 1] = cand;
-      arr.sort((a, b) => b.totalScore - a.totalScore);
+    if (atCap(first)) return;
+    if (buffer.length < K) {
+      insertSorted(cand);
+      firstCount.set(first, (firstCount.get(first) ?? 0) + 1);
+    } else if (cand.totalScore > buffer[buffer.length - 1].totalScore) {
+      const w = buffer.pop() as NameCandidate;
+      const wf = w.hangeul[0] ?? "";
+      firstCount.set(wf, (firstCount.get(wf) ?? 1) - 1);
+      insertSorted(cand);
+      firstCount.set(first, (firstCount.get(first) ?? 0) + 1);
     }
   }
 
-  // 4. 조합 생성 → consider (전체 배열 누적 없음)
+  // 4. 조합 생성 → consider. capped 첫 글자는 makeCandidate 생략 (CPU 절감).
   if (options.nameLength === 1) {
     for (const c of usable) {
+      if (atCap(c.hangeul[0] ?? "")) continue;
       consider(makeCandidate([c], options));
     }
   } else {
     for (let i = 0; i < usable.length; i++) {
+      const firstSyl = usable[i].hangeul[0] ?? "";
+      if (atCap(firstSyl)) continue; // 첫 글자 cap → 이 char1 조합 전체 skip
       for (let j = 0; j < usable.length; j++) {
         if (i === j) continue; // 같은 글자 중복 제외
+        if (atCap(firstSyl)) break; // 루프 중 cap 도달 → 중단
         consider(makeCandidate([usable[i], usable[j]], options));
       }
     }
   }
 
   // 5. 다양성 선별 — 첫 글자 distinct 우선 (39-C).
-  return selectDiverse(byFirst, limit);
+  return selectDiverse(buffer, limit);
 }
 
 /**
- * 첫 글자별 버킷에서 topN 선택 — 다양성 우선.
- *   rank 0(각 첫 글자 best)부터 라운드로빈: 같은 rank 후보를 점수순으로 채움 →
- *   distinct 첫 글자가 먼저 선택됨. topN ≤ distinct 첫 글자 수면 전원 distinct.
- *   부족 시 rank 1(각 첫 글자 2위)…로 채움. 최종 점수 desc 정렬.
+ * 점수 desc 버퍼에서 topN 선택 — 첫 글자 distinct 우선 (다양성).
+ *   버퍼를 첫 글자별로 그룹 후 rank 0(각 그룹 best)부터 라운드로빈 → distinct 우선.
+ *   topN ≤ distinct 첫 글자 수면 전원 distinct. 최종 점수 desc 정렬.
  */
 export function selectDiverse(
-  byFirst: Map<string, NameCandidate[]>,
+  buffer: NameCandidate[],
   limit: number,
 ): NameCandidate[] {
   if (limit <= 0) return [];
-  const buckets = [...byFirst.values()]; // 각 버킷은 점수 desc 정렬됨
+  const byFirst = new Map<string, NameCandidate[]>();
+  for (const c of buffer) {
+    const f = c.hangeul[0] ?? "";
+    const arr = byFirst.get(f);
+    if (arr) arr.push(c);
+    else byFirst.set(f, [c]);
+  }
+  const buckets = [...byFirst.values()]; // buffer가 desc라 각 그룹도 desc
   const result: NameCandidate[] = [];
   let rank = 0;
   while (result.length < limit) {
-    const tier = buckets
-      .filter((b) => b.length > rank)
-      .map((b) => b[rank]);
+    const tier = buckets.filter((b) => b.length > rank).map((b) => b[rank]);
     if (tier.length === 0) break;
     tier.sort((a, b) => b.totalScore - a.totalScore);
     for (const c of tier) {

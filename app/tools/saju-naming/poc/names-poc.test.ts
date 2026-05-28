@@ -97,12 +97,8 @@ const mk = (hangeul: string, totalScore: number): NameCandidate => ({
   totalScore,
   breakdown: "",
 });
-const byFirst = new Map<string, NameCandidate[]>([
-  ["수", [mk("수아", 97), mk("수호", 96), mk("수민", 95)]],
-  ["가", [mk("가람", 90)]],
-  ["나", [mk("나래", 88)]],
-]);
-const picked = selectDiverse(byFirst, 3);
+const synth = [mk("수아", 97), mk("수호", 96), mk("수민", 95), mk("가람", 90), mk("나래", 88)];
+const picked = selectDiverse(synth, 3);
 check("case4 selectDiverse 3개", picked.length === 3);
 check("case4 첫 글자 distinct", new Set(picked.map((c) => c.hangeul[0])).size === 3);
 check("case4 최고점 유지", picked[0].hangeul === "수아");
@@ -129,7 +125,11 @@ check(
 );
 
 // case 5 — 대형 합성 풀 500자 n=2 (약 25만 조합) — OOM 회귀 가드.
-const HANGEUL_POOL = ["가", "나", "다", "라", "마", "바", "사", "아", "자", "차"];
+// 20음절 — topN=30은 rank0(20 distinct)+rank1(10)로 충족 (MAX_PER_FIRST=2 다양성 cap).
+const HANGEUL_POOL = [
+  "가", "나", "다", "라", "마", "바", "사", "아", "자", "차",
+  "카", "타", "파", "하", "거", "너", "더", "러", "머", "버",
+];
 const OH = ["목", "화", "토", "금", "수"];
 const bigPool: HanjaEntry[] = [];
 for (let i = 0; i < 500; i++) {
