@@ -139,6 +139,10 @@ check("case6 isRareBlock 明(URO) false", isRareBlock("明") === false);
 check("case6 卵 명시 제외", isExcludedFromRecommend({ character: "卵", meaning: "알 란" }));
 check("case6 危 키워드(위태) 제외", isExcludedFromRecommend({ character: "危", meaning: "위태할 위" }));
 check("case6 明 통과", !isExcludedFromRecommend({ character: "明", meaning: "밝을 명" }));
+check("case6 憧 화이트리스트 통과", !isExcludedFromRecommend({ character: "憧", meaning: "동경할 동/어리석을 동" }));
+check("case6 惰 제외 유지", isExcludedFromRecommend({ character: "惰", meaning: "게으를 타/아름다울 타" }));
+check("case6 伋 제외 유지", isExcludedFromRecommend({ character: "伋", meaning: "속일 급/사람 이름 급" }));
+check("case6 仳 제외 유지", isExcludedFromRecommend({ character: "仳", meaning: "떠날 비/추할 비" }));
 //   통합: seed + 卵/㔕/危 → 추천 결과 미등장.
 const seed2: HanjaEntry[] = [
   ...seed,
