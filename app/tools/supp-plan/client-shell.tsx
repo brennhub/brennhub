@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/provider";
-import { scheduleStorage } from "@/lib/supp-plan/storage/localStorage";
+import { useCurrentUser } from "@/components/auth/user-provider";
+import {
+  getScheduleStorage,
+  loadScheduleForUser,
+} from "@/lib/supp-plan/storage";
 import {
   emptySchedule,
   SCHEMA_VERSION,
@@ -62,6 +66,13 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
   const t = useMessages();
   const tp = t.suppPlan;
 
+  const user = useCurrentUser();
+  const isLoggedIn = !!user;
+  const storage = useMemo(
+    () => getScheduleStorage(isLoggedIn),
+    [isLoggedIn],
+  );
+
   const [schedule, setSchedule] = useState<PersonalSchedule>(emptySchedule());
   const [hydrated, setHydrated] = useState(false);
   const [editTarget, setEditTarget] = useState<ScheduleEntry | null>(null);
@@ -69,30 +80,38 @@ export function SuppPlanClientShell({ supplements, rules, dbError }: Props) {
   const [formOpen, setFormOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ScheduleViewMode>("card");
 
+  // mount + 로그인 상태 변화 시 storage에서 schedule 재로드.
+  // 자동 이전 없음 — 로그인=D1만 / 비로그인=localStorage만 (2-2 결정).
   useEffect(() => {
     let cancelled = false;
-    scheduleStorage.getSchedule().then((stored) => {
+    setHydrated(false);
+    loadScheduleForUser(isLoggedIn).then(({ data }) => {
       if (cancelled) return;
-      if (stored) {
-        setSchedule(stored);
-      }
+      setSchedule(data ?? emptySchedule());
       setHydrated(true);
     });
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
+
+  // view mode는 사용자별 D1 데이터와 무관 — 항상 localStorage.
+  useEffect(() => {
     try {
       const stored = localStorage.getItem(VIEW_MODE_KEY);
       if (stored === "table" || stored === "card") setViewMode(stored);
     } catch {
       // ignore
     }
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
-  const persist = useCallback(async (next: PersonalSchedule) => {
-    setSchedule(next);
-    await scheduleStorage.saveSchedule(next);
-  }, []);
+  const persist = useCallback(
+    async (next: PersonalSchedule) => {
+      setSchedule(next);
+      await storage.saveSchedule(next);
+    },
+    [storage],
+  );
 
   const handleSave = useCallback(
     async (entry: ScheduleEntry) => {
