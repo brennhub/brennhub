@@ -35,7 +35,8 @@ export function LoginButtonClient() {
     );
   }
 
-  const displayName = user.name || user.email;
+  // 표시 우선순위: display_name > name > email.
+  const displayName = user.display_name || user.name || user.email;
   return (
     <div className="flex items-center gap-2">
       {user.is_admin === 1 && (
@@ -48,9 +49,13 @@ export function LoginButtonClient() {
           <Settings className="size-4" />
         </Link>
       )}
-      <span className="text-sm text-zinc-700 dark:text-zinc-200" title={user.email}>
+      <Link
+        href="/profile"
+        title={user.email}
+        className="text-sm text-zinc-700 hover:underline dark:text-zinc-200"
+      >
         {displayName}
-      </span>
+      </Link>
       <form action="/api/auth/logout" method="POST">
         <button
           type="submit"

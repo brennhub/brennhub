@@ -645,6 +645,27 @@ export type Messages = {
   footer: {
     privacy: string;
   };
+  profile: {
+    title: string;
+    accountInfo: string;
+    email: string;
+    displayName: string;
+    displayNamePlaceholder: string;
+    displayNameHint: string;
+    save: string;
+    saving: string;
+    saved: string;
+    saveError: string;
+    dangerZone: string;
+    deleteAccount: string;
+    deleteWarning: string;
+    deleteConfirm: string;
+    deleting: string;
+    deleteError: string;
+    cancel: string;
+    loginRequired: string;
+    loginCta: string;
+  };
   admin: {
     title: string;
     dashboardTitle: string;
@@ -1398,6 +1419,28 @@ export const messages: Record<Locale, Messages> = {
     },
     footer: {
       privacy: "개인정보 처리방침",
+    },
+    profile: {
+      title: "내 프로필",
+      accountInfo: "계정 정보",
+      email: "이메일",
+      displayName: "표시 이름",
+      displayNamePlaceholder: "표시할 이름",
+      displayNameHint: "비워두면 Google 계정 이름을 사용합니다.",
+      save: "저장",
+      saving: "저장 중…",
+      saved: "저장되었습니다",
+      saveError: "저장에 실패했습니다. 다시 시도해주세요.",
+      dangerZone: "계정 삭제",
+      deleteAccount: "계정 삭제",
+      deleteWarning:
+        "계정과 모든 도구 데이터(영양제 스케줄 등)가 영구 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+      deleteConfirm: "영구 삭제",
+      deleting: "삭제 중…",
+      deleteError: "삭제에 실패했습니다. 다시 시도해주세요.",
+      cancel: "취소",
+      loginRequired: "로그인이 필요합니다.",
+      loginCta: "로그인",
     },
     admin: {
       title: "관리자",
@@ -2190,6 +2233,28 @@ export const messages: Record<Locale, Messages> = {
     },
     footer: {
       privacy: "Privacy Policy",
+    },
+    profile: {
+      title: "My Profile",
+      accountInfo: "Account",
+      email: "Email",
+      displayName: "Display name",
+      displayNamePlaceholder: "Name to show",
+      displayNameHint: "Leave empty to use your Google account name.",
+      save: "Save",
+      saving: "Saving…",
+      saved: "Saved",
+      saveError: "Save failed. Please try again.",
+      dangerZone: "Delete account",
+      deleteAccount: "Delete account",
+      deleteWarning:
+        "Your account and all tool data (supplement schedules, etc.) will be permanently deleted. This cannot be undone.",
+      deleteConfirm: "Delete permanently",
+      deleting: "Deleting…",
+      deleteError: "Deletion failed. Please try again.",
+      cancel: "Cancel",
+      loginRequired: "Sign-in required.",
+      loginCta: "Sign in",
     },
     admin: {
       title: "Admin",
