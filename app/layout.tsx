@@ -62,6 +62,11 @@ interface AuthEnv {
   AUTH_DB?: D1Database;
 }
 
+// headers() 호출하므로 prerender 불가. force-dynamic으로 Next에 명시적 신호.
+// (이전 2-1: try/catch 메시지 필터로 우회 → OpenNext 런타임에서 "Page changed from
+// static to dynamic" throw. 신호 차단이 원인이었음. 빌드 경고는 숨기지 말고 원인 해결.)
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -78,12 +83,7 @@ export default async function RootLayout({
       user = await getUserFromHeaders(db, h as unknown as Headers);
     }
   } catch (err) {
-    // Next는 prerender 시도 시 cookie 사용을 "Dynamic server usage"로 던짐 (정상 — 본 layout은
-    // 의도적으로 dynamic). 실제 런타임 에러만 로그.
-    const msg = err instanceof Error ? err.message : String(err);
-    if (!msg.includes("Dynamic server usage")) {
-      console.error("[layout] session lookup failed:", err);
-    }
+    console.error("[layout] session lookup failed:", err);
   }
 
   return (
