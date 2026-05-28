@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/card";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { useCurrency } from "@/components/currency-provider";
+import { useCurrentUser } from "@/components/auth/user-provider";
+import { getCalcStorage } from "@/lib/stock-sim/storage";
 import {
   formatCurrency,
   parseCurrency,
@@ -29,7 +31,11 @@ import {
 import { cn } from "@/lib/utils";
 import { SplitSellDetail } from "./split-sell-detail";
 
-const STORAGE_KEY = "brennhub:stock-sim:split-sell";
+/** localStorage parse (게스트 legacy). split-sell은 schemaVersion 없음 — 방어적 형태 확인만. */
+function parseStored(raw: unknown): StoredState | null {
+  if (!raw || typeof raw !== "object") return null;
+  return raw as StoredState;
+}
 
 const N_MIN = 2;
 const N_MAX_HARD = 50;
@@ -130,6 +136,12 @@ export function SplitSellCalculator() {
   const t = useMessages().stockSim.splitSell;
   const { locale } = useLocale();
   const { currency, rate } = useCurrency();
+  const user = useCurrentUser();
+  const isLoggedIn = !!user;
+  const storage = useMemo(
+    () => getCalcStorage<StoredState>("split-sell", isLoggedIn, parseStored),
+    [isLoggedIn],
+  );
 
   const [ticker, setTicker] = useState<string>("");
   const [holdings, setHoldings] = useState<string>("");
@@ -149,11 +161,13 @@ export function SplitSellCalculator() {
 
   const prevCurrencyRef = useRef<Currency | null>(null);
 
+  // hydrate — 로그인=D1 / 게스트=localStorage. 로그인 상태 변화 시 재로드.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<StoredState>;
+    let cancelled = false;
+    setHydrated(false);
+    storage.get().then((parsed) => {
+      if (cancelled) return;
+      if (parsed) {
         if (typeof parsed.ticker === "string") setTicker(parsed.ticker);
         if (typeof parsed.holdings === "string") setHoldings(parsed.holdings);
         if (typeof parsed.startPrice === "string")
@@ -172,37 +186,33 @@ export function SplitSellCalculator() {
         if (typeof parsed.lastCompletedRound === "number")
           setLastCompletedRound(parsed.lastCompletedRound);
       }
-    } catch {
-      // corrupt
-    }
-    setHydrated(true);
-  }, []);
+      setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [storage]);
 
+  // persist — debounce 저장 (storage 내부 600ms).
   useEffect(() => {
     if (!hydrated) return;
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          ticker,
-          holdings,
-          startPrice,
-          rounds,
-          riseInterval,
-          avgCost,
-          taxRate,
-          taxType,
-          weightEnabled,
-          firstWeightPct,
-          sellBasis,
-          lastCompletedRound,
-        } satisfies StoredState),
-      );
-    } catch {
-      // quota
-    }
+    storage.save({
+      ticker,
+      holdings,
+      startPrice,
+      rounds,
+      riseInterval,
+      avgCost,
+      taxRate,
+      taxType,
+      weightEnabled,
+      firstWeightPct,
+      sellBasis,
+      lastCompletedRound,
+    });
   }, [
     hydrated,
+    storage,
     ticker,
     holdings,
     startPrice,
@@ -216,6 +226,9 @@ export function SplitSellCalculator() {
     sellBasis,
     lastCompletedRound,
   ]);
+
+  // flush — unmount(탭 전환) / backend 전환 직전 대기 저장 기록.
+  useEffect(() => () => storage.flush(), [storage]);
 
   useEffect(() => {
     if (!hydrated) return;

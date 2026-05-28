@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/card";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { useCurrency } from "@/components/currency-provider";
+import { useCurrentUser } from "@/components/auth/user-provider";
+import { getCalcStorage } from "@/lib/stock-sim/storage";
 import {
   formatCurrency,
   parseCurrency,
@@ -76,7 +78,19 @@ type SeriesPoint = {
   cumulativeYieldPct: number;
 };
 
-const STORAGE_KEY = "brennhub:stock-sim:dividend";
+/**
+ * localStorage parse (게스트 legacy) — rows에 migrateRow 적용 (invested→equity 등).
+ * ⚠️ migrate는 localStorage 경로 전용. D1 데이터는 현 shape라 storage.get()이 그대로 반환.
+ */
+function parseStored(raw: unknown): StoredState | null {
+  if (!raw || typeof raw !== "object") return null;
+  const p = raw as Partial<StoredState>;
+  return {
+    rows: Array.isArray(p.rows) ? p.rows.map(migrateRow) : [],
+    months: typeof p.months === "string" ? p.months : DEFAULT_MONTHS,
+    dripEnabled: typeof p.dripEnabled === "boolean" ? p.dripEnabled : true,
+  };
+}
 const DEFAULT_MONTHS = "12";
 const DEFAULT_MONTHS_NUM = 12;
 const MONTHS_MIN = 1;
@@ -133,6 +147,12 @@ export function DividendCalculator() {
   const t = useMessages().stockSim.dividend;
   const { locale } = useLocale();
   const { currency, rate } = useCurrency();
+  const user = useCurrentUser();
+  const isLoggedIn = !!user;
+  const storage = useMemo(
+    () => getCalcStorage<StoredState>("dividend", isLoggedIn, parseStored),
+    [isLoggedIn],
+  );
   const [rows, setRows] = useState<Row[]>(() => [emptyRow()]);
   const [months, setMonths] = useState<string>(DEFAULT_MONTHS);
   const [periodInputStr, setPeriodInputStr] = useState<string>(() =>
@@ -142,13 +162,15 @@ export function DividendCalculator() {
   const [hydrated, setHydrated] = useState(false);
   const prevCurrencyRef = useRef<Currency | null>(null);
 
+  // hydrate — 로그인=D1 / 게스트=localStorage. migrateRow는 parseStored(localStorage)에서.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<StoredState>;
+    let cancelled = false;
+    setHydrated(false);
+    storage.get().then((parsed) => {
+      if (cancelled) return;
+      if (parsed) {
         if (Array.isArray(parsed.rows) && parsed.rows.length > 0) {
-          setRows(parsed.rows.map(migrateRow));
+          setRows(parsed.rows);
         }
         if (typeof parsed.months === "string") {
           setMonths(parsed.months);
@@ -161,27 +183,21 @@ export function DividendCalculator() {
           setDripEnabled(parsed.dripEnabled);
         }
       }
-    } catch {
-      // corrupt state — start fresh
-    }
-    setHydrated(true);
-  }, []);
+      setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [storage]);
 
+  // persist — debounce 저장 (storage 내부 600ms).
   useEffect(() => {
     if (!hydrated) return;
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          rows,
-          months,
-          dripEnabled,
-        } satisfies StoredState),
-      );
-    } catch {
-      // quota / private mode — in-session only
-    }
-  }, [rows, months, dripEnabled, hydrated]);
+    storage.save({ rows, months, dripEnabled });
+  }, [rows, months, dripEnabled, hydrated, storage]);
+
+  // flush — unmount(탭 전환) / backend 전환 직전 대기 저장 기록.
+  useEffect(() => () => storage.flush(), [storage]);
 
   // Currency toggle: convert raw monetary inputs (row.equity, row.currentPrice).
   useEffect(() => {
@@ -212,7 +228,7 @@ export function DividendCalculator() {
       })),
     );
     prevCurrencyRef.current = currency;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [currency, rate, hydrated]);
 
   // Initial-state metrics for the Results card. These are a t=0 snapshot;
