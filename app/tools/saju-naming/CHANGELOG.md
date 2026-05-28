@@ -144,6 +144,17 @@
 - 상생 채점 = **방향 무관**(다수안). 방향성 `directionBonus`는 1차 출처 확보 후 refinement plug-in (BACKLOG 39-C, 비critical).
 - `RELATION_POINT`(상생 1.0/비화 0.5/상극 0.0) · 가중치 55:45 = 시작값, 최종 캘리브레이션은 39-C (풀 분포 측정).
 
+### Added (39-C 추천 품질 가드)
+- `lib/name-exclude.ts` — 추천 부적합 필터 (희귀 블록 CJK URO 밖 + 부정 의미 키워드 + 명시 블랙리스트). best-effort 휴리스틱.
+
+### Changed (39-C 추천 품질 가드)
+- `recommendNames` — (1) usable 필터에 `isExcludedFromRecommend` 적용 (의미 불량·벽자·희귀 블록 제외). (2) bounded top-N → bounded 버퍼(K) + `selectDiverse`(이름 첫 글자 distinct 우선) = 추천 다양성. dev 검증 2회 관측(金犴危 / 金卵㔕 — 의미 불량·희귀자·첫 글자 중복) 해소.
+
+### Decided (39-C 추천 품질 가드)
+- frequency 실데이터 미가용 확정 — 대법원 출생 통계 = 한글 이름순위(per-name), per-한자 아님 + bulk 불가 / Unihan kFrequency = Unicode 17.0에서 제거(UAX#38 미수록). → frequency 본격 정렬은 자료 확보 의존 후속(blocked), **경량 가드** 채택.
+- 희귀자 = CJK URO 밖(Ext A/B) 제외 휴리스틱 (풀 269자/3% tradeoff). 의미 불량 = 부정 의미 키워드 + 명시 블랙리스트 best-effort (완전 의미/어감 평가는 Task 45 AI 어감). 키워드는 다음절·저모호만(음·타훈 오탐 회피).
+- 블랙리스트/키워드 보강 — 풀 9,055 의미(훈) 스캔 도출(추측 X): 키워드 51개(사망·질병·재앙·악/추함·범죄·요괴·부패·어리석음·궁핍·음란·태만·부정동물) + 명시 블랙리스트 24자(충돌 회피 char: 病疾疫·屎糞尿·卑庳·險嶮·鬼僞·酷暴傷 등). "거짓"(誕·眠 충돌)·"귀신"(神 충돌) 키워드는 제거하고 僞·鬼 char로 대체 — 양호자(神誕眠創低猛督便炳秉孔 등) 보호. URO 풀 제외 74→212(신규 146자). 화이트리스트(`憧` 동경할/어리석을 — 키워드 오탐 예외) 도입.
+
 ## [0.6.5] — 2026-05-19
 
 ### Decided (C-2/C-3 정찰 매듭 + D안 채택)

@@ -14,6 +14,7 @@
 
 import { calculateSurie } from "./surie";
 import { evaluateSoundOhaeng } from "./sound-ohaeng";
+import { isExcludedFromRecommend } from "./name-exclude";
 
 // ───────────────────────── 발음오행 ─────────────────────────
 
@@ -174,21 +175,29 @@ export function recommendNames(
       h.inname_ok === undefined || h.inname_ok === 1,
   );
 
-  // 2. excludeChars 제거
+  // 2. excludeChars + 추천 부적합 제거 — 희귀 블록·의미 불량·블랙리스트 (39-C 품질 가드).
   const excludeSet = new Set(options.excludeChars ?? []);
-  const usable = dbFiltered.filter((h) => !excludeSet.has(h.character));
+  const usable = dbFiltered.filter(
+    (h) =>
+      !excludeSet.has(h.character) &&
+      !isExcludedFromRecommend({ character: h.character, meaning: h.meaning }),
+  );
 
-  // 3. bounded top-N — pool² 후보 배열 materialize 제거 (Workers 128MB 메모리 한도; C-5-7c).
-  //    순회하며 상위 topN개만 정렬 유지 → 메모리 O(topN). exact top-N (근사 아님).
+  // 3. bounded 버퍼 — 상위 K개만 정렬 유지 (메모리 O(K), pool² 아님; C-5-7c).
+  //    다양성 선별을 위해 topN보다 큰 버퍼 확보 후 최종 선택 (39-C).
   const limit = options.topN;
-  const top: NameCandidate[] = [];
+  const bufferLimit = Math.min(200, Math.max(limit * 10, 50));
+  const buffer: NameCandidate[] = [];
   function consider(cand: NameCandidate): void {
-    if (top.length < limit) {
-      top.push(cand);
-      top.sort((a, b) => b.totalScore - a.totalScore);
-    } else if (limit > 0 && cand.totalScore > top[top.length - 1].totalScore) {
-      top[top.length - 1] = cand;
-      top.sort((a, b) => b.totalScore - a.totalScore);
+    if (buffer.length < bufferLimit) {
+      buffer.push(cand);
+      buffer.sort((a, b) => b.totalScore - a.totalScore);
+    } else if (
+      bufferLimit > 0 &&
+      cand.totalScore > buffer[buffer.length - 1].totalScore
+    ) {
+      buffer[buffer.length - 1] = cand;
+      buffer.sort((a, b) => b.totalScore - a.totalScore);
     }
   }
 
@@ -206,7 +215,39 @@ export function recommendNames(
     }
   }
 
-  return top;
+  // 5. 다양성 선별 — 이름 첫 글자 중복 최소화하며 topN 선택 (39-C).
+  return selectDiverse(buffer, limit);
+}
+
+/**
+ * 점수 desc 버퍼에서 topN 선택 — 이름 첫 글자 distinct 우선 (다양성).
+ *   1차: 첫 글자 미사용 후보 우선 pick. 2차: 부족분은 점수순 채움(중복 허용).
+ *   최종 점수 desc 재정렬 (표시 순서).
+ */
+export function selectDiverse(
+  sorted: NameCandidate[],
+  limit: number,
+): NameCandidate[] {
+  if (limit <= 0) return [];
+  const result: NameCandidate[] = [];
+  const usedFirst = new Set<string>();
+  for (const c of sorted) {
+    if (result.length >= limit) break;
+    const first = c.hangeul[0] ?? "";
+    if (!usedFirst.has(first)) {
+      result.push(c);
+      usedFirst.add(first);
+    }
+  }
+  if (result.length < limit) {
+    const chosen = new Set(result);
+    for (const c of sorted) {
+      if (result.length >= limit) break;
+      if (!chosen.has(c)) result.push(c);
+    }
+  }
+  result.sort((a, b) => b.totalScore - a.totalScore);
+  return result;
 }
 
 // 검증은 `poc/names-poc.test.ts`로 분리됨 (Edge runtime 호환).
