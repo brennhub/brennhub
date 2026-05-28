@@ -151,6 +151,8 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 - [ ] 정밀 권위 inname_ok reconcile (C-5-8 후속, 비critical) — 법령 별표1 「인명용추가한자표」 BMP 이미지 7,274개를 풀커버리지 CJK 폰트 렌더와 픽셀 매칭 → 코드포인트 복원, 교육용 기초한자 1,800자 합집합 = 공식 권위 셋. BrennHub 9,460과 정밀 diff. ~1.5~2d. C-5-8 Option B(비표준 405 안전 제외)가 적용돼 있어 44 UI live 비차단. 정찰 상세: `docs/learnings/2026-05-21-saju-naming-c5-8-inname-ok-reconcile.md`.
 - [ ] 이름 한자 다중음 검색 (Task 44 2단계 Fix A, 비critical) — `hanja` 테이블이 한자당 단일 primary `hangeul`만 보유 → `hanja-search`가 비-primary 음(두음법칙·다중음) 한자를 못 찾음 (Task 44 2단계 dev 검증서 발견: `hanja-search?hangeul=김` 0건). 성씨는 Task 44에서 큐레이션 정적 목록(`lib/surnames.ts`)으로 우회. 이름 한자 검색까지 다중음 지원하려면: `hanja`에 `hangeul_all` 컬럼 추가 (staged-hanja.json엔 이미 있음) + 재적재 migration + `hanja-search` WHERE를 `hangeul_all` 포함 검색으로 확장. 현재 이름 한자 검색은 primary 음으로 충분해 비critical.
 - [ ] 음령오행 상생 방향 가산점 `directionBonus` refinement (음령오행 2단계 후속, 비critical) — 음령오행 상생 채점은 현재 방향 무관(다수안). 방향성 이론("이름→성 방향 상생이 최선, 성→이름 차선")이 정찰서 1회 확인됐으나 verbatim 1차 출처 핀포인트 실패 → "추측 금지" 원칙상 보류. 1차 출처(작명 권위서/sajuforum 등) 확보 시 `relateOhaeng` 위에 상생 내 방향 가산점을 선택적 plug-in으로 추가 (학파 분기 아님, 상생 통과 여부 불변·미세 우열만). 출처 확보 의존. 정찰: `docs/learnings/2026-05-21-saju-naming-sound-ohaeng.md` §5.
+- ◐ 추천 품질 — 경량 가드 적용 (39-C): `lib/name-exclude.ts`(희귀 블록 Ext A/B + 부정 의미 키워드 + 명시 블랙리스트) + `recommendNames` 다양성(`selectDiverse` 첫 글자 distinct). dev 검증 2회 관측(金犴危/金卵㔕) 해소.
+- [ ] frequency 본격 정렬 (39-C 후속, blocked — 자료 의존) — 무료·기계가독 per-한자 빈도 미가용 정찰 확정(대법원=한글 이름순위 per-name / Unihan kFrequency=Unicode 17.0 제거). 작명 빈도 데이터 확보(협의·구매·타 코퍼스) 시 `frequency` 컬럼 populate → recommend route 기존 `ORDER BY frequency DESC` 활성 → 풀-레벨 희귀자 demotion + 빈도 기반 정렬. 현재 stroke ASC 풀 선택의 벽자 편향 근본 해소.
 
 #### 39-D — Advanced 전통 학파 옵션 (자원오행)
 
