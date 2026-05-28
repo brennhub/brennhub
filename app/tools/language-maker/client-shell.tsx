@@ -1,11 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/provider";
+import { useCurrentUser } from "@/components/auth/user-provider";
 import { SCHEMA_VERSION, type Glyph } from "@/lib/language-maker/types";
 import { newGlyph } from "@/lib/language-maker/glyph";
-import { loadProject, saveProject } from "@/lib/language-maker/storage";
+import {
+  getLanguageStorage,
+  loadProjectForUser,
+} from "@/lib/language-maker/storage";
 import { StepNav, type Step } from "@/components/language-maker/step-nav";
 import { CharacterGrid } from "@/components/language-maker/character-grid";
 import { PixelEditor } from "@/components/language-maker/pixel-editor";
@@ -15,23 +19,38 @@ export function LanguageMakerClientShell() {
   const t = useMessages();
   const tl = t.languageMaker;
 
+  const user = useCurrentUser();
+  const isLoggedIn = !!user;
+  const storage = useMemo(
+    () => getLanguageStorage(isLoggedIn),
+    [isLoggedIn],
+  );
+
   const [glyphs, setGlyphs] = useState<Glyph[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [step, setStep] = useState<Step>(1);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // hydrate — localStorage에서 문자 컬렉션 로드.
+  // hydrate — 로그인=D1 / 게스트=localStorage. 로그인 상태 변화 시 재로드.
+  // 자동 이전 없음 (게스트/로그인 분리, supp-plan 2-2 정책).
   useEffect(() => {
-    const project = loadProject();
-    setGlyphs(project.glyphs);
-    setHydrated(true);
-  }, []);
+    let cancelled = false;
+    setHydrated(false);
+    loadProjectForUser(isLoggedIn).then(({ data }) => {
+      if (cancelled) return;
+      setGlyphs(data?.glyphs ?? []);
+      setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
 
-  // persist — hydrate 이후 변경분만 저장.
+  // persist — hydrate 이후 변경분만 저장 (storage 경유).
   useEffect(() => {
     if (!hydrated) return;
-    saveProject({ schemaVersion: SCHEMA_VERSION, glyphs });
-  }, [glyphs, hydrated]);
+    storage.saveProject({ schemaVersion: SCHEMA_VERSION, glyphs });
+  }, [glyphs, hydrated, storage]);
 
   const handleAdd = useCallback(() => {
     const g = newGlyph();

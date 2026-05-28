@@ -1,5 +1,13 @@
-import { SCHEMA_VERSION, type Glyph, type LanguageProject } from "./types";
-import { isValidBitmap } from "./glyph";
+/**
+ * 게스트(비로그인) storage — localStorage. schema migrate 보존.
+ *
+ * ⚠️ migrate는 이 경로(legacy device-local 데이터)에만 적용. D1 경로는 migrate 안 함
+ *    (로그인 write가 항상 현 SCHEMA_VERSION 보장 — 구schema D1 저장 방지).
+ */
+
+import { SCHEMA_VERSION, type Glyph, type LanguageProject } from "../types";
+import { isValidBitmap } from "../glyph";
+import type { LanguageProjectStorage } from "./types";
 
 const KEY = "brennhub-language-maker";
 
@@ -38,24 +46,33 @@ function migrate(raw: unknown): LanguageProject {
   return { schemaVersion: SCHEMA_VERSION, glyphs: sanitizeGlyphs(data.glyphs) };
 }
 
-/** localStorage에서 언어 프로젝트를 읽어 온다 (hydrate). */
-export function loadProject(): LanguageProject {
-  if (typeof window === "undefined") return emptyProject();
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return emptyProject();
-    return migrate(JSON.parse(raw));
-  } catch {
-    return emptyProject();
+export class LocalStorageLanguageStorage implements LanguageProjectStorage {
+  async getProject(): Promise<LanguageProject | null> {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return null;
+      return migrate(JSON.parse(raw));
+    } catch {
+      return null;
+    }
   }
-}
 
-/** 언어 프로젝트를 localStorage에 저장한다 (persist). */
-export function saveProject(project: LanguageProject): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(KEY, JSON.stringify(project));
-  } catch {
-    // quota 초과/불가 — 세션 내 상태는 그대로 유지
+  async saveProject(project: LanguageProject): Promise<void> {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(KEY, JSON.stringify(project));
+    } catch {
+      // quota 초과/불가 — 세션 내 상태는 그대로 유지
+    }
+  }
+
+  async clearProject(): Promise<void> {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.removeItem(KEY);
+    } catch {
+      // ignore
+    }
   }
 }
