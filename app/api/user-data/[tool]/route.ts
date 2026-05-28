@@ -23,6 +23,15 @@ interface AuthEnv {
 
 const TOOL_SLUGS = new Set(tools.map((t) => t.slug));
 
+// stock-sim은 4개 계산기를 슬러그 분리로 저장 (tool=stock-sim:<sub>, D1 row 독립).
+// registry엔 'stock-sim'만 두고, 서브 슬러그는 여기서 명시 허용 (매핑 (b)).
+const STOCK_SIM_SUB_SLUGS = new Set([
+  "stock-sim:cost-basis",
+  "stock-sim:dca-down",
+  "stock-sim:dividend",
+  "stock-sim:split-sell",
+]);
+
 async function resolveAuth(): Promise<
   | { ok: true; userId: string; db: D1Database }
   | { ok: false; status: number; error: string }
@@ -37,7 +46,7 @@ async function resolveAuth(): Promise<
 }
 
 function validateTool(tool: string): boolean {
-  return TOOL_SLUGS.has(tool);
+  return TOOL_SLUGS.has(tool) || STOCK_SIM_SUB_SLUGS.has(tool);
 }
 
 function err(status: number, error: string): Response {
