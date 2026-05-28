@@ -16,6 +16,9 @@ export interface AuthUser {
   email: string;
   name: string | null;
   avatar_url: string | null;
+  // feat/profile (2026-05-27): 사용자 커스텀 표시 이름. NULL이면 name(Google) 사용.
+  // 표시 우선순위: display_name > name > email. callback은 이 필드를 건드리지 않음.
+  display_name: string | null;
   // 1-A (2026-05-27): admin 권한. 1=admin, 0=일반. middleware는 자체 SQL 사용,
   // 본 필드는 UI 측 조건 표시(예: admin 메뉴) 등 향후 활용.
   is_admin: number;
@@ -140,13 +143,46 @@ export async function getUserFromHeaders(
   const sessionId = await sha256Hex(cookieValue);
   const row = await db
     .prepare(
-      "SELECT u.id AS id, u.google_sub AS google_sub, u.email AS email, u.name AS name, u.avatar_url AS avatar_url, u.is_admin AS is_admin " +
+      "SELECT u.id AS id, u.google_sub AS google_sub, u.email AS email, u.name AS name, u.avatar_url AS avatar_url, u.display_name AS display_name, u.is_admin AS is_admin " +
         "FROM sessions s JOIN users u ON s.user_id = u.id " +
         "WHERE s.id = ? AND s.expires_at > ?",
     )
     .bind(sessionId, Date.now())
     .first<AuthUser>();
   return row ?? null;
+}
+
+/**
+ * 표시 이름 변경. value=null이면 커스텀 이름 제거(Google name으로 복원).
+ */
+export async function updateDisplayName(
+  db: D1Like,
+  userId: string,
+  value: string | null,
+): Promise<void> {
+  await db
+    .prepare("UPDATE users SET display_name = ? WHERE id = ?")
+    .bind(value, userId)
+    .run();
+}
+
+interface D1BatchLike extends D1Like {
+  batch(statements: unknown[]): Promise<unknown>;
+}
+
+/**
+ * 계정 영구 삭제. user_data + sessions + users를 명시적으로 삭제 (자식→부모 순).
+ * CASCADE에 의존하지 않음 — D1 FK enforcement 상태와 무관하게 보장. 원자적 batch.
+ */
+export async function deleteAccount(
+  db: D1BatchLike,
+  userId: string,
+): Promise<void> {
+  await db.batch([
+    db.prepare("DELETE FROM user_data WHERE user_id = ?").bind(userId),
+    db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userId),
+    db.prepare("DELETE FROM users WHERE id = ?").bind(userId),
+  ]);
 }
 
 export const SESSION_MAX_AGE_SECONDS = SESSION_TTL_MS / 1000;
