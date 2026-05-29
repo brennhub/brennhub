@@ -1,47 +1,39 @@
 "use client";
 
-import { Pin, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Chip } from "@/lib/tag-it/types";
 
 type Props = {
   chip: Chip;
   onToggleSelect: () => void;
-  onTogglePin: () => void;
   onDelete: () => void;
   labels: {
     select: string;
-    pin: string;
-    unpin: string;
     delete: string;
   };
 };
 
 /**
- * 칩 1개 (기획서 §5.1 / §5.3).
- *   본체 클릭 = 후보 ↔ 채택 토글 / 핀 = 보호 토글 / × = 삭제.
- *   상태별 색: 후보(희미) · 채택(강조) · 보호(주황).
- * 모바일 호버 없음 → 아이콘 항상 노출 (탭으로 조작).
+ * 칩 1개 (기획서 §5.1 / §5.3, UI 개선 변경 1).
+ *   본체 클릭 = 후보 ↔ 채택 토글 / × = 삭제. (핀/보호 UI는 MVP에서 숨김)
+ *   색: 원본 문서 태그(existing)=주황 / 채택=강조 / 후보=희미.
+ * 모바일 호버 없음 → × 아이콘 항상 노출 (탭으로 조작).
  */
-export function ChipView({
-  chip,
-  onToggleSelect,
-  onTogglePin,
-  onDelete,
-  labels,
-}: Props) {
-  const isProtected = chip.status === "protected";
+export function ChipView({ chip, onToggleSelect, onDelete, labels }: Props) {
+  const isExisting = chip.source === "existing";
   const isSelected = chip.status === "selected";
 
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-sm transition-colors",
-        isProtected &&
+        isExisting &&
           "border-orange-400 bg-orange-100 text-orange-900 dark:border-orange-500/60 dark:bg-orange-500/15 dark:text-orange-200",
-        isSelected &&
+        !isExisting &&
+          isSelected &&
           "border-primary bg-primary text-primary-foreground",
-        !isProtected &&
+        !isExisting &&
           !isSelected &&
           "border-border bg-muted/40 text-muted-foreground hover:bg-muted",
       )}
@@ -57,19 +49,6 @@ export function ChipView({
         {chip.freq > 0 && (
           <span className="ml-1 text-xs opacity-60">{chip.freq}</span>
         )}
-      </button>
-
-      <button
-        type="button"
-        onClick={onTogglePin}
-        aria-label={isProtected ? labels.unpin : labels.pin}
-        aria-pressed={isProtected}
-        className={cn(
-          "flex size-4 items-center justify-center rounded-full outline-none transition-opacity focus-visible:ring-1 focus-visible:ring-ring",
-          isProtected ? "opacity-100" : "opacity-50 hover:opacity-100",
-        )}
-      >
-        <Pin className={cn("size-3", isProtected && "fill-current")} />
       </button>
 
       <button

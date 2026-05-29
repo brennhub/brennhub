@@ -10,8 +10,10 @@ import { extractCandidates } from "@/lib/tag-it/extract";
 import {
   buildInitialChips,
   chipId,
+  deselectExtracted,
   finalTags,
   mergeReextract,
+  selectCandidates,
 } from "@/lib/tag-it/chips";
 import {
   isDocxFile,
@@ -66,6 +68,7 @@ export function TagItClientShell() {
   const [files, setFiles] = useState<TagFile[]>([]);
   const [commonTags, setCommonTags] = useState<string[]>([]);
   const [warning, setWarning] = useState<string | null>(null);
+  const [capNotes, setCapNotes] = useState<Record<string, string>>({});
 
   // 최신 files 스냅샷 — handleSelect가 setFiles updater 안에서 side-effect를 내지
   // 않고도(StrictMode 이중실행 방지) 한계 검증에 쓰도록 ref로 유지.
@@ -210,11 +213,21 @@ export function TagItClientShell() {
   );
 
   // ── 칩 조작 ────────────────────────────────────────────────────────
+  // 일괄 선택 cap 경고 (파일별). 다른 조작 시 해당 파일 노트 제거.
+  const clearCapNote = (fileId: string) =>
+    setCapNotes((prev) => {
+      if (!(fileId in prev)) return prev;
+      const next = { ...prev };
+      delete next[fileId];
+      return next;
+    });
+
   const updateChips = useCallback(
     (fileId: string, fn: (chips: Chip[]) => Chip[]) => {
       setFiles((prev) =>
         prev.map((f) => (f.id === fileId ? { ...f, chips: fn(f.chips) } : f)),
       );
+      clearCapNote(fileId);
     },
     [],
   );
@@ -224,18 +237,6 @@ export function TagItClientShell() {
       chips.map((c) =>
         c.id === id
           ? { ...c, status: c.status === "selected" ? "candidate" : "selected" }
-          : c,
-      ),
-    );
-
-  const togglePin = (fileId: string, id: string) =>
-    updateChips(fileId, (chips) =>
-      chips.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              status: c.status === "protected" ? "candidate" : "protected",
-            }
           : c,
       ),
     );
@@ -265,12 +266,41 @@ export function TagItClientShell() {
     });
   };
 
-  const clearSelection = (fileId: string) =>
-    updateChips(fileId, (chips) =>
-      chips.map((c) =>
-        c.status === "selected" ? { ...c, status: "candidate" } : c,
+  // ── 일괄 선택 (변경 3) — filesRef 스냅샷으로 capped 판정 후 노트 갱신 ──
+  const capMessage = () =>
+    tt.capWarning.replace(/\{max\}/g, String(TAG_IT_LIMITS.maxTagsPerFile));
+
+  const selectAll = (fileId: string) => {
+    const file = filesRef.current.find((f) => f.id === fileId);
+    if (!file) return;
+    const { chips, capped } = selectCandidates(file.chips);
+    setFiles((prev) =>
+      prev.map((f) => (f.id === fileId ? { ...f, chips } : f)),
+    );
+    if (capped) setCapNotes((p) => ({ ...p, [fileId]: capMessage() }));
+    else clearCapNote(fileId);
+  };
+
+  const selectTop = (fileId: string, n: number) => {
+    const file = filesRef.current.find((f) => f.id === fileId);
+    if (!file) return;
+    const { chips, capped } = selectCandidates(file.chips, n);
+    setFiles((prev) =>
+      prev.map((f) => (f.id === fileId ? { ...f, chips } : f)),
+    );
+    if (capped) setCapNotes((p) => ({ ...p, [fileId]: capMessage() }));
+    else clearCapNote(fileId);
+  };
+
+  // 전체 해제 = 자동 추출분만 후보로. 기존 keywords·수동 입력은 보존 (파괴 방지).
+  const deselectAll = (fileId: string) => {
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.id === fileId ? { ...f, chips: deselectExtracted(f.chips) } : f,
       ),
     );
+    clearCapNote(fileId);
+  };
 
   // ── 공통 태그 트레이 ────────────────────────────────────────────────
   const addCommon = (text: string) => {
@@ -418,11 +448,13 @@ export function TagItClientShell() {
                 <FileCard
                   key={file.id}
                   file={file}
+                  capWarning={capNotes[file.id] ?? null}
                   onToggleSelect={(cid) => toggleSelect(file.id, cid)}
-                  onTogglePin={(cid) => togglePin(file.id, cid)}
                   onDelete={(cid) => deleteChip(file.id, cid)}
                   onAddManual={(text) => addManual(file.id, text)}
-                  onClearSelection={() => clearSelection(file.id)}
+                  onSelectAll={() => selectAll(file.id)}
+                  onDeselectAll={() => deselectAll(file.id)}
+                  onSelectTop={(n) => selectTop(file.id, n)}
                   onDownload={() => downloadOne(file.id)}
                   labels={{
                     statusPending: tt.statusPending,
@@ -432,14 +464,19 @@ export function TagItClientShell() {
                     addPlaceholder: tt.addPlaceholder,
                     showMore: tt.showMore,
                     showLess: tt.showLess,
-                    clearSelection: tt.clearSelection,
                     download: tt.download,
-                    tagCount: tt.tagCount,
+                    counter: tt.counter,
                     emptyCanvas: tt.emptyCanvas,
                     chipSelect: tt.chipSelect,
-                    chipPin: tt.chipPin,
-                    chipUnpin: tt.chipUnpin,
                     chipDelete: tt.chipDelete,
+                    sectionSelected: tt.sectionSelected,
+                    sectionCandidate: tt.sectionCandidate,
+                    selectedEmpty: tt.selectedEmpty,
+                    candidateAllAdded: tt.candidateAllAdded,
+                    selectAll: tt.selectAll,
+                    deselectAll: tt.deselectAll,
+                    selectTop: tt.selectTop,
+                    topNAria: tt.topNAria,
                   }}
                 />
               ))}

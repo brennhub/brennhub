@@ -3,18 +3,20 @@
 import { useMemo, useState } from "react";
 import { Download, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NumberStepper } from "@/components/number-stepper";
 import { TAG_IT_LIMITS } from "@/lib/tag-it/limits";
-import { finalTags } from "@/lib/tag-it/chips";
 import type { FileStatus, TagFile } from "@/lib/tag-it/types";
 import { ChipView } from "./chip";
 
 type Props = {
   file: TagFile;
+  capWarning: string | null;
   onToggleSelect: (chipId: string) => void;
-  onTogglePin: (chipId: string) => void;
   onDelete: (chipId: string) => void;
   onAddManual: (text: string) => void;
-  onClearSelection: () => void;
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
+  onSelectTop: (n: number) => void;
   onDownload: () => void;
   labels: {
     statusPending: string;
@@ -24,14 +26,19 @@ type Props = {
     addPlaceholder: string;
     showMore: string; // "+{n}개 더보기"
     showLess: string;
-    clearSelection: string;
     download: string;
-    tagCount: string; // "{n}/{max}"
+    counter: string; // "선택 {sel}/{max} · 후보 {cand}"
     emptyCanvas: string;
     chipSelect: string;
-    chipPin: string;
-    chipUnpin: string;
     chipDelete: string;
+    sectionSelected: string;
+    sectionCandidate: string;
+    selectedEmpty: string;
+    candidateAllAdded: string;
+    selectAll: string;
+    deselectAll: string;
+    selectTop: string; // "상위 {n} 담기"
+    topNAria: string;
   };
 };
 
@@ -44,16 +51,19 @@ const STATUS_STYLE: Record<FileStatus, string> = {
 
 export function FileCard({
   file,
+  capWarning,
   onToggleSelect,
-  onTogglePin,
   onDelete,
   onAddManual,
-  onClearSelection,
+  onSelectAll,
+  onDeselectAll,
+  onSelectTop,
   onDownload,
   labels,
 }: Props) {
   const [input, setInput] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [topN, setTopN] = useState(10);
 
   const statusLabel: Record<FileStatus, string> = {
     pending: labels.statusPending,
@@ -62,18 +72,10 @@ export function FileCard({
     error: labels.statusError,
   };
 
-  // 사용자 칩(보호·채택·수동)은 항상 노출, 후보 칩만 점진 노출.
-  const { userChips, candidateChips } = useMemo(() => {
-    const user = file.chips.filter(
-      (c) =>
-        c.status === "protected" ||
-        c.status === "selected" ||
-        c.source === "manual",
-    );
-    const cand = file.chips.filter(
-      (c) => c.status === "candidate" && c.source !== "manual",
-    );
-    return { userChips: user, candidateChips: cand };
+  const { selectedChips, candidateChips } = useMemo(() => {
+    const selected = file.chips.filter((c) => c.status === "selected");
+    const candidate = file.chips.filter((c) => c.status === "candidate");
+    return { selectedChips: selected, candidateChips: candidate };
   }, [file.chips]);
 
   const visibleCandidates = showAll
@@ -81,8 +83,8 @@ export function FileCard({
     : candidateChips.slice(0, TAG_IT_LIMITS.defaultVisibleChips);
   const hiddenCount = candidateChips.length - visibleCandidates.length;
 
-  const tagsCount = finalTags(file.chips).length;
   const ready = file.status === "done";
+  const chipLabels = { select: labels.chipSelect, delete: labels.chipDelete };
 
   const commit = () => {
     const text = input.trim();
@@ -91,12 +93,10 @@ export function FileCard({
     setInput("");
   };
 
-  const chipLabels = {
-    select: labels.chipSelect,
-    pin: labels.chipPin,
-    unpin: labels.chipUnpin,
-    delete: labels.chipDelete,
-  };
+  const counterText = labels.counter
+    .replace("{sel}", String(selectedChips.length))
+    .replace("{max}", String(TAG_IT_LIMITS.maxTagsPerFile))
+    .replace("{cand}", String(candidateChips.length));
 
   return (
     <div className="rounded-lg border border-border bg-card">
@@ -119,9 +119,7 @@ export function FileCard({
           </span>
           {ready && (
             <span className="tnum text-xs text-muted-foreground">
-              {labels.tagCount
-                .replace("{n}", String(tagsCount))
-                .replace("{max}", String(TAG_IT_LIMITS.maxTagsPerFile))}
+              {counterText}
             </span>
           )}
         </div>
@@ -133,49 +131,125 @@ export function FileCard({
           {file.error}
         </p>
       ) : ready ? (
-        <div className="space-y-3 px-4 py-4">
-          <div className="flex flex-wrap gap-1.5">
-            {userChips.length === 0 && candidateChips.length === 0 && (
-              <span className="text-xs text-muted-foreground">
-                {labels.emptyCanvas}
-              </span>
+        <div className="space-y-4 px-4 py-4">
+          {/* 선택한 태그 구역 */}
+          <section className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {labels.sectionSelected}
+            </h3>
+            {selectedChips.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {labels.selectedEmpty}
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedChips.map((chip) => (
+                  <ChipView
+                    key={chip.id}
+                    chip={chip}
+                    labels={chipLabels}
+                    onToggleSelect={() => onToggleSelect(chip.id)}
+                    onDelete={() => onDelete(chip.id)}
+                  />
+                ))}
+              </div>
             )}
-            {userChips.map((chip) => (
-              <ChipView
-                key={chip.id}
-                chip={chip}
-                labels={chipLabels}
-                onToggleSelect={() => onToggleSelect(chip.id)}
-                onTogglePin={() => onTogglePin(chip.id)}
-                onDelete={() => onDelete(chip.id)}
-              />
-            ))}
-            {visibleCandidates.map((chip) => (
-              <ChipView
-                key={chip.id}
-                chip={chip}
-                labels={chipLabels}
-                onToggleSelect={() => onToggleSelect(chip.id)}
-                onTogglePin={() => onTogglePin(chip.id)}
-                onDelete={() => onDelete(chip.id)}
-              />
-            ))}
-          </div>
+          </section>
 
-          {candidateChips.length > TAG_IT_LIMITS.defaultVisibleChips && (
-            <button
-              type="button"
-              onClick={() => setShowAll((v) => !v)}
-              className="text-xs font-medium text-primary hover:underline"
-            >
-              {showAll
-                ? labels.showLess
-                : labels.showMore.replace("{n}", String(hiddenCount))}
-            </button>
-          )}
+          {/* 후보 구역 */}
+          <section className="space-y-2 border-t border-border pt-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {labels.sectionCandidate}
+              </h3>
+              {/* 일괄 조작 */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={onSelectAll}
+                  disabled={candidateChips.length === 0}
+                  className="rounded-md border border-border px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {labels.selectAll}
+                </button>
+                <button
+                  type="button"
+                  onClick={onDeselectAll}
+                  className="rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
+                >
+                  {labels.deselectAll}
+                </button>
+                <div className="flex items-center gap-1">
+                  <NumberStepper
+                    value={String(topN)}
+                    min={1}
+                    max={TAG_IT_LIMITS.maxTagsPerFile}
+                    smallStep={1}
+                    bigStep={10}
+                    showBigStep={false}
+                    inputMode="numeric"
+                    aria-label={labels.topNAria}
+                    className="w-20"
+                    onStep={(n) => setTopN(n)}
+                    onInputChange={(text) => {
+                      const n = Number.parseInt(text, 10);
+                      if (Number.isFinite(n) && n >= 1) setTopN(n);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => onSelectTop(topN)}
+                    disabled={candidateChips.length === 0}
+                    className="whitespace-nowrap rounded-md border border-border px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {labels.selectTop.replace("{n}", String(topN))}
+                  </button>
+                </div>
+              </div>
+            </div>
 
-          {/* 직접 입력 + 액션 */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {capWarning && (
+              <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+                {capWarning}
+              </p>
+            )}
+
+            {candidateChips.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {file.chips.length === 0
+                  ? labels.emptyCanvas
+                  : labels.candidateAllAdded}
+              </p>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-1.5">
+                  {visibleCandidates.map((chip) => (
+                    <ChipView
+                      key={chip.id}
+                      chip={chip}
+                      labels={chipLabels}
+                      onToggleSelect={() => onToggleSelect(chip.id)}
+                      onDelete={() => onDelete(chip.id)}
+                    />
+                  ))}
+                </div>
+                {candidateChips.length > TAG_IT_LIMITS.defaultVisibleChips && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAll((v) => !v)}
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
+                    {showAll
+                      ? labels.showLess
+                      : labels.showMore.replace("{n}", String(hiddenCount))}
+                  </button>
+                )}
+              </>
+            )}
+          </section>
+
+          {/* 직접 입력 + 다운로드 */}
+          <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
             <input
               type="text"
               value={input}
@@ -190,13 +264,6 @@ export function FileCard({
               }}
               className="min-w-0 flex-1 rounded-md border border-input bg-transparent px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
             />
-            <button
-              type="button"
-              onClick={onClearSelection}
-              className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
-            >
-              {labels.clearSelection}
-            </button>
             <button
               type="button"
               onClick={onDownload}
