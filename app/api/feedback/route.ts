@@ -13,6 +13,7 @@ const TOOLS = [
   "language-maker",
   "maze",
   "shooter",
+  "tag-it",
 ] as const;
 const CATEGORIES = ["feature", "improvement", "complaint", "other"] as const;
 

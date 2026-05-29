@@ -1,0 +1,494 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { Download } from "lucide-react";
+import { useMessages } from "@/lib/i18n/provider";
+import { Switch } from "@/components/switch";
+import { TAG_IT_LIMITS } from "@/lib/tag-it/limits";
+import { extractCandidates } from "@/lib/tag-it/extract";
+import {
+  buildInitialChips,
+  chipId,
+  finalTags,
+  mergeReextract,
+} from "@/lib/tag-it/chips";
+import {
+  isDocxFile,
+  readKeywords,
+  readText,
+  unzipDocx,
+  writeKeywords,
+  zipFiles,
+} from "@/lib/tag-it/docx";
+import { loadOptions, saveOptions } from "@/lib/tag-it/storage";
+import {
+  DEFAULT_EXTRACT_OPTIONS,
+  type Chip,
+  type ExtractOptions,
+  type TagFile,
+} from "@/lib/tag-it/types";
+import { UploadZone } from "./components/upload-zone";
+import { CommonTray } from "./components/common-tray";
+import { AdvancedPanel } from "./components/advanced-panel";
+import { FileCard } from "./components/file-card";
+
+const DOCX_MIME =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+/** 캐시는 전체 텍스트(본문+표) — scope 필터는 extractCandidates가 옵션으로 처리. */
+const FULL_SCOPE = { body: true, tables: true } as const;
+
+type Mode = "auto" | "manual";
+
+function triggerDownload(bytes: Uint8Array, name: string, mime: string) {
+  // Uint8Array → 새 ArrayBuffer 복사 (Blob 타입 안정)
+  const buf = bytes.slice().buffer;
+  const url = URL.createObjectURL(new Blob([buf], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export function TagItClientShell() {
+  const t = useMessages();
+  const tt = t.tagIt;
+
+  const [hydrated, setHydrated] = useState(false);
+  const [options, setOptions] = useState<ExtractOptions>(
+    DEFAULT_EXTRACT_OPTIONS,
+  );
+  const [mode, setMode] = useState<Mode>("auto");
+  const [files, setFiles] = useState<TagFile[]>([]);
+  const [commonTags, setCommonTags] = useState<string[]>([]);
+  const [warning, setWarning] = useState<string | null>(null);
+
+  // 최신 files 스냅샷 — handleSelect가 setFiles updater 안에서 side-effect를 내지
+  // 않고도(StrictMode 이중실행 방지) 한계 검증에 쓰도록 ref로 유지.
+  const filesRef = useRef<TagFile[]>([]);
+  useEffect(() => {
+    filesRef.current = files;
+  }, [files]);
+  const commonTagsRef = useRef<string[]>([]);
+  useEffect(() => {
+    commonTagsRef.current = commonTags;
+  }, [commonTags]);
+
+  // 옵션 hydrate (localStorage) — 재방문 시 마지막 설정.
+  useEffect(() => {
+    setOptions(loadOptions());
+    setHydrated(true);
+  }, []);
+
+  // 옵션 persist (hydrate 이후 변경분만).
+  useEffect(() => {
+    if (!hydrated) return;
+    saveOptions(options);
+  }, [options, hydrated]);
+
+  // 옵션·모드 변경 시 재추출 — 사용자 칩(채택·보호·수동) 보존.
+  useEffect(() => {
+    if (!hydrated) return;
+    setFiles((prev) =>
+      prev.map((f) => {
+        if (f.status !== "done" || !f.extracted) return f;
+        if (mode === "manual") return f; // 수동: 후보 자동 추가 안 함, 기존 칩 유지
+        const candidates = extractCandidates(f.extracted, options);
+        return { ...f, chips: mergeReextract(f.chips, candidates) };
+      }),
+    );
+     
+  }, [options, mode, hydrated]);
+
+  const doneFiles = useMemo(
+    () => files.filter((f) => f.status === "done"),
+    [files],
+  );
+
+  // 파일 1개 파싱·추출 (실패는 해당 카드만 error).
+  const loadAndProcess = useCallback(
+    async (file: File, id: string) => {
+      setFiles((prev) =>
+        prev.map((f) => (f.id === id ? { ...f, status: "processing" } : f)),
+      );
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const entries = unzipDocx(bytes);
+        const text = readText(entries, FULL_SCOPE); // 전체 캐시
+        const existing = readKeywords(entries);
+        const candidates =
+          mode === "auto" ? extractCandidates(text, options) : [];
+        const baseChips = buildInitialChips(candidates, existing);
+        // 업로드 시점의 공통 태그도 즉시 반영
+        const chips = applyCommonTags(baseChips, commonTagsRef.current);
+
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === id
+              ? {
+                  ...f,
+                  bytes,
+                  status: "done",
+                  extracted: text,
+                  existingKeywords: existing,
+                  chips,
+                }
+              : f,
+          ),
+        );
+      } catch {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === id
+              ? { ...f, status: "error", error: tt.errorParse }
+              : f,
+          ),
+        );
+      }
+    },
+    [mode, options, tt],
+  );
+
+  // ── 업로드 + 한계 검증 ──────────────────────────────────────────────
+  // filesRef로 최신 상태를 읽어 순수하게 검증 → 통과분만 추가하고 처리 시작.
+  const handleSelect = useCallback(
+    (incoming: File[]) => {
+      setWarning(null);
+      const prev = filesRef.current;
+
+      let warn: string | null = null;
+      const accepted: { file: File; tagFile: TagFile }[] = [];
+      let runningTotal = prev.reduce((s, f) => s + f.size, 0);
+      let slots = TAG_IT_LIMITS.maxFiles - prev.length;
+
+      for (const file of incoming) {
+        if (!isDocxFile(file.name)) {
+          warn ??= tt.limitNotDocx.replace("{name}", file.name);
+          continue;
+        }
+        if (slots <= 0) {
+          warn ??= tt.limitFiles.replace("{max}", String(TAG_IT_LIMITS.maxFiles));
+          break;
+        }
+        if (file.size > TAG_IT_LIMITS.maxFileBytes) {
+          warn ??= tt.limitFileSize
+            .replace("{name}", file.name)
+            .replace("{max}", "8MB");
+          continue;
+        }
+        if (runningTotal + file.size > TAG_IT_LIMITS.maxTotalBytes) {
+          warn ??= tt.limitTotalSize.replace("{max}", "15MB");
+          break;
+        }
+        runningTotal += file.size;
+        slots -= 1;
+        accepted.push({
+          file,
+          tagFile: {
+            id: crypto.randomUUID(),
+            name: file.name,
+            size: file.size,
+            bytes: new Uint8Array(0), // loadAndProcess에서 채움
+            status: "pending",
+            existingKeywords: [],
+            chips: [],
+          },
+        });
+      }
+
+      if (warn) setWarning(warn);
+      if (accepted.length > 0) {
+        setFiles((p) => [...p, ...accepted.map((a) => a.tagFile)]);
+        for (const a of accepted) void loadAndProcess(a.file, a.tagFile.id);
+      }
+    },
+    [tt, loadAndProcess],
+  );
+
+  // ── 칩 조작 ────────────────────────────────────────────────────────
+  const updateChips = useCallback(
+    (fileId: string, fn: (chips: Chip[]) => Chip[]) => {
+      setFiles((prev) =>
+        prev.map((f) => (f.id === fileId ? { ...f, chips: fn(f.chips) } : f)),
+      );
+    },
+    [],
+  );
+
+  const toggleSelect = (fileId: string, id: string) =>
+    updateChips(fileId, (chips) =>
+      chips.map((c) =>
+        c.id === id
+          ? { ...c, status: c.status === "selected" ? "candidate" : "selected" }
+          : c,
+      ),
+    );
+
+  const togglePin = (fileId: string, id: string) =>
+    updateChips(fileId, (chips) =>
+      chips.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              status: c.status === "protected" ? "candidate" : "protected",
+            }
+          : c,
+      ),
+    );
+
+  const deleteChip = (fileId: string, id: string) =>
+    updateChips(fileId, (chips) => chips.filter((c) => c.id !== id));
+
+  const addManual = (fileId: string, text: string) => {
+    const id = chipId(text);
+    updateChips(fileId, (chips) => {
+      const exists = chips.find((c) => c.id === id);
+      if (exists)
+        return chips.map((c) =>
+          c.id === id ? { ...c, status: "selected" } : c,
+        );
+      return [
+        {
+          id,
+          text: text.slice(0, TAG_IT_LIMITS.maxTagChars),
+          status: "selected",
+          score: 0,
+          freq: 0,
+          source: "manual",
+        },
+        ...chips,
+      ];
+    });
+  };
+
+  const clearSelection = (fileId: string) =>
+    updateChips(fileId, (chips) =>
+      chips.map((c) =>
+        c.status === "selected" ? { ...c, status: "candidate" } : c,
+      ),
+    );
+
+  // ── 공통 태그 트레이 ────────────────────────────────────────────────
+  const addCommon = (text: string) => {
+    const clean = text.slice(0, TAG_IT_LIMITS.maxTagChars);
+    setCommonTags((prev) =>
+      prev.some((x) => chipId(x) === chipId(clean)) ? prev : [...prev, clean],
+    );
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.status === "done"
+          ? { ...f, chips: applyCommonTags(f.chips, [clean]) }
+          : f,
+      ),
+    );
+  };
+
+  const removeCommon = (text: string) => {
+    const id = chipId(text);
+    setCommonTags((prev) => prev.filter((x) => chipId(x) !== id));
+    setFiles((prev) =>
+      prev.map((f) => ({ ...f, chips: f.chips.filter((c) => c.id !== id) })),
+    );
+  };
+
+  // ── 다운로드 ───────────────────────────────────────────────────────
+  const downloadOne = (fileId: string) => {
+    const file = files.find((f) => f.id === fileId);
+    if (!file || file.status !== "done") return;
+    const out = writeKeywords(unzipDocx(file.bytes), finalTags(file.chips));
+    triggerDownload(out, file.name, DOCX_MIME);
+  };
+
+  const downloadAll = () => {
+    const built = doneFiles.map((f) => ({
+      name: f.name,
+      bytes: writeKeywords(unzipDocx(f.bytes), finalTags(f.chips)),
+    }));
+    if (built.length === 0) return;
+    const date = new Date().toISOString().slice(0, 10);
+    triggerDownload(zipFiles(built), `tag-it-${date}.zip`, "application/zip");
+  };
+
+  const atFileLimit = files.length >= TAG_IT_LIMITS.maxFiles;
+
+  return (
+    <main className="mx-auto w-full max-w-4xl px-6 pt-6 pb-20">
+      <div className="mb-4">
+        <Link
+          href="/"
+          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {t.toolCommon.back}
+        </Link>
+      </div>
+
+      <header className="mb-6">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          {tt.title}
+        </h1>
+        <p className="mt-2 text-muted-foreground">{tt.description}</p>
+      </header>
+
+      <div className="space-y-5">
+        <UploadZone
+          onSelect={handleSelect}
+          warning={warning}
+          disabled={atFileLimit}
+          labels={{
+            title: tt.uploadTitle,
+            hint: tt.uploadHint,
+            button: tt.uploadButton,
+          }}
+        />
+
+        {/* 모드 토글 (자동/수동) */}
+        <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium text-foreground">
+              {tt.modeLabel}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {mode === "auto" ? tt.modeAutoHint : tt.modeManualHint}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span
+              className={
+                mode === "manual"
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              }
+            >
+              {tt.modeManual}
+            </span>
+            <Switch
+              checked={mode === "auto"}
+              onCheckedChange={(v) => setMode(v ? "auto" : "manual")}
+              aria-label={tt.modeLabel}
+            />
+            <span
+              className={
+                mode === "auto" ? "text-foreground" : "text-muted-foreground"
+              }
+            >
+              {tt.modeAuto}
+            </span>
+          </div>
+        </div>
+
+        <AdvancedPanel
+          options={options}
+          onChange={setOptions}
+          labels={{
+            advancedTitle: tt.advancedTitle,
+            removeJosaLabel: tt.removeJosaLabel,
+            removeJosaHint: tt.removeJosaHint,
+            nounFocusLabel: tt.nounFocusLabel,
+            nounFocusHint: tt.nounFocusHint,
+            scopeLabel: tt.scopeLabel,
+            scopeBody: tt.scopeBody,
+            scopeTables: tt.scopeTables,
+            minFreqLabel: tt.minFreqLabel,
+            minFreqHint: tt.minFreqHint,
+          }}
+        />
+
+        {files.length > 0 && (
+          <>
+            <CommonTray
+              tags={commonTags}
+              onAdd={addCommon}
+              onRemove={removeCommon}
+              disabled={doneFiles.length === 0}
+              labels={{
+                title: tt.commonTrayTitle,
+                hint: tt.commonTrayHint,
+                placeholder: tt.commonTrayPlaceholder,
+                empty: tt.commonTrayEmpty,
+                remove: tt.chipDelete,
+              }}
+            />
+
+            <div className="space-y-3">
+              {files.map((file) => (
+                <FileCard
+                  key={file.id}
+                  file={file}
+                  onToggleSelect={(cid) => toggleSelect(file.id, cid)}
+                  onTogglePin={(cid) => togglePin(file.id, cid)}
+                  onDelete={(cid) => deleteChip(file.id, cid)}
+                  onAddManual={(text) => addManual(file.id, text)}
+                  onClearSelection={() => clearSelection(file.id)}
+                  onDownload={() => downloadOne(file.id)}
+                  labels={{
+                    statusPending: tt.statusPending,
+                    statusProcessing: tt.statusProcessing,
+                    statusDone: tt.statusDone,
+                    statusError: tt.statusError,
+                    addPlaceholder: tt.addPlaceholder,
+                    showMore: tt.showMore,
+                    showLess: tt.showLess,
+                    clearSelection: tt.clearSelection,
+                    download: tt.download,
+                    tagCount: tt.tagCount,
+                    emptyCanvas: tt.emptyCanvas,
+                    chipSelect: tt.chipSelect,
+                    chipPin: tt.chipPin,
+                    chipUnpin: tt.chipUnpin,
+                    chipDelete: tt.chipDelete,
+                  }}
+                />
+              ))}
+            </div>
+
+            {doneFiles.length > 1 && (
+              <button
+                type="button"
+                onClick={downloadAll}
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                <Download className="size-4" />
+                {tt.downloadAll}
+              </button>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              {tt.overwriteNote}
+            </p>
+          </>
+        )}
+      </div>
+    </main>
+  );
+}
+
+/** 공통 태그를 칩 목록에 selected로 합류 (중복은 selected로 승격). */
+function applyCommonTags(chips: Chip[], commonTags: string[]): Chip[] {
+  let next = chips;
+  for (const tag of commonTags) {
+    const id = chipId(tag);
+    const exists = next.find((c) => c.id === id);
+    if (exists) {
+      next = next.map((c) =>
+        c.id === id ? { ...c, status: "selected" } : c,
+      );
+    } else {
+      next = [
+        {
+          id,
+          text: tag.slice(0, TAG_IT_LIMITS.maxTagChars),
+          status: "selected",
+          score: 0,
+          freq: 0,
+          source: "manual",
+        },
+        ...next,
+      ];
+    }
+  }
+  return next;
+}

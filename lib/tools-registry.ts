@@ -74,4 +74,12 @@ export const tools: Tool[] = [
     // 전용 page.tsx 존재 — [slug] fallback이 정적 경로를 emit하지 않도록 hasPage:true.
     hasPage: true,
   },
+  {
+    id: "tag-it",
+    slug: "tag-it",
+    status: "live",
+    createdAt: "2026-05-29",
+    // 클라이언트 전용 도구 (D1·서버 없음). hasPage: [slug] fallback 충돌 방지.
+    hasPage: true,
+  },
 ];

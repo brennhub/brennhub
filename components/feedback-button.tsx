@@ -17,6 +17,7 @@ function toolFromPath(pathname: string | null): FeedbackTool | undefined {
   if (pathname.startsWith("/tools/language-maker")) return "language-maker";
   if (pathname.startsWith("/tools/maze")) return "maze";
   if (pathname.startsWith("/tools/shooter")) return "shooter";
+  if (pathname.startsWith("/tools/tag-it")) return "tag-it";
   if (pathname === "/" || pathname === "") return undefined;
   return "site";
 }
