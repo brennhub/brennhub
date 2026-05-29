@@ -153,6 +153,7 @@
 
 ### Changed (39-C 상용도 티어 + char2 best-by-score)
 - `recommendNames` — 첫 글자별 cap을 **인카운터순(=stroke ASC)**으로 채우던 버퍼를 **첫 글자별 best-by-score 버킷**으로 재작성 (cap-skip 최저획 char2 잠김 → 최고점 char2 선택, 蘇玟刁의 刁=2획 고정 해소). 메모리 `O(distinct × PER_FIRST_KEEP)` 유지 — pool² 없음(c5-7c 503 원칙 계승).
+- ⚠️ n=2 char2 후보 **상위 40개 제한**(`CHAR2_LIMIT`, db=route frequency DESC) — best-by-score 무제한 평가가 `evaluateSoundOhaeng`×25만으로 Workers CPU 503 재발(dev 회귀, 단건 1465ms·burst 17/20 503). char2 상위 40 제한 → CPU `O(pool×40)`≈120ms. char1은 전 풀(다양성 유지). 상세 learnings §3(B).
 - `NameCandidate += freqSum` (이름 한자 상용도 합) + `compareCandidate`(totalScore desc, 동점 freqSum desc) — 상용도는 **점수 미가산**, 풀 선정(route ORDER BY frequency DESC)·동점 tiebreak에만 (음령55/수리45 축 불변).
 - `poc/names-poc.test.ts` — case7(char2 best-by-score 브루트포스 동등성)·8(상용도 tiebreak)·9(작명 부적합 가드) 추가.
 

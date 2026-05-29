@@ -203,11 +203,9 @@ export function recommendNames(
   // 3. 첫 글자별 best-by-score 버퍼 (39-C char2 품질 패스).
   //    구 설계: 첫 글자 cap을 **인카운터 순서**로 채움 → 풀이 stroke ASC라 최저획 char2가
   //    먼저 cap을 채우고 잠김(蘇玟刁 회귀: 刁=2획 char2 고정). →
-  //    신 설계: 모든 조합을 평가하되 첫 글자별 **상위 PER_FIRST_KEEP개(점수순, 동점 상용도순)**만
-  //    유지 → char2가 "최저획"이 아닌 "최고점"으로 선택됨.
-  //    메모리 O(distinct 첫 글자 × PER_FIRST_KEEP) — pool² materialize 없음 → 503 회피.
-  //    (cap-skip 제거로 makeCandidate는 모든 조합 호출 — POOL_LIMIT 500이면 n=2 ≤25만,
-  //     c5-7c 실측 p95 193ms 범위. 객체는 버킷 외 즉시 GC.)
+  //    신 설계: 첫 글자별 **상위 PER_FIRST_KEEP개(점수순, 동점 상용도순)**만 유지 →
+  //    char2가 "최저획"이 아닌 "최고점"으로 선택됨.
+  //    메모리 O(distinct 첫 글자 × PER_FIRST_KEEP) — pool² materialize 없음 → OOM(503) 회피.
   const PER_FIRST_KEEP = 2; // 출력 다양성(첫 글자당 ≤2) — 39-C 계승.
   const buckets = new Map<string, NameCandidate[]>(); // 각 버킷 compareCandidate desc
   function consider(cand: NameCandidate): void {
@@ -224,12 +222,18 @@ export function recommendNames(
     }
   }
 
-  // 4. 조합 생성 → consider (cap-skip 없음: 모든 char2 평가 → 최고점 char2 선택).
+  // 4. 조합 생성 → consider.
+  //    n=2 CPU 안전: char2 후보를 **상용도 상위 CHAR2_LIMIT개로 제한** (db는 route에서
+  //    frequency DESC 정렬 = 상위가 상용 char2). 무제한 평가는 evaluateSoundOhaeng×pool²
+  //    (POOL 500 → 25만)이 Workers CPU 한도 초과 → 503 (dev 회귀 확인). char1은 전 풀
+  //    순회(첫 글자 다양성 유지). best-by-score는 상위 char2 집합 안에서 → CPU O(pool×CHAR2_LIMIT).
   if (options.nameLength === 1) {
     for (const c of usable) consider(makeCandidate([c], options));
   } else {
+    const CHAR2_LIMIT = 40; // 상용도 상위 char2만 (pool×40 ≈ 2만 ≤ c5-7c 안전역).
+    const c2Count = Math.min(usable.length, CHAR2_LIMIT);
     for (let i = 0; i < usable.length; i++) {
-      for (let j = 0; j < usable.length; j++) {
+      for (let j = 0; j < c2Count; j++) {
         if (i === j) continue; // 같은 글자 중복 제외
         consider(makeCandidate([usable[i], usable[j]], options));
       }
