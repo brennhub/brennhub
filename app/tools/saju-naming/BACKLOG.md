@@ -209,7 +209,7 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 ### Task 45 — Basic / Premium 흐름
 - [ ] Stripe 결제 통합
 - [ ] 후보 30개 (Basic) 화면
-- [ ] AI 어감 분석 (Premium)
+- [ ] AI 어감 분석 (Premium) — ⚠️ **39-C 蘇 시뮬에서 본질 부각**: 점수 포화 동점 풀에 비-작명 명사(皇·革·音·列·式·吏 등) 다수 잔존. frequency 티어·의미 가드(숫자·기능어)로는 미해소 → **후보 중 작명 적합 한자 선별 = 본 AI 어감의 핵심 역할**. 상세 `docs/learnings/2026-05-29-saju-naming-39c-frequency-tier.md` §2·6.
 - [ ] 부모 의도 입력 (Premium)
 - [ ] iteration 버튼
 
