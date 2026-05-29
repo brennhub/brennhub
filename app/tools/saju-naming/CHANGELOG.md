@@ -151,11 +151,11 @@
 - `lib/name-exclude.ts` — `NON_NAME_MEANING_KEYWORDS`(9)/`NON_NAME_EXPLICIT`(14)/`hasNonNameMeaning` 추가. 숫자·기능어(六全同共各一…) 차단. 풀 9,055 의미 스캔 오탐 0 검증(相·玖·鈞·申·巨 등 보호).
 - `docs/learnings/2026-05-29-saju-naming-39c-frequency-tier.md` — 자료원 정찰 + 蘇 포화 병목 발견 + 3+1 레이어 + 정직한 한계 record.
 
-### Changed (39-C 상용도 티어 + char2 best-by-score)
-- `recommendNames` — 첫 글자별 cap을 **인카운터순(=stroke ASC)**으로 채우던 버퍼를 **첫 글자별 best-by-score 버킷**으로 재작성 (cap-skip 최저획 char2 잠김 → 최고점 char2 선택, 蘇玟刁의 刁=2획 고정 해소). 메모리 `O(distinct × PER_FIRST_KEEP)` 유지 — pool² 없음(c5-7c 503 원칙 계승).
-- ⚠️ n=2 char2 후보 **상위 40개 제한**(`CHAR2_LIMIT`, db=route frequency DESC) — best-by-score 무제한 평가가 `evaluateSoundOhaeng`×25만으로 Workers CPU 503 재발(dev 회귀, 단건 1465ms·burst 17/20 503). char2 상위 40 제한 → CPU `O(pool×40)`≈120ms. char1은 전 풀(다양성 유지). 상세 learnings §3(B).
+### Changed (39-C 상용도 티어 + char2 상용 우선)
+- `recommendNames` — 첫 글자 cap 버퍼 유지(`PER_FIRST_KEEP=2`, cap-skip) + **007 freq-DESC 풀**로 cap이 **상용 char1·char2**를 lock (구 버그 蘇玟刁의 최저획 char2 刁 고정은 풀이 stroke-ASC였기 때문 — 007로 정반대 해소). 메모리 `O(distinct × PER_FIRST_KEEP)` — pool² 없음.
+- ⚠️ **CPU 503 2회 회귀 → cap-skip 복귀**: char2 best-by-score(전 조합 평가)는 `evaluateSoundOhaeng`(c5-7c 경량 함수의 ~7.6×)×25만 → 단건 1465ms·burst 17/20 503. char2 상위 40 제한(2만)도 3/20 503. **cap-skip(수백 조합, prod 검증)으로 복귀** — char2 best-by-score는 CPU 한계로 보류(sound 함수 경량화 시 재시도, backlog). 007 풀이 char2 상용성 대체 달성. 상세 learnings §3(B).
 - `NameCandidate += freqSum` (이름 한자 상용도 합) + `compareCandidate`(totalScore desc, 동점 freqSum desc) — 상용도는 **점수 미가산**, 풀 선정(route ORDER BY frequency DESC)·동점 tiebreak에만 (음령55/수리45 축 불변).
-- `poc/names-poc.test.ts` — case7(char2 best-by-score 브루트포스 동등성)·8(상용도 tiebreak)·9(작명 부적합 가드) 추가.
+- `poc/names-poc.test.ts` — case7(cap-skip 풀순서 상용 char2 우선)·8(상용도 tiebreak)·9(작명 부적합 가드) 추가.
 
 ### Decided (39-C 상용도 티어)
 - **frequency 컬럼 재사용** (스키마 변경 0) — route `ORDER BY frequency DESC`(기존, 무효였음) 즉시 유효화. 진짜 빈도 데이터 도착 시 동일 컬럼 교체.

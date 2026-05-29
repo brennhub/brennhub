@@ -36,14 +36,15 @@ per-한자 실사용 빈도 무료·기계가독 자료는 **미가용 재확인
 | 레이어 | 위치 | 효과 | 한계 |
 |---|---|---|---|
 | (A) 상용도 풀 선정 | 007 migration + route `ORDER BY frequency DESC`(기존) | 풀 500이 상용자 우선 → 刁(K1)·玟玢玪 풀 상단서 demote | 풀 LIMIT 안에 비-작명 상용자 잔존 |
-| (B) char2 best-by-score | `lib/names.ts` recommendNames 버퍼 재작성 | cap-skip 최저획 → 첫 글자별 **최고점** char2 (브루트포스 동등성 PoC) | 점수 포화 시 동점 다수라 가시 효과 제한 |
+| (B) char2 상용 우선 (cap-skip + 007 풀) | `lib/names.ts` 버퍼 | 007 freq-DESC 풀 → cap-skip이 **상용 char2** 고정 (구 stroke-ASC의 최저획 刁 고정 해소) | best-by-score는 CPU 한계로 보류(아래 ⚠) — 007 풀이 char2 상용성 대체 달성 |
 | (C) 상용도 tiebreak | `lib/names.ts` `freqSum` (점수 미가산) | 동점에서 흔한 한자 우선 | 비-작명 상용자(六共)도 "흔함"이라 상위 → (D) 필요 |
 | (D) 작명 부적합 가드 | `lib/name-exclude.ts` | 숫자·기능어(六全同共各一…) 차단 | best-effort·비포괄: 일반 명사·동사(皇革音列式吏…) 미포착 |
 
-**(B) 메모리 + CPU**: 첫 글자별 bounded 버킷 `O(distinct × PER_FIRST_KEEP)` — pool² materialize 없음(메모리 503 회피, c5-7c 계승).
-- ⚠️ **CPU 503 재발 → 정정**: 첫 시도는 cap-skip 제거 후 **전 조합**(POOL 500 → n=2 25만) 평가. c5-7c는 cap-skip+경량 `calcSoundScore`로 25만이 193ms였으나, 그 후 도입된 **`evaluateSoundOhaeng`이 ~7.6× 무거워** 25만 = 단건 1465ms + 순차 burst에서 17/20 HTTP 503(dev 회귀). Workers CPU 한도 초과.
-- **수정**: n=2 char2 후보를 **상용도 상위 40개**로 제한(`CHAR2_LIMIT=40`, db는 route frequency DESC 정렬 = 상위가 상용 char2). char1은 전 풀 순회(첫 글자 다양성). CPU `O(pool × 40)` ≈ 2만 ≈ 120ms(c5-7c 안전역). best-by-score는 상위 char2 집합 안에서. POOL 500은 유지(seed 25 < 40이라 PoC case7 브루트포스 동등성 불변).
-- 교훈: **Workers 회귀는 로컬 PoC로 안 잡힘** — `evaluateSoundOhaeng` 같은 점수 함수 무게 변화 시 조합수×함수무게를 dev HTTP latency로 재측정 필수. c5-7c 193ms는 당시 경량 함수 기준이라 현재 무효.
+**(B) char2 — CPU 503 2회 회귀 → cap-skip 복귀**: 메모리는 첫 글자별 bounded 버킷 `O(distinct × PER_FIRST_KEEP)`로 pool² 없음(메모리 503 회피, c5-7c 계승). 문제는 CPU.
+- ⚠️ **시도 1 (best-by-score 전 조합)**: cap-skip 제거 후 n=2 전 조합(POOL 500² = 25만)을 `evaluateSoundOhaeng`로 평가. c5-7c 193ms는 당시 경량 `calcSoundScore` 기준이었고 그 후 도입된 **`evaluateSoundOhaeng`이 ~7.6× 무거워** 25만 = 단건 1465ms·burst **17/20 HTTP 503**(dev 회귀).
+- ⚠️ **시도 2 (char2 상위 40 제한)**: char2를 상용 상위 40으로 제한(2만 조합). 단건 warm p50 178ms로 회복했으나 **여전히 3/20 503**(2만도 Workers CPU 한도 근처).
+- ✅ **최종 (cap-skip 복귀)**: 첫 글자 버킷이 차면(`PER_FIRST_KEEP=2`) skip → 평가 조합 ≈ distinct 첫글자 × 2 (수백). **007 freq-DESC 풀** 덕에 cap-skip이 lock하는 char2 = **상용 char2**(구 stroke-ASC 버그의 최저획 刁 고정과 정반대). char2 best-by-score 자체는 evaluateSoundOhaeng CPU 비용으로 **보류**(향후 sound 점수 함수 경량화 시 재시도 가능 — backlog).
+- 교훈: **Workers CPU 회귀는 로컬 PoC로 안 잡힘** — 점수 함수 무게 변화 시 조합수×함수무게를 dev HTTP latency로 재측정 필수. c5-7c 193ms는 경량 함수 기준이라 현재 무효. cap-skip(수백 조합)은 prod 검증된 안전역.
 
 **(D) 가드 — 오탐 0 데이터 검증** (풀 9,055 의미 스캔). 충돌 어휘는 키워드 배제 + char 명시:
 - 키워드(9): 여섯·다섯·여덟·일곱·스물·한가지·각각·온전할·무릇 → 매칭 18자(七五仝伍全八六凡卄各同咫囫廿捌柒漆鍰, 전부 비-작명).

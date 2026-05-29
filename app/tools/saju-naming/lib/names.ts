@@ -200,41 +200,42 @@ export function recommendNames(
       !isExcludedFromRecommend({ character: h.character, meaning: h.meaning }),
   );
 
-  // 3. 첫 글자별 best-by-score 버퍼 (39-C char2 품질 패스).
-  //    구 설계: 첫 글자 cap을 **인카운터 순서**로 채움 → 풀이 stroke ASC라 최저획 char2가
-  //    먼저 cap을 채우고 잠김(蘇玟刁 회귀: 刁=2획 char2 고정). →
-  //    신 설계: 첫 글자별 **상위 PER_FIRST_KEEP개(점수순, 동점 상용도순)**만 유지 →
-  //    char2가 "최저획"이 아닌 "최고점"으로 선택됨.
-  //    메모리 O(distinct 첫 글자 × PER_FIRST_KEEP) — pool² materialize 없음 → OOM(503) 회피.
-  const PER_FIRST_KEEP = 2; // 출력 다양성(첫 글자당 ≤2) — 39-C 계승.
+  // 3. 첫 글자별 cap 버퍼 (다양성) — 첫 글자당 PER_FIRST_KEEP개.
+  //    핵심: db는 route에서 `frequency DESC`(007 상용도 티어) 정렬 → 풀 순회 시 **상용 한자가
+  //    먼저** 등장. cap을 인카운터순으로 채우면 자연히 **상용 char1·char2**가 선택됨.
+  //    (구 버그 蘇玟刁의 刁=최저획 char2 고정은 풀이 stroke ASC였기 때문 — 007 freq-DESC로 해소.)
+  //    메모리 O(distinct 첫 글자 × PER_FIRST_KEEP) — pool² 없음(OOM 회피).
+  const PER_FIRST_KEEP = 2; // 출력 다양성(첫 글자당 ≤2).
   const buckets = new Map<string, NameCandidate[]>(); // 각 버킷 compareCandidate desc
+  const bucketFull = (first: string): boolean =>
+    (buckets.get(first)?.length ?? 0) >= PER_FIRST_KEEP;
   function consider(cand: NameCandidate): void {
     const first = cand.hangeul[0] ?? "";
     const arr = buckets.get(first);
-    if (!arr) {
-      buckets.set(first, [cand]);
-    } else if (arr.length < PER_FIRST_KEEP) {
+    if (!arr) buckets.set(first, [cand]);
+    else if (arr.length < PER_FIRST_KEEP) {
       arr.push(cand);
-      arr.sort(compareCandidate);
-    } else if (compareCandidate(cand, arr[arr.length - 1]) < 0) {
-      arr[arr.length - 1] = cand; // 최하위 교체 (cand가 더 우수)
       arr.sort(compareCandidate);
     }
   }
 
-  // 4. 조합 생성 → consider.
-  //    n=2 CPU 안전: char2 후보를 **상용도 상위 CHAR2_LIMIT개로 제한** (db는 route에서
-  //    frequency DESC 정렬 = 상위가 상용 char2). 무제한 평가는 evaluateSoundOhaeng×pool²
-  //    (POOL 500 → 25만)이 Workers CPU 한도 초과 → 503 (dev 회귀 확인). char1은 전 풀
-  //    순회(첫 글자 다양성 유지). best-by-score는 상위 char2 집합 안에서 → CPU O(pool×CHAR2_LIMIT).
+  // 4. 조합 생성 → consider. 첫 글자 버킷이 차면 skip(cap-skip).
+  //    ⚠️ CPU: evaluateSoundOhaeng는 무거워 무제한/대량 char2 평가 시 Workers CPU 초과 → 503
+  //    (dev 회귀 2회 확인: 무제한 25만 17/20·char2상위40 2만 3/20). cap-skip은 첫 글자별 ~2조합만
+  //    평가(총 ≈ distinct 첫글자 × 2, 수백) → CPU 안전(prod 검증). char2 best-by-score는
+  //    CPU 한계로 보류 — 007 freq-DESC 풀이 상용 char2를 보장(동일 목표 달성).
   if (options.nameLength === 1) {
-    for (const c of usable) consider(makeCandidate([c], options));
+    for (const c of usable) {
+      if (bucketFull(c.hangeul[0] ?? "")) continue;
+      consider(makeCandidate([c], options));
+    }
   } else {
-    const CHAR2_LIMIT = 40; // 상용도 상위 char2만 (pool×40 ≈ 2만 ≤ c5-7c 안전역).
-    const c2Count = Math.min(usable.length, CHAR2_LIMIT);
     for (let i = 0; i < usable.length; i++) {
-      for (let j = 0; j < c2Count; j++) {
+      const firstSyl = usable[i].hangeul[0] ?? "";
+      if (bucketFull(firstSyl)) continue; // 첫 글자 cap → 이 char1 조합 전체 skip
+      for (let j = 0; j < usable.length; j++) {
         if (i === j) continue; // 같은 글자 중복 제외
+        if (bucketFull(firstSyl)) break; // 루프 중 cap 도달 → 중단
         consider(makeCandidate([usable[i], usable[j]], options));
       }
     }
