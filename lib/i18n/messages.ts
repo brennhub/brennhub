@@ -584,16 +584,22 @@ export type Messages = {
     addPlaceholder: string;
     showMore: string;
     showLess: string;
-    clearSelection: string;
     download: string;
     downloadAll: string;
-    tagCount: string;
     emptyCanvas: string;
     overwriteNote: string;
     chipSelect: string;
-    chipPin: string;
-    chipUnpin: string;
     chipDelete: string;
+    sectionSelected: string;
+    sectionCandidate: string;
+    selectedEmpty: string;
+    candidateAllAdded: string;
+    counter: string;
+    selectAll: string;
+    deselectAll: string;
+    selectTop: string;
+    topNAria: string;
+    capWarning: string;
   };
   feedback: {
     button: string;
@@ -1332,17 +1338,23 @@ export const messages: Record<Locale, Messages> = {
       addPlaceholder: "태그 직접 입력 후 Enter",
       showMore: "+{n}개 더보기",
       showLess: "접기",
-      clearSelection: "선택 해제",
       download: "다운로드",
       downloadAll: "전체 다운로드 (.zip)",
-      tagCount: "{n}/{max} 태그",
       emptyCanvas: "추출된 칩이 여기에 표시됩니다. 직접 입력해도 됩니다.",
       overwriteNote:
         "다운로드 파일은 원본과 같은 이름입니다. 덮어쓰지 않도록 주의하세요.",
       chipSelect: "태그 채택/해제",
-      chipPin: "보호 (고정)",
-      chipUnpin: "보호 해제",
       chipDelete: "삭제",
+      sectionSelected: "선택한 태그",
+      sectionCandidate: "후보",
+      selectedEmpty: "아래 후보에서 태그를 골라 담으세요.",
+      candidateAllAdded: "모든 후보를 담았어요.",
+      counter: "선택 {sel}/{max} · 후보 {cand}",
+      selectAll: "전체 선택",
+      deselectAll: "전체 해제",
+      selectTop: "상위 {n} 담기",
+      topNAria: "상위 몇 개를 담을지",
+      capWarning: "파일당 태그는 최대 {max}개입니다. 상위 {max}개만 담았어요.",
     },
     feedback: {
       button: "피드백",
@@ -2179,17 +2191,23 @@ export const messages: Record<Locale, Messages> = {
       addPlaceholder: "Type a tag, then Enter",
       showMore: "+{n} more",
       showLess: "Show less",
-      clearSelection: "Clear selection",
       download: "Download",
       downloadAll: "Download all (.zip)",
-      tagCount: "{n}/{max} tags",
       emptyCanvas: "Extracted chips appear here. You can also type your own.",
       overwriteNote:
         "Downloads keep the original filename. Take care not to overwrite.",
       chipSelect: "Select/deselect tag",
-      chipPin: "Protect (pin)",
-      chipUnpin: "Unprotect",
       chipDelete: "Delete",
+      sectionSelected: "Selected tags",
+      sectionCandidate: "Candidates",
+      selectedEmpty: "Pick tags from the candidates below.",
+      candidateAllAdded: "All candidates added.",
+      counter: "Selected {sel}/{max} · Candidates {cand}",
+      selectAll: "Select all",
+      deselectAll: "Clear all",
+      selectTop: "Top {n}",
+      topNAria: "How many top candidates to add",
+      capWarning: "Up to {max} tags per file — kept the top {max}.",
     },
     feedback: {
       button: "Feedback",
