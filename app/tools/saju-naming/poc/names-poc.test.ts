@@ -20,7 +20,6 @@ import {
   type NameCandidate,
 } from "../lib/names";
 import { evaluateSoundOhaeng } from "../lib/sound-ohaeng";
-import { calculateSurie } from "../lib/surie";
 import {
   isExcludedFromRecommend,
   isRareBlock,
@@ -185,38 +184,22 @@ check("case6 卵 추천 미등장", !joined6.includes("卵"));
 check("case6 㔕 추천 미등장", !joined6.includes("㔕"));
 check("case6 危 추천 미등장", !joined6.includes("危"));
 
-// case 7 — char2 best-by-score (蘇玟刁 회귀의 핵심 수정).
-//   구 버퍼: 첫 글자 cap을 인카운터(=풀 stroke ASC)로 채워 최저획 char2 고정.
-//   신 버퍼: 첫 글자별 최고점 char2 선택. 브루트포스 max와 동등성 검증.
-function comboScore(
-  sungStroke: number,
-  sungHangeul: string,
-  c1: HanjaEntry,
-  c2: HanjaEntry,
-): number {
-  const surie = calculateSurie(sungStroke, c1.won_stroke, c2.won_stroke).totalScore;
-  const sound = evaluateSoundOhaeng([sungHangeul, c1.hangeul, c2.hangeul]).score;
-  return Math.round(sound * 0.55) + Math.round(surie * 0.45);
-}
-const bruteBest = new Map<string, number>();
-for (let i = 0; i < seed.length; i++) {
-  for (let j = 0; j < seed.length; j++) {
-    if (i === j) continue;
-    const f = seed[i].hangeul[0];
-    const s = comboScore(SUNG.sungStroke, SUNG.sungHangeul, seed[i], seed[j]);
-    if (!bruteBest.has(f) || s > (bruteBest.get(f) as number)) bruteBest.set(f, s);
-  }
-}
-const distinctFirsts = new Set(seed.map((c) => c.hangeul[0])).size;
-const r7 = recommendNames({ ...SUNG, nameLength: 2, topN: distinctFirsts, db: seed });
-check("case7 첫 글자 distinct (rank0)", new Set(r7.map((c) => c.hangeul[0])).size === r7.length);
-for (const c of r7) {
-  const f = c.hangeul[0];
-  check(
-    `case7 ${c.hanja}(${f}) 첫글자 최고점 == 브루트 max(${bruteBest.get(f)})`,
-    c.totalScore === bruteBest.get(f),
-  );
-}
+// case 7 — cap-skip은 풀(db) 순서(=route frequency DESC) 상위 char2 우선 (蘇玟刁 해소 메커니즘).
+//   구 버그: 풀 stroke ASC → 최저획 char2(刁) 고정. 007 freq-DESC 풀에선 상용 char2 우선.
+//   db에 상용 char2(赫·煥, freq5) 뒤 희귀 저획 char2(刁, freq3) → 각 char1 cap(2)이 상용으로
+//   차고 刁는 char2 슬롯 미선택(char1로는 가능). CPU: 첫글자당 ~2조합만 평가(503 회피).
+const c2pool: HanjaEntry[] = [
+  { character: "林", hangeul: "림", stroke: 8, won_stroke: 8, ohaeng: "목", meaning: "수풀 림", frequency: 5 },
+  { character: "赫", hangeul: "혁", stroke: 14, won_stroke: 14, ohaeng: "화", meaning: "빛날 혁", frequency: 5 },
+  { character: "煥", hangeul: "환", stroke: 13, won_stroke: 13, ohaeng: "화", meaning: "빛날 환", frequency: 5 },
+  { character: "刁", hangeul: "조", stroke: 2, won_stroke: 2, ohaeng: "금", meaning: "조두 조", frequency: 3 },
+];
+const r7 = recommendNames({ ...SUNG, nameLength: 2, topN: 10, db: c2pool });
+check("case7 결과 존재", r7.length > 0);
+check(
+  "case7 희귀 저획 char2(刁) char2 슬롯 미선택 (상용 char2 우선)",
+  r7.every((c) => [...c.hanja][1] !== "刁"),
+);
 
 // case 8 — 상용도 tiebreak (동점 → freqSum 높은 후보 우선). 점수축 미가산, 동률에서만.
 //   "가" 동점 90 두 후보: freqSum 9 > 4 → 그룹 내 가온 우선.
@@ -273,5 +256,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `PoC 통과 — recommendNames 9 case (n=2 / n=1 / 음령 통합 / 다양성 / 대형풀 / 제외 필터 / char2 best-by-score / 상용도 tiebreak / 작명 부적합 가드) · 음령 55%+수리 45% · 39-C 품질 가드.`,
+  `PoC 통과 — recommendNames 9 case (n=2 / n=1 / 음령 통합 / 다양성 / 대형풀 / 제외 필터 / char2 cap-skip 풀순서 / 상용도 tiebreak / 작명 부적합 가드) · 음령 55%+수리 45% · 39-C 품질 가드.`,
 );
