@@ -20,7 +20,12 @@ import {
   type NameCandidate,
 } from "../lib/names";
 import { evaluateSoundOhaeng } from "../lib/sound-ohaeng";
-import { isExcludedFromRecommend, isRareBlock } from "../lib/name-exclude";
+import { calculateSurie } from "../lib/surie";
+import {
+  isExcludedFromRecommend,
+  isRareBlock,
+  hasNonNameMeaning,
+} from "../lib/name-exclude";
 
 // 시드 25자 — stroke=필획, won_stroke=원획 (氵 변형부수 한자는 환원 +1).
 const seed: HanjaEntry[] = [
@@ -86,7 +91,11 @@ for (const c of r3) {
 
 // case 4 — 다양성 (39-C)
 //   selectDiverse 단위: 첫 글자 중복 버퍼 → distinct 우선 선택.
-const mk = (hangeul: string, totalScore: number): NameCandidate => ({
+const mk = (
+  hangeul: string,
+  totalScore: number,
+  freqSum = 0,
+): NameCandidate => ({
   hanja: "?",
   hangeul,
   strokes: [],
@@ -95,6 +104,7 @@ const mk = (hangeul: string, totalScore: number): NameCandidate => ({
   surieScore: 0,
   soundScore: 0,
   totalScore,
+  freqSum,
   breakdown: "",
 });
 const synth = [mk("수아", 97), mk("수호", 96), mk("수민", 95), mk("가람", 90), mk("나래", 88)];
@@ -175,11 +185,93 @@ check("case6 卵 추천 미등장", !joined6.includes("卵"));
 check("case6 㔕 추천 미등장", !joined6.includes("㔕"));
 check("case6 危 추천 미등장", !joined6.includes("危"));
 
+// case 7 — char2 best-by-score (蘇玟刁 회귀의 핵심 수정).
+//   구 버퍼: 첫 글자 cap을 인카운터(=풀 stroke ASC)로 채워 최저획 char2 고정.
+//   신 버퍼: 첫 글자별 최고점 char2 선택. 브루트포스 max와 동등성 검증.
+function comboScore(
+  sungStroke: number,
+  sungHangeul: string,
+  c1: HanjaEntry,
+  c2: HanjaEntry,
+): number {
+  const surie = calculateSurie(sungStroke, c1.won_stroke, c2.won_stroke).totalScore;
+  const sound = evaluateSoundOhaeng([sungHangeul, c1.hangeul, c2.hangeul]).score;
+  return Math.round(sound * 0.55) + Math.round(surie * 0.45);
+}
+const bruteBest = new Map<string, number>();
+for (let i = 0; i < seed.length; i++) {
+  for (let j = 0; j < seed.length; j++) {
+    if (i === j) continue;
+    const f = seed[i].hangeul[0];
+    const s = comboScore(SUNG.sungStroke, SUNG.sungHangeul, seed[i], seed[j]);
+    if (!bruteBest.has(f) || s > (bruteBest.get(f) as number)) bruteBest.set(f, s);
+  }
+}
+const distinctFirsts = new Set(seed.map((c) => c.hangeul[0])).size;
+const r7 = recommendNames({ ...SUNG, nameLength: 2, topN: distinctFirsts, db: seed });
+check("case7 첫 글자 distinct (rank0)", new Set(r7.map((c) => c.hangeul[0])).size === r7.length);
+for (const c of r7) {
+  const f = c.hangeul[0];
+  check(
+    `case7 ${c.hanja}(${f}) 첫글자 최고점 == 브루트 max(${bruteBest.get(f)})`,
+    c.totalScore === bruteBest.get(f),
+  );
+}
+
+// case 8 — 상용도 tiebreak (동점 → freqSum 높은 후보 우선). 점수축 미가산, 동률에서만.
+//   "가" 동점 90 두 후보: freqSum 9 > 4 → 그룹 내 가온 우선.
+const tie = [mk("가람", 90, 4), mk("가온", 90, 9), mk("나래", 88, 6)];
+const r8 = selectDiverse(tie, 3);
+check(
+  "case8 동점 첫글자 그룹 freqSum 우선(가온)",
+  r8.find((c) => c.hangeul[0] === "가")?.hangeul === "가온",
+);
+//   recommendNames 출력은 compareCandidate(점수 desc, 동점 freqSum desc) 순.
+const r8b = recommendNames({ ...SUNG, nameLength: 2, topN: 5, db: seed });
+check(
+  "case8 출력 정렬 (점수 desc, 동점 freqSum desc)",
+  r8b.every(
+    (c, i) =>
+      i === 0 ||
+      r8b[i - 1].totalScore > c.totalScore ||
+      (r8b[i - 1].totalScore === c.totalScore && r8b[i - 1].freqSum >= c.freqSum),
+  ),
+);
+
+// case 9 — 작명 부적합 의미군 가드 (39-C 후속, 蘇 시뮬 발견).
+//   숫자·기능어 차단 (六 여섯·全 온전·同 한가지·共 함께·各 각각·一 명시).
+check("case9 六(여섯) 차단", isExcludedFromRecommend({ character: "六", meaning: "여섯 륙" }));
+check("case9 全(온전할) 차단", isExcludedFromRecommend({ character: "全", meaning: "온전할 전" }));
+check("case9 同(한가지) 차단", isExcludedFromRecommend({ character: "同", meaning: "한가지 동" }));
+check("case9 共(함께·명시) 차단", isExcludedFromRecommend({ character: "共", meaning: "함께 공" }));
+check("case9 各(각각) 차단", isExcludedFromRecommend({ character: "各", meaning: "각각 각" }));
+check("case9 一(명시 수사) 차단", isExcludedFromRecommend({ character: "一", meaning: "한 일" }));
+//   오탐 방지 — 양호 이름자 통과 (충돌 회피 검증).
+check("case9 相(서로 상) 통과", !isExcludedFromRecommend({ character: "相", meaning: "서로 상" }));
+check("case9 玖(옥돌/아홉 구) 통과", !isExcludedFromRecommend({ character: "玖", meaning: "옥돌 구/아홉 구" }));
+check("case9 鈞(서른 근 균) 통과", !isExcludedFromRecommend({ character: "鈞", meaning: "서른 근 균" }));
+//   "온전할"(全) vs "온전한 덕"(㦃) — 키워드 정밀도: 㦃은 키워드 미매칭 (단, Ext A라 rareBlock 별도 제외).
+check("case9 '온전한 덕' 키워드 미매칭", !hasNonNameMeaning("온전한 덕 산"));
+check("case9 '서른 근' 키워드 미매칭", !hasNonNameMeaning("서른 근 균"));
+check("case9 珍(보배 진) 통과", !isExcludedFromRecommend({ character: "珍", meaning: "보배 진" }));
+//   통합: seed + 六/全/共 → 추천 미등장.
+const seed3: HanjaEntry[] = [
+  ...seed,
+  { character: "六", hangeul: "륙", stroke: 4, won_stroke: 4, ohaeng: "화", meaning: "여섯 륙", frequency: 5 },
+  { character: "全", hangeul: "전", stroke: 6, won_stroke: 6, ohaeng: "금", meaning: "온전할 전", frequency: 5 },
+  { character: "共", hangeul: "공", stroke: 6, won_stroke: 6, ohaeng: "토", meaning: "함께 공", frequency: 5 },
+];
+const r9 = recommendNames({ ...SUNG, nameLength: 2, topN: 30, db: seed3 });
+const joined9 = r9.map((c) => c.hanja).join("");
+check("case9 六 추천 미등장", !joined9.includes("六"));
+check("case9 全 추천 미등장", !joined9.includes("全"));
+check("case9 共 추천 미등장", !joined9.includes("共"));
+
 if (failures.length > 0) {
   console.error(`PoC 실패 ${failures.length}건:`);
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
 console.log(
-  `PoC 통과 — recommendNames 6 case (n=2 / n=1 / 음령 통합 / 다양성 / 대형풀 / 제외 필터) · 음령 55%+수리 45% · 39-C 품질 가드.`,
+  `PoC 통과 — recommendNames 9 case (n=2 / n=1 / 음령 통합 / 다양성 / 대형풀 / 제외 필터 / char2 best-by-score / 상용도 tiebreak / 작명 부적합 가드) · 음령 55%+수리 45% · 39-C 품질 가드.`,
 );
