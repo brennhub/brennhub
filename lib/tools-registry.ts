@@ -66,4 +66,12 @@ export const tools: Tool[] = [
     // hasPage: live 후에도 [slug] fallback 충돌 방지로 유지 (P2 결정 명문화).
     hasPage: true,
   },
+  {
+    id: "tag-it",
+    slug: "tag-it",
+    status: "live",
+    createdAt: "2026-05-29",
+    // 클라이언트 전용 도구 (D1·서버 없음). hasPage: [slug] fallback 충돌 방지.
+    hasPage: true,
+  },
 ];
