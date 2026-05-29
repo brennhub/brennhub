@@ -7,6 +7,9 @@
  *   1. 희귀 블록 — CJK URO 밖(확장 A/B) 제외.
  *   2. 부정 의미 키워드 — 훈에 죽을·위태·무너질 등 → 제외.
  *   3. 명시 블랙리스트 — 키워드 충돌 회피로 못 잡는 명백 부정·부적합 한자.
+ *   4. 작명 부적합 의미군(39-C 후속) — 숫자·대명사·접속·기능어 등 이름에 안 쓰는 뜻
+ *      (六 여섯·全 온전·同 한가지·共 함께류). frequency 티어가 벽자는 demote했으나 점수
+ *      포화 동점에서 흔한 비-작명 한자가 상위 등극(蘇 추천 시뮬 발견) → 의미 가드로 차단.
  *
  * 키워드/블랙리스트는 **풀 9,055 의미(훈) 데이터 스캔으로 도출**(추측 X) 후 도메인
  * 선별. 충돌 회피 원칙:
@@ -112,18 +115,63 @@ export const WHITELIST: ReadonlySet<string> = new Set([
   "憧", // 동경할/어리석을 동 — "어리석을" 오탐 보호 (憧憬=동경, 긍정)
 ]);
 
+/**
+ * 작명 부적합 의미군 키워드 (39-C 후속) — 숫자·기능어 등 이름에 안 쓰는 뜻.
+ * 풀 9,055 의미 스캔으로 **오탐 0 검증된 키워드만**. 충돌 어휘는 키워드 배제 + EXPLICIT char:
+ *   "아홉"→玖(옥돌)·申 / "서른"→鈞 / "온전"→㦃(온전한 덕) / "어찌"→巨(클) / "마땅"→宜·當 /
+ *   "이를"→至·致·早 / 단위(되·말·자·치·섬·길)→升(오를)·石·馬·任 등 충돌 → 키워드 미사용.
+ * 매칭 한자(전부 비-작명): 六鍰·五伍·八咫捌·七柒漆·卄廿·仝同·各·全囫·凡.
+ */
+export const NON_NAME_MEANING_KEYWORDS: readonly string[] = [
+  "여섯", "다섯", "여덟", "일곱", // 수사
+  "스물", // 卄廿
+  "한가지", // 仝同
+  "각각", // 各
+  "온전할", // 全囫 ("온전한 덕" 㦃 보호 — "온전" 미사용)
+  "무릇", // 凡
+];
+
+/**
+ * 작명 부적합 명시 char — 수사·기능어 중 키워드가 못 잡거나(타훈 충돌) 직접 지정이 안전한 것.
+ * char 직접 매칭이라 충돌 0. 보호 대상(相 서로·玖 옥돌·鈞·申·巨 클)은 미포함.
+ * (일반 명사·동사 皇 임금·革 가죽·音 소리 등은 미포착 — best-effort 경계, 작명 빈도 자료 의존 backlog.)
+ */
+export const NON_NAME_EXPLICIT: ReadonlySet<string> = new Set([
+  // 기본 수사 (훈 "한 일/두 이/석 삼/넉 사/아홉 구/열 십/서른 삽" — 키워드화 시 타훈 충돌 → char)
+  "一", "二", "三", "四", "九", "十", "卅",
+  // 대명사·접속·기능어
+  "共", // 함께 공
+  "又", // 또 우
+  "亦", // 또 역
+  "咸", // 다 함
+  "皆", // 다 개
+  "此", // 이 차
+  "其", // 그 기
+]);
+
 /** 의미(훈)에 부정 키워드 포함 여부. */
 export function hasNegativeMeaning(meaning: string | null): boolean {
   if (!meaning) return false;
   return NEGATIVE_MEANING_KEYWORDS.some((k) => meaning.includes(k));
 }
 
-/** 추천에서 제외할 한자인지 (희귀 블록 ∪ 명시 블랙리스트 ∪ 부정 의미). 화이트리스트 우선. */
+/** 의미(훈)에 작명 부적합(숫자·기능어) 키워드 포함 여부. */
+export function hasNonNameMeaning(meaning: string | null): boolean {
+  if (!meaning) return false;
+  return NON_NAME_MEANING_KEYWORDS.some((k) => meaning.includes(k));
+}
+
+/**
+ * 추천에서 제외할 한자인지. 화이트리스트 우선.
+ * 희귀 블록 ∪ 부정 명시 ∪ 부정 의미 ∪ 작명 부적합 명시 ∪ 작명 부적합 의미.
+ */
 export function isExcludedFromRecommend(entry: ExcludeEntry): boolean {
   if (WHITELIST.has(entry.character)) return false;
   return (
     isRareBlock(entry.character) ||
     EXPLICIT_EXCLUDE.has(entry.character) ||
-    hasNegativeMeaning(entry.meaning)
+    NON_NAME_EXPLICIT.has(entry.character) ||
+    hasNegativeMeaning(entry.meaning) ||
+    hasNonNameMeaning(entry.meaning)
   );
 }
