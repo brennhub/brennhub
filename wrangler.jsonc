@@ -24,7 +24,8 @@
 		"binding": "AI"
 	},
 	"vars": {
-		"AI_PROVIDER": "workers-ai"
+		"AI_PROVIDER": "workers-ai",
+		"GOOGLE_OAUTH_CLIENT_ID": "814605358293-0tvp8f2gppdetbb6ugg994l1uavor6r4.apps.googleusercontent.com"
 	},
 	"observability": {
 		"enabled": true,
@@ -45,6 +46,16 @@
 			"binding": "NAMING_DB",
 			"database_name": "brennhub-saju-naming",
 			"database_id": "2b4853be-def4-4b94-a872-81a20d448024"
+		},
+		{
+			"binding": "MAZE_DB",
+			"database_name": "brennhub-maze",
+			"database_id": "d6e44eaf-c4e6-4a53-8f40-cdfc00949a59"
+		},
+		{
+			"binding": "AUTH_DB",
+			"database_name": "brennhub-auth",
+			"database_id": "922d256f-765f-4b06-b55b-87b9c24de6dc"
 		}
 	],
 	// env.preview = dev.brennhub.com (brennhub-dev worker). Deploy: npm run deploy:preview
@@ -80,7 +91,8 @@
 				"binding": "AI"
 			},
 			"vars": {
-				"AI_PROVIDER": "workers-ai"
+				"AI_PROVIDER": "workers-ai",
+				"GOOGLE_OAUTH_CLIENT_ID": "814605358293-0tvp8f2gppdetbb6ugg994l1uavor6r4.apps.googleusercontent.com"
 			},
 			"observability": {
 				"enabled": true,
@@ -101,6 +113,16 @@
 					"binding": "NAMING_DB",
 					"database_name": "brennhub-saju-naming-dev",
 					"database_id": "48fce286-18e8-4664-826e-e1517d8a182f"
+				},
+				{
+					"binding": "MAZE_DB",
+					"database_name": "brennhub-maze-dev",
+					"database_id": "321b671e-68b7-4afb-8ea5-6f8d471615f8"
+				},
+				{
+					"binding": "AUTH_DB",
+					"database_name": "brennhub-auth-dev",
+					"database_id": "ca02de71-48a2-46d3-b3b2-10544377aa8b"
 				}
 			]
 		}

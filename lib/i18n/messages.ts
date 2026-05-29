@@ -75,7 +75,12 @@ export type Messages = {
     exchangeRateTooltip: string;
     exchangeRateTooltipManual: string;
     rateLabel: string;
-    tabs: { costBasis: string; dividend: string; dcaDown: string };
+    tabs: {
+      costBasis: string;
+      dividend: string;
+      dcaDown: string;
+      splitSell: string;
+    };
     costBasis: {
       inputTitle: string;
       priceHeader: string;
@@ -217,11 +222,72 @@ export type Messages = {
       invalidInputHint: string;
       tableEmptyHint: string;
     };
+    splitSell: {
+      inputTitle: string;
+      tickerHeader: string;
+      tickerPlaceholder: string;
+      holdingsHeader: string;
+      holdingsPlaceholder: string;
+      startPriceHeader: string;
+      startPricePlaceholder: string;
+      nLabel: string;
+      nPlaceholder: string;
+      riseIntervalLabel: string;
+      riseIntervalPlaceholder: string;
+      avgCostLabel: string;
+      avgCostPlaceholder: string;
+      avgCostHint: string;
+      taxRateLabel: string;
+      taxTypeShortTerm: string;
+      taxTypeLongTerm: string;
+      taxTooltipShortTerm: string;
+      taxTooltipLongTerm: string;
+      weightToggle: string;
+      weightTooltip: string;
+      weightHint: string;
+      firstWeightLabel: string;
+      firstWeightPlaceholder: string;
+      weightEqualBenchmark: string;
+      sellBasisLabel: string;
+      sellBasisTooltip: string;
+      summaryTitle: string;
+      totalInvestLabel: string;
+      totalProceedsLabel: string;
+      totalSharesLabel: string;
+      avgSellPriceLabel: string;
+      realizedProfitLabel: string;
+      taxAmountLabel: string;
+      afterTaxRealizedLabel: string;
+      tableTitle: string;
+      colRound: string;
+      colPrice: string;
+      colRisePct: string;
+      colShares: string;
+      colCumShares: string;
+      colSellAmount: string;
+      colCumSellAmount: string;
+      colRealizedPnl: string;
+      colCumRealizedPnl: string;
+      legendCompleted: string;
+      legendNextSell: string;
+      legendReset: string;
+      exportCsvLabel: string;
+      zeroShareWarningSingle: string;
+      zeroShareWarningRange: string;
+      invalidInputHint: string;
+      tableEmptyHint: string;
+      stepperRiseMax: string;
+      stepperRiseMin: string;
+      stepperNMax: string;
+      stepperNMin: string;
+      stepperTaxMax: string;
+      stepperWeightMax: string;
+      unitN: string;
+    };
   };
   suppPlan: {
     title: string;
     description: string;
-    local: string;
     disclaimer: string;
     library: string;
     mySchedule: string;
@@ -363,6 +429,124 @@ export type Messages = {
       "4-3-2-1": string;
     };
   };
+  languageMaker: {
+    title: string;
+    description: string;
+    step1: string;
+    step2: string;
+    gridHeading: string;
+    gridIntro: string;
+    addCharacter: string;
+    characterIndex: string;
+    triggerPlaceholder: string;
+    duplicateTrigger: string;
+    deleteCharacter: string;
+    editorTitle: string;
+    editorIntro: string;
+    clearCharacter: string;
+    editorDone: string;
+    editorClose: string;
+    typewriterHeading: string;
+    typewriterIntro: string;
+    inputLabel: string;
+    inputPlaceholder: string;
+    outputLabel: string;
+    download: string;
+    typewriterNoGlyph: string;
+    typewriterEmpty: string;
+    unmappedNote: string;
+    goToSlots: string;
+  };
+  maze: {
+    title: string;
+    description: string;
+    step1: string;
+    step2: string;
+    sizeLabel: string;
+    widthLabel: string;
+    heightLabel: string;
+    dimMaxReached: string;
+    dimMinReached: string;
+    applySize: string;
+    presetsLabel: string;
+    fogLabel: string;
+    fogDescription: string;
+    fogRadiusLabel: string;
+    fogRadiusMax: string;
+    fogRadiusMin: string;
+    playViewSpanLabel: string;
+    playViewSpanMax: string;
+    playViewSpanMin: string;
+    timeLimitLabel: string;
+    timeLimitDescription: string;
+    timeLimitValueLabel: string;
+    timeLimitMaxReached: string;
+    timeLimitMinReached: string;
+    sizeChangeTitle: string;
+    sizeChangeMessage: string;
+    sizeChangeConfirm: string;
+    viewZoomIn: string;
+    viewZoomOut: string;
+    viewFit: string;
+    viewHand: string;
+    toolWall: string;
+    toolPath: string;
+    toolStart: string;
+    toolGoal: string;
+    commitWallsButton: string;
+    commitWallsHint: string;
+    resetTitle: string;
+    resetMessage: string;
+    resetConfirm: string;
+    resetCancel: string;
+    resetGridTitle: string;
+    resetGridMessage: string;
+    resetGridConfirm: string;
+    editorUndo: string;
+    editorRedo: string;
+    editorResetGrid: string;
+    validationTitlePass: string;
+    validationTitleFail: string;
+    validationNoStart: string;
+    validationMultiStart: string;
+    validationNoGoal: string;
+    validationUnreachable: string;
+    validationExpand: string;
+    validationCollapse: string;
+    validationRuleEndpoints: string;
+    validationRuleReachability: string;
+    validationSkipped: string;
+    scoreLabel: string;
+    scoreStarsAria: string;
+    scoreDimDetour: string;
+    scoreDimCorridors: string;
+    scoreDimTexture: string;
+    weakLowDetour: string;
+    weakNoCorridors: string;
+    weakNoTexture: string;
+    playNotReadyHint: string;
+    playIntro: string;
+    playControlsUp: string;
+    playControlsDown: string;
+    playControlsLeft: string;
+    playControlsRight: string;
+    playRestart: string;
+    playBackToEdit: string;
+    soundMute: string;
+    soundUnmute: string;
+    winTitle: string;
+    winMessage: string;
+    shareButton: string;
+    shareGenerating: string;
+    shareUrlLabel: string;
+    shareCopyButton: string;
+    shareCopiedToast: string;
+    shareErrorGeneric: string;
+    shareErrorRateLimit: string;
+    shareNotFoundTitle: string;
+    shareNotFoundMessage: string;
+    sharedBuildOwn: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -375,6 +559,8 @@ export type Messages = {
     toolSuppPlan: string;
     toolSajuNaming: string;
     toolLineupBuilder: string;
+    toolLanguageMaker: string;
+    toolMaze: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -393,6 +579,81 @@ export type Messages = {
     errorTooLong: string;
     errorRateLimit: string;
     cardIconTooltip: string;
+  };
+  auth: {
+    signIn: string;
+    signOut: string;
+    adminPanel: string;
+    errors: {
+      stateMismatch: string;
+      stateInvalid: string;
+      stateExpired: string;
+      tokenExchangeFailed: string;
+      idTokenInvalid: string;
+      idTokenUnverifiedEmail: string;
+      dbError: string;
+      internal: string;
+      notAdmin: string;
+    };
+  };
+  privacy: {
+    title: string;
+    lastUpdated: string;
+    intro: string;
+    collection: {
+      heading: string;
+      description: string;
+      columns: {
+        item: string;
+        source: string;
+        purpose: string;
+        retention: string;
+      };
+      rows: Array<{
+        item: string;
+        source: string;
+        purpose: string;
+        retention: string;
+      }>;
+    };
+    purpose: { heading: string; body: string };
+    retention: { heading: string; body: string };
+    thirdParty: { heading: string; body: string };
+    rights: { heading: string; body: string };
+    contact: { heading: string; body: string; email: string };
+  };
+  footer: {
+    privacy: string;
+  };
+  profile: {
+    title: string;
+    accountInfo: string;
+    email: string;
+    displayName: string;
+    displayNamePlaceholder: string;
+    displayNameHint: string;
+    save: string;
+    saving: string;
+    saved: string;
+    saveError: string;
+    dangerZone: string;
+    deleteAccount: string;
+    deleteWarning: string;
+    deleteConfirm: string;
+    deleting: string;
+    deleteError: string;
+    cancel: string;
+    loginRequired: string;
+    loginCta: string;
+  };
+  admin: {
+    title: string;
+    dashboardTitle: string;
+    dashboardIntro: string;
+    menu: {
+      dashboard: string;
+      feedback: string;
+    };
   };
   tools: Record<string, { name: string; description: string }>;
 };
@@ -475,7 +736,12 @@ export const messages: Record<Locale, Messages> = {
       exchangeRateTooltip: "1 USD = {rate} KRW ({date} 갱신)",
       exchangeRateTooltipManual: "1 USD = {rate} KRW (수동 설정)",
       rateLabel: "1 USD =",
-      tabs: { costBasis: "평단가", dividend: "배당", dcaDown: "분할매수" },
+      tabs: {
+        costBasis: "평단가",
+        dividend: "배당",
+        dcaDown: "분할매수",
+        splitSell: "분할매도",
+      },
       costBasis: {
         inputTitle: "매수 기록",
         priceHeader: "매수가",
@@ -566,7 +832,7 @@ export const messages: Record<Locale, Messages> = {
         startPricePlaceholder: "첫 매수가",
         nLabel: "매수 횟수",
         nPlaceholder: "2-50",
-        dropIntervalLabel: "하락율 (%)",
+        dropIntervalLabel: "하락률 (%)",
         dropIntervalPlaceholder: "5",
         targetReturnLabel: "목표 수익률 (%)",
         targetReturnPlaceholder: "30",
@@ -579,7 +845,7 @@ export const messages: Record<Locale, Messages> = {
         tableTitle: "회차별 매수",
         colRound: "매수 회차",
         colPrice: "가격",
-        colDropPct: "하락율 (%)",
+        colDropPct: "하락률 (%)",
         colBuyAmount: "매수금",
         colShares: "주식수",
         colCumShares: "누적 주식수",
@@ -603,9 +869,9 @@ export const messages: Record<Locale, Messages> = {
         legendCompleted: "매수 완료",
         legendNextBuy: "다음 매수",
         legendReset: "리셋",
-        stepperDropMax: "하락율은 최대 50% 입니다",
-        stepperDropMin: "하락율은 최소 0.1% 입니다",
-        stepperNMax: "매수 횟수는 최대 {max}회입니다 (현재 하락율 기준)",
+        stepperDropMax: "하락률은 최대 50% 입니다",
+        stepperDropMin: "하락률은 최소 0.1% 입니다",
+        stepperNMax: "매수 횟수는 최대 {max}회입니다 (현재 하락률 기준)",
         stepperNMin: "최소 2회 매수 필요",
         stepperGenericMax: "최대값 도달",
         forceFirstShareLabel: "시작가 매수 보장",
@@ -626,14 +892,83 @@ export const messages: Record<Locale, Messages> = {
         stepperTargetMax: "목표 수익률은 최대 500%입니다",
         stepperWeightMax: "분배 균형은 최대 100입니다",
         invalidInputHint:
-          "분할매수 시뮬레이션을 위해 모든 입력값(총 예산, 현재가, 매수 횟수, 하락율)이 0보다 큰 값이어야 합니다.",
+          "분할매수 시뮬레이션을 위해 모든 입력값(총 예산, 현재가, 매수 횟수, 하락률)이 0보다 큰 값이어야 합니다.",
         tableEmptyHint: "결과 없음",
+      },
+      splitSell: {
+        inputTitle: "분할 매도 계획",
+        tickerHeader: "종목",
+        tickerPlaceholder: "AAPL",
+        holdingsHeader: "보유 주식수",
+        holdingsPlaceholder: "총 보유 수량",
+        startPriceHeader: "현재가",
+        startPricePlaceholder: "첫 매도가",
+        nLabel: "매도 횟수",
+        nPlaceholder: "2-50",
+        riseIntervalLabel: "상승률 (%)",
+        riseIntervalPlaceholder: "5",
+        avgCostLabel: "평단가",
+        avgCostPlaceholder: "산 가격",
+        avgCostHint: "실현손익 계산에 사용됩니다",
+        taxRateLabel: "세율 (%)",
+        taxTypeShortTerm: "단기",
+        taxTypeLongTerm: "장기",
+        taxTooltipShortTerm:
+          "1년 미만 보유. 일반 소득세 24% 적용 (단일 신고 $103k~$197k 소득 기준, 2025)",
+        taxTooltipLongTerm:
+          "1년 이상 보유. 장기 자본이득세 15% 적용 (단일 신고 $48k~$533k 소득 기준, 2025)",
+        weightToggle: "가중치 적용",
+        weightTooltip:
+          "각 회차별 매도 비중을 '분배 균형(0-100)'으로 조절. 값이 작을수록 후반(고가)에 많이 매도 (Martingale 방향). 큰 값일수록 균등 가까움.",
+        weightHint:
+          "가중치 OFF: Martingale (2배 배수, 고가일수록 더 매도). 가중치 ON: 분배 균형 직접 입력",
+        firstWeightLabel: "분배 균형 (0-100)",
+        firstWeightPlaceholder: "50",
+        weightEqualBenchmark: "(50 = 균등값)",
+        sellBasisLabel: "매도가 기준",
+        sellBasisTooltip:
+          "매도가 사다리의 시작 기준. 평단가 기준: 평단가에서 회차별 상승. 현재가 기준: 현재가에서 회차별 상승. 1회차부터 상승률이 적용됩니다.",
+        summaryTitle: "최종 결과 요약",
+        totalInvestLabel: "총 투자금",
+        totalProceedsLabel: "총 매도금",
+        totalSharesLabel: "총 매도 주식수",
+        avgSellPriceLabel: "평균 매도가",
+        realizedProfitLabel: "실현 손익",
+        taxAmountLabel: "예상 세금",
+        afterTaxRealizedLabel: "세후 실현 손익",
+        tableTitle: "회차별 매도",
+        colRound: "매도 회차",
+        colPrice: "매도가",
+        colRisePct: "상승률 (%)",
+        colShares: "매도 주식수",
+        colCumShares: "누적 매도",
+        colSellAmount: "매도금",
+        colCumSellAmount: "누적 매도금",
+        colRealizedPnl: "실현 손익",
+        colCumRealizedPnl: "누적 손익",
+        legendCompleted: "매도 완료",
+        legendNextSell: "다음 매도",
+        legendReset: "리셋",
+        exportCsvLabel: "CSV로 내보내기",
+        zeroShareWarningSingle:
+          "회차 {n}은 배분 주식수가 0주입니다. 매도 횟수를 줄이거나 보유 수량을 늘리세요.",
+        zeroShareWarningRange:
+          "회차 {start}~{end}는 배분 주식수가 0주입니다. 매도 횟수를 줄이거나 보유 수량을 늘리세요.",
+        invalidInputHint:
+          "분할매도 시뮬레이션을 위해 보유 주식수 · 평단가 · 매도 횟수 · 상승률, 그리고 매도가 기준으로 선택한 가격이 모두 0보다 커야 합니다.",
+        tableEmptyHint: "결과 없음",
+        stepperRiseMax: "상승률은 최대 100%입니다",
+        stepperRiseMin: "상승률은 0% 이상이어야 합니다",
+        stepperNMax: "매도 횟수는 최대 50회입니다",
+        stepperNMin: "최소 2회 매도 필요",
+        stepperTaxMax: "세율은 최대 50%입니다",
+        stepperWeightMax: "분배 균형은 최대 100입니다",
+        unitN: "회",
       },
     },
     suppPlan: {
       title: "영양제 플래너",
       description: "약동학 기반 개인 영양제 스케줄링",
-      local: "로컬 저장",
       disclaimer:
         "의학적 조언 아님. 자가 책임으로 사용하세요. 영양제 복용 전 의료진 상담을 권장합니다.",
       library: "영양제 라이브러리",
@@ -778,6 +1113,138 @@ export const messages: Record<Locale, Messages> = {
         "4-3-2-1": "4-3-2-1 크리스마스 트리",
       },
     },
+    languageMaker: {
+      title: "언어 창조기",
+      description:
+        "픽셀로 나만의 문자를 그리고 입력값에 매핑해 실시간으로 변환하세요.",
+      step1: "문자 만들기",
+      step2: "타이핑",
+      gridHeading: "문자 만들기",
+      gridIntro:
+        "카드를 눌러 문자를 그리고 입력값을 매핑하세요. 끌어서 순서를 바꿀 수 있습니다.",
+      addCharacter: "문자 추가",
+      characterIndex: "문자 {n}",
+      triggerPlaceholder: "매핑할 글자 또는 단어",
+      duplicateTrigger: "이미 사용 중인 입력값입니다",
+      deleteCharacter: "삭제",
+      editorTitle: "문자 그리기",
+      editorIntro: "16×16 격자를 클릭하거나 드래그해 그리세요.",
+      clearCharacter: "지우기",
+      editorDone: "완료",
+      editorClose: "닫기",
+      typewriterHeading: "바벨 타자기",
+      typewriterIntro: "입력하면 매핑된 문자로 실시간 변환됩니다.",
+      inputLabel: "입력",
+      inputPlaceholder: "변환할 텍스트를 입력하세요",
+      outputLabel: "변환 결과",
+      download: "이미지 저장",
+      typewriterNoGlyph: "먼저 문자에 입력값을 매핑하세요.",
+      typewriterEmpty:
+        "위에 텍스트를 입력하면 변환 결과가 여기에 표시됩니다.",
+      unmappedNote: "매핑되지 않은 글자는 회색 원문으로 표시됩니다.",
+      goToSlots: "문자 만들기로",
+    },
+    maze: {
+      title: "픽셀 미로 만들기",
+      description: "픽셀 격자로 나만의 미로를 설계하고 링크로 공유하세요.",
+      step1: "만들기",
+      step2: "플레이",
+      sizeLabel: "맵 크기",
+      widthLabel: "가로",
+      heightLabel: "세로",
+      dimMaxReached: "최대 128칸입니다",
+      dimMinReached: "최소 3칸입니다",
+      applySize: "적용",
+      presetsLabel: "프리셋",
+      fogLabel: "시야 제한",
+      fogDescription:
+        "플레이할 때 시작점 주변만 보이도록 시야를 제한합니다.",
+      fogRadiusLabel: "시야 반경 (칸)",
+      fogRadiusMax: "최대 시야 반경입니다",
+      fogRadiusMin: "최소 시야 반경입니다",
+      playViewSpanLabel: "플레이 시야 거리 (칸)",
+      playViewSpanMax: "최대 시야 거리입니다 (전체 보임)",
+      playViewSpanMin: "최소 시야 거리입니다 (가장 가까이)",
+      timeLimitLabel: "시간 제한",
+      timeLimitDescription:
+        "플레이 시 제한 시간이 흐르고, 시간 초과 시 게임 오버.",
+      timeLimitValueLabel: "시간 (초)",
+      timeLimitMaxReached: "최대 900초입니다",
+      timeLimitMinReached: "최소 10초입니다",
+      sizeChangeTitle: "사이즈 변경",
+      sizeChangeMessage:
+        "사이즈를 바꾸면 그리드의 모든 셀이 새 크기로 다시 생성됩니다. 지금까지 그린 내용은 사라집니다.",
+      sizeChangeConfirm: "변경",
+      viewZoomIn: "확대",
+      viewZoomOut: "축소",
+      viewFit: "맞춤",
+      viewHand: "손도구 (스페이스 + 드래그)",
+      toolWall: "벽",
+      toolPath: "길",
+      toolStart: "시작점",
+      toolGoal: "도착점",
+      commitWallsButton: "벽 생성",
+      commitWallsHint:
+        "그린 길을 제외한 칸이 모두 벽이 됩니다. 시작점·도착점은 유지.",
+      resetTitle: "맵 초기화",
+      resetMessage:
+        "설정으로 돌아가면 지금까지 그린 맵이 모두 초기화됩니다. 계속할까요?",
+      resetConfirm: "초기화하고 돌아가기",
+      resetCancel: "취소",
+      resetGridTitle: "그리드 초기화",
+      resetGridMessage:
+        "그리드의 모든 셀이 빈 칸으로 초기화됩니다. 사이즈와 시야 설정은 유지됩니다. 실행취소(Undo) 가능합니다.",
+      resetGridConfirm: "초기화",
+      editorUndo: "실행취소",
+      editorRedo: "다시실행",
+      editorResetGrid: "초기화",
+      validationTitlePass: "플레이 가능",
+      validationTitleFail: "검증 실패",
+      validationNoStart: "시작점이 없습니다",
+      validationMultiStart: "시작점이 여러 개입니다",
+      validationNoGoal: "도착점이 없습니다",
+      validationUnreachable: "도착점에 도달할 수 없습니다",
+      validationExpand: "상세 보기",
+      validationCollapse: "닫기",
+      validationRuleEndpoints: "시작점·도착점",
+      validationRuleReachability: "도달 가능성",
+      validationSkipped: "검증 보류",
+      scoreLabel: "미로 점수",
+      scoreStarsAria: "별 5개 중 {n}개",
+      scoreDimDetour: "경로 우회도",
+      scoreDimCorridors: "복도성",
+      scoreDimTexture: "갈림길·막다른 길",
+      weakLowDetour:
+        "우회도가 낮습니다 — 벽을 더 채워 길을 꼬아보세요.",
+      weakNoCorridors:
+        "벽이 거의 없습니다 — 길을 좁혀 미로를 만들어보세요.",
+      weakNoTexture:
+        "갈림길도 막다른 길도 없습니다 — 단조로워요.",
+      playNotReadyHint:
+        "플레이를 시작하려면 그리기 단계의 검증을 먼저 통과해야 합니다.",
+      playIntro: "방향키 또는 WASD, 아래 D-pad로 이동하세요.",
+      playControlsUp: "위로 이동",
+      playControlsDown: "아래로 이동",
+      playControlsLeft: "왼쪽으로 이동",
+      playControlsRight: "오른쪽으로 이동",
+      playRestart: "다시 플레이",
+      playBackToEdit: "편집으로 돌아가기",
+      soundMute: "소리 끄기",
+      soundUnmute: "소리 켜기",
+      shareButton: "공유 링크 만들기",
+      shareGenerating: "생성 중...",
+      shareUrlLabel: "공유 링크",
+      shareCopyButton: "복사",
+      shareCopiedToast: "복사됨",
+      shareErrorGeneric: "공유 링크 생성에 실패했습니다.",
+      shareErrorRateLimit: "잠시 후 다시 시도해주세요.",
+      shareNotFoundTitle: "미로를 찾을 수 없습니다",
+      shareNotFoundMessage:
+        "공유 링크가 잘못되었거나 삭제된 미로입니다.",
+      sharedBuildOwn: "내 미로 만들기",
+      winTitle: "탈출 성공!",
+      winMessage: "도착점에 도달했습니다.",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -790,6 +1257,8 @@ export const messages: Record<Locale, Messages> = {
       toolSuppPlan: "영양제 플래너",
       toolSajuNaming: "사주 작명",
       toolLineupBuilder: "축구 베스트 일레븐 만들기",
+      toolLanguageMaker: "언어 창조기",
+      toolMaze: "픽셀 미로 만들기",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -809,6 +1278,138 @@ export const messages: Record<Locale, Messages> = {
       errorTooLong: "메시지가 너무 깁니다 (최대 2000자)",
       errorRateLimit: "잠시 후 다시 시도해주세요",
       cardIconTooltip: "이 도구 피드백",
+    },
+    auth: {
+      signIn: "로그인",
+      signOut: "로그아웃",
+      adminPanel: "관리자",
+      errors: {
+        stateMismatch: "로그인 세션이 일치하지 않습니다. 다시 시도해주세요.",
+        stateInvalid: "로그인 검증에 실패했습니다. 다시 시도해주세요.",
+        stateExpired: "로그인 시도가 만료됐어요. 다시 시도해주세요.",
+        tokenExchangeFailed: "Google 인증 통신에 실패했습니다. 잠시 후 다시 시도해주세요.",
+        idTokenInvalid: "Google 토큰 검증에 실패했습니다. 다시 시도해주세요.",
+        idTokenUnverifiedEmail: "이메일 미인증 계정입니다. Google 계정에서 이메일 인증 후 다시 시도해주세요.",
+        dbError: "서버 저장에 실패했습니다. 잠시 후 다시 시도해주세요.",
+        internal: "서버 설정 오류입니다. 관리자에게 문의해주세요.",
+        notAdmin: "관리자 권한이 필요합니다.",
+      },
+    },
+    privacy: {
+      title: "개인정보 처리방침",
+      lastUpdated: "최종 수정: 2026-05-12",
+      intro:
+        "BrennHub은 로그인 기능 제공에 필요한 최소한의 정보만 수집합니다. 이 페이지는 어떤 정보를 받아 어디에 쓰는지, 얼마나 보관하는지를 코드 수준에서 명확히 밝힙니다.",
+      collection: {
+        heading: "1. 수집 항목",
+        description:
+          "Google 로그인을 통해 받는 정보와, 로그인 과정에서 서버가 생성하는 데이터입니다.",
+        columns: {
+          item: "항목",
+          source: "출처",
+          purpose: "이용 목적",
+          retention: "보유 기간",
+        },
+        rows: [
+          {
+            item: "이메일",
+            source: "Google id_token (email)",
+            purpose: "로그인 식별, UI 표시",
+            retention: "계정 유지 동안",
+          },
+          {
+            item: "이름",
+            source: "Google id_token (name)",
+            purpose: "UI 표시",
+            retention: "계정 유지 동안",
+          },
+          {
+            item: "Google 계정 ID (sub)",
+            source: "Google id_token (sub)",
+            purpose: "사용자 매핑 영구 키",
+            retention: "계정 유지 동안",
+          },
+          {
+            item: "프로필 사진 URL",
+            source: "Google id_token (picture)",
+            purpose: "DB에 저장하지만 현재 UI에서 사용하지 않음",
+            retention: "계정 유지 동안",
+          },
+          {
+            item: "brennhub_session 쿠키",
+            source: "서버 생성 (32-byte 난수)",
+            purpose: "로그인 세션 유지",
+            retention: "30일",
+          },
+          {
+            item: "auth_state 쿠키",
+            source: "서버 생성 (HMAC 토큰)",
+            purpose: "로그인 과정 CSRF 방어",
+            retention: "10분",
+          },
+          {
+            item: "브라우저 정보 (User-Agent)",
+            source: "요청 헤더 (로그인 시점)",
+            purpose: "비정상 접근 감지 / 감사",
+            retention: "세션과 동일 (30일)",
+          },
+        ],
+      },
+      purpose: {
+        heading: "2. 이용 목적",
+        body: "수집한 정보는 로그인 식별과 세션 유지를 위해서만 사용합니다. 도구별 개인 데이터 저장 기능은 향후 단계에서 별도 안내합니다. 광고, 분석, 외부 트래커 용도로는 사용하지 않습니다.",
+      },
+      retention: {
+        heading: "3. 보유 기간",
+        body: "계정이 유지되는 동안 사용자 정보를 보관합니다. 로그인 세션은 30일 후 만료되며, 로그아웃 시 즉시 삭제됩니다. 로그인 과정의 임시 토큰(auth_state)은 10분 후 만료됩니다.",
+      },
+      thirdParty: {
+        heading: "4. 제3자 제공",
+        body: "수집한 정보를 제3자에게 제공하지 않습니다. Google은 인증 제공자(OAuth identity provider)로서 로그인 시점에 정보를 전달하는 주체이며, BrennHub이 정보를 외부로 내보내는 행위는 없습니다.",
+      },
+      rights: {
+        heading: "5. 이용자 권리",
+        body: "본인의 정보 열람, 수정, 삭제를 요청할 수 있습니다. 계정 삭제를 요청하면 사용자 정보와 모든 세션 기록이 즉시 삭제됩니다. 아래 연락처로 요청해주세요.",
+      },
+      contact: {
+        heading: "6. 연락처",
+        body: "본 처리방침과 개인정보 관련 문의는 다음 이메일로 보내주세요.",
+        email: "brennhub.co@gmail.com",
+      },
+    },
+    footer: {
+      privacy: "개인정보 처리방침",
+    },
+    profile: {
+      title: "내 프로필",
+      accountInfo: "계정 정보",
+      email: "이메일",
+      displayName: "표시 이름",
+      displayNamePlaceholder: "표시할 이름",
+      displayNameHint: "비워두면 Google 계정 이름을 사용합니다.",
+      save: "저장",
+      saving: "저장 중…",
+      saved: "저장되었습니다",
+      saveError: "저장에 실패했습니다. 다시 시도해주세요.",
+      dangerZone: "계정 삭제",
+      deleteAccount: "계정 삭제",
+      deleteWarning:
+        "계정과 모든 도구 데이터(영양제 스케줄 등)가 영구 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+      deleteConfirm: "영구 삭제",
+      deleting: "삭제 중…",
+      deleteError: "삭제에 실패했습니다. 다시 시도해주세요.",
+      cancel: "취소",
+      loginRequired: "로그인이 필요합니다.",
+      loginCta: "로그인",
+    },
+    admin: {
+      title: "관리자",
+      dashboardTitle: "BrennHub 관리자 대시보드",
+      dashboardIntro: "사이트 운영 메뉴",
+      menu: {
+        dashboard: "대시보드",
+        feedback: "피드백",
+      },
     },
     tools: {
       "email-diag": {
@@ -835,6 +1436,15 @@ export const messages: Record<Locale, Messages> = {
         name: "축구 베스트 일레븐 만들기",
         description:
           "포메이션, 선수 명단, 등번호를 시각적으로 구성하고 PNG로 다운로드",
+      },
+      "language-maker": {
+        name: "언어 창조기",
+        description:
+          "픽셀로 문자를 그리고 입력값에 1:1로 매핑해 나만의 언어를 만들고 실시간 변환·공유",
+      },
+      maze: {
+        name: "픽셀 미로 만들기",
+        description: "픽셀 격자로 미로를 설계하고 풀이하며 링크로 공유",
       },
     },
   },
@@ -922,6 +1532,7 @@ export const messages: Record<Locale, Messages> = {
         costBasis: "Cost Basis",
         dividend: "Dividends",
         dcaDown: "Averaging Down",
+        splitSell: "Split Sell",
       },
       costBasis: {
         inputTitle: "Purchases",
@@ -1074,11 +1685,80 @@ export const messages: Record<Locale, Messages> = {
           "All inputs (Total Budget, Current Price, Rounds, Drop %) must be greater than 0 for DCA simulation.",
         tableEmptyHint: "No data",
       },
+      splitSell: {
+        inputTitle: "Sell Plan",
+        tickerHeader: "Ticker",
+        tickerPlaceholder: "AAPL",
+        holdingsHeader: "Shares Held",
+        holdingsPlaceholder: "Total held",
+        startPriceHeader: "Current Price",
+        startPricePlaceholder: "First sell",
+        nLabel: "Sell Rounds",
+        nPlaceholder: "2-50",
+        riseIntervalLabel: "Rise %",
+        riseIntervalPlaceholder: "5",
+        avgCostLabel: "Avg Cost",
+        avgCostPlaceholder: "Cost basis",
+        avgCostHint: "Used to compute realized P&L",
+        taxRateLabel: "Tax Rate (%)",
+        taxTypeShortTerm: "Short-term",
+        taxTypeLongTerm: "Long-term",
+        taxTooltipShortTerm:
+          "Held < 1 year. Ordinary income tax 24% (single filer $103k~$197k bracket, 2025)",
+        taxTooltipLongTerm:
+          "Held > 1 year. Long-term capital gains 15% (single filer $48k~$533k bracket, 2025)",
+        weightToggle: "Apply Weighting",
+        weightTooltip:
+          "Control each round's sell size via 'Weight Balance (0-100)'. Smaller = more back-loaded at higher prices (Martingale). Larger = closer to equal.",
+        weightHint:
+          "OFF: Martingale (2x doubling, sells more at higher prices). ON: Set weight balance",
+        firstWeightLabel: "Weight Balance (0-100)",
+        firstWeightPlaceholder: "50",
+        weightEqualBenchmark: "(50 = Equal)",
+        sellBasisLabel: "Sell Price Basis",
+        sellBasisTooltip:
+          "Starting point of the sell-price ladder. Avg Cost: rises per round from your average cost. Current Price: rises per round from the current price. The rise applies from round 1.",
+        summaryTitle: "Summary",
+        totalInvestLabel: "Total Invested",
+        totalProceedsLabel: "Total Proceeds",
+        totalSharesLabel: "Total Shares Sold",
+        avgSellPriceLabel: "Avg Sell Price",
+        realizedProfitLabel: "Realized P&L",
+        taxAmountLabel: "Tax",
+        afterTaxRealizedLabel: "After-Tax Realized P&L",
+        tableTitle: "Round-by-Round Sells",
+        colRound: "Sell Round",
+        colPrice: "Sell Price",
+        colRisePct: "Rise %",
+        colShares: "Shares Sold",
+        colCumShares: "Cum Sold",
+        colSellAmount: "Sell Amount",
+        colCumSellAmount: "Cum Sell Amount",
+        colRealizedPnl: "Realized P&L",
+        colCumRealizedPnl: "Cumulative P&L",
+        legendCompleted: "Sold",
+        legendNextSell: "Next Sell",
+        legendReset: "Reset",
+        exportCsvLabel: "Export CSV",
+        zeroShareWarningSingle:
+          "Round {n} is allocated 0 shares. Reduce sell rounds or increase holdings.",
+        zeroShareWarningRange:
+          "Rounds {start}-{end} are allocated 0 shares. Reduce sell rounds or increase holdings.",
+        invalidInputHint:
+          "Shares Held, Avg Cost, Sell Rounds, Rise %, and the chosen basis price must all be greater than 0 for split-sell simulation.",
+        tableEmptyHint: "No data",
+        stepperRiseMax: "Rise max is 100%",
+        stepperRiseMin: "Rise must be 0% or higher",
+        stepperNMax: "Max sell rounds is 50",
+        stepperNMin: "Minimum 2 sell rounds",
+        stepperTaxMax: "Tax rate max is 50%",
+        stepperWeightMax: "Weight balance max is 100",
+        unitN: "rounds",
+      },
     },
     suppPlan: {
       title: "Supplement Planner",
       description: "Pharmacokinetics-aware personal supplement scheduling",
-      local: "Local only",
       disclaimer:
         "Not medical advice. Use at your own discretion. Consult a healthcare professional before starting any supplement regimen.",
       library: "Supplement Library",
@@ -1223,6 +1903,139 @@ export const messages: Record<Locale, Messages> = {
         "4-3-2-1": "4-3-2-1 Christmas Tree",
       },
     },
+    languageMaker: {
+      title: "Language Maker",
+      description:
+        "Draw your own characters pixel by pixel, map them to any input, and convert text in real time.",
+      step1: "Characters",
+      step2: "Typing",
+      gridHeading: "Make characters",
+      gridIntro:
+        "Tap a card to draw a character and map its input. Drag to reorder.",
+      addCharacter: "Add character",
+      characterIndex: "Character {n}",
+      triggerPlaceholder: "Letter or word to map",
+      duplicateTrigger: "This input is already in use",
+      deleteCharacter: "Delete",
+      editorTitle: "Draw character",
+      editorIntro: "Click or drag across the 16×16 grid to draw.",
+      clearCharacter: "Clear",
+      editorDone: "Done",
+      editorClose: "Close",
+      typewriterHeading: "Babel typewriter",
+      typewriterIntro:
+        "Type and watch it convert into your mapped characters in real time.",
+      inputLabel: "Input",
+      inputPlaceholder: "Type text to convert",
+      outputLabel: "Converted output",
+      download: "Save image",
+      typewriterNoGlyph: "Map an input to a character first.",
+      typewriterEmpty:
+        "Type text above and the converted output will appear here.",
+      unmappedNote: "Unmapped characters appear as gray original text.",
+      goToSlots: "Go to characters",
+    },
+    maze: {
+      title: "Pixel Maze Maker",
+      description: "Design your own maze on a pixel grid and share it via link.",
+      step1: "Build",
+      step2: "Play",
+      sizeLabel: "Map size",
+      widthLabel: "Width",
+      heightLabel: "Height",
+      dimMaxReached: "Maximum is 128",
+      dimMinReached: "Minimum is 3",
+      applySize: "Apply",
+      presetsLabel: "Presets",
+      fogLabel: "Fog of War",
+      fogDescription:
+        "Limits visibility to a radius around the start when playing.",
+      fogRadiusLabel: "Vision radius (tiles)",
+      fogRadiusMax: "Maximum vision radius",
+      fogRadiusMin: "Minimum vision radius",
+      playViewSpanLabel: "Play view span (tiles)",
+      playViewSpanMax: "Maximum span (entire grid visible)",
+      playViewSpanMin: "Minimum span (closest)",
+      timeLimitLabel: "Time limit",
+      timeLimitDescription:
+        "Limit play time. Game over if exceeded.",
+      timeLimitValueLabel: "Time (sec)",
+      timeLimitMaxReached: "Maximum is 900 seconds",
+      timeLimitMinReached: "Minimum is 10 seconds",
+      sizeChangeTitle: "Change size",
+      sizeChangeMessage:
+        "Changing size regenerates the grid at the new dimensions. Anything drawn will be lost.",
+      sizeChangeConfirm: "Change",
+      viewZoomIn: "Zoom in",
+      viewZoomOut: "Zoom out",
+      viewFit: "Fit",
+      viewHand: "Hand tool (space + drag)",
+      toolWall: "Wall",
+      toolPath: "Path",
+      toolStart: "Start",
+      toolGoal: "Goal",
+      commitWallsButton: "Generate walls",
+      commitWallsHint:
+        "Cells outside your path become walls. Start and goal are preserved.",
+      resetTitle: "Reset map",
+      resetMessage:
+        "Going back to settings will reset everything you've drawn. Continue?",
+      resetConfirm: "Reset and go back",
+      resetCancel: "Cancel",
+      resetGridTitle: "Clear grid",
+      resetGridMessage:
+        "All cells will be cleared. Size and fog settings stay. This action can be undone.",
+      resetGridConfirm: "Clear",
+      editorUndo: "Undo",
+      editorRedo: "Redo",
+      editorResetGrid: "Clear grid",
+      validationTitlePass: "Ready to play",
+      validationTitleFail: "Validation failed",
+      validationNoStart: "No start tile placed",
+      validationMultiStart: "Multiple start tiles found",
+      validationNoGoal: "No goal tile placed",
+      validationUnreachable: "No goal is reachable from start",
+      validationExpand: "Details",
+      validationCollapse: "Hide",
+      validationRuleEndpoints: "Start & goal",
+      validationRuleReachability: "Reachability",
+      validationSkipped: "Skipped",
+      scoreLabel: "Maze score",
+      scoreStarsAria: "{n} of 5 stars",
+      scoreDimDetour: "Detour",
+      scoreDimCorridors: "Corridor structure",
+      scoreDimTexture: "Branches & dead ends",
+      weakLowDetour:
+        "Detour is low — add walls to twist the path.",
+      weakNoCorridors:
+        "Hardly any walls — narrow the paths to form a maze.",
+      weakNoTexture:
+        "No branches or dead ends — the path feels flat.",
+      playNotReadyHint:
+        "Pass the draw-step validation before you can play.",
+      playIntro: "Arrow keys, WASD, or the D-pad below to move.",
+      playControlsUp: "Move up",
+      playControlsDown: "Move down",
+      playControlsLeft: "Move left",
+      playControlsRight: "Move right",
+      playRestart: "Play again",
+      playBackToEdit: "Back to editor",
+      soundMute: "Mute",
+      soundUnmute: "Unmute",
+      shareButton: "Create share link",
+      shareGenerating: "Generating...",
+      shareUrlLabel: "Share link",
+      shareCopyButton: "Copy",
+      shareCopiedToast: "Copied",
+      shareErrorGeneric: "Failed to create share link.",
+      shareErrorRateLimit: "Please try again in a moment.",
+      shareNotFoundTitle: "Maze not found",
+      shareNotFoundMessage:
+        "The share link is invalid or the maze was removed.",
+      sharedBuildOwn: "Build your own maze",
+      winTitle: "Escaped!",
+      winMessage: "You reached the goal.",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -1235,6 +2048,8 @@ export const messages: Record<Locale, Messages> = {
       toolSuppPlan: "Supplement Planner",
       toolSajuNaming: "Saju Naming",
       toolLineupBuilder: "Football Best XI Builder",
+      toolLanguageMaker: "Language Maker",
+      toolMaze: "Pixel Maze Maker",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -1253,6 +2068,138 @@ export const messages: Record<Locale, Messages> = {
       errorTooLong: "Message too long (max 2000 chars)",
       errorRateLimit: "Please try again shortly",
       cardIconTooltip: "Feedback for this tool",
+    },
+    auth: {
+      signIn: "Sign in",
+      signOut: "Sign out",
+      adminPanel: "Admin",
+      errors: {
+        stateMismatch: "Sign-in session mismatch. Please try again.",
+        stateInvalid: "Sign-in verification failed. Please try again.",
+        stateExpired: "Sign-in attempt expired. Please try again.",
+        tokenExchangeFailed: "Google auth communication failed. Please try again shortly.",
+        idTokenInvalid: "Google token verification failed. Please try again.",
+        idTokenUnverifiedEmail: "Email not verified. Verify your email on your Google account and try again.",
+        dbError: "Server save failed. Please try again shortly.",
+        internal: "Server configuration error. Please contact the admin.",
+        notAdmin: "Admin access required.",
+      },
+    },
+    privacy: {
+      title: "Privacy Policy",
+      lastUpdated: "Last updated: 2026-05-12",
+      intro:
+        "BrennHub collects only the minimum information needed to provide sign-in. This page spells out exactly what we receive, where it's used, and how long it's kept — straight from the code.",
+      collection: {
+        heading: "1. What we collect",
+        description:
+          "Information received via Google sign-in, plus data the server generates during the sign-in process.",
+        columns: {
+          item: "Item",
+          source: "Source",
+          purpose: "Purpose",
+          retention: "Retention",
+        },
+        rows: [
+          {
+            item: "Email",
+            source: "Google id_token (email)",
+            purpose: "Account identification, UI display",
+            retention: "While account exists",
+          },
+          {
+            item: "Name",
+            source: "Google id_token (name)",
+            purpose: "UI display",
+            retention: "While account exists",
+          },
+          {
+            item: "Google account ID (sub)",
+            source: "Google id_token (sub)",
+            purpose: "Stable user mapping key",
+            retention: "While account exists",
+          },
+          {
+            item: "Profile picture URL",
+            source: "Google id_token (picture)",
+            purpose: "Stored in DB but not currently shown in the UI",
+            retention: "While account exists",
+          },
+          {
+            item: "brennhub_session cookie",
+            source: "Server-generated (32-byte random)",
+            purpose: "Maintain sign-in session",
+            retention: "30 days",
+          },
+          {
+            item: "auth_state cookie",
+            source: "Server-generated (HMAC token)",
+            purpose: "CSRF protection during sign-in",
+            retention: "10 minutes",
+          },
+          {
+            item: "User-Agent string",
+            source: "Request header (at sign-in time)",
+            purpose: "Audit / detect abnormal access",
+            retention: "Same as session (30 days)",
+          },
+        ],
+      },
+      purpose: {
+        heading: "2. Purpose of use",
+        body: "Collected information is used solely for sign-in identification and session maintenance. Per-tool personal data storage is a future phase and will be announced separately. We do not use this data for advertising, analytics, or external trackers.",
+      },
+      retention: {
+        heading: "3. Retention",
+        body: "User information is kept while the account exists. Sessions expire after 30 days and are deleted immediately on sign-out. The temporary sign-in token (auth_state) expires after 10 minutes.",
+      },
+      thirdParty: {
+        heading: "4. Third-party sharing",
+        body: "We do not share collected information with third parties. Google acts as an identity provider that delivers information to us at sign-in; BrennHub does not forward any data outward.",
+      },
+      rights: {
+        heading: "5. Your rights",
+        body: "You may request access, correction, or deletion of your information. On account deletion, your user record and all session entries are removed immediately. Contact us at the address below.",
+      },
+      contact: {
+        heading: "6. Contact",
+        body: "Send questions about this policy or your data to the address below.",
+        email: "brennhub.co@gmail.com",
+      },
+    },
+    footer: {
+      privacy: "Privacy Policy",
+    },
+    profile: {
+      title: "My Profile",
+      accountInfo: "Account",
+      email: "Email",
+      displayName: "Display name",
+      displayNamePlaceholder: "Name to show",
+      displayNameHint: "Leave empty to use your Google account name.",
+      save: "Save",
+      saving: "Saving…",
+      saved: "Saved",
+      saveError: "Save failed. Please try again.",
+      dangerZone: "Delete account",
+      deleteAccount: "Delete account",
+      deleteWarning:
+        "Your account and all tool data (supplement schedules, etc.) will be permanently deleted. This cannot be undone.",
+      deleteConfirm: "Delete permanently",
+      deleting: "Deleting…",
+      deleteError: "Deletion failed. Please try again.",
+      cancel: "Cancel",
+      loginRequired: "Sign-in required.",
+      loginCta: "Sign in",
+    },
+    admin: {
+      title: "Admin",
+      dashboardTitle: "BrennHub Admin Dashboard",
+      dashboardIntro: "Site operations menu",
+      menu: {
+        dashboard: "Dashboard",
+        feedback: "Feedback",
+      },
     },
     tools: {
       "email-diag": {
@@ -1280,6 +2227,16 @@ export const messages: Record<Locale, Messages> = {
         name: "Football Best XI Builder",
         description:
           "Visually compose your football starting eleven (formation, names, numbers) and download as PNG",
+      },
+      "language-maker": {
+        name: "Language Maker",
+        description:
+          "Create your own language — draw pixel glyphs, map them to any input, convert text in real time",
+      },
+      maze: {
+        name: "Pixel Maze Maker",
+        description:
+          "Design pixel-grid mazes, solve them, and share via link",
       },
     },
   },

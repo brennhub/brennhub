@@ -15,7 +15,9 @@ export type FeedbackTool =
   | "stock-sim"
   | "supp-plan"
   | "saju-naming"
-  | "lineup-builder";
+  | "lineup-builder"
+  | "language-maker"
+  | "maze";
 
 type Category = "feature" | "improvement" | "complaint" | "other";
 
@@ -131,6 +133,8 @@ export function FeedbackDialog({ open, onOpenChange, defaultTool }: Props) {
     { value: "supp-plan", label: t.toolSuppPlan },
     { value: "saju-naming", label: t.toolSajuNaming },
     { value: "lineup-builder", label: t.toolLineupBuilder },
+    { value: "language-maker", label: t.toolLanguageMaker },
+    { value: "maze", label: t.toolMaze },
   ];
   const categoryOptions: { value: Category; label: string }[] = [
     { value: "feature", label: t.categoryFeature },

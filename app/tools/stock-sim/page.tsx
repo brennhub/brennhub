@@ -9,6 +9,7 @@ import { useMessages } from "@/lib/i18n/provider";
 import { CostBasisCalculator } from "./cost-basis-calculator";
 import { DividendCalculator } from "./dividend-calculator";
 import { DcaDownCalculator } from "./dca-down-calculator";
+import { SplitSellCalculator } from "./split-sell-calculator";
 
 export default function StockSimPage() {
   const t = useMessages();
@@ -38,6 +39,9 @@ export default function StockSimPage() {
             <TabsTrigger value="dca-down">
               {t.stockSim.tabs.dcaDown}
             </TabsTrigger>
+            <TabsTrigger value="split-sell">
+              {t.stockSim.tabs.splitSell}
+            </TabsTrigger>
           </TabsList>
           <div className="flex flex-wrap items-start gap-3">
             <ColorSchemeToggle />
@@ -55,6 +59,9 @@ export default function StockSimPage() {
         </TabsContent>
         <TabsContent value="dca-down" className="mt-6">
           <DcaDownCalculator />
+        </TabsContent>
+        <TabsContent value="split-sell" className="mt-6">
+          <SplitSellCalculator />
         </TabsContent>
       </Tabs>
     </main>

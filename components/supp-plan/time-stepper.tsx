@@ -74,6 +74,9 @@ export function TimeStepper({ value, onChange }: Props) {
           inputMode="numeric"
           aria-label={tp.timeHour}
           className="w-20"
+          // 1.0.1: value prop이 24h string → parse24 → to12 → String 변환된 결과라
+          // valid 범위 밖 입력 시 즉시 튕기는 기존 동작 보존.
+          syncWhileFocused
         />
       </Labelled>
       <Labelled label={tp.timeMinute}>
@@ -94,6 +97,8 @@ export function TimeStepper({ value, onChange }: Props) {
           inputMode="numeric"
           aria-label={tp.timeMinute}
           className="w-20"
+          // 1.0.1: 5분 단위 round 변환 결과 state — 기존 즉시 튕김 동작 보존.
+          syncWhileFocused
         />
       </Labelled>
       <div className="flex gap-1">

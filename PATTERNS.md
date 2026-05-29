@@ -85,12 +85,17 @@
 ### forceFirstShare safety guard (dca-down 전용)
 - R1 1주 보장 + budget 초과 시 뒤 회차에서 트림 (역순). 안전 카운터로 무한루프 가드.
 
+### 최대잔여 정수 배분 (split-sell 탭)
+- 정수 총량(보유 주식수)을 분수 가중치로 N분할하되 합이 정확히 일치해야 할 때.
+- `split-sell-calculator.tsx` `allocateShares(total, weights)` — floor 후 잔여분을 소수부 큰 순서로 1씩 분배.
+- 분할매수(현금 floor 배분 + 트림)와 달리 분할매도는 정수 분할이라 별도 패턴 필요.
+
 ### Color-scheme aware gain/loss
 - 값 양수/음수에 따라 `text-[var(--color-gain)]` / `text-[var(--color-loss)]` 적용. ColorSchemeProvider가 CSS 변수 swap.
 
 ### Storage abstraction (supp-plan)
-- Interface `PersonalScheduleStorage` (`lib/supp-plan/storage/types.ts`) + `LocalStorageScheduleStorage` impl. Singleton `scheduleStorage` export.
-- 미래 로그인 도입 시 `D1ScheduleStorage` 새로 만들고 export 한 줄만 교체. 모든 사용처는 interface로 접근.
+- Interface `PersonalScheduleStorage` (`lib/supp-plan/storage/types.ts`) + 2 impl: `LocalStorageScheduleStorage` (게스트) / `D1ScheduleStorage` (로그인, generic `D1UserData<PersonalSchedule>` 래퍼).
+- `getScheduleStorage(isLoggedIn)` factory + `loadScheduleForUser(isLoggedIn)` helper (`lib/supp-plan/storage/index.ts`). 자동 이전 없음 — 로그인=D1만 / 비로그인=localStorage만 (Phase 2-2 결정).
 
 ### Compatibility-window matcher (supp-plan)
 - 같은 `state` (예: with-meal) + 시간 ±60분 entries 짝짓기 → `compatibility_rules` (DB) 순회로 룰 매칭. 위장 흡수 1시간 기준.

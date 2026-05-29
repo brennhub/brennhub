@@ -143,5 +143,3 @@ export class LocalStorageScheduleStorage implements PersonalScheduleStorage {
     }
   }
 }
-
-export const scheduleStorage = new LocalStorageScheduleStorage();

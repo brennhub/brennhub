@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/card";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { useCurrency } from "@/components/currency-provider";
+import { useCurrentUser } from "@/components/auth/user-provider";
+import { getCalcStorage } from "@/lib/stock-sim/storage";
 import {
   formatCurrency,
   parseCurrency,
@@ -33,7 +35,11 @@ type StoredState = {
   currentPrice: string;
 };
 
-const STORAGE_KEY = "brennhub:stock-sim:cost-basis";
+/** localStorage parse (게스트 legacy). cost-basis는 schemaVersion 없음 — 방어적 형태 확인만. */
+function parseStored(raw: unknown): StoredState | null {
+  if (!raw || typeof raw !== "object") return null;
+  return raw as StoredState;
+}
 
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -55,40 +61,46 @@ export function CostBasisCalculator() {
   const t = useMessages().stockSim.costBasis;
   const { locale } = useLocale();
   const { currency, rate } = useCurrency();
+  const user = useCurrentUser();
+  const isLoggedIn = !!user;
+  const storage = useMemo(
+    () => getCalcStorage<StoredState>("cost-basis", isLoggedIn, parseStored),
+    [isLoggedIn],
+  );
   const [rows, setRows] = useState<Row[]>(() => [emptyRow()]);
   const [currentPrice, setCurrentPrice] = useState("");
   const [hydrated, setHydrated] = useState(false);
   const prevCurrencyRef = useRef<Currency | null>(null);
 
+  // hydrate — 로그인=D1 / 게스트=localStorage. 로그인 상태 변화 시 재로드.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as StoredState;
-        if (Array.isArray(parsed.rows) && parsed.rows.length > 0) {
-          setRows(parsed.rows);
+    let cancelled = false;
+    setHydrated(false);
+    storage.get().then((data) => {
+      if (cancelled) return;
+      if (data) {
+        if (Array.isArray(data.rows) && data.rows.length > 0) {
+          setRows(data.rows);
         }
-        if (typeof parsed.currentPrice === "string") {
-          setCurrentPrice(parsed.currentPrice);
+        if (typeof data.currentPrice === "string") {
+          setCurrentPrice(data.currentPrice);
         }
       }
-    } catch {
-      // corrupt state — start fresh
-    }
-    setHydrated(true);
-  }, []);
+      setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [storage]);
 
+  // persist — debounce 저장 (storage 내부 600ms).
   useEffect(() => {
     if (!hydrated) return;
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ rows, currentPrice } satisfies StoredState),
-      );
-    } catch {
-      // quota / private mode
-    }
-  }, [rows, currentPrice, hydrated]);
+    storage.save({ rows, currentPrice });
+  }, [rows, currentPrice, hydrated, storage]);
+
+  // flush — unmount(탭 전환) / backend 전환 직전 대기 저장 기록.
+  useEffect(() => () => storage.flush(), [storage]);
 
   // Currency toggle: convert raw monetary inputs (row prices, currentPrice).
   useEffect(() => {

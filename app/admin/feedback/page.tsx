@@ -21,6 +21,8 @@ const TOOL_LABEL: Record<string, string> = {
   "supp-plan": "영양제 플래너",
   "saju-naming": "사주 작명",
   "lineup-builder": "축구 베스트 일레븐 만들기",
+  "language-maker": "언어 창조기",
+  maze: "픽셀 미로 만들기",
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -109,7 +111,7 @@ export default async function AdminFeedbackPage({
   const hasFilter = Boolean(filterTool || filterCategory || filterStatus);
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10">
+    <div>
       <header className="mb-6 flex items-baseline justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           피드백 관리
@@ -214,7 +216,7 @@ export default async function AdminFeedbackPage({
           </table>
         </div>
       )}
-    </main>
+    </div>
   );
 }
 

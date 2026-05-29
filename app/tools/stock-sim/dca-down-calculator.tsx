@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/card";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { useCurrency } from "@/components/currency-provider";
+import { useCurrentUser } from "@/components/auth/user-provider";
+import { getCalcStorage } from "@/lib/stock-sim/storage";
 import {
   formatCurrency,
   parseCurrency,
@@ -28,8 +30,6 @@ import {
 } from "@/lib/format/currency";
 import { cn } from "@/lib/utils";
 import { DcaDownDetail } from "./dca-down-detail";
-
-const STORAGE_KEY = "brennhub:stock-sim:dca-down";
 
 const N_MIN = 2;
 const N_MAX_HARD = 50;
@@ -88,10 +88,22 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
+/** localStorage parse (게스트 legacy). 필드 마이그레이션은 load effect 내부에서 처리. */
+function parseStored(raw: unknown): StoredState | null {
+  if (!raw || typeof raw !== "object") return null;
+  return raw as StoredState;
+}
+
 export function DcaDownCalculator() {
   const t = useMessages().stockSim.dcaDown;
   const { locale } = useLocale();
   const { currency, rate } = useCurrency();
+  const user = useCurrentUser();
+  const isLoggedIn = !!user;
+  const storage = useMemo(
+    () => getCalcStorage<StoredState>("dca-down", isLoggedIn, parseStored),
+    [isLoggedIn],
+  );
 
   const [ticker, setTicker] = useState<string>("");
   const [budget, setBudget] = useState<string>("");
@@ -113,11 +125,15 @@ export function DcaDownCalculator() {
 
   const prevCurrencyRef = useRef<Currency | null>(null);
 
+  // hydrate — 로그인=D1 / 게스트=localStorage. 필드 마이그레이션(finalDrop→dropInterval,
+  // nextBuyRound→lastCompletedRound)은 게스트 localStorage legacy 대응 — D1 데이터는
+  // 현 shape라 current-field 분기를 탐.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<StoredState>;
+    let cancelled = false;
+    setHydrated(false);
+    storage.get().then((parsed) => {
+      if (cancelled) return;
+      if (parsed) {
         if (typeof parsed.ticker === "string") setTicker(parsed.ticker);
         if (typeof parsed.budget === "string") setBudget(parsed.budget);
         if (typeof parsed.startPrice === "string")
@@ -151,37 +167,31 @@ export function DcaDownCalculator() {
           setLastCompletedRound(Math.max(0, parsed.nextBuyRound - 1));
         }
       }
-    } catch {
-      // corrupt
-    }
-    setHydrated(true);
-  }, []);
+      setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [storage]);
 
+  // persist — debounce 저장 (storage 내부 600ms).
   useEffect(() => {
     if (!hydrated) return;
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          ticker,
-          budget,
-          startPrice,
-          rounds,
-          dropInterval,
-          targetReturn,
-          taxRate,
-          taxType,
-          weightEnabled,
-          firstWeightPct,
-          forceFirstShare,
-          lastCompletedRound,
-        } satisfies StoredState),
-      );
-    } catch {
-      // quota
-    }
+    storage.save({
+      ticker,
+      budget,
+      startPrice,
+      rounds,
+      dropInterval,
+      targetReturn,
+      taxRate,
+      taxType,
+      weightEnabled,
+      firstWeightPct,
+      forceFirstShare,
+      lastCompletedRound,
+    });
   }, [
-    hydrated,
     ticker,
     budget,
     startPrice,
@@ -194,7 +204,12 @@ export function DcaDownCalculator() {
     firstWeightPct,
     forceFirstShare,
     lastCompletedRound,
+    hydrated,
+    storage,
   ]);
+
+  // flush — unmount(탭 전환) / backend 전환 직전 대기 저장 기록.
+  useEffect(() => () => storage.flush(), [storage]);
 
   useEffect(() => {
     if (!hydrated) return;
