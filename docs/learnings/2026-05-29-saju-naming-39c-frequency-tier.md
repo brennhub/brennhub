@@ -40,7 +40,10 @@ per-한자 실사용 빈도 무료·기계가독 자료는 **미가용 재확인
 | (C) 상용도 tiebreak | `lib/names.ts` `freqSum` (점수 미가산) | 동점에서 흔한 한자 우선 | 비-작명 상용자(六共)도 "흔함"이라 상위 → (D) 필요 |
 | (D) 작명 부적합 가드 | `lib/name-exclude.ts` | 숫자·기능어(六全同共各一…) 차단 | best-effort·비포괄: 일반 명사·동사(皇革音列式吏…) 미포착 |
 
-**(B) 메모리**: 첫 글자별 bounded 버킷 `O(distinct × PER_FIRST_KEEP)` — pool² materialize 없음 → c5-7c 503 원칙 계승. cap-skip 제거로 makeCandidate는 전 조합(POOL 500 → n=2 ≤25만, c5-7c p95 193ms 범위).
+**(B) 메모리 + CPU**: 첫 글자별 bounded 버킷 `O(distinct × PER_FIRST_KEEP)` — pool² materialize 없음(메모리 503 회피, c5-7c 계승).
+- ⚠️ **CPU 503 재발 → 정정**: 첫 시도는 cap-skip 제거 후 **전 조합**(POOL 500 → n=2 25만) 평가. c5-7c는 cap-skip+경량 `calcSoundScore`로 25만이 193ms였으나, 그 후 도입된 **`evaluateSoundOhaeng`이 ~7.6× 무거워** 25만 = 단건 1465ms + 순차 burst에서 17/20 HTTP 503(dev 회귀). Workers CPU 한도 초과.
+- **수정**: n=2 char2 후보를 **상용도 상위 40개**로 제한(`CHAR2_LIMIT=40`, db는 route frequency DESC 정렬 = 상위가 상용 char2). char1은 전 풀 순회(첫 글자 다양성). CPU `O(pool × 40)` ≈ 2만 ≈ 120ms(c5-7c 안전역). best-by-score는 상위 char2 집합 안에서. POOL 500은 유지(seed 25 < 40이라 PoC case7 브루트포스 동등성 불변).
+- 교훈: **Workers 회귀는 로컬 PoC로 안 잡힘** — `evaluateSoundOhaeng` 같은 점수 함수 무게 변화 시 조합수×함수무게를 dev HTTP latency로 재측정 필수. c5-7c 193ms는 당시 경량 함수 기준이라 현재 무효.
 
 **(D) 가드 — 오탐 0 데이터 검증** (풀 9,055 의미 스캔). 충돌 어휘는 키워드 배제 + char 명시:
 - 키워드(9): 여섯·다섯·여덟·일곱·스물·한가지·각각·온전할·무릇 → 매칭 18자(七五仝伍全八六凡卄各同咫囫廿捌柒漆鍰, 전부 비-작명).
