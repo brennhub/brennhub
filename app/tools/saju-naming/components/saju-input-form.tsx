@@ -20,7 +20,7 @@ interface Props {
 }
 
 const SELECT_CLASS =
-  "mt-1 h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-zinc-900 outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30 dark:text-zinc-100";
+  "mt-1 h-8 w-full rounded-lg border border-input bg-white px-2.5 text-sm text-zinc-900 outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-950 dark:text-zinc-100";
 
 const range = (lo: number, hi: number): number[] =>
   Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
