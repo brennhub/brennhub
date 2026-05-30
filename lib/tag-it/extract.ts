@@ -181,10 +181,14 @@ const ENDING_DESC = [...ENDING_WEIGHTS].sort(
   (a, b) => b.pattern.length - a.pattern.length,
 );
 
-/** 토큰 말미 어미의 가중치(차감량). longest-match 1개. 없으면 0. */
+/**
+ * 토큰 말미 어미의 가중치(차감량). longest-match 1개. 없으면 0.
+ * `>=` — 토큰이 어미와 **정확히 같아도** 매칭(됩니다/봤다 단독 종결형). 0.8.0의 `>`는
+ * 정확길이 토큰이 약한 1글자 패턴으로 새던 버그 → 사전 floor(85)가 명사를 보호하므로 안전.
+ */
 function endingDecrement(token: string): number {
   for (const { pattern, weight } of ENDING_DESC) {
-    if (token.length > pattern.length && token.endsWith(pattern)) return weight;
+    if (token.length >= pattern.length && token.endsWith(pattern)) return weight;
   }
   return 0;
 }
