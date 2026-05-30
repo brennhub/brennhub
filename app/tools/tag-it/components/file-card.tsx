@@ -32,6 +32,7 @@ type Props = {
     chipSelect: string;
     chipDelete: string;
     freqTitle: string; // "{n}회 등장"
+    probTitle: string; // "명사 신뢰도 {p}%"
     sectionSelected: string;
     sectionCandidate: string;
     selectedEmpty: string;
@@ -98,6 +99,7 @@ export function FileCard({
     select: labels.chipSelect,
     delete: labels.chipDelete,
     freqTitle: labels.freqTitle,
+    probTitle: labels.probTitle,
   };
 
   const commit = () => {

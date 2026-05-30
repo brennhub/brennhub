@@ -1,12 +1,16 @@
 /**
  * 키워드 추출 엔진 (기획서 §3 / C). 전부 사전 + 통계 — 환각 0, 동일 입력=동일 결과.
  *
- * 1차: 토큰화 → (강도 3+) 조사 제거 → 1글자/맨숫자 제거
+ * 1차: 토큰화 → (강도 3+) 명사어간 복원·조사 제거 → 1글자/맨숫자 제거
  * 형태 노이즈(문서 종류 무관): 기호·비문자(항상) / 숫자+영문 단편 / 숫자+세는단위 — 강도별 게이트
- * 2차: 불용어(항상) + 용언 어미 제거(강도 3+) + 점수화(빈도 + 위치 가산점 − 약어 감점)
+ * 2차: 불용어(항상) + 명사 확률 모델 + 점수화(빈도 + 위치 가산점 − 약어 감점)
+ *
+ * 명사 확률 모델(Phase 3, §nounProbability): 용언 어미를 "제거/보존" 이분법으로 떨구지 않고
+ * NNG 사전(보호 신호) + 어미·신호1 가중 차감으로 0~100 확률을 매겨 강도별 임계로 채택.
+ * 가중치는 weights.ts(코드 수정 없이 조정). 사전 미로딩 시 50% 경로 fallback(안 깨짐).
  *
  * 노이즈 규칙은 전부 "토큰 형태" 기준 — 코드/산문 구분 없이 동일하게 처리.
- * 활성 필터는 필터 강도(1~5)가 결정 (PROFILES).
+ * 활성 필터는 필터 강도(1~5)가 결정 (PROFILES). 강도 = 확률 채택 임계.
  */
 
 import { EN_STOPWORDS } from "./stopwords.en";
@@ -17,9 +21,19 @@ import {
   KO_NOUN_VERB_SUFFIXES,
   KO_NUMERIC_COUNTERS,
   KO_STOPWORDS,
-  KO_VERB_ENDINGS,
   KO_VERBAL_MARKERS,
 } from "./stopwords.ko";
+import { getNounDict } from "./noun-dict";
+import {
+  DICT_MAX_DECR,
+  DICT_START,
+  ENDING_WEIGHTS,
+  FUNCTIONAL_STEM_WEIGHT,
+  NONDICT_MAX_DECR,
+  NONDICT_START,
+  SIGNAL1_WEIGHT,
+  THRESHOLD,
+} from "./weights";
 import {
   hasHangul,
   hasLatin,
@@ -64,8 +78,6 @@ type FilterProfile = {
   removeNumericCounter: boolean;
   dropShortLatin: boolean;
   abbrevPenalty: number;
-  /** 신호1 — 용언 활용 패러다임 판정 (강도 4+) */
-  signal1Paradigm: boolean;
   /** URL/웹 토큰 제거 (강도 5) */
   dropUrl: boolean;
   /** 신호3 — 1음절 의존명사+조사 제거 (강도 5) */
@@ -80,7 +92,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: false,
     dropShortLatin: false,
     abbrevPenalty: 0,
-    signal1Paradigm: false,
     dropUrl: false,
     signal3Mono: false,
   },
@@ -91,7 +102,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: false,
     dropShortLatin: false,
     abbrevPenalty: 0,
-    signal1Paradigm: false,
     dropUrl: false,
     signal3Mono: false,
   },
@@ -102,7 +112,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: true,
     dropShortLatin: false,
     abbrevPenalty: 1,
-    signal1Paradigm: false,
     dropUrl: false,
     signal3Mono: false,
   },
@@ -113,7 +122,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: true,
     dropShortLatin: false,
     abbrevPenalty: 2,
-    signal1Paradigm: true,
     dropUrl: false,
     signal3Mono: false,
   },
@@ -124,7 +132,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: true,
     dropShortLatin: true,
     abbrevPenalty: 3,
-    signal1Paradigm: true,
     dropUrl: true,
     signal3Mono: true,
   },
@@ -169,11 +176,50 @@ function isStopword(token: string, norm: string): boolean {
   return EN_STOPWORDS.has(norm) || KO_STOPWORDS.has(token);
 }
 
-/** 네거티브 필터(강도 3+): 용언 종결·연결 어미로 끝나면 명사가 아니라고 본다. */
-function isVerbLike(token: string): boolean {
-  return KO_VERB_ENDINGS.some(
-    (e) => token.length > e.length && token.endsWith(e),
-  );
+/** 어미 가중치 길이 내림차순 — longest-match 1개만 적용(합산 아님). */
+const ENDING_DESC = [...ENDING_WEIGHTS].sort(
+  (a, b) => b.pattern.length - a.pattern.length,
+);
+
+/** 토큰 말미 어미의 가중치(차감량). longest-match 1개. 없으면 0. */
+function endingDecrement(token: string): number {
+  for (const { pattern, weight } of ENDING_DESC) {
+    if (token.length > pattern.length && token.endsWith(pattern)) return weight;
+  }
+  return 0;
+}
+
+/**
+ * 명사 확률 0~100 (Phase 3). "세상은 흑백이 아니다" — 제거/보존 이분법 대신 확률로 노출.
+ *   사전 O(NNG): DICT_START(100) − min(decr, DICT_MAX_DECR) → 하한 DICT_FLOOR(85). 추락 봉쇄.
+ *   사전 X      : NONDICT_START(50) − min(decr, NONDICT_MAX_DECR) → 하한 0.
+ *   decr = 어미(longest-match) + 신호1(용언 패러다임). 신호1은 기능어간이면 빈도 무관,
+ *          아니면 빈출 명사 보존 가드(freq>=SIGNAL1_FREQ_GUARD) 아래에서만(§B).
+ *   denominal(명사+하다 복원)은 이미 명사 어간 → 차감 면제.
+ *   사전 미로딩(fallback) 시 inDict=false 경로 = Phase 2 동작과 동일(안 깨짐).
+ */
+function nounProbability(
+  token: string,
+  freq: number,
+  denominal: boolean,
+  docTokens: Set<string>,
+): number {
+  const dict = getNounDict();
+  const inDict = dict !== null && dict.has(token);
+
+  let decr = 0;
+  if (!denominal) {
+    decr = endingDecrement(token);
+    const stem = inflectedStem(token, docTokens);
+    if (stem !== null) {
+      if (KO_FUNCTIONAL_STEMS.has(stem)) decr += FUNCTIONAL_STEM_WEIGHT;
+      else if (freq < SIGNAL1_FREQ_GUARD) decr += SIGNAL1_WEIGHT;
+    }
+  }
+
+  return inDict
+    ? DICT_START - Math.min(decr, DICT_MAX_DECR)
+    : NONDICT_START - Math.min(decr, NONDICT_MAX_DECR);
 }
 
 const HANGUL_G = /[가-힣]/g;
@@ -243,7 +289,7 @@ function isShortAbbrev(token: string): boolean {
 function refine(
   raw: string,
   p: FilterProfile,
-): { key: string; text: string } | null {
+): { key: string; text: string; denominal: boolean } | null {
   let tok = raw;
 
   // 명사 어간 추출(§#2)을 조사 제거보다 **먼저** — "포함하는"의 "는"을 stripJosa가 조사로
@@ -276,12 +322,10 @@ function refine(
     return null;
   }
 
-  // 명사 어간 없는 순수 용언만 폐기 (먹었다 등). 명사 복원된 토큰은 통과.
-  if (!denominal && p.removeVerbForms && hasHangul(tok) && isVerbLike(tok)) {
-    return null;
-  }
-
-  return { key: norm, text: tok };
+  // 용언 활용형(먹었다/객관적인 등)은 여기서 떨구지 않는다 — 명사 확률 모델이
+  // 사전 보호 신호와 함께 가중 차감으로 판정(extractCandidates §명사확률).
+  // denominal(명사+하다 복원 토큰)은 이미 명사 어간이라 차감 면제 신호로 넘긴다.
+  return { key: norm, text: tok, denominal };
 }
 
 /** 제목 영역에 등장한 정규화 키 집합 (위치 가산점용). */
@@ -311,40 +355,40 @@ export function extractCandidates(
 
   const titles = titleKeys(text.body, p);
 
-  // 정규화 키 → { 표시 텍스트(첫 등장), 빈도 }. 신호1용 문서 토큰셋도 함께 수집.
+  // 정규화 키 → { 표시 텍스트(첫 등장), 빈도, denominal }. 신호1용 문서 토큰셋도 수집.
+  // docTokens는 전 강도 수집 — 확률(hover %)은 강도 무관 동일, 채택만 임계가 가른다.
   const docTokens = new Set<string>();
-  const counts = new Map<string, { text: string; freq: number }>();
+  const counts = new Map<
+    string,
+    { text: string; freq: number; denominal: boolean }
+  >();
   for (const raw of splitTokens(joined)) {
-    if (p.signal1Paradigm) docTokens.add(raw);
+    docTokens.add(raw);
     const r = refine(raw, p);
     if (!r) continue;
     const existing = counts.get(r.key);
-    if (existing) existing.freq += 1;
-    else counts.set(r.key, { text: r.text, freq: 1 });
+    if (existing) {
+      existing.freq += 1;
+      if (r.denominal) existing.denominal = true;
+    } else {
+      counts.set(r.key, { text: r.text, freq: 1, denominal: r.denominal });
+    }
   }
 
   // 빈도 컷은 사용자 minFreq만 (§#3). 강도는 "명사 판별 엄격도"만 담당, 빈도 컷 안 함.
   const minFreq = opts.minFreq;
+  const threshold = THRESHOLD[opts.strength];
 
   const out: Candidate[] = [];
-  for (const [key, { text: t, freq }] of counts) {
+  for (const [key, { text: t, freq, denominal }] of counts) {
     if (freq < minFreq) continue;
-    // 신호1(강도4+): 용언 활용형 노이즈 제거.
-    //  - 기능 용언 어간(있/없/같…)은 빈도 무관 제거(빈출이라도 명사 아님).
-    //  - borderline 어간(보=報告 등)은 빈출(가드 이상)이면 명사로 보존(§B).
-    if (p.signal1Paradigm) {
-      const stem = inflectedStem(t, docTokens);
-      if (
-        stem !== null &&
-        (KO_FUNCTIONAL_STEMS.has(stem) || freq < SIGNAL1_FREQ_GUARD)
-      ) {
-        continue;
-      }
-    }
+    // 명사 확률 모델(§nounProbability) — 사전 보호 + 가중 차감. 강도 = 채택 임계.
+    const prob = nounProbability(t, freq, denominal, docTokens);
+    if (prob < threshold) continue;
     // 빈도가 지배. 약어는 강도별 감점만 — 빈출 약어(MRI 등)는 상위에 살아남는다.
     let score = freq + (titles.has(key) ? TITLE_BONUS : 0);
     if (isShortAbbrev(t)) score -= p.abbrevPenalty;
-    out.push({ text: t, freq, score });
+    out.push({ text: t, freq, score, prob });
   }
 
   // 점수 → 빈도 → 사전순 (완전 결정론적 정렬)
