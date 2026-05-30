@@ -1,5 +1,22 @@
 # 태그잇 (Tag-it) CHANGELOG
 
+## 0.6.0 — 포맷 확장: xlsx/pptx 추가 (2026-05-29)
+
+.docx 전용 → **오피스 문서 3종(Word·Excel·PowerPoint)**. OOXML core.xml의 keywords 위치가
+동일해 읽기·쓰기·재포장·무결성·기존 keywords 프리셋은 그대로 공유, 본문 추출만 포맷별 분기.
+
+- **`docx.ts` → `office.ts` rename + 포맷 디스패치**: `detectFormat`/`isOfficeFile`/`unzipOffice` +
+  `readText(entries, format, scope)`.
+- **xlsx**: `xl/sharedStrings.xml`의 `<t>`(리치텍스트 포함) + 시트 inline string(`<is><t>`).
+  한자 phonetic(`<rPh>`) 제외. ⚠️ 빈도는 sharedStrings 기준(고유 문자열) — 실제 셀 횟수와 다를 수 있음(BACKLOG).
+- **pptx**: `ppt/slides/slideN.xml`의 `<a:t>`, **슬라이드 번호 자연 정렬**(slide2 < slide10).
+  노트·머리/바닥글 제외(BACKLOG).
+- **무결성 동일**: 본문 XML(word/document·xl/*·ppt/slides/*) 미수정, core.xml 한 엔트리만 교체 —
+  세 포맷 동일 코드 경로. 다운로드 MIME 포맷별 매핑, 파일명·확장자 원본 유지.
+- 통합: 업로드 `accept=".docx,.xlsx,.pptx"`, i18n(ko/en) 카피·도구 설명 "오피스 문서"로 갱신,
+  `limitNotDocx`→`limitNotOffice`. 추출 엔진·강도·세그먼트 등은 포맷 무관 공유("문서는 문서다").
+- 검증: 합성 docx/xlsx/pptx 추출·자연정렬·본문 바이트 불변·core.xml 교체 스모크 통과.
+
 ## 0.5.0 — UI 전체 재설계 (시각 위계·밀도·세그먼트·마감) (2026-05-29)
 
 기능 회귀 0, 디자인·레이아웃·시선 흐름만 개선 (refined minimalism, brennhub zinc 유지).

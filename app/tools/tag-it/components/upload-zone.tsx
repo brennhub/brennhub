@@ -62,7 +62,7 @@ export function UploadZone({ onSelect, warning, disabled, labels }: Props) {
         <input
           ref={inputRef}
           type="file"
-          accept=".docx"
+          accept=".docx,.xlsx,.pptx"
           multiple
           hidden
           onChange={(e) => {

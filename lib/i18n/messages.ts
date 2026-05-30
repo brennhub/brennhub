@@ -553,7 +553,7 @@ export type Messages = {
     uploadTitle: string;
     uploadHint: string;
     uploadButton: string;
-    limitNotDocx: string;
+    limitNotOffice: string;
     limitFiles: string;
     limitFileSize: string;
     limitTotalSize: string;
@@ -1309,11 +1309,11 @@ export const messages: Record<Locale, Messages> = {
     tagIt: {
       title: "태그잇",
       description:
-        "워드(.docx) 문서를 올리면 본문에서 핵심 키워드를 칩으로 뽑아 줍니다. 고르고 다듬은 태그를 문서 속성에 기록해 다시 내려받으세요. 파일은 브라우저 밖으로 나가지 않습니다.",
-      uploadTitle: "여기에 .docx 파일을 끌어다 놓으세요",
-      uploadHint: "한 번에 최대 5개 · 개당 8MB · 총 15MB · .docx만",
+        "오피스 문서(Word·Excel·PowerPoint)를 올리면 본문에서 핵심 키워드를 칩으로 뽑아 줍니다. 고르고 다듬은 태그를 문서 속성에 기록해 다시 내려받으세요. 파일은 브라우저 밖으로 나가지 않습니다.",
+      uploadTitle: "여기에 오피스 문서를 끌어다 놓으세요",
+      uploadHint: "한 번에 최대 5개 · 개당 8MB · 총 15MB · .docx / .xlsx / .pptx",
       uploadButton: "파일 선택",
-      limitNotDocx: "{name}: .docx 파일만 지원합니다",
+      limitNotOffice: "{name}: .docx / .xlsx / .pptx 만 지원합니다",
       limitFiles: "최대 {max}개 파일까지만 올릴 수 있습니다",
       limitFileSize: "{name}: 개당 {max}를 초과했습니다",
       limitTotalSize: "총 용량 {max}를 초과했습니다",
@@ -1323,7 +1323,7 @@ export const messages: Record<Locale, Messages> = {
       modeAutoHint: "본문을 읽어 키워드 칩을 자동으로 뽑아냅니다.",
       modeManualHint: "빈 캔버스에서 직접 태그를 입력합니다.",
       workspaceTitle: "추출 결과",
-      workspaceEmpty: "위에서 .docx 파일을 올리면 여기에 키워드 칩이 나타납니다.",
+      workspaceEmpty: "위에서 오피스 문서를 올리면 여기에 키워드 칩이 나타납니다.",
       reextracted: "갱신됨",
       advancedTitle: "고급 옵션",
       strengthLabel: "필터 강도",
@@ -1349,7 +1349,8 @@ export const messages: Record<Locale, Messages> = {
       statusProcessing: "읽는 중…",
       statusDone: "완료",
       statusError: "실패",
-      errorParse: "파일을 읽지 못했습니다. 올바른 .docx인지 확인해 주세요.",
+      errorParse:
+        "파일을 읽지 못했습니다. 올바른 .docx / .xlsx / .pptx인지 확인해 주세요.",
       addPlaceholder: "태그 직접 입력 후 Enter",
       showMore: "+{n}개 더보기",
       showLess: "접기",
@@ -1579,7 +1580,7 @@ export const messages: Record<Locale, Messages> = {
       "tag-it": {
         name: "태그잇",
         description:
-          "워드(.docx) 문서에서 핵심 키워드를 뽑아 칩으로 다듬고 문서 속성에 기록 — 전부 브라우저 안에서",
+          "오피스 문서(Word·Excel·PowerPoint)에서 핵심 키워드를 뽑아 칩으로 다듬고 문서 속성에 기록 — 전부 브라우저 안에서",
       },
     },
   },
@@ -2174,11 +2175,11 @@ export const messages: Record<Locale, Messages> = {
     tagIt: {
       title: "Tag-it",
       description:
-        "Upload a Word (.docx) document and it pulls key terms from the text into chips. Curate the tags, write them into the document properties, and download it again. Files never leave your browser.",
-      uploadTitle: "Drop your .docx files here",
-      uploadHint: "Up to 5 at once · 8MB each · 15MB total · .docx only",
+        "Upload an Office document (Word, Excel, PowerPoint) and it pulls key terms from the text into chips. Curate the tags, write them into the document properties, and download it again. Files never leave your browser.",
+      uploadTitle: "Drop your Office documents here",
+      uploadHint: "Up to 5 at once · 8MB each · 15MB total · .docx / .xlsx / .pptx",
       uploadButton: "Choose files",
-      limitNotDocx: "{name}: only .docx files are supported",
+      limitNotOffice: "{name}: only .docx / .xlsx / .pptx are supported",
       limitFiles: "You can upload at most {max} files",
       limitFileSize: "{name}: exceeds {max} per file",
       limitTotalSize: "Total size exceeds {max}",
@@ -2188,7 +2189,8 @@ export const messages: Record<Locale, Messages> = {
       modeAutoHint: "Reads the text and pulls keyword chips automatically.",
       modeManualHint: "Start from a blank canvas and type tags yourself.",
       workspaceTitle: "Results",
-      workspaceEmpty: "Upload a .docx above and keyword chips will appear here.",
+      workspaceEmpty:
+        "Upload an Office document above and keyword chips will appear here.",
       reextracted: "Updated",
       advancedTitle: "Advanced options",
       strengthLabel: "Filter strength",
@@ -2214,7 +2216,8 @@ export const messages: Record<Locale, Messages> = {
       statusProcessing: "Reading…",
       statusDone: "Done",
       statusError: "Failed",
-      errorParse: "Could not read the file. Please check it is a valid .docx.",
+      errorParse:
+        "Could not read the file. Please check it is a valid .docx / .xlsx / .pptx.",
       addPlaceholder: "Type a tag, then Enter",
       showMore: "+{n} more",
       showLess: "Show less",
@@ -2445,7 +2448,7 @@ export const messages: Record<Locale, Messages> = {
       "tag-it": {
         name: "Tag-it",
         description:
-          "Pull key terms from a Word (.docx) doc into chips, curate them, and write them to the document properties — all in the browser",
+          "Pull key terms from an Office doc (Word/Excel/PowerPoint) into chips, curate them, and write them to the document properties — all in the browser",
       },
     },
   },
