@@ -37,20 +37,23 @@ export type ReadScope = {
   tables: boolean;
 };
 
+/**
+ * 필터 강도 1~5 (관대 ↔ 엄격). 입력 규칙 강도 — 강도→필터 프로파일은 extract.ts.
+ * 출력 숨김(2차 점수 임계 슬라이더)과는 별개 축.
+ */
+export type FilterStrength = 1 | 2 | 3 | 4 | 5;
+
 /** 추출 옵션 — 고급 패널에서 조정, localStorage 영속 (기획서 §3.6 / D) */
 export type ExtractOptions = {
-  /** 조사 제거 */
-  removeJosa: boolean;
-  /** 명사 위주 (네거티브 필터) */
-  nounFocus: boolean;
+  /** 필터 강도 (조사·활용형 제거 여부 등을 강도에 흡수) */
+  strength: FilterStrength;
   scope: ReadScope;
-  /** 최소 빈도 컷 (1 = 컷 없음) */
+  /** 사용자 최소 빈도 컷 (1 = 컷 없음). 강도가 내부 floor를 추가로 적용. */
   minFreq: number;
 };
 
 export const DEFAULT_EXTRACT_OPTIONS: ExtractOptions = {
-  removeJosa: true,
-  nounFocus: true,
+  strength: 3,
   scope: { body: true, tables: true },
   minFreq: 1,
 };

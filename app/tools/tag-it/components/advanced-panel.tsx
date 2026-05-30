@@ -2,20 +2,19 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Switch } from "@/components/switch";
 import { NumberStepper } from "@/components/number-stepper";
 import { cn } from "@/lib/utils";
-import type { ExtractOptions } from "@/lib/tag-it/types";
+import type { ExtractOptions, FilterStrength } from "@/lib/tag-it/types";
 
 type Props = {
   options: ExtractOptions;
   onChange: (next: ExtractOptions) => void;
   labels: {
     advancedTitle: string;
-    removeJosaLabel: string;
-    removeJosaHint: string;
-    nounFocusLabel: string;
-    nounFocusHint: string;
+    strengthLabel: string;
+    strengthHint: string;
+    strengthNames: readonly [string, string, string, string, string];
+    strengthDescs: readonly [string, string, string, string, string];
     scopeLabel: string;
     scopeBody: string;
     scopeTables: string;
@@ -52,23 +51,35 @@ export function AdvancedPanel({ options, onChange, labels }: Props) {
 
       {open && (
         <div className="space-y-5 border-t border-border px-4 py-4">
-          {/* 조사 제거 */}
-          <Row label={labels.removeJosaLabel} hint={labels.removeJosaHint}>
-            <Switch
-              checked={options.removeJosa}
-              onCheckedChange={(v) => set({ removeJosa: v })}
-              aria-label={labels.removeJosaLabel}
+          {/* 필터 강도 슬라이더 (관대 ↔ 엄격) */}
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-sm font-medium text-foreground">
+                {labels.strengthLabel}
+              </p>
+              <span className="text-sm font-medium text-primary">
+                {labels.strengthNames[options.strength - 1]}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={5}
+              step={1}
+              value={options.strength}
+              aria-label={labels.strengthLabel}
+              onChange={(e) =>
+                set({ strength: Number(e.target.value) as FilterStrength })
+              }
+              className="w-full accent-primary"
             />
-          </Row>
-
-          {/* 명사 위주 */}
-          <Row label={labels.nounFocusLabel} hint={labels.nounFocusHint}>
-            <Switch
-              checked={options.nounFocus}
-              onCheckedChange={(v) => set({ nounFocus: v })}
-              aria-label={labels.nounFocusLabel}
-            />
-          </Row>
+            <p className="text-xs text-muted-foreground">
+              {labels.strengthDescs[options.strength - 1]}
+            </p>
+            <p className="text-xs text-muted-foreground/70">
+              {labels.strengthHint}
+            </p>
+          </div>
 
           {/* 읽기 범위 */}
           <div className="space-y-2">

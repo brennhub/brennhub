@@ -38,17 +38,39 @@ function countHangul(s: string): number {
  *   - "정보를" → "를" 떼면 "정보"(2음절) → "정보"
  *   - "수로" → "로" 떼면 "수"(1음절) → 가드 → 원형 "수로" 유지
  * 의심스러우면 원형 보존 (과도제거 < 미제거, brennhub 결정론·안전 우선).
+ *
+ * 어간 유효성:
+ *   - 한글 ≥2음절, 또는
+ *   - 영문·숫자 포함 (어근이 순수 한글 명사가 아니므로 뒤 한글은 조사로 본다)
+ * 영문/숫자 어근이면 한글 음절 수와 무관하게 조사를 떼어, 스택 조사도 반복 제거:
+ *   "gd에→gd", "70과→70", "preload만으로" → "만"(어근 latin, 유효) → "preload".
+ * 영문 없는 한글 1음절 어근("회의"→"회", "수로"→"수")은 가드로 원형 보존.
  */
+function stemValid(stem: string): boolean {
+  if (countHangul(stem) >= 2) return true;
+  if (/[a-zA-Z0-9]/.test(stem)) return true;
+  return false;
+}
+
 export function stripJosa(token: string): string {
-  if (!hasHangul(token)) return token;
-  for (const josa of JOSA_DESC) {
-    if (token.length > josa.length && token.endsWith(josa)) {
-      const stem = token.slice(0, -josa.length);
-      if (countHangul(stem) >= 2) return stem;
-      // 이 조사는 어간을 너무 깎음 — 더 짧은 조사 시도
+  let cur = token;
+  // 한글이 남아있는 동안만 조사 후보가 있다 (조사는 한글). 한 번 제거할 때마다 재시도.
+  while (hasHangul(cur)) {
+    let stripped = false;
+    for (const josa of JOSA_DESC) {
+      if (cur.length > josa.length && cur.endsWith(josa)) {
+        const stem = cur.slice(0, -josa.length);
+        if (stemValid(stem)) {
+          cur = stem;
+          stripped = true;
+          break;
+        }
+        // 이 조사는 어간을 너무 깎음 — 더 짧은 조사 시도
+      }
     }
+    if (!stripped) break;
   }
-  return token;
+  return cur;
 }
 
 /** 텍스트 → 토큰 배열 (구두점·공백 분리, 빈 토큰 제거). */

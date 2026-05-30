@@ -415,10 +415,10 @@ export function TagItClientShell() {
           onChange={setOptions}
           labels={{
             advancedTitle: tt.advancedTitle,
-            removeJosaLabel: tt.removeJosaLabel,
-            removeJosaHint: tt.removeJosaHint,
-            nounFocusLabel: tt.nounFocusLabel,
-            nounFocusHint: tt.nounFocusHint,
+            strengthLabel: tt.strengthLabel,
+            strengthHint: tt.strengthHint,
+            strengthNames: tt.strengthNames,
+            strengthDescs: tt.strengthDescs,
             scopeLabel: tt.scopeLabel,
             scopeBody: tt.scopeBody,
             scopeTables: tt.scopeTables,

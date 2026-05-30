@@ -1,11 +1,12 @@
 /**
  * 키워드 추출 엔진 (기획서 §3 / C). 전부 사전 + 통계 — 환각 0, 동일 입력=동일 결과.
  *
- * 1차: 토큰화 → 조사 제거 → 1글자/맨숫자 제거
- * 형태 노이즈(문서 종류 무관, 항상 적용): 기호·비문자 / 숫자+영문 단편 / 숫자+세는단위
- * 2차: 불용어 + 명사 위주(용언 어미 제거, 옵션) + 점수화(빈도 + 위치 가산점 − 약어 감점)
+ * 1차: 토큰화 → (강도 3+) 조사 제거 → 1글자/맨숫자 제거
+ * 형태 노이즈(문서 종류 무관): 기호·비문자(항상) / 숫자+영문 단편 / 숫자+세는단위 — 강도별 게이트
+ * 2차: 불용어(항상) + 용언 어미 제거(강도 3+) + 점수화(빈도 + 위치 가산점 − 약어 감점)
  *
  * 노이즈 규칙은 전부 "토큰 형태" 기준 — 코드/산문 구분 없이 동일하게 처리.
+ * 활성 필터는 필터 강도(1~5)가 결정 (PROFILES).
  */
 
 import { EN_STOPWORDS } from "./stopwords.en";
@@ -22,7 +23,12 @@ import {
   splitTokens,
   stripJosa,
 } from "./tokenize";
-import type { Candidate, ExtractOptions, ExtractedText } from "./types";
+import type {
+  Candidate,
+  ExtractOptions,
+  ExtractedText,
+  FilterStrength,
+} from "./types";
 
 const BARE_NUMBER = /^\d+$/;
 const HAS_DIGIT = /[0-9]/;
@@ -35,8 +41,72 @@ const NUMERIC_HANGUL = /^\d+([가-힣]+)$/;
 const TITLE_REGION_CHARS = 120;
 /** 제목 영역 등장 토큰 가산점 */
 const TITLE_BONUS = 2;
-/** 약어성 토큰 점수 감점 (빈도가 지배 — 제외급 아닌 "하위 정렬"용). */
-const SHORT_ABBREV_PENALTY = 1;
+
+/**
+ * 필터 강도(1~5) → 활성 필터 프로파일. 기호·비문자 제거와 불용어 제거는 전 강도 항상.
+ *   1 관대  : 기호만
+ *   2       : + 숫자영문단편
+ *   3 균형  : + 조사·활용형·숫자카운터 (기존 "명사 위주 ON" 수준)
+ *   4       : + 약어 감점 강화 + 최소빈도 floor
+ *   5 엄격  : + 짧은 영문(약어) 제외
+ */
+type FilterProfile = {
+  removeJosa: boolean;
+  removeVerbForms: boolean;
+  removeLatinDigitFrag: boolean;
+  removeNumericCounter: boolean;
+  dropShortLatin: boolean;
+  abbrevPenalty: number;
+  minFreqFloor: number;
+};
+
+const PROFILES: Record<FilterStrength, FilterProfile> = {
+  1: {
+    removeJosa: false,
+    removeVerbForms: false,
+    removeLatinDigitFrag: false,
+    removeNumericCounter: false,
+    dropShortLatin: false,
+    abbrevPenalty: 0,
+    minFreqFloor: 1,
+  },
+  2: {
+    removeJosa: false,
+    removeVerbForms: false,
+    removeLatinDigitFrag: true,
+    removeNumericCounter: false,
+    dropShortLatin: false,
+    abbrevPenalty: 0,
+    minFreqFloor: 1,
+  },
+  3: {
+    removeJosa: true,
+    removeVerbForms: true,
+    removeLatinDigitFrag: true,
+    removeNumericCounter: true,
+    dropShortLatin: false,
+    abbrevPenalty: 1,
+    minFreqFloor: 1,
+  },
+  4: {
+    removeJosa: true,
+    removeVerbForms: true,
+    removeLatinDigitFrag: true,
+    removeNumericCounter: true,
+    dropShortLatin: false,
+    abbrevPenalty: 2,
+    minFreqFloor: 2,
+  },
+  5: {
+    removeJosa: true,
+    removeVerbForms: true,
+    removeLatinDigitFrag: true,
+    removeNumericCounter: true,
+    dropShortLatin: true,
+    abbrevPenalty: 3,
+    minFreqFloor: 2,
+  },
+};
 
 /** 조사 길이 내림차순 — 세는단위 뒤 조사 제거용(가드 없음: 카운터 판정 전용). */
 const JOSA_DESC = [...KO_JOSA].sort((a, b) => b.length - a.length);
@@ -45,7 +115,7 @@ function isStopword(token: string, norm: string): boolean {
   return EN_STOPWORDS.has(norm) || KO_STOPWORDS.has(token);
 }
 
-/** 명사 위주 네거티브 필터: 용언 종결·연결 어미로 끝나면 명사가 아니라고 본다. */
+/** 네거티브 필터(강도 3+): 용언 종결·연결 어미로 끝나면 명사가 아니라고 본다. */
 function isVerbLike(token: string): boolean {
   return KO_VERB_ENDINGS.some(
     (e) => token.length > e.length && token.endsWith(e),
@@ -90,32 +160,33 @@ function isShortAbbrev(token: string): boolean {
 /** 한 토큰에 1차+노이즈+2차 필터를 적용해 살아남으면 정규화 키를, 아니면 null. */
 function refine(
   raw: string,
-  opts: ExtractOptions,
+  p: FilterProfile,
 ): { key: string; text: string } | null {
   let tok = raw;
-  if (opts.removeJosa && hasHangul(tok)) tok = stripJosa(tok);
+  if (p.removeJosa && hasHangul(tok)) tok = stripJosa(tok);
 
   if (tok.length <= 1) return null; // 1글자 토큰 제외
   if (BARE_NUMBER.test(tok)) return null; // 맨숫자 제외
 
-  // ── 형태 노이즈 (문서 종류 무관, 항상 적용) ──
-  if (hasStraySymbol(tok)) return null; // 기호·비문자
-  if (isLatinDigitFragment(tok)) return null; // 숫자+영문 단편
-  if (isNumericCounter(tok)) return null; // 숫자+세는단위
+  // ── 형태 노이즈 (문서 종류 무관, 토큰 형태 기준) ──
+  if (hasStraySymbol(tok)) return null; // 기호·비문자 — 전 강도 항상
+  if (p.removeLatinDigitFrag && isLatinDigitFragment(tok)) return null;
+  if (p.removeNumericCounter && isNumericCounter(tok)) return null;
+  if (p.dropShortLatin && isShortAbbrev(tok)) return null; // 엄격(5): 약어 제외
 
   const norm = normalizeKey(tok);
-  if (isStopword(tok, norm)) return null;
-  if (opts.nounFocus && hasHangul(tok) && isVerbLike(tok)) return null;
+  if (isStopword(tok, norm)) return null; // 기능어 — 전 강도 항상
+  if (p.removeVerbForms && hasHangul(tok) && isVerbLike(tok)) return null;
 
   return { key: norm, text: tok };
 }
 
 /** 제목 영역에 등장한 정규화 키 집합 (위치 가산점용). */
-function titleKeys(body: string, opts: ExtractOptions): Set<string> {
+function titleKeys(body: string, p: FilterProfile): Set<string> {
   const region = body.slice(0, TITLE_REGION_CHARS);
   const keys = new Set<string>();
   for (const raw of splitTokens(region)) {
-    const r = refine(raw, opts);
+    const r = refine(raw, p);
     if (r) keys.add(r.key);
   }
   return keys;
@@ -129,28 +200,32 @@ export function extractCandidates(
   text: ExtractedText,
   opts: ExtractOptions,
 ): Candidate[] {
+  const p = PROFILES[opts.strength];
   const parts = [text.body];
   if (opts.scope.tables && text.tables) parts.push(text.tables);
   const joined = parts.join("\n");
 
-  const titles = titleKeys(text.body, opts);
+  const titles = titleKeys(text.body, p);
 
   // 정규화 키 → { 표시 텍스트(첫 등장), 빈도 }
   const counts = new Map<string, { text: string; freq: number }>();
   for (const raw of splitTokens(joined)) {
-    const r = refine(raw, opts);
+    const r = refine(raw, p);
     if (!r) continue;
     const existing = counts.get(r.key);
     if (existing) existing.freq += 1;
     else counts.set(r.key, { text: r.text, freq: 1 });
   }
 
+  // 효과 minFreq = max(사용자 값, 강도 floor)
+  const minFreq = Math.max(opts.minFreq, p.minFreqFloor);
+
   const out: Candidate[] = [];
   for (const [key, { text: t, freq }] of counts) {
-    if (freq < opts.minFreq) continue;
-    // 빈도가 지배. 약어는 -1만 — 빈출 약어(MRI 등)는 상위에 살아남는다.
+    if (freq < minFreq) continue;
+    // 빈도가 지배. 약어는 강도별 감점만 — 빈출 약어(MRI 등)는 상위에 살아남는다.
     let score = freq + (titles.has(key) ? TITLE_BONUS : 0);
-    if (isShortAbbrev(t)) score -= SHORT_ABBREV_PENALTY;
+    if (isShortAbbrev(t)) score -= p.abbrevPenalty;
     out.push({ text: t, freq, score });
   }
 
