@@ -3,7 +3,7 @@
  * 결정론적 — 동일 입력 = 동일 출력. 형태소 분석기·AI 없음.
  */
 
-import { KO_JOSA } from "./stopwords.ko";
+import { KO_JOSA, KO_JOSA_OVERSTRIP } from "./stopwords.ko";
 
 const HANGUL = /[가-힣]/;
 const LATIN = /[a-zA-Z]/;
@@ -60,7 +60,8 @@ export function stripJosa(token: string): string {
     for (const josa of JOSA_DESC) {
       if (cur.length > josa.length && cur.endsWith(josa)) {
         const stem = cur.slice(0, -josa.length);
-        if (stemValid(stem)) {
+        // 긴 격·보조사(충돌 0)는 어간 1음절이어도 분리 (등에서→등). 그 외는 과도제거 가드.
+        if (stemValid(stem) || KO_JOSA_OVERSTRIP.has(josa)) {
           cur = stem;
           stripped = true;
           break;
