@@ -12,6 +12,7 @@
 import { EN_STOPWORDS } from "./stopwords.en";
 import {
   KO_JOSA,
+  KO_NOUN_VERB_SUFFIXES,
   KO_NUMERIC_COUNTERS,
   KO_STOPWORDS,
   KO_VERB_ENDINGS,
@@ -47,8 +48,9 @@ const TITLE_BONUS = 2;
  *   1 관대  : 기호만
  *   2       : + 숫자영문단편
  *   3 균형  : + 조사·활용형·숫자카운터 (기존 "명사 위주 ON" 수준)
- *   4       : + 약어 감점 강화 + 최소빈도 floor
+ *   4       : + 약어 감점 강화
  *   5 엄격  : + 짧은 영문(약어) 제외
+ * 빈도 컷(minFreq)은 강도와 분리 — 사용자 옵션만 (§#3). 강도는 빈도 컷 안 함.
  */
 type FilterProfile = {
   removeJosa: boolean;
@@ -57,7 +59,6 @@ type FilterProfile = {
   removeNumericCounter: boolean;
   dropShortLatin: boolean;
   abbrevPenalty: number;
-  minFreqFloor: number;
 };
 
 const PROFILES: Record<FilterStrength, FilterProfile> = {
@@ -68,7 +69,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: false,
     dropShortLatin: false,
     abbrevPenalty: 0,
-    minFreqFloor: 1,
   },
   2: {
     removeJosa: false,
@@ -77,7 +77,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: false,
     dropShortLatin: false,
     abbrevPenalty: 0,
-    minFreqFloor: 1,
   },
   3: {
     removeJosa: true,
@@ -86,7 +85,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: true,
     dropShortLatin: false,
     abbrevPenalty: 1,
-    minFreqFloor: 1,
   },
   4: {
     removeJosa: true,
@@ -95,7 +93,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: true,
     dropShortLatin: false,
     abbrevPenalty: 2,
-    minFreqFloor: 2,
   },
   5: {
     removeJosa: true,
@@ -104,7 +101,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: true,
     dropShortLatin: true,
     abbrevPenalty: 3,
-    minFreqFloor: 2,
   },
 };
 
@@ -120,6 +116,34 @@ function isVerbLike(token: string): boolean {
   return KO_VERB_ENDINGS.some(
     (e) => token.length > e.length && token.endsWith(e),
   );
+}
+
+const HANGUL_G = /[가-힣]/g;
+function countHangul(s: string): number {
+  return (s.match(HANGUL_G) ?? []).length;
+}
+
+/** 접미 용언 길이 내림차순 — longest-match. */
+const NOUN_VERB_DESC = [...KO_NOUN_VERB_SUFFIXES].sort(
+  (a, b) => b.length - a.length,
+);
+
+/**
+ * 명사+하다/되다/시키다 류 용언에서 접미 용언을 떼어 명사 어간을 복원 (§#2).
+ * "도출하였다"→"도출", "분석했다"→"분석", "평가되었다"→"평가".
+ *
+ * 과분리 가드: 남는 어간 한글 ≥2일 때만 분리. 부실하면(위하여→위, 말하다→말 = 1음절)
+ * 이 접미는 건너뛰고 더 짧은 접미를 시도, 끝내 없으면 null(분리 안 함 → 기존대로 폐기).
+ * 접미 사전이 하/되/시키 계열뿐이라 일반 동사(먹었다)는 매치되지 않는다.
+ */
+function extractNounStem(token: string): string | null {
+  for (const suf of NOUN_VERB_DESC) {
+    if (token.length > suf.length && token.endsWith(suf)) {
+      const stem = token.slice(0, -suf.length);
+      if (countHangul(stem) >= 2) return stem;
+    }
+  }
+  return null;
 }
 
 /** 가드 없는 후행 조사 1회 제거 — 카운터 판정 전용(어간 추출 아님). */
@@ -163,6 +187,18 @@ function refine(
   p: FilterProfile,
 ): { key: string; text: string } | null {
   let tok = raw;
+
+  // 명사 어간 추출(§#2)을 조사 제거보다 **먼저** — "포함하는"의 "는"을 stripJosa가 조사로
+  // 떼어 "포함하"가 되기 전에 "하는"을 잡아 "포함" 복원. (둘 다 강도 3+에서 켜짐)
+  let denominal = false;
+  if (p.removeVerbForms && hasHangul(tok)) {
+    const stem = extractNounStem(tok);
+    if (stem) {
+      tok = stem;
+      denominal = true;
+    }
+  }
+
   if (p.removeJosa && hasHangul(tok)) tok = stripJosa(tok);
 
   if (tok.length <= 1) return null; // 1글자 토큰 제외
@@ -176,7 +212,11 @@ function refine(
 
   const norm = normalizeKey(tok);
   if (isStopword(tok, norm)) return null; // 기능어 — 전 강도 항상
-  if (p.removeVerbForms && hasHangul(tok) && isVerbLike(tok)) return null;
+
+  // 명사 어간 없는 순수 용언만 폐기 (먹었다 등). 명사 복원된 토큰은 통과.
+  if (!denominal && p.removeVerbForms && hasHangul(tok) && isVerbLike(tok)) {
+    return null;
+  }
 
   return { key: norm, text: tok };
 }
@@ -217,8 +257,8 @@ export function extractCandidates(
     else counts.set(r.key, { text: r.text, freq: 1 });
   }
 
-  // 효과 minFreq = max(사용자 값, 강도 floor)
-  const minFreq = Math.max(opts.minFreq, p.minFreqFloor);
+  // 빈도 컷은 사용자 minFreq만 (§#3). 강도는 "명사 판별 엄격도"만 담당, 빈도 컷 안 함.
+  const minFreq = opts.minFreq;
 
   const out: Candidate[] = [];
   for (const [key, { text: t, freq }] of counts) {
