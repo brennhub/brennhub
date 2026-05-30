@@ -1,10 +1,12 @@
 # 태그잇 (Tag-it) · `tag-it`
 
-워드(.docx) 문서에서 핵심 키워드를 뽑아 칩으로 다듬고, 문서 속성(keywords)에 기록해 다시 내려받는 도구.
+오피스 문서(Word·Excel·PowerPoint)에서 핵심 키워드를 뽑아 칩으로 다듬고, 문서 속성(keywords)에 기록해 다시 내려받는 도구.
 
 ## 한 줄
 
-.docx 업로드 → **브라우저 안에서** 본문을 읽어 키워드 후보를 칩으로 추출 → 사용자가 클릭·입력으로 다듬은 태그를 `docProps/core.xml`의 `<cp:keywords>`에 기록 → 다운로드. **서버 전송·AI 없음.**
+.docx / .xlsx / .pptx 업로드 → **브라우저 안에서** 본문을 읽어 키워드 후보를 칩으로 추출 → 사용자가 클릭·입력으로 다듬은 태그를 `docProps/core.xml`의 `<cp:keywords>`에 기록 → 다운로드. **서버 전송·AI 없음.**
+
+OOXML 세 포맷은 `docProps/core.xml`의 keywords 위치가 동일 → 읽기·쓰기·재포장은 공유, 포맷별로 다른 건 본문 추출뿐.
 
 ## 아키텍처
 
@@ -23,14 +25,14 @@
 | `tokenize.ts` | 토큰 분리 + 조사 longest-match 제거 (**과도제거 가드**: 남는 어간 2음절 미만이면 원형 보존) |
 | `extract.ts` | 점수화(빈도 + 위치 가산점) + 명사 위주 네거티브 필터 + 중복 병합 |
 | `chips.ts` | 후보 → 칩 변환 / 재추출 시 사용자 칩(채택·보호·수동) 보존 / 최종 태그 산출 |
-| `docx.ts` | fflate zip 해제 → 본문/표 텍스트 추출 / core.xml keywords 읽기·쓰기 / 재포장 |
+| `office.ts` | fflate zip 해제 + 포맷 디스패치(`detectFormat`) → 본문 추출(docx 본문/표, xlsx sharedStrings+inline, pptx 슬라이드 자연정렬) / core.xml keywords 읽기·쓰기·재포장(포맷 공유) / 다운로드 MIME |
 | `storage.ts` | 고급 옵션 localStorage 영속 (값만) |
 | `types.ts` | 칩 상태·파일·옵션 타입 |
 
-## docx 재포장 무결성 (제일 깨지기 쉬운 지점)
+## 재포장 무결성 (제일 깨지기 쉬운 지점, 세 포맷 공통)
 
 - unzip이 돌려준 **각 엔트리의 콘텐츠 바이트를 그대로** 다시 zip에 넘기고, `docProps/core.xml` **한 엔트리만** 교체.
-- 본문 `word/document.xml`은 **절대 건드리지 않음** → "문서 손상" 경고 위험 최소화.
+- 본문 XML(`word/document.xml` · `xl/*` · `ppt/slides/*`)은 **절대 건드리지 않음** → "문서 손상" 경고 위험 최소화.
 - core.xml의 `<cp:keywords>`만 교체/삽입. core.xml이 아예 없는 경우(드묾)에만 생성 + `[Content_Types].xml`·`_rels/.rels` 등록.
 - 재압축 자체는 정상 (Word도 저장 시 재압축). 콘텐츠·경로·구조가 보존되면 호환 뷰어가 손상 없이 연다.
 

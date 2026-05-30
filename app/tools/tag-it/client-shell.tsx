@@ -17,13 +17,15 @@ import {
   selectCandidates,
 } from "@/lib/tag-it/chips";
 import {
-  isDocxFile,
+  MIME_BY_FORMAT,
+  detectFormat,
+  isOfficeFile,
   readKeywords,
   readText,
-  unzipDocx,
+  unzipOffice,
   writeKeywords,
   zipFiles,
-} from "@/lib/tag-it/docx";
+} from "@/lib/tag-it/office";
 import { loadOptions, saveOptions } from "@/lib/tag-it/storage";
 import {
   DEFAULT_EXTRACT_OPTIONS,
@@ -36,8 +38,6 @@ import { CommonTray } from "./components/common-tray";
 import { AdvancedPanel } from "./components/advanced-panel";
 import { FileCard } from "./components/file-card";
 
-const DOCX_MIME =
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 /** 캐시는 전체 텍스트(본문+표) — scope 필터는 extractCandidates가 옵션으로 처리. */
 const FULL_SCOPE = { body: true, tables: true } as const;
@@ -131,9 +131,10 @@ export function TagItClientShell() {
         prev.map((f) => (f.id === id ? { ...f, status: "processing" } : f)),
       );
       try {
+        const format = detectFormat(file.name) ?? "docx";
         const bytes = new Uint8Array(await file.arrayBuffer());
-        const entries = unzipDocx(bytes);
-        const text = readText(entries, FULL_SCOPE); // 전체 캐시
+        const entries = unzipOffice(bytes);
+        const text = readText(entries, format, FULL_SCOPE); // 전체 캐시
         const existing = readKeywords(entries);
         const candidates =
           mode === "auto" ? extractCandidates(text, options) : [];
@@ -181,8 +182,8 @@ export function TagItClientShell() {
       let slots = TAG_IT_LIMITS.maxFiles - prev.length;
 
       for (const file of incoming) {
-        if (!isDocxFile(file.name)) {
-          warn ??= tt.limitNotDocx.replace("{name}", file.name);
+        if (!isOfficeFile(file.name)) {
+          warn ??= tt.limitNotOffice.replace("{name}", file.name);
           continue;
         }
         if (slots <= 0) {
@@ -341,14 +342,15 @@ export function TagItClientShell() {
   const downloadOne = (fileId: string) => {
     const file = files.find((f) => f.id === fileId);
     if (!file || file.status !== "done") return;
-    const out = writeKeywords(unzipDocx(file.bytes), finalTags(file.chips));
-    triggerDownload(out, file.name, DOCX_MIME);
+    const out = writeKeywords(unzipOffice(file.bytes), finalTags(file.chips));
+    const mime = MIME_BY_FORMAT[detectFormat(file.name) ?? "docx"];
+    triggerDownload(out, file.name, mime);
   };
 
   const downloadAll = () => {
     const built = doneFiles.map((f) => ({
       name: f.name,
-      bytes: writeKeywords(unzipDocx(f.bytes), finalTags(f.chips)),
+      bytes: writeKeywords(unzipOffice(f.bytes), finalTags(f.chips)),
     }));
     if (built.length === 0) return;
     const date = new Date().toISOString().slice(0, 10);
