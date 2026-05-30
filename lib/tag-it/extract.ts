@@ -11,11 +11,14 @@
 
 import { EN_STOPWORDS } from "./stopwords.en";
 import {
+  KO_FUNCTIONAL_STEMS,
+  KO_INFL_ENDINGS,
   KO_JOSA,
   KO_NOUN_VERB_SUFFIXES,
   KO_NUMERIC_COUNTERS,
   KO_STOPWORDS,
   KO_VERB_ENDINGS,
+  KO_VERBAL_MARKERS,
 } from "./stopwords.ko";
 import {
   hasHangul,
@@ -37,6 +40,8 @@ const HAS_DIGIT = /[0-9]/;
 const NON_WORD = /[^\p{L}\p{N}]/u;
 /** 숫자로 시작해 한글로 끝나는 토큰 (숫자+세는단위 검사용). */
 const NUMERIC_HANGUL = /^\d+([가-힣]+)$/;
+/** 신호3 — 1음절 한글 + 조사 패턴 (것은/것을/등이…). 1음절이 의존명사면 제거. */
+const MONO_PLUS_JOSA = /^[가-힣](을|를|은|는|이|가|의|에|도|로|만)$/;
 
 /** 제목·도입부로 간주해 가산점을 줄 본문 앞부분 길이 */
 const TITLE_REGION_CHARS = 120;
@@ -59,6 +64,12 @@ type FilterProfile = {
   removeNumericCounter: boolean;
   dropShortLatin: boolean;
   abbrevPenalty: number;
+  /** 신호1 — 용언 활용 패러다임 판정 (강도 4+) */
+  signal1Paradigm: boolean;
+  /** URL/웹 토큰 제거 (강도 5) */
+  dropUrl: boolean;
+  /** 신호3 — 1음절 의존명사+조사 제거 (강도 5) */
+  signal3Mono: boolean;
 };
 
 const PROFILES: Record<FilterStrength, FilterProfile> = {
@@ -69,6 +80,9 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: false,
     dropShortLatin: false,
     abbrevPenalty: 0,
+    signal1Paradigm: false,
+    dropUrl: false,
+    signal3Mono: false,
   },
   2: {
     removeJosa: false,
@@ -77,6 +91,9 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: false,
     dropShortLatin: false,
     abbrevPenalty: 0,
+    signal1Paradigm: false,
+    dropUrl: false,
+    signal3Mono: false,
   },
   3: {
     removeJosa: true,
@@ -85,6 +102,9 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: true,
     dropShortLatin: false,
     abbrevPenalty: 1,
+    signal1Paradigm: false,
+    dropUrl: false,
+    signal3Mono: false,
   },
   4: {
     removeJosa: true,
@@ -93,6 +113,9 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: true,
     dropShortLatin: false,
     abbrevPenalty: 2,
+    signal1Paradigm: true,
+    dropUrl: false,
+    signal3Mono: false,
   },
   5: {
     removeJosa: true,
@@ -101,11 +124,46 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeNumericCounter: true,
     dropShortLatin: true,
     abbrevPenalty: 3,
+    signal1Paradigm: true,
+    dropUrl: true,
+    signal3Mono: true,
   },
 };
 
 /** 조사 길이 내림차순 — 세는단위 뒤 조사 제거용(가드 없음: 카운터 판정 전용). */
 const JOSA_DESC = [...KO_JOSA].sort((a, b) => b.length - a.length);
+
+/** 신호1 — 활용 어미 길이 내림차순 (longest-match). */
+const INFL_DESC = [...KO_INFL_ENDINGS].sort((a, b) => b.length - a.length);
+
+/** URL 통째 제거 (강도5). 토큰화 전에 빼야 https/youtube 등 파편이 안 생긴다. */
+const URL_RE = /https?:\/\/\S+/g;
+
+/**
+ * 신호1 — 빈출 명사 보존 빈도 가드. 어간이 용언이어도 이 빈도 이상이면 명사로 보존
+ * (보고(報告)/참고처럼 어간이 용언과 겹치는 빈출 명사 살리기, §B).
+ */
+const SIGNAL1_FREQ_GUARD = 5;
+
+/** 어간이 문서에서 용언 활용(하다/되다/었다…)과 함께 나타나면 true → 용언 어간. */
+function isVerbDeriving(stem: string, docTokens: Set<string>): boolean {
+  if (stem.length < 1) return false;
+  return KO_VERBAL_MARKERS.some((e) => docTokens.has(stem + e));
+}
+
+/**
+ * 신호1 — 토큰이 '용언 활용형'이면 그 어간을 반환, 아니면 null. 검증 어미만 떼어
+ * 어간을 얻고, 그 어간이 문서에서 용언 활용과 공유될 때만. (임의 절단 금지 — KO_INFL_ENDINGS만)
+ */
+function inflectedStem(text: string, docTokens: Set<string>): string | null {
+  for (const e of INFL_DESC) {
+    if (text.length > e.length && text.endsWith(e)) {
+      const stem = text.slice(0, -e.length);
+      if (isVerbDeriving(stem, docTokens)) return stem;
+    }
+  }
+  return null;
+}
 
 function isStopword(token: string, norm: string): boolean {
   return EN_STOPWORDS.has(norm) || KO_STOPWORDS.has(token);
@@ -213,6 +271,11 @@ function refine(
   const norm = normalizeKey(tok);
   if (isStopword(tok, norm)) return null; // 기능어 — 전 강도 항상
 
+  // 신호3(강도5): 1음절 의존명사+조사 제거 (것은/것을/등이). 진짜 1음절명사(돈을)는 보존.
+  if (p.signal3Mono && MONO_PLUS_JOSA.test(tok) && KO_STOPWORDS.has(tok[0])) {
+    return null;
+  }
+
   // 명사 어간 없는 순수 용언만 폐기 (먹었다 등). 명사 복원된 토큰은 통과.
   if (!denominal && p.removeVerbForms && hasHangul(tok) && isVerbLike(tok)) {
     return null;
@@ -243,13 +306,16 @@ export function extractCandidates(
   const p = PROFILES[opts.strength];
   const parts = [text.body];
   if (opts.scope.tables && text.tables) parts.push(text.tables);
-  const joined = parts.join("\n");
+  let joined = parts.join("\n");
+  if (p.dropUrl) joined = joined.replace(URL_RE, " "); // URL 통째 제거(강도5)
 
   const titles = titleKeys(text.body, p);
 
-  // 정규화 키 → { 표시 텍스트(첫 등장), 빈도 }
+  // 정규화 키 → { 표시 텍스트(첫 등장), 빈도 }. 신호1용 문서 토큰셋도 함께 수집.
+  const docTokens = new Set<string>();
   const counts = new Map<string, { text: string; freq: number }>();
   for (const raw of splitTokens(joined)) {
+    if (p.signal1Paradigm) docTokens.add(raw);
     const r = refine(raw, p);
     if (!r) continue;
     const existing = counts.get(r.key);
@@ -263,6 +329,18 @@ export function extractCandidates(
   const out: Candidate[] = [];
   for (const [key, { text: t, freq }] of counts) {
     if (freq < minFreq) continue;
+    // 신호1(강도4+): 용언 활용형 노이즈 제거.
+    //  - 기능 용언 어간(있/없/같…)은 빈도 무관 제거(빈출이라도 명사 아님).
+    //  - borderline 어간(보=報告 등)은 빈출(가드 이상)이면 명사로 보존(§B).
+    if (p.signal1Paradigm) {
+      const stem = inflectedStem(t, docTokens);
+      if (
+        stem !== null &&
+        (KO_FUNCTIONAL_STEMS.has(stem) || freq < SIGNAL1_FREQ_GUARD)
+      ) {
+        continue;
+      }
+    }
     // 빈도가 지배. 약어는 강도별 감점만 — 빈출 약어(MRI 등)는 상위에 살아남는다.
     let score = freq + (titles.has(key) ? TITLE_BONUS : 0);
     if (isShortAbbrev(t)) score -= p.abbrevPenalty;
