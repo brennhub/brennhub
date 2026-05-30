@@ -69,12 +69,47 @@ function escapeXml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-/** XML에서 특정 태그(<w:t>/<a:t>/<t>)의 텍스트를 모두 뽑아 공백으로 합친다. */
-function extractByTag(xml: string, tag: string): string {
-  const re = new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)</${tag}>`, "g");
+/** 줄바꿈·탭 요소 (run 아님) — 문단 안에서 단어 병합 방지를 위해 공백으로 취급. */
+const BREAK_RE = /<(?:w:br|w:cr|w:tab|a:br)\b[^>]*\/?>/g;
+
+/** 문단 컨테이너가 없을 때(예외) 안전 fallback — 기존처럼 런을 공백으로 합친다. */
+function extractRunsFlat(xml: string, runTag: string): string {
+  const re = new RegExp(`<${runTag}\\b[^>]*>([\\s\\S]*?)</${runTag}>`, "g");
+  return [...xml.matchAll(re)].map((m) => decodeXml(m[1])).join(" ");
+}
+
+/**
+ * 문단/셀(<w:p>/<a:p>/<si>) 단위로 런(<w:t>/<a:t>/<t>) 텍스트를 추출.
+ *
+ * 문단 **안**의 런은 공백 없이("") 이어 붙인다 → PowerPoint 등이 단어 중간을 여러
+ * 런으로 쪼개도 단어가 복원됨. 진짜 띄어쓰기는 OOXML에서 런 내용 안의 문자(xml:space
+ * ="preserve" 포함)라 보존됨. 줄바꿈·탭(<w:br/> 등)은 run이 아니라 공백 런으로 치환해
+ * 순서를 유지하며 공백을 넣는다(단어 병합 방지). 문단 **사이**는 공백으로 구분.
+ *
+ * run 태그(<w:t> 등)만 뽑으므로 <w:instrText> 같은 비가시 필드 텍스트는 제외된다.
+ * paraTag 정규식 `\b`는 <w:pPr>/<a:pPr>(속성 컨테이너)와 단어경계로 구분 → 오매치 없음.
+ */
+function extractParagraphs(
+  xml: string,
+  paraTag: string,
+  runTag: string,
+): string {
+  const paraRe = new RegExp(
+    `<${paraTag}\\b[^>]*>[\\s\\S]*?</${paraTag}>`,
+    "g",
+  );
+  const paras = xml.match(paraRe);
+  if (!paras) return extractRunsFlat(xml, runTag);
+
+  const runRe = new RegExp(`<${runTag}\\b[^>]*>([\\s\\S]*?)</${runTag}>`, "g");
+  const space = `<${runTag}> </${runTag}>`;
   const out: string[] = [];
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(xml)) !== null) out.push(decodeXml(m[1]));
+  for (const para of paras) {
+    // 줄바꿈·탭 → 공백 런으로 치환 (run 추출 시 순서 유지하며 공백이 됨)
+    const normalized = para.replace(BREAK_RE, space);
+    const runs = [...normalized.matchAll(runRe)].map((m) => decodeXml(m[1]));
+    if (runs.length) out.push(runs.join(""));
+  }
   return out.join(" ");
 }
 
@@ -93,9 +128,11 @@ function readDocxText(entries: OfficeEntries, scope: ReadScope): ExtractedText {
   const xml = strFromU8(docBytes);
   const TBL_RE = /<w:tbl[ >][\s\S]*?<\/w:tbl>/g;
   const tableBlocks = xml.match(TBL_RE) ?? [];
-  const tables = tableBlocks.map((b) => extractByTag(b, "w:t")).join(" ");
+  const tables = tableBlocks
+    .map((b) => extractParagraphs(b, "w:p", "w:t"))
+    .join(" ");
   const bodyXml = xml.replace(TBL_RE, " ");
-  const body = extractByTag(bodyXml, "w:t");
+  const body = extractParagraphs(bodyXml, "w:p", "w:t");
   return {
     body: scope.body ? body : "",
     tables: scope.tables ? tables : "",
@@ -112,15 +149,14 @@ function readXlsxText(entries: OfficeEntries): ExtractedText {
   const ssBytes = entries[SHARED_STRINGS_PATH];
   if (ssBytes) {
     // 한국어/한자 phonetic 힌트(<rPh>)는 후리가나 노이즈라 제거 후 추출.
+    // 셀(<si>) 단위 — 리치텍스트 셀(<si><r><t>..)의 런 토막을 ""로 복원.
     const xml = strFromU8(ssBytes).replace(/<rPh\b[\s\S]*?<\/rPh>/g, "");
-    parts.push(extractByTag(xml, "t"));
+    parts.push(extractParagraphs(xml, "si", "t"));
   }
-  // inline string: <c t="inlineStr"><is><t>...</t></is>. 시트별 <is> 블록의 <t>.
+  // inline string: <c t="inlineStr"><is><t>...</t></is>. 셀(<is>) 단위.
   for (const path of Object.keys(entries)) {
     if (!/^xl\/worksheets\/sheet\d+\.xml$/.test(path)) continue;
-    const xml = strFromU8(entries[path]);
-    const isBlocks = xml.match(/<is>[\s\S]*?<\/is>/g);
-    if (isBlocks) parts.push(extractByTag(isBlocks.join(" "), "t"));
+    parts.push(extractParagraphs(strFromU8(entries[path]), "is", "t"));
   }
   return { body: parts.join(" "), tables: "" };
 }
@@ -134,7 +170,7 @@ function readPptxText(entries: OfficeEntries): ExtractedText {
     .filter((p) => /^ppt\/slides\/slide\d+\.xml$/.test(p))
     .sort((a, b) => numberIn(a) - numberIn(b));
   const body = slides
-    .map((p) => extractByTag(strFromU8(entries[p]), "a:t"))
+    .map((p) => extractParagraphs(strFromU8(entries[p]), "a:p", "a:t"))
     .join(" ");
   return { body, tables: "" };
 }
