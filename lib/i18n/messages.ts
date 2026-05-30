@@ -562,6 +562,9 @@ export type Messages = {
     modeManual: string;
     modeAutoHint: string;
     modeManualHint: string;
+    workspaceTitle: string;
+    workspaceEmpty: string;
+    reextracted: string;
     advancedTitle: string;
     strengthLabel: string;
     strengthHint: string;
@@ -590,10 +593,13 @@ export type Messages = {
     overwriteNote: string;
     chipSelect: string;
     chipDelete: string;
+    freqTitle: string;
     sectionSelected: string;
     sectionCandidate: string;
     selectedEmpty: string;
     candidateAllAdded: string;
+    searchPlaceholder: string;
+    searchEmpty: string;
     counter: string;
     selectAll: string;
     deselectAll: string;
@@ -1316,6 +1322,9 @@ export const messages: Record<Locale, Messages> = {
       modeManual: "수동",
       modeAutoHint: "본문을 읽어 키워드 칩을 자동으로 뽑아냅니다.",
       modeManualHint: "빈 캔버스에서 직접 태그를 입력합니다.",
+      workspaceTitle: "추출 결과",
+      workspaceEmpty: "위에서 .docx 파일을 올리면 여기에 키워드 칩이 나타납니다.",
+      reextracted: "갱신됨",
       advancedTitle: "고급 옵션",
       strengthLabel: "필터 강도",
       strengthHint: "왼쪽=관대(다 보여줌) · 오른쪽=엄격(확실한 명사만)",
@@ -1351,10 +1360,13 @@ export const messages: Record<Locale, Messages> = {
         "다운로드 파일은 원본과 같은 이름입니다. 덮어쓰지 않도록 주의하세요.",
       chipSelect: "태그 채택/해제",
       chipDelete: "삭제",
+      freqTitle: "{n}회 등장",
       sectionSelected: "선택한 태그",
       sectionCandidate: "후보",
       selectedEmpty: "아래 후보에서 태그를 골라 담으세요.",
       candidateAllAdded: "모든 후보를 담았어요.",
+      searchPlaceholder: "후보 칩 검색…",
+      searchEmpty: "검색과 일치하는 후보가 없어요.",
       counter: "선택 {sel}/{max} · 후보 {cand}",
       selectAll: "전체 선택",
       deselectAll: "전체 해제",
@@ -2175,6 +2187,9 @@ export const messages: Record<Locale, Messages> = {
       modeManual: "Manual",
       modeAutoHint: "Reads the text and pulls keyword chips automatically.",
       modeManualHint: "Start from a blank canvas and type tags yourself.",
+      workspaceTitle: "Results",
+      workspaceEmpty: "Upload a .docx above and keyword chips will appear here.",
+      reextracted: "Updated",
       advancedTitle: "Advanced options",
       strengthLabel: "Filter strength",
       strengthHint: "Left = lenient (show more) · Right = strict (clear nouns only)",
@@ -2210,10 +2225,13 @@ export const messages: Record<Locale, Messages> = {
         "Downloads keep the original filename. Take care not to overwrite.",
       chipSelect: "Select/deselect tag",
       chipDelete: "Delete",
+      freqTitle: "appears {n}×",
       sectionSelected: "Selected tags",
       sectionCandidate: "Candidates",
       selectedEmpty: "Pick tags from the candidates below.",
       candidateAllAdded: "All candidates added.",
+      searchPlaceholder: "Search candidate chips…",
+      searchEmpty: "No candidates match your search.",
       counter: "Selected {sel}/{max} · Candidates {cand}",
       selectAll: "Select all",
       deselectAll: "Clear all",

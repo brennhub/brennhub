@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { useMessages } from "@/lib/i18n/provider";
-import { Switch } from "@/components/switch";
+import { cn } from "@/lib/utils";
+import { Segmented } from "./components/segmented";
 import { TAG_IT_LIMITS } from "@/lib/tag-it/limits";
 import { extractCandidates } from "@/lib/tag-it/extract";
 import {
@@ -80,6 +81,17 @@ export function TagItClientShell() {
   useEffect(() => {
     commonTagsRef.current = commonTags;
   }, [commonTags]);
+
+  // 재추출 마이크로 피드백 — 옵션·모드 변경 시 짧게 "갱신됨" 표시 (절제).
+  // filesRef 선언 뒤에 둬야 immutability 규칙에 안 걸린다.
+  const [justUpdated, setJustUpdated] = useState(false);
+  const updateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pulseUpdated = useCallback(() => {
+    if (!filesRef.current.some((f) => f.status === "done")) return;
+    setJustUpdated(true);
+    if (updateTimer.current) clearTimeout(updateTimer.current);
+    updateTimer.current = setTimeout(() => setJustUpdated(false), 900);
+  }, []);
 
   // 옵션 hydrate (localStorage) — 재방문 시 마지막 설정.
   useEffect(() => {
@@ -363,6 +375,7 @@ export function TagItClientShell() {
         <p className="mt-2 text-muted-foreground">{tt.description}</p>
       </header>
 
+      {/* ① 입력 흐름 — 절제된 진입점 */}
       <div className="space-y-5">
         <UploadZone
           onSelect={handleSelect}
@@ -375,44 +388,13 @@ export function TagItClientShell() {
           }}
         />
 
-        {/* 모드 토글 (자동/수동) */}
-        <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
-          <div className="space-y-0.5">
-            <p className="text-sm font-medium text-foreground">
-              {tt.modeLabel}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {mode === "auto" ? tt.modeAutoHint : tt.modeManualHint}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <span
-              className={
-                mode === "manual"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
-              }
-            >
-              {tt.modeManual}
-            </span>
-            <Switch
-              checked={mode === "auto"}
-              onCheckedChange={(v) => setMode(v ? "auto" : "manual")}
-              aria-label={tt.modeLabel}
-            />
-            <span
-              className={
-                mode === "auto" ? "text-foreground" : "text-muted-foreground"
-              }
-            >
-              {tt.modeAuto}
-            </span>
-          </div>
-        </div>
-
+        {/* ② 추출 설정 — 접힘 기본(강도·범위·최소빈도). 모드는 여기 두지 않음. */}
         <AdvancedPanel
           options={options}
-          onChange={setOptions}
+          onChange={(o) => {
+            setOptions(o);
+            pulseUpdated();
+          }}
           labels={{
             advancedTitle: tt.advancedTitle,
             strengthLabel: tt.strengthLabel,
@@ -427,21 +409,65 @@ export function TagItClientShell() {
           }}
         />
 
-        {files.length > 0 && (
-          <>
-            <CommonTray
-              tags={commonTags}
-              onAdd={addCommon}
-              onRemove={removeCommon}
-              disabled={doneFiles.length === 0}
-              labels={{
-                title: tt.commonTrayTitle,
-                hint: tt.commonTrayHint,
-                placeholder: tt.commonTrayPlaceholder,
-                empty: tt.commonTrayEmpty,
-                remove: tt.chipDelete,
-              }}
-            />
+        {/* ③ 주 작업공간 — 화면 주인공. 상시 노출, 모드 세그먼트가 칩 바로 위. */}
+        <section className="space-y-3 pt-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-semibold tracking-tight text-foreground">
+                {tt.workspaceTitle}
+              </h2>
+              <span
+                aria-live="polite"
+                className={cn(
+                  "text-xs text-primary transition-opacity duration-300",
+                  justUpdated ? "opacity-100" : "opacity-0",
+                )}
+              >
+                {tt.reextracted}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {tt.modeLabel}
+              </span>
+              <Segmented<Mode>
+                ariaLabel={tt.modeLabel}
+                value={mode}
+                onChange={(m) => {
+                  setMode(m);
+                  pulseUpdated();
+                }}
+                className="w-auto"
+                options={[
+                  { value: "auto", label: tt.modeAuto },
+                  { value: "manual", label: tt.modeManual },
+                ]}
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {mode === "auto" ? tt.modeAutoHint : tt.modeManualHint}
+          </p>
+
+          {files.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-12 text-center text-sm text-muted-foreground">
+              {tt.workspaceEmpty}
+            </div>
+          ) : (
+            <>
+              <CommonTray
+                tags={commonTags}
+                onAdd={addCommon}
+                onRemove={removeCommon}
+                disabled={doneFiles.length === 0}
+                labels={{
+                  title: tt.commonTrayTitle,
+                  hint: tt.commonTrayHint,
+                  placeholder: tt.commonTrayPlaceholder,
+                  empty: tt.commonTrayEmpty,
+                  remove: tt.chipDelete,
+                }}
+              />
 
             <div className="space-y-3">
               {files.map((file) => (
@@ -469,10 +495,13 @@ export function TagItClientShell() {
                     emptyCanvas: tt.emptyCanvas,
                     chipSelect: tt.chipSelect,
                     chipDelete: tt.chipDelete,
+                    freqTitle: tt.freqTitle,
                     sectionSelected: tt.sectionSelected,
                     sectionCandidate: tt.sectionCandidate,
                     selectedEmpty: tt.selectedEmpty,
                     candidateAllAdded: tt.candidateAllAdded,
+                    searchPlaceholder: tt.searchPlaceholder,
+                    searchEmpty: tt.searchEmpty,
                     selectAll: tt.selectAll,
                     deselectAll: tt.deselectAll,
                     selectTop: tt.selectTop,
@@ -493,11 +522,12 @@ export function TagItClientShell() {
               </button>
             )}
 
-            <p className="text-xs text-muted-foreground">
-              {tt.overwriteNote}
-            </p>
-          </>
-        )}
+              <p className="text-xs text-muted-foreground">
+                {tt.overwriteNote}
+              </p>
+            </>
+          )}
+        </section>
       </div>
     </main>
   );

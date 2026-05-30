@@ -31,10 +31,13 @@ type Props = {
     emptyCanvas: string;
     chipSelect: string;
     chipDelete: string;
+    freqTitle: string; // "{n}회 등장"
     sectionSelected: string;
     sectionCandidate: string;
     selectedEmpty: string;
     candidateAllAdded: string;
+    searchPlaceholder: string;
+    searchEmpty: string;
     selectAll: string;
     deselectAll: string;
     selectTop: string; // "상위 {n} 담기"
@@ -64,6 +67,7 @@ export function FileCard({
   const [input, setInput] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [topN, setTopN] = useState(10);
+  const [search, setSearch] = useState("");
 
   const statusLabel: Record<FileStatus, string> = {
     pending: labels.statusPending,
@@ -78,13 +82,23 @@ export function FileCard({
     return { selectedChips: selected, candidateChips: candidate };
   }, [file.chips]);
 
-  const visibleCandidates = showAll
-    ? candidateChips
-    : candidateChips.slice(0, TAG_IT_LIMITS.defaultVisibleChips);
-  const hiddenCount = candidateChips.length - visibleCandidates.length;
+  // 검색어가 있으면 후보를 실시간 필터(부분일치) + 전부 노출(좁히는 흐름).
+  const query = search.trim().toLowerCase();
+  const filteredCandidates = query
+    ? candidateChips.filter((c) => c.text.toLowerCase().includes(query))
+    : candidateChips;
+  const expanded = showAll || query.length > 0;
+  const visibleCandidates = expanded
+    ? filteredCandidates
+    : filteredCandidates.slice(0, TAG_IT_LIMITS.defaultVisibleChips);
+  const hiddenCount = filteredCandidates.length - visibleCandidates.length;
 
   const ready = file.status === "done";
-  const chipLabels = { select: labels.chipSelect, delete: labels.chipDelete };
+  const chipLabels = {
+    select: labels.chipSelect,
+    delete: labels.chipDelete,
+    freqTitle: labels.freqTitle,
+  };
 
   const commit = () => {
     const text = input.trim();
@@ -214,11 +228,26 @@ export function FileCard({
               </p>
             )}
 
+            {/* 칩 검색 — 후보가 많을 때 좁히기 (벽 펼치기 대신) */}
+            {candidateChips.length > 0 && (
+              <input
+                type="search"
+                value={search}
+                placeholder={labels.searchPlaceholder}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
+              />
+            )}
+
             {candidateChips.length === 0 ? (
               <p className="text-xs text-muted-foreground">
                 {file.chips.length === 0
                   ? labels.emptyCanvas
                   : labels.candidateAllAdded}
+              </p>
+            ) : filteredCandidates.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {labels.searchEmpty}
               </p>
             ) : (
               <>
@@ -233,15 +262,24 @@ export function FileCard({
                     />
                   ))}
                 </div>
-                {candidateChips.length > TAG_IT_LIMITS.defaultVisibleChips && (
+                {!expanded &&
+                  filteredCandidates.length >
+                    TAG_IT_LIMITS.defaultVisibleChips && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAll(true)}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      {labels.showMore.replace("{n}", String(hiddenCount))}
+                    </button>
+                  )}
+                {showAll && !query && (
                   <button
                     type="button"
-                    onClick={() => setShowAll((v) => !v)}
+                    onClick={() => setShowAll(false)}
                     className="text-xs font-medium text-primary hover:underline"
                   >
-                    {showAll
-                      ? labels.showLess
-                      : labels.showMore.replace("{n}", String(hiddenCount))}
+                    {labels.showLess}
                   </button>
                 )}
               </>
