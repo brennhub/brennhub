@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { NumberStepper } from "@/components/number-stepper";
 import { cn } from "@/lib/utils";
 import type { ExtractOptions, FilterStrength } from "@/lib/tag-it/types";
+import { Segmented } from "./segmented";
 
 type Props = {
   options: ExtractOptions;
@@ -51,7 +52,7 @@ export function AdvancedPanel({ options, onChange, labels }: Props) {
 
       {open && (
         <div className="space-y-5 border-t border-border px-4 py-4">
-          {/* 필터 강도 슬라이더 (관대 ↔ 엄격) */}
+          {/* 필터 강도 — 5칸 세그먼트 (관대 ↔ 엄격) */}
           <div className="space-y-2">
             <div className="flex items-baseline justify-between gap-2">
               <p className="text-sm font-medium text-foreground">
@@ -61,17 +62,14 @@ export function AdvancedPanel({ options, onChange, labels }: Props) {
                 {labels.strengthNames[options.strength - 1]}
               </span>
             </div>
-            <input
-              type="range"
-              min={1}
-              max={5}
-              step={1}
+            <Segmented<FilterStrength>
+              ariaLabel={labels.strengthLabel}
               value={options.strength}
-              aria-label={labels.strengthLabel}
-              onChange={(e) =>
-                set({ strength: Number(e.target.value) as FilterStrength })
-              }
-              className="w-full accent-primary"
+              onChange={(v) => set({ strength: v })}
+              options={[1, 2, 3, 4, 5].map((n) => ({
+                value: n as FilterStrength,
+                label: labels.strengthNames[n - 1],
+              }))}
             />
             <p className="text-xs text-muted-foreground">
               {labels.strengthDescs[options.strength - 1]}

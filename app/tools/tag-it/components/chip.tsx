@@ -11,6 +11,7 @@ type Props = {
   labels: {
     select: string;
     delete: string;
+    freqTitle: string; // "{n}회 등장" — hover 툴팁으로만 빈도 노출
   };
 };
 
@@ -26,16 +27,22 @@ export function ChipView({ chip, onToggleSelect, onDelete, labels }: Props) {
 
   return (
     <span
+      title={
+        chip.freq > 0
+          ? labels.freqTitle.replace("{n}", String(chip.freq))
+          : undefined
+      }
       className={cn(
         "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-sm transition-colors",
         isExisting &&
           "border-orange-400 bg-orange-100 text-orange-900 dark:border-orange-500/60 dark:bg-orange-500/15 dark:text-orange-200",
+        // 채택 = 채움(solid) / 후보 = 외곽선(투명) → 색 + 형태 이중 구분(색맹 안전)
         !isExisting &&
           isSelected &&
-          "border-primary bg-primary text-primary-foreground",
+          "border-primary bg-primary text-primary-foreground shadow-sm",
         !isExisting &&
           !isSelected &&
-          "border-border bg-muted/40 text-muted-foreground hover:bg-muted",
+          "border-border bg-transparent text-muted-foreground hover:border-foreground/30 hover:text-foreground",
       )}
     >
       <button
@@ -46,9 +53,6 @@ export function ChipView({ chip, onToggleSelect, onDelete, labels }: Props) {
         className="cursor-pointer outline-none focus-visible:underline"
       >
         {chip.text}
-        {chip.freq > 0 && (
-          <span className="ml-1 text-xs opacity-60">{chip.freq}</span>
-        )}
       </button>
 
       <button
