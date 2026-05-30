@@ -7,10 +7,18 @@
 import {
   DEFAULT_EXTRACT_OPTIONS,
   type ExtractOptions,
+  type FilterStrength,
   type ReadScope,
 } from "./types";
 
-const KEY = "tag-it:options:v1";
+// v1(removeJosa/nounFocus) → v2(strength). 구버전 값은 무시하고 기본 강도 3으로 1회 리셋.
+const KEY = "tag-it:options:v2";
+
+function toStrength(v: unknown): FilterStrength {
+  return v === 1 || v === 2 || v === 3 || v === 4 || v === 5
+    ? v
+    : DEFAULT_EXTRACT_OPTIONS.strength;
+}
 
 /** localStorage에서 옵션 로드. 손상·부재 시 기본값. SSR 안전. */
 export function loadOptions(): ExtractOptions {
@@ -24,8 +32,7 @@ export function loadOptions(): ExtractOptions {
       tables: parsed.scope?.tables ?? DEFAULT_EXTRACT_OPTIONS.scope.tables,
     };
     return {
-      removeJosa: parsed.removeJosa ?? DEFAULT_EXTRACT_OPTIONS.removeJosa,
-      nounFocus: parsed.nounFocus ?? DEFAULT_EXTRACT_OPTIONS.nounFocus,
+      strength: toStrength(parsed.strength),
       minFreq:
         typeof parsed.minFreq === "number" && parsed.minFreq >= 1
           ? Math.floor(parsed.minFreq)

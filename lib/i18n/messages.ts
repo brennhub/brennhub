@@ -582,10 +582,10 @@ export type Messages = {
     modeAutoHint: string;
     modeManualHint: string;
     advancedTitle: string;
-    removeJosaLabel: string;
-    removeJosaHint: string;
-    nounFocusLabel: string;
-    nounFocusHint: string;
+    strengthLabel: string;
+    strengthHint: string;
+    strengthNames: readonly [string, string, string, string, string];
+    strengthDescs: readonly [string, string, string, string, string];
     scopeLabel: string;
     scopeBody: string;
     scopeTables: string;
@@ -1356,10 +1356,16 @@ export const messages: Record<Locale, Messages> = {
       modeAutoHint: "본문을 읽어 키워드 칩을 자동으로 뽑아냅니다.",
       modeManualHint: "빈 캔버스에서 직접 태그를 입력합니다.",
       advancedTitle: "고급 옵션",
-      removeJosaLabel: "조사 제거",
-      removeJosaHint: "단어 뒤 조사(을·를·이·가 등)를 떼어 칩으로 만듭니다.",
-      nounFocusLabel: "명사 위주",
-      nounFocusHint: "동사·형용사 어미로 끝나는 말은 후보에서 제외합니다.",
+      strengthLabel: "필터 강도",
+      strengthHint: "왼쪽=관대(다 보여줌) · 오른쪽=엄격(확실한 명사만)",
+      strengthNames: ["관대", "약하게", "균형", "강하게", "엄격"],
+      strengthDescs: [
+        "기호 섞인 토큰만 거릅니다.",
+        "+ 숫자·영문 섞인 단편(5px, F1)도 거릅니다.",
+        "+ 조사·활용형·세는단위까지 거릅니다 (기본).",
+        "+ 약어 감점 강화 + 드물게 나온 단어를 거릅니다.",
+        "+ 약어도 제외하고 확실한 명사만 남깁니다.",
+      ],
       scopeLabel: "읽기 범위",
       scopeBody: "본문 (항상)",
       scopeTables: "표 안 텍스트",
@@ -2233,10 +2239,16 @@ export const messages: Record<Locale, Messages> = {
       modeAutoHint: "Reads the text and pulls keyword chips automatically.",
       modeManualHint: "Start from a blank canvas and type tags yourself.",
       advancedTitle: "Advanced options",
-      removeJosaLabel: "Strip Korean particles",
-      removeJosaHint: "Removes trailing particles (을/를/이/가, etc.) from words.",
-      nounFocusLabel: "Nouns only",
-      nounFocusHint: "Drops tokens ending in verb/adjective inflections.",
+      strengthLabel: "Filter strength",
+      strengthHint: "Left = lenient (show more) · Right = strict (clear nouns only)",
+      strengthNames: ["Lenient", "Light", "Balanced", "Strong", "Strict"],
+      strengthDescs: [
+        "Removes only tokens with stray symbols.",
+        "+ Also removes digit/letter fragments (5px, F1).",
+        "+ Removes particles, inflections, and counters (default).",
+        "+ Stronger abbreviation penalty + drops rare words.",
+        "+ Also drops abbreviations, keeping clear nouns only.",
+      ],
       scopeLabel: "Read scope",
       scopeBody: "Body (always)",
       scopeTables: "Text inside tables",
