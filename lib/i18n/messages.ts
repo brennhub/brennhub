@@ -547,6 +547,60 @@ export type Messages = {
     shareNotFoundMessage: string;
     sharedBuildOwn: string;
   };
+  tagIt: {
+    title: string;
+    description: string;
+    uploadTitle: string;
+    uploadHint: string;
+    uploadButton: string;
+    limitNotDocx: string;
+    limitFiles: string;
+    limitFileSize: string;
+    limitTotalSize: string;
+    modeLabel: string;
+    modeAuto: string;
+    modeManual: string;
+    modeAutoHint: string;
+    modeManualHint: string;
+    advancedTitle: string;
+    strengthLabel: string;
+    strengthHint: string;
+    strengthNames: readonly [string, string, string, string, string];
+    strengthDescs: readonly [string, string, string, string, string];
+    scopeLabel: string;
+    scopeBody: string;
+    scopeTables: string;
+    minFreqLabel: string;
+    minFreqHint: string;
+    commonTrayTitle: string;
+    commonTrayHint: string;
+    commonTrayPlaceholder: string;
+    commonTrayEmpty: string;
+    statusPending: string;
+    statusProcessing: string;
+    statusDone: string;
+    statusError: string;
+    errorParse: string;
+    addPlaceholder: string;
+    showMore: string;
+    showLess: string;
+    download: string;
+    downloadAll: string;
+    emptyCanvas: string;
+    overwriteNote: string;
+    chipSelect: string;
+    chipDelete: string;
+    sectionSelected: string;
+    sectionCandidate: string;
+    selectedEmpty: string;
+    candidateAllAdded: string;
+    counter: string;
+    selectAll: string;
+    deselectAll: string;
+    selectTop: string;
+    topNAria: string;
+    capWarning: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -561,6 +615,7 @@ export type Messages = {
     toolLineupBuilder: string;
     toolLanguageMaker: string;
     toolMaze: string;
+    toolTagIt: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -1245,6 +1300,68 @@ export const messages: Record<Locale, Messages> = {
       winTitle: "탈출 성공!",
       winMessage: "도착점에 도달했습니다.",
     },
+    tagIt: {
+      title: "태그잇",
+      description:
+        "워드(.docx) 문서를 올리면 본문에서 핵심 키워드를 칩으로 뽑아 줍니다. 고르고 다듬은 태그를 문서 속성에 기록해 다시 내려받으세요. 파일은 브라우저 밖으로 나가지 않습니다.",
+      uploadTitle: "여기에 .docx 파일을 끌어다 놓으세요",
+      uploadHint: "한 번에 최대 5개 · 개당 8MB · 총 15MB · .docx만",
+      uploadButton: "파일 선택",
+      limitNotDocx: "{name}: .docx 파일만 지원합니다",
+      limitFiles: "최대 {max}개 파일까지만 올릴 수 있습니다",
+      limitFileSize: "{name}: 개당 {max}를 초과했습니다",
+      limitTotalSize: "총 용량 {max}를 초과했습니다",
+      modeLabel: "추출 모드",
+      modeAuto: "자동",
+      modeManual: "수동",
+      modeAutoHint: "본문을 읽어 키워드 칩을 자동으로 뽑아냅니다.",
+      modeManualHint: "빈 캔버스에서 직접 태그를 입력합니다.",
+      advancedTitle: "고급 옵션",
+      strengthLabel: "필터 강도",
+      strengthHint: "왼쪽=관대(다 보여줌) · 오른쪽=엄격(확실한 명사만)",
+      strengthNames: ["관대", "약하게", "균형", "강하게", "엄격"],
+      strengthDescs: [
+        "기호 섞인 토큰만 거릅니다.",
+        "+ 숫자·영문 섞인 단편(5px, F1)도 거릅니다.",
+        "+ 조사·활용형·세는단위까지 거릅니다 (기본).",
+        "+ 약어 감점 강화 + 드물게 나온 단어를 거릅니다.",
+        "+ 약어도 제외하고 확실한 명사만 남깁니다.",
+      ],
+      scopeLabel: "읽기 범위",
+      scopeBody: "본문 (항상)",
+      scopeTables: "표 안 텍스트",
+      minFreqLabel: "최소 등장 횟수",
+      minFreqHint: "이 횟수보다 적게 나온 단어는 제외합니다.",
+      commonTrayTitle: "공통 태그",
+      commonTrayHint: "여기 입력한 태그는 올린 모든 파일에 함께 적용됩니다.",
+      commonTrayPlaceholder: "모든 파일에 넣을 태그 입력 후 Enter",
+      commonTrayEmpty: "아직 공통 태그가 없습니다.",
+      statusPending: "대기 중",
+      statusProcessing: "읽는 중…",
+      statusDone: "완료",
+      statusError: "실패",
+      errorParse: "파일을 읽지 못했습니다. 올바른 .docx인지 확인해 주세요.",
+      addPlaceholder: "태그 직접 입력 후 Enter",
+      showMore: "+{n}개 더보기",
+      showLess: "접기",
+      download: "다운로드",
+      downloadAll: "전체 다운로드 (.zip)",
+      emptyCanvas: "추출된 칩이 여기에 표시됩니다. 직접 입력해도 됩니다.",
+      overwriteNote:
+        "다운로드 파일은 원본과 같은 이름입니다. 덮어쓰지 않도록 주의하세요.",
+      chipSelect: "태그 채택/해제",
+      chipDelete: "삭제",
+      sectionSelected: "선택한 태그",
+      sectionCandidate: "후보",
+      selectedEmpty: "아래 후보에서 태그를 골라 담으세요.",
+      candidateAllAdded: "모든 후보를 담았어요.",
+      counter: "선택 {sel}/{max} · 후보 {cand}",
+      selectAll: "전체 선택",
+      deselectAll: "전체 해제",
+      selectTop: "상위 {n} 담기",
+      topNAria: "상위 몇 개를 담을지",
+      capWarning: "파일당 태그는 최대 {max}개입니다. 상위 {max}개만 담았어요.",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -1259,6 +1376,7 @@ export const messages: Record<Locale, Messages> = {
       toolLineupBuilder: "축구 베스트 일레븐 만들기",
       toolLanguageMaker: "언어 창조기",
       toolMaze: "픽셀 미로 만들기",
+      toolTagIt: "태그잇",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -1445,6 +1563,11 @@ export const messages: Record<Locale, Messages> = {
       maze: {
         name: "픽셀 미로 만들기",
         description: "픽셀 격자로 미로를 설계하고 풀이하며 링크로 공유",
+      },
+      "tag-it": {
+        name: "태그잇",
+        description:
+          "워드(.docx) 문서에서 핵심 키워드를 뽑아 칩으로 다듬고 문서 속성에 기록 — 전부 브라우저 안에서",
       },
     },
   },
@@ -2036,6 +2159,68 @@ export const messages: Record<Locale, Messages> = {
       winTitle: "Escaped!",
       winMessage: "You reached the goal.",
     },
+    tagIt: {
+      title: "Tag-it",
+      description:
+        "Upload a Word (.docx) document and it pulls key terms from the text into chips. Curate the tags, write them into the document properties, and download it again. Files never leave your browser.",
+      uploadTitle: "Drop your .docx files here",
+      uploadHint: "Up to 5 at once · 8MB each · 15MB total · .docx only",
+      uploadButton: "Choose files",
+      limitNotDocx: "{name}: only .docx files are supported",
+      limitFiles: "You can upload at most {max} files",
+      limitFileSize: "{name}: exceeds {max} per file",
+      limitTotalSize: "Total size exceeds {max}",
+      modeLabel: "Extraction mode",
+      modeAuto: "Auto",
+      modeManual: "Manual",
+      modeAutoHint: "Reads the text and pulls keyword chips automatically.",
+      modeManualHint: "Start from a blank canvas and type tags yourself.",
+      advancedTitle: "Advanced options",
+      strengthLabel: "Filter strength",
+      strengthHint: "Left = lenient (show more) · Right = strict (clear nouns only)",
+      strengthNames: ["Lenient", "Light", "Balanced", "Strong", "Strict"],
+      strengthDescs: [
+        "Removes only tokens with stray symbols.",
+        "+ Also removes digit/letter fragments (5px, F1).",
+        "+ Removes particles, inflections, and counters (default).",
+        "+ Stronger abbreviation penalty + drops rare words.",
+        "+ Also drops abbreviations, keeping clear nouns only.",
+      ],
+      scopeLabel: "Read scope",
+      scopeBody: "Body (always)",
+      scopeTables: "Text inside tables",
+      minFreqLabel: "Minimum occurrences",
+      minFreqHint: "Words appearing fewer times than this are dropped.",
+      commonTrayTitle: "Common tags",
+      commonTrayHint: "Tags entered here apply to every uploaded file.",
+      commonTrayPlaceholder: "Type a tag for all files, then Enter",
+      commonTrayEmpty: "No common tags yet.",
+      statusPending: "Pending",
+      statusProcessing: "Reading…",
+      statusDone: "Done",
+      statusError: "Failed",
+      errorParse: "Could not read the file. Please check it is a valid .docx.",
+      addPlaceholder: "Type a tag, then Enter",
+      showMore: "+{n} more",
+      showLess: "Show less",
+      download: "Download",
+      downloadAll: "Download all (.zip)",
+      emptyCanvas: "Extracted chips appear here. You can also type your own.",
+      overwriteNote:
+        "Downloads keep the original filename. Take care not to overwrite.",
+      chipSelect: "Select/deselect tag",
+      chipDelete: "Delete",
+      sectionSelected: "Selected tags",
+      sectionCandidate: "Candidates",
+      selectedEmpty: "Pick tags from the candidates below.",
+      candidateAllAdded: "All candidates added.",
+      counter: "Selected {sel}/{max} · Candidates {cand}",
+      selectAll: "Select all",
+      deselectAll: "Clear all",
+      selectTop: "Top {n}",
+      topNAria: "How many top candidates to add",
+      capWarning: "Up to {max} tags per file — kept the top {max}.",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -2050,6 +2235,7 @@ export const messages: Record<Locale, Messages> = {
       toolLineupBuilder: "Football Best XI Builder",
       toolLanguageMaker: "Language Maker",
       toolMaze: "Pixel Maze Maker",
+      toolTagIt: "Tag-it",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -2237,6 +2423,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Pixel Maze Maker",
         description:
           "Design pixel-grid mazes, solve them, and share via link",
+      },
+      "tag-it": {
+        name: "Tag-it",
+        description:
+          "Pull key terms from a Word (.docx) doc into chips, curate them, and write them to the document properties — all in the browser",
       },
     },
   },
