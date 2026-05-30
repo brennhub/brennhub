@@ -44,7 +44,7 @@ export function ChipView({ chip, onToggleSelect, onDelete, labels }: Props) {
     <span
       title={titleParts.length > 0 ? titleParts.join(" · ") : undefined}
       className={cn(
-        "group inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-sm transition-colors",
+        "group relative inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-sm transition-colors",
         isExisting &&
           "border-orange-400 bg-orange-100 text-orange-900 dark:border-orange-500/60 dark:bg-orange-500/15 dark:text-orange-200",
         // 채택 = 채움(solid) / 후보 = 외곽선(투명) → 색 + 형태 이중 구분(색맹 안전)
@@ -67,10 +67,13 @@ export function ChipView({ chip, onToggleSelect, onDelete, labels }: Props) {
       </button>
 
       {showProb && (
+        // 말풍선 — absolute(흐름 밖)라 칩 크기·레이아웃 불변. hover 시에만 opacity 전환.
         <span
           aria-hidden
           className={cn(
-            "max-w-0 overflow-hidden whitespace-nowrap text-[10px] font-medium tabular-nums opacity-0 transition-all duration-150 group-hover:max-w-[2.5rem] group-hover:opacity-100",
+            "pointer-events-none absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100",
+            "border-border bg-popover",
+            // 70%↑ 초록(사전 보호 확신) / ↓ 호박(규칙 판정)
             chip.prob! >= PROB_HIGH
               ? "text-emerald-600 dark:text-emerald-400"
               : "text-amber-600 dark:text-amber-500",
