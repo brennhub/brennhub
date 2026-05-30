@@ -58,6 +58,7 @@ export function buildInitialChips(
       status: "candidate",
       score: c.score,
       freq: c.freq,
+      prob: c.prob,
       source: "extracted",
     });
   }
@@ -83,6 +84,7 @@ export function mergeReextract(prev: Chip[], candidates: Candidate[]): Chip[] {
       status: "candidate",
       score: c.score,
       freq: c.freq,
+      prob: c.prob,
       source: "extracted",
     });
   }

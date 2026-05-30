@@ -26,6 +26,8 @@ export type Chip = {
   score: number;
   /** 문서 내 등장 빈도 (manual은 0) */
   freq: number;
+  /** 명사 확률 0~100 (추출 칩만 — hover %. manual·existing은 undefined) */
+  prob?: number;
   source: ChipSource;
 };
 
@@ -63,6 +65,8 @@ export type Candidate = {
   text: string;
   score: number;
   freq: number;
+  /** 명사 확률 0~100 (사전 O 85~100 / 사전 X ~50, 차감 반영). hover %·디버깅용. */
+  prob: number;
 };
 
 /** 파일별 처리 상태 배지 (기획서 §6.3) */

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Segmented } from "./components/segmented";
 import { TAG_IT_LIMITS } from "@/lib/tag-it/limits";
 import { extractCandidates } from "@/lib/tag-it/extract";
+import { loadNounDict } from "@/lib/tag-it/noun-dict";
 import {
   buildInitialChips,
   chipId,
@@ -70,6 +71,8 @@ export function TagItClientShell() {
   const [commonTags, setCommonTags] = useState<string[]>([]);
   const [warning, setWarning] = useState<string | null>(null);
   const [capNotes, setCapNotes] = useState<Record<string, string>>({});
+  // 명사 보호 사전 로드 완료 플래그 — true 전이 시 재추출 1회(보호 신호 반영). 실패 시 false 유지(fallback).
+  const [dictReady, setDictReady] = useState(false);
 
   // 최신 files 스냅샷 — handleSelect가 setFiles updater 안에서 side-effect를 내지
   // 않고도(StrictMode 이중실행 방지) 한계 검증에 쓰도록 ref로 유지.
@@ -99,6 +102,18 @@ export function TagItClientShell() {
     setHydrated(true);
   }, []);
 
+  // 명사 보호 사전 lazy-load (1회). 성공 시 dictReady=true → 재추출 effect 재발동.
+  // 실패해도 무시(fallback) — 사전 없이 기존 동작 유지.
+  useEffect(() => {
+    let cancelled = false;
+    void loadNounDict().then((d) => {
+      if (!cancelled && d) setDictReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // 옵션 persist (hydrate 이후 변경분만).
   useEffect(() => {
     if (!hydrated) return;
@@ -116,8 +131,8 @@ export function TagItClientShell() {
         return { ...f, chips: mergeReextract(f.chips, candidates) };
       }),
     );
-     
-  }, [options, mode, hydrated]);
+
+  }, [options, mode, hydrated, dictReady]);
 
   const doneFiles = useMemo(
     () => files.filter((f) => f.status === "done"),
@@ -498,6 +513,7 @@ export function TagItClientShell() {
                     chipSelect: tt.chipSelect,
                     chipDelete: tt.chipDelete,
                     freqTitle: tt.freqTitle,
+                    probTitle: tt.probTitle,
                     sectionSelected: tt.sectionSelected,
                     sectionCandidate: tt.sectionCandidate,
                     selectedEmpty: tt.selectedEmpty,

@@ -594,6 +594,7 @@ export type Messages = {
     chipSelect: string;
     chipDelete: string;
     freqTitle: string;
+    probTitle: string;
     sectionSelected: string;
     sectionCandidate: string;
     selectedEmpty: string;
@@ -1362,6 +1363,7 @@ export const messages: Record<Locale, Messages> = {
       chipSelect: "태그 채택/해제",
       chipDelete: "삭제",
       freqTitle: "{n}회 등장",
+      probTitle: "명사 신뢰도 {p}%",
       sectionSelected: "선택한 태그",
       sectionCandidate: "후보",
       selectedEmpty: "아래 후보에서 태그를 골라 담으세요.",
@@ -2229,6 +2231,7 @@ export const messages: Record<Locale, Messages> = {
       chipSelect: "Select/deselect tag",
       chipDelete: "Delete",
       freqTitle: "appears {n}×",
+      probTitle: "noun confidence {p}%",
       sectionSelected: "Selected tags",
       sectionCandidate: "Candidates",
       selectedEmpty: "Pick tags from the candidates below.",

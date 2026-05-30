@@ -1,0 +1,30 @@
+tag-it 명사 사전 (public/tag-it/noun-dict.txt.gz)
+===================================================
+
+이 도구의 한국어 명사 보호 사전은 mecab-ko-dic 에서 일반명사(NNG) 표제어를
+추출하여 생성한 파생물입니다.
+
+출처 (Source)
+-------------
+  mecab-ko-dic 2.1.1-20180720
+  © Eunjeon Project (Yongwoon Lee, Yungho Yu)
+  https://bitbucket.org/eunjeon/mecab-ko-dic
+
+라이선스 (License)
+------------------
+  Apache License 2.0
+  전문(full text): ./LICENSE-mecab-ko-dic
+
+파생 내용 (What was derived)
+----------------------------
+  - 사전 CSV에서 품사 = NNG(일반명사) 인 표제어(surface) 만 추출.
+  - 한글 음절([가-힣]) 로만 이루어진 항목만 선별 (한자·기호·혼합 제외).
+  - 중복 제거·정렬 후 gzip 압축 → noun-dict.txt.gz (216,932개 표제어).
+  - 가중치·비용·연결 정보 등 사전의 다른 필드는 사용하지 않음.
+  - 생성 스크립트: app/tools/tag-it/scripts/gen-noun-dict.mjs (재현 가능).
+
+용도 (Usage)
+------------
+  추출된 후보가 일반명사 사전에 존재하면 "명사 보호 신호"로 사용
+  (명사 확률 상향). 사전은 정적 자산으로 클라이언트에서만 사용되며,
+  사용자 문서는 서버로 전송되지 않습니다.
