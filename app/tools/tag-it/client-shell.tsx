@@ -507,6 +507,7 @@ export function TagItClientShell() {
                     addPlaceholder: tt.addPlaceholder,
                     showMore: tt.showMore,
                     showLess: tt.showLess,
+                    expandAll: tt.expandAll,
                     download: tt.download,
                     counter: tt.counter,
                     emptyCanvas: tt.emptyCanvas,

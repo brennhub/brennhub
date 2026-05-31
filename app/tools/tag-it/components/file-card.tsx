@@ -26,6 +26,7 @@ type Props = {
     addPlaceholder: string;
     showMore: string; // "+{n}개 더보기"
     showLess: string;
+    expandAll: string; // "전체 펼치기"
     download: string;
     counter: string; // "선택 {sel}/{max} · 후보 {cand}"
     emptyCanvas: string;
@@ -66,7 +67,10 @@ export function FileCard({
   labels,
 }: Props) {
   const [input, setInput] = useState("");
-  const [showAll, setShowAll] = useState(false);
+  // 노출 개수: 첫 화면 30 → "더보기" +20씩 → "전체 펼치기". 검색 중엔 전체 노출.
+  const [visibleCount, setVisibleCount] = useState<number>(
+    TAG_IT_LIMITS.defaultVisibleChips,
+  );
   const [topN, setTopN] = useState(10);
   const [search, setSearch] = useState("");
 
@@ -88,11 +92,15 @@ export function FileCard({
   const filteredCandidates = query
     ? candidateChips.filter((c) => c.text.toLowerCase().includes(query))
     : candidateChips;
-  const expanded = showAll || query.length > 0;
-  const visibleCandidates = expanded
+  const searching = query.length > 0;
+  // 검색 중이면 전체(좁히는 흐름), 아니면 visibleCount까지.
+  const visibleCandidates = searching
     ? filteredCandidates
-    : filteredCandidates.slice(0, TAG_IT_LIMITS.defaultVisibleChips);
+    : filteredCandidates.slice(0, visibleCount);
   const hiddenCount = filteredCandidates.length - visibleCandidates.length;
+  const canExpand = !searching && hiddenCount > 0;
+  const canCollapse =
+    !searching && visibleCount > TAG_IT_LIMITS.defaultVisibleChips;
 
   const ready = file.status === "done";
   const chipLabels = {
@@ -264,25 +272,42 @@ export function FileCard({
                     />
                   ))}
                 </div>
-                {!expanded &&
-                  filteredCandidates.length >
-                    TAG_IT_LIMITS.defaultVisibleChips && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAll(true)}
-                      className="text-xs font-medium text-primary hover:underline"
-                    >
-                      {labels.showMore.replace("{n}", String(hiddenCount))}
-                    </button>
-                  )}
-                {showAll && !query && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAll(false)}
-                    className="text-xs font-medium text-primary hover:underline"
-                  >
-                    {labels.showLess}
-                  </button>
+                {(canExpand || canCollapse) && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    {canExpand && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVisibleCount((v) => v + TAG_IT_LIMITS.moreStep)
+                        }
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        {labels.showMore.replace("{n}", String(hiddenCount))}
+                      </button>
+                    )}
+                    {canExpand && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVisibleCount(filteredCandidates.length)
+                        }
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        {labels.expandAll}
+                      </button>
+                    )}
+                    {canCollapse && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVisibleCount(TAG_IT_LIMITS.defaultVisibleChips)
+                        }
+                        className="text-xs font-medium text-muted-foreground hover:underline"
+                      >
+                        {labels.showLess}
+                      </button>
+                    )}
+                  </div>
                 )}
               </>
             )}

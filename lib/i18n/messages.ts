@@ -587,6 +587,7 @@ export type Messages = {
     addPlaceholder: string;
     showMore: string;
     showLess: string;
+    expandAll: string;
     download: string;
     downloadAll: string;
     emptyCanvas: string;
@@ -1355,6 +1356,7 @@ export const messages: Record<Locale, Messages> = {
       addPlaceholder: "태그 직접 입력 후 Enter",
       showMore: "+{n}개 더보기",
       showLess: "접기",
+      expandAll: "전체 펼치기",
       download: "다운로드",
       downloadAll: "전체 다운로드 (.zip)",
       emptyCanvas: "추출된 칩이 여기에 표시됩니다. 직접 입력해도 됩니다.",
@@ -2223,6 +2225,7 @@ export const messages: Record<Locale, Messages> = {
       addPlaceholder: "Type a tag, then Enter",
       showMore: "+{n} more",
       showLess: "Show less",
+      expandAll: "Expand all",
       download: "Download",
       downloadAll: "Download all (.zip)",
       emptyCanvas: "Extracted chips appear here. You can also type your own.",

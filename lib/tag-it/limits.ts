@@ -11,8 +11,10 @@ export const TAG_IT_LIMITS = {
   maxFileBytes: 8 * 1024 * 1024,
   /** 총합 최대 바이트 (15MB) — 개당·총합 이중 제한 */
   maxTotalBytes: 15 * 1024 * 1024,
-  /** 점진 노출 시 처음에 보여줄 칩 수 (검색으로 좁히는 흐름 우선 → 20) */
-  defaultVisibleChips: 20,
+  /** 점진 노출: 첫 화면 칩 수 (정렬 정밀화로 상위 30 노출 → "더보기" +20씩 / "전체 펼치기") */
+  defaultVisibleChips: 30,
+  /** "더보기" 한 번에 추가 노출할 칩 수 */
+  moreStep: 20,
   /** 파일당 기록 가능한 태그 상한 (core.xml keywords 현실 상한) */
   maxTagsPerFile: 50,
   /** 태그 1개 글자수 상한 */
