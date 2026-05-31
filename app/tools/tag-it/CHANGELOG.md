@@ -1,5 +1,17 @@
 # 태그잇 (Tag-it) CHANGELOG
 
+## 0.8.9 — 후보 덤프 게이트: NODE_ENV → ?debug=1 (2026-05-31)
+
+0.8.8의 덤프 버튼이 `process.env.NODE_ENV === "development"` 게이트라 dev.brennhub.com
+(Cloudflare가 NODE_ENV=production으로 빌드)에서 dead-code 제거 → 안 보임. 로컬 `npm run dev`
+에서만 보여 실사용 분석 불가. URL 쿼리 게이트로 변경.
+
+- **`file-card.tsx`**: 게이트를 `?debug=1`로. `useEffect`로 마운트 후 `window.location.search`
+  파싱(SSG 프리렌더·하이드레이션 불일치 회피, useSearchParams Suspense 요건도 회피).
+  `/tools/tag-it?debug=1` 접근 시 버튼 노출. 파라미터 없으면 어디서도 안 뜸(prod brennhub.com
+  일반 사용자 미노출 — 파라미터를 모르면 안 보임). NODE_ENV 조건 제거.
+- **불변**: CSV 컬럼·정렬·대상(추출 칩)·라벨 리터럴 모두 0.8.8 그대로. 엔진 무변경.
+
 ## 0.8.8 — 개발 모드 후보 덤프 (dev-only, 2026-05-30)
 
 추출 결과를 화면에서 손으로 옮겨 적던 비효율 제거. 후보 전수의 내부 값을 CSV로 덤프해

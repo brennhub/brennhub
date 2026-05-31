@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NumberStepper } from "@/components/number-stepper";
@@ -75,6 +75,20 @@ export function FileCard({
   );
   const [topN, setTopN] = useState(10);
   const [search, setSearch] = useState("");
+
+  // 디버그 덤프 게이트: URL 쿼리 ?debug=1 일 때만 버튼 노출. NODE_ENV 대신 쿼리 게이트라
+  // dev.brennhub.com(Cloudflare가 NODE_ENV=production으로 빌드)에서도 ?debug=1로 접근 가능.
+  // 파라미터를 모르면 prod brennhub.com에서도 안 뜸(일반 사용자 미노출). window.location은
+  // 클라이언트에서만 — useEffect로 마운트 후 읽어 SSG 프리렌더·하이드레이션 불일치 회피.
+  const [debugEnabled, setDebugEnabled] = useState(false);
+  useEffect(() => {
+    // 마운트 후 1회 읽기 — window는 클라이언트에만, 동기 lazy init은 SSR/하이드레이션
+    // 불일치를 일으키므로 effect 안에서 set. (정석 client-only 플래그 패턴, 1회성)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDebugEnabled(
+      new URLSearchParams(window.location.search).get("debug") === "1",
+    );
+  }, []);
 
   const statusLabel: Record<FileStatus, string> = {
     pending: labels.statusPending,
@@ -389,7 +403,7 @@ export function FileCard({
               }}
               className="min-w-0 flex-1 rounded-md border border-input bg-transparent px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
             />
-            {process.env.NODE_ENV === "development" && (
+            {debugEnabled && (
               <button
                 type="button"
                 onClick={handleDebugDump}
