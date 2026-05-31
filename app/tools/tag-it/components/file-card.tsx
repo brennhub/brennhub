@@ -282,7 +282,10 @@ export function FileCard({
                         }
                         className="text-xs font-medium text-primary hover:underline"
                       >
-                        {labels.showMore.replace("{n}", String(hiddenCount))}
+                        {labels.showMore.replace(
+                          "{n}",
+                          String(TAG_IT_LIMITS.moreStep),
+                        )}
                       </button>
                     )}
                     {canExpand && (
@@ -293,7 +296,7 @@ export function FileCard({
                         }
                         className="text-xs font-medium text-primary hover:underline"
                       >
-                        {labels.expandAll}
+                        {labels.expandAll.replace("{n}", String(hiddenCount))}
                       </button>
                     )}
                     {canCollapse && (
