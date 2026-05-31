@@ -67,8 +67,9 @@ const TITLE_BONUS = 2;
  *   1 관대  : 기호만
  *   2       : + 숫자영문단편
  *   3 균형  : + 조사·활용형·숫자카운터 (기존 "명사 위주 ON" 수준)
- *   4       : + 약어 감점 강화
- *   5 엄격  : + 짧은 영문(약어) 제외
+ *   4       : (3과 동일 — 약어 감점은 0.8.4에서 폐지)
+ *   5 엄격  : + URL·1음절 의존명사 제거
+ * 영문은 기본 포함(길이 기준 제거·감점 없음) — RULES.md §11. 일반 영단어 노이즈는 사용자가 거름.
  * 빈도 컷(minFreq)은 강도와 분리 — 사용자 옵션만 (§#3). 강도는 빈도 컷 안 함.
  */
 type FilterProfile = {
@@ -76,8 +77,6 @@ type FilterProfile = {
   removeVerbForms: boolean;
   removeLatinDigitFrag: boolean;
   removeNumericCounter: boolean;
-  dropShortLatin: boolean;
-  abbrevPenalty: number;
   /** URL/웹 토큰 제거 (강도 5) */
   dropUrl: boolean;
   /** 신호3 — 1음절 의존명사+조사 제거 (강도 5) */
@@ -90,8 +89,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeVerbForms: false,
     removeLatinDigitFrag: false,
     removeNumericCounter: false,
-    dropShortLatin: false,
-    abbrevPenalty: 0,
     dropUrl: false,
     signal3Mono: false,
   },
@@ -100,8 +97,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeVerbForms: false,
     removeLatinDigitFrag: true,
     removeNumericCounter: false,
-    dropShortLatin: false,
-    abbrevPenalty: 0,
     dropUrl: false,
     signal3Mono: false,
   },
@@ -110,8 +105,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeVerbForms: true,
     removeLatinDigitFrag: true,
     removeNumericCounter: true,
-    dropShortLatin: false,
-    abbrevPenalty: 1,
     dropUrl: false,
     signal3Mono: false,
   },
@@ -120,8 +113,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeVerbForms: true,
     removeLatinDigitFrag: true,
     removeNumericCounter: true,
-    dropShortLatin: false,
-    abbrevPenalty: 2,
     dropUrl: false,
     signal3Mono: false,
   },
@@ -130,8 +121,6 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
     removeVerbForms: true,
     removeLatinDigitFrag: true,
     removeNumericCounter: true,
-    dropShortLatin: true,
-    abbrevPenalty: 3,
     dropUrl: true,
     signal3Mono: true,
   },
@@ -292,11 +281,6 @@ function isNumericCounter(token: string): boolean {
   return KO_NUMERIC_COUNTERS.has(stripTrailingJosaRaw(m[1]));
 }
 
-/** 약어성: 한글 없음 + 길이 ≤3 + 숫자 없음 (gd/dps/int/MRI). 제외 X, 점수만 감점. */
-function isShortAbbrev(token: string): boolean {
-  return !hasHangul(token) && token.length <= 3 && !HAS_DIGIT.test(token);
-}
-
 /** 한 토큰에 1차+노이즈+2차 필터를 적용해 살아남으면 정규화 키를, 아니면 null. */
 function refine(
   raw: string,
@@ -325,7 +309,8 @@ function refine(
   if (hasStraySymbol(tok)) return null; // 기호·비문자 — 전 강도 항상
   if (p.removeLatinDigitFrag && isLatinDigitFragment(tok)) return null;
   if (p.removeNumericCounter && isNumericCounter(tok)) return null;
-  if (p.dropShortLatin && isShortAbbrev(tok)) return null; // 엄격(5): 약어 제외
+  // 영문 약어(KPI/ROI/AI 등)는 거르지 않는다 — 사전(판별 근거)이 없어 감점=근거 없는 차감.
+  // 영문 기본 포함, 일반 영단어 노이즈는 사용자가 거름 (RULES.md §11/§C). 숫자단편(5px)만 위에서 제거.
 
   const norm = normalizeKey(tok);
   if (isStopword(tok, norm)) return null; // 기능어 — 전 강도 항상
@@ -398,9 +383,8 @@ export function extractCandidates(
     // 명사 확률 모델(§nounProbability) — 사전 보호 + 가중 차감. 강도 = 채택 임계.
     const prob = nounProbability(t, freq, denominal, docTokens);
     if (prob < threshold) continue;
-    // 빈도가 지배. 약어는 강도별 감점만 — 빈출 약어(MRI 등)는 상위에 살아남는다.
-    let score = freq + (titles.has(key) ? TITLE_BONUS : 0);
-    if (isShortAbbrev(t)) score -= p.abbrevPenalty;
+    // 점수 = 빈도 + 제목 가산점. 영문 약어 감점은 폐지(0.8.4) — 한글과 동일 취급.
+    const score = freq + (titles.has(key) ? TITLE_BONUS : 0);
     out.push({ text: t, freq, score, prob });
   }
 
