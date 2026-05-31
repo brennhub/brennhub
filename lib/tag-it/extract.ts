@@ -63,6 +63,20 @@ const TITLE_REGION_CHARS = 120;
 const TITLE_BONUS = 2;
 
 /**
+ * 정렬 점수("양" 문제, RULES.md §13). score = (a·freq + b·min(len,CAP) + 제목) × prob/100.
+ * 정렬·노출만 — 후보 삭제 0(1회 명사 안 죽고 후순위로). ⚠️ 길이는 반드시 CAP — raw면 base64
+ * 쓰레기(길이 100+)가 점수 독식. CAP으로 침몰. 튜닝은 여기 숫자만.
+ */
+const SORT_FREQ_WEIGHT = 1;
+const SORT_LEN_WEIGHT = 2;
+const SORT_LEN_CAP = 6;
+
+/** 글자수(코드포인트 기준) — 길이항용. */
+function charLen(s: string): number {
+  return [...s].length;
+}
+
+/**
  * 필터 강도(1~5) → 활성 필터 프로파일. 기호·비문자 제거와 불용어 제거는 전 강도 항상.
  *   1 관대  : 기호만
  *   2       : + 숫자영문단편
@@ -383,8 +397,15 @@ export function extractCandidates(
     // 명사 확률 모델(§nounProbability) — 사전 보호 + 가중 차감. 강도 = 채택 임계.
     const prob = nounProbability(t, freq, denominal, docTokens);
     if (prob < threshold) continue;
-    // 점수 = 빈도 + 제목 가산점. 영문 약어 감점은 폐지(0.8.4) — 한글과 동일 취급.
-    const score = freq + (titles.has(key) ? TITLE_BONUS : 0);
+    // 정렬 점수("양", §정렬): (a·빈도 + b·길이 + 제목가산점) × (prob/100). RULES.md §13.
+    //  - 길이는 글자수 상한(CAP) — raw면 base64 쓰레기가 독식, CAP으로 침몰.
+    //  - prob 곱: 노이즈(흘리/것 prob≤50)는 빈도 높아도 반토막 → 후순위. 죽이진 않음(정렬만).
+    const lenTerm = Math.min(charLen(t), SORT_LEN_CAP);
+    const value =
+      SORT_FREQ_WEIGHT * freq +
+      SORT_LEN_WEIGHT * lenTerm +
+      (titles.has(key) ? TITLE_BONUS : 0);
+    const score = value * (prob / 100);
     out.push({ text: t, freq, score, prob });
   }
 
