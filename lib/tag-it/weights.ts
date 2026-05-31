@@ -178,6 +178,10 @@ export const ENDING_WEIGHTS: EndingWeight[] = [
   // ── 충돌 7~15 : 약한 신호 → 12 (노던/모던 류 외래어 명사 충돌) ──
   { pattern: "던", weight: 12, collision: 8 },
   // ── 충돌 16~300 : 명사 말음 다수 → 4 (가벼운 신호만) ──
+  // "히"(부사 어미, 0.8.10): 충돌 38 — 표본이 하인리히/페니히/케르니히(외래 인명·단위)·
+  //   올히/다히(고어) 위주라 생산적 현대 명사 말음은 사실상 없음. 비-INFL이라 신호1 합산도
+  //   없음(완전히/단순히/꼼꼼히 등 부사 50→46, 후순위로만 — 학살 아님). RULES.md §A-3.
+  { pattern: "히", weight: 4, collision: 38 },
   { pattern: "을", weight: 4, collision: 61 },
   { pattern: "여", weight: 4, collision: 135 },
   { pattern: "은", weight: 4, collision: 203 },
@@ -208,6 +212,11 @@ export const ENDING_WEIGHTS: EndingWeight[] = [
   { pattern: "인", weight: 3, collision: 1483 },
   { pattern: "한", weight: 3, collision: 327 },
   { pattern: "화", weight: 3, collision: 1455 },
+  // "적"(한자 접미사 -的, 0.8.10): 충돌 506 — 목적/견적/공적 등 사전O 명사 다수 포함이나
+  //   전부 floor 85 보호. 비-INFL(신호1 미발동)·충돌<2000 → w3(화/성 패밀리). longest-match가
+  //   "적인"(35)을 먼저 잡아 객관적인은 중복 차감 없음. 객관적/구조적/수학적 등 비사전 형용사
+  //   어근(50→47) 후순위화. RULES.md §A-3.
+  { pattern: "적", weight: 3, collision: 506 },
   { pattern: "성", weight: 2, collision: 2124 },
   { pattern: "이", weight: 1, collision: 6403 },
   { pattern: "기", weight: 1, collision: 6587 },
