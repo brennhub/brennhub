@@ -2,6 +2,9 @@
 
 오피스 문서(Word·Excel·PowerPoint)에서 핵심 키워드를 뽑아 칩으로 다듬고, 문서 속성(keywords)에 기록해 다시 내려받는 도구.
 
+> 📐 **추출 규칙을 바꾸기 전 반드시 [`lib/tag-it/RULES.md`](../../../lib/tag-it/RULES.md)를 먼저 읽고 갱신할 것.**
+> 모든 규칙의 근거·계측·한계·재검토가 거기 쌓인다 (weights.ts는 숫자만). 규칙 변경은 RULES.md → 코드 순서.
+
 ## 한 줄
 
 .docx / .xlsx / .pptx 업로드 → **브라우저 안에서** 본문을 읽어 키워드 후보를 칩으로 추출 → 사용자가 클릭·입력으로 다듬은 태그를 `docProps/core.xml`의 `<cp:keywords>`에 기록 → 다운로드. **서버 전송·AI 없음.**
