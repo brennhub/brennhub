@@ -687,6 +687,17 @@ export type Messages = {
   };
   footer: {
     privacy: string;
+    releases: string;
+  };
+  releases: {
+    title: string;
+    subtitle: string;
+    toolSite: string;
+    kind: {
+      new: string;
+      improved: string;
+      fixed: string;
+    };
   };
   profile: {
     title: string;
@@ -1514,6 +1525,17 @@ export const messages: Record<Locale, Messages> = {
     },
     footer: {
       privacy: "개인정보 처리방침",
+      releases: "새 소식",
+    },
+    releases: {
+      title: "새 소식",
+      subtitle: "BrennHub의 최근 업데이트를 한눈에 보세요.",
+      toolSite: "사이트",
+      kind: {
+        new: "신규",
+        improved: "개선",
+        fixed: "수정",
+      },
     },
     profile: {
       title: "내 프로필",
@@ -2382,6 +2404,17 @@ export const messages: Record<Locale, Messages> = {
     },
     footer: {
       privacy: "Privacy Policy",
+      releases: "What's New",
+    },
+    releases: {
+      title: "What's New",
+      subtitle: "Recent updates across BrennHub.",
+      toolSite: "Site",
+      kind: {
+        new: "new",
+        improved: "improved",
+        fixed: "fixed",
+      },
     },
     profile: {
       title: "My Profile",

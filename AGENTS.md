@@ -34,3 +34,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - 도구 작업 first step: 기존 도구 `git checkout feat/<tool>` + `git merge main` / 신규 도구 `git checkout -b feat/<tool> main`. feat는 도구당 long-lived 1개 (task별 분기·삭제 X).
 - 수동 deploy 명령 (`npm run deploy` / `wrangler deploy` / `opennextjs-cloudflare deploy`) 은 어떤 경우에도 자동 실행 금지 — 사용자가 명시적으로 지시한 경우에만.
 - 시행 시점: 2026-05-20 dev → main reset 이후. 상세: BRENNHUB.md § 5/6/7.
+
+# 릴리스 노트 기록 (수동, 1단계)
+
+외부 사용자용 공개 릴리스 노트는 `lib/releases.ts`에 항목 추가만으로 `/releases`에 노출된다.
+
+- **시점**: 도구가 main 머지로 prod 반영된 후.
+- **무엇**: 사용자 체감 신규/개선/수정만. 내부 리팩토링·빌드·인프라 변경은 제외.
+- **말투**: 사용자 언어. 개발 용어(commit, refactor, schema, D1 등) 금지. "AI"는 어디서도 노출 X (BrennHub UI 원칙).
+- **항목 모양**: `{ date: "YYYY-MM-DD", tool: <slug>|"site", title: {ko,en}, body: {ko,en}, kind?: "new"|"improved"|"fixed" }`. 정렬은 페이지가 date desc로 처리.
+- 자동화(CI 강제·자동 수집)는 2단계 — 굴려보고 결정.
