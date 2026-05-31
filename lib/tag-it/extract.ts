@@ -140,6 +140,14 @@ const PROFILES: Record<FilterStrength, FilterProfile> = {
 /** 조사 길이 내림차순 — 세는단위 뒤 조사 제거용(가드 없음: 카운터 판정 전용). */
 const JOSA_DESC = [...KO_JOSA].sort((a, b) => b.length - a.length);
 
+/**
+ * 단독 조사 토큰 제외용 Set. 구두점·띄어쓰기(금액(으로)/방식·으로/회사 에서)로 조사가 독립
+ * 토큰화되면 후보가 되는데, 순수 조사는 키워드가 아니므로 떨군다. (stripJosa로 어간을 떼는 것과
+ * 별개 — 떼어낸 조사는 어디에도 배출되지 않는다. 이건 "처음부터 조사만인 토큰" 제거.)
+ * 정상명사 영향 0: 2글자+ 조사 중 사전 등재분(에서/까지/조차 등 7개)도 키워드 가치 없는 오염.
+ */
+const JOSA_SET: ReadonlySet<string> = new Set(KO_JOSA);
+
 /** 신호1 — 활용 어미 길이 내림차순 (longest-match). */
 const INFL_DESC = [...KO_INFL_ENDINGS].sort((a, b) => b.length - a.length);
 
@@ -311,6 +319,7 @@ function refine(
 
   if (tok.length <= 1) return null; // 1글자 토큰 제외
   if (BARE_NUMBER.test(tok)) return null; // 맨숫자 제외
+  if (JOSA_SET.has(tok)) return null; // 단독 조사 (구두점 분리로 독립 토큰화된 으로/에서 등) — 키워드 아님
 
   // ── 형태 노이즈 (문서 종류 무관, 토큰 형태 기준) ──
   if (hasStraySymbol(tok)) return null; // 기호·비문자 — 전 강도 항상
