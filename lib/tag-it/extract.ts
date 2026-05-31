@@ -193,15 +193,27 @@ const ENDING_DESC = [...ENDING_WEIGHTS].sort(
 );
 
 /**
- * 토큰 말미 어미의 가중치(차감량). longest-match 1개. 없으면 0.
+ * 토큰 말미에 걸리는 어미(longest-match 1개)와 그 가중치. 없으면 null. 읽기 전용.
  * `>=` — 토큰이 어미와 **정확히 같아도** 매칭(됩니다/봤다 단독 종결형). 0.8.0의 `>`는
  * 정확길이 토큰이 약한 1글자 패턴으로 새던 버그 → 사전 floor(85)가 명사를 보호하므로 안전.
+ *
+ * 채택 로직(endingDecrement)과 디버그 덤프가 같은 ENDING_DESC longest-match를 쓰도록
+ * single-source로 노출 — 덤프의 "걸린어미"가 실제 엔진 판정과 어긋나지 않게 한다.
  */
-function endingDecrement(token: string): number {
+export function matchedEnding(
+  token: string,
+): { pattern: string; weight: number } | null {
   for (const { pattern, weight } of ENDING_DESC) {
-    if (token.length >= pattern.length && token.endsWith(pattern)) return weight;
+    if (token.length >= pattern.length && token.endsWith(pattern)) {
+      return { pattern, weight };
+    }
   }
-  return 0;
+  return null;
+}
+
+/** 토큰 말미 어미의 가중치(차감량). longest-match 1개. 없으면 0. */
+function endingDecrement(token: string): number {
+  return matchedEnding(token)?.weight ?? 0;
 }
 
 /**

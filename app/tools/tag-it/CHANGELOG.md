@@ -1,5 +1,21 @@
 # 태그잇 (Tag-it) CHANGELOG
 
+## 0.8.8 — 개발 모드 후보 덤프 (dev-only, 2026-05-30)
+
+추출 결과를 화면에서 손으로 옮겨 적던 비효율 제거. 후보 전수의 내부 값을 CSV로 덤프해
+정확한 전수 분석. **개발 모드 전용** — 일반 사용자 미노출(프로덕션 번들에서 dead-code 제거).
+
+- **버튼**(`file-card.tsx`): 파일 카드 다운로드 버튼 옆, `process.env.NODE_ENV === "development"`
+  게이트. Next.js가 prod 빌드에서 `=== "development"`를 false로 정적 치환 → 버튼·핸들러가
+  prod 번들에서 통째 제거(실행 `.js`·클라이언트 청크 0건 확인, 소스맵에만 잔존). i18n 미등록
+  리터럴 라벨("디버그: 후보 덤프") — dev-only라 messages 오염 방지.
+- **CSV 컬럼**: 순위·단어·신뢰도(%)·빈도·정렬점수·글자수·사전등재·첫화면(상위30)·걸린어미·어미가중치.
+  순위=엔진과 동일 정렬(score→freq→사전순) 인덱스, 첫화면=순위≤30(defaultVisibleChips).
+  대상은 추출 칩(source="extracted")만 — manual/existing은 prob/걸린어미 없음. BOM+UTF-8(한글 OK).
+- **엔진(최소 변경)**: `extract.ts`에 읽기 전용 `matchedEnding(token)` export 추가 —
+  덤프의 "걸린어미"가 채택 로직과 같은 ENDING_DESC longest-match를 쓰도록 single-source화.
+  `endingDecrement`는 `matchedEnding()?.weight ?? 0`로 위임(동작 동일, drift 0). 그 외 엔진 무변경.
+
 ## 0.8.7 — 더보기 라벨 정확화 (2026-05-30)
 
 0.8.6 노출 UI의 거짓 라벨 수정. "더보기"가 "+294개 더보기"로 표시되나 실제론 20개만 펼쳐 오해.

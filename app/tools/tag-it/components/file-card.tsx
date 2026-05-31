@@ -5,6 +5,8 @@ import { Download, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NumberStepper } from "@/components/number-stepper";
 import { TAG_IT_LIMITS } from "@/lib/tag-it/limits";
+import { matchedEnding } from "@/lib/tag-it/extract";
+import { getNounDict } from "@/lib/tag-it/noun-dict";
 import type { FileStatus, TagFile } from "@/lib/tag-it/types";
 import { ChipView } from "./chip";
 
@@ -121,6 +123,61 @@ export function FileCard({
     .replace("{sel}", String(selectedChips.length))
     .replace("{max}", String(TAG_IT_LIMITS.maxTagsPerFile))
     .replace("{cand}", String(candidateChips.length));
+
+  // 개발 모드 전용 디버그 덤프. process.env.NODE_ENV === "development" 게이트로 prod
+  // 번들에서 버튼·이 함수가 dead-code 제거됨(사용자 미노출). 추출 칩(source="extracted")만
+  // 대상 — manual/existing은 prob/걸린어미가 없다. 엔진과 동일한 정렬로 순위를 재현하고,
+  // 걸린어미는 extract.ts의 matchedEnding(엔진 채택 로직과 같은 longest-match)을 그대로 쓴다.
+  const handleDebugDump = () => {
+    const dict = getNounDict();
+    const ranked = file.chips
+      .filter((c) => c.source === "extracted")
+      .sort(
+        (a, b) =>
+          b.score - a.score ||
+          b.freq - a.freq ||
+          a.text.localeCompare(b.text),
+      );
+    const header = [
+      "순위",
+      "단어",
+      "신뢰도(%)",
+      "빈도",
+      "정렬점수",
+      "글자수",
+      "사전등재",
+      "첫화면(상위30)",
+      "걸린어미",
+      "어미가중치",
+    ].join(",");
+    const lines = ranked.map((c, i) => {
+      const rank = i + 1;
+      const end = matchedEnding(c.text);
+      return [
+        rank,
+        c.text,
+        c.prob ?? "",
+        c.freq,
+        c.score.toFixed(2),
+        [...c.text].length,
+        dict?.has(c.text) ? "true" : "false",
+        rank <= TAG_IT_LIMITS.defaultVisibleChips ? "true" : "false",
+        end?.pattern ?? "",
+        end?.weight ?? "",
+      ].join(",");
+    });
+    const csv = "﻿" + [header, ...lines].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const today = new Date().toISOString().slice(0, 10);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tag-it-debug-${today}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="rounded-lg border border-border bg-card">
@@ -332,6 +389,15 @@ export function FileCard({
               }}
               className="min-w-0 flex-1 rounded-md border border-input bg-transparent px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
             />
+            {process.env.NODE_ENV === "development" && (
+              <button
+                type="button"
+                onClick={handleDebugDump}
+                className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
+              >
+                디버그: 후보 덤프
+              </button>
+            )}
             <button
               type="button"
               onClick={onDownload}
