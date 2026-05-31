@@ -186,10 +186,29 @@ export const ENDING_WEIGHTS: EndingWeight[] = [
   { pattern: "임", weight: 4, collision: 275 },
   { pattern: "게", weight: 4, collision: 292 },
   // ── 충돌 300+ : 명사 말음 → 0 (차감 금지. 가게/창고/가면/녹음/가다랑어/가경지 보호) ──
+  // ⚠️ 면/고/아/어/음/지는 INFL 어미(신호1 발동) — 작은 차감 주면 신호1(30)과 합산돼 비사전
+  //    명사가 임계 밑으로 갈 위험 → 0 유지(§A-1). 아래 A-1 작은 차감은 비-INFL 패턴만.
   { pattern: "면", weight: 0, collision: 524 },
   { pattern: "고", weight: 0, collision: 684 },
   { pattern: "아", weight: 0, collision: 744 },
   { pattern: "어", weight: 0, collision: 1082 },
   { pattern: "음", weight: 0, collision: 1103 },
   { pattern: "지", weight: 0, collision: 3365 },
+  // ── A-1 (0.8.5) 위험 어미·1글자 조사 작은 차감 (충돌 역수 차등, 비-INFL만) ──
+  // "0이 아니라 작은 차감"으로 불확실성을 % 로 표현. 큰 차감은 명사 학살이라 금지.
+  // 사전 O는 floor 85라 안전(원의 97·회의 97·차이 99 — 의심 표현, 명사 지위 보호).
+  // 비사전 명사는 최악 50−3=47 ≥ 임계 40이라 생존(endingDecrement longest-match 1개 +
+  // 비-INFL이라 신호1 미발동 → 누적 차감 구조적 불가). 충돌<2000→w3·2000~5000→w2·5000+→w1.
+  { pattern: "의", weight: 3, collision: 1430 },
+  { pattern: "가", weight: 3, collision: 1367 },
+  { pattern: "도", weight: 3, collision: 1487 },
+  { pattern: "과", weight: 3, collision: 1238 },
+  { pattern: "로", weight: 3, collision: 681 },
+  { pattern: "를", weight: 3, collision: 4 },
+  { pattern: "인", weight: 3, collision: 1483 },
+  { pattern: "한", weight: 3, collision: 327 },
+  { pattern: "화", weight: 3, collision: 1455 },
+  { pattern: "성", weight: 2, collision: 2124 },
+  { pattern: "이", weight: 1, collision: 6403 },
+  { pattern: "기", weight: 1, collision: 6587 },
 ];
