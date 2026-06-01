@@ -4,20 +4,15 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { MessageSquare } from "lucide-react";
 import { useMessages } from "@/lib/i18n/provider";
+import { toolSlugFromPath } from "@/lib/tools/slug-from-path";
 import { FeedbackDialog, type FeedbackTool } from "./feedback-dialog";
 
-function toolFromPath(pathname: string | null): FeedbackTool | undefined {
-  if (!pathname) return undefined;
-  if (pathname.startsWith("/tools/email-diag")) return "email-diag";
-  if (pathname.startsWith("/tools/cron-trans")) return "cron-trans";
-  if (pathname.startsWith("/tools/stock-sim")) return "stock-sim";
-  if (pathname.startsWith("/tools/supp-plan")) return "supp-plan";
-  if (pathname.startsWith("/tools/saju-naming") || pathname.startsWith("/naming")) return "saju-naming";
-  if (pathname.startsWith("/tools/lineup-builder")) return "lineup-builder";
-  if (pathname.startsWith("/tools/language-maker")) return "language-maker";
-  if (pathname.startsWith("/tools/maze")) return "maze";
-  if (pathname.startsWith("/tools/tag-it")) return "tag-it";
-  if (pathname === "/" || pathname === "") return undefined;
+function feedbackToolFromPath(
+  pathname: string | null,
+): FeedbackTool | undefined {
+  const slug = toolSlugFromPath(pathname);
+  if (slug) return slug as FeedbackTool;
+  if (!pathname || pathname === "/") return undefined;
   return "site";
 }
 
@@ -28,7 +23,7 @@ export function FeedbackButton() {
 
   if (pathname?.startsWith("/admin")) return null;
 
-  const defaultTool = toolFromPath(pathname);
+  const defaultTool = feedbackToolFromPath(pathname);
 
   return (
     <>
