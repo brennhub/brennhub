@@ -6,13 +6,14 @@ import { fetchVisitCount } from "@/lib/hub/visits";
 
 /**
  * Hub 카드 visit count 표시 (30일 누적).
- * 임계치 미만(5)이면 미노출 — 시드 단계 카드 깔끔.
+ * 임계치 미만이면 미노출 — 시드 단계 카드 깔끔.
+ * TODO: 디버깅 임시로 1. 실 사용량 늘면 5로 환원.
  */
 type Props = {
   slug: string;
 };
 
-const VISIBLE_THRESHOLD = 5;
+const VISIBLE_THRESHOLD = 1;
 
 export function VisitCounter({ slug }: Props) {
   const [count, setCount] = useState<number | null>(null);

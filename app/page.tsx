@@ -41,7 +41,12 @@ export default function Home() {
   );
 
   // mount + 로그인 상태 변화 시 storage에서 favorites 재로드.
+  // 비로그인은 즐겨찾기 미사용 정책 (UI에서 toast로 차단). 빈 상태 강제.
   useEffect(() => {
+    if (!isLoggedIn) {
+      setFavorites(emptyFavorites());
+      return;
+    }
     let cancelled = false;
     loadFavoritesForUser(isLoggedIn).then((favs) => {
       if (!cancelled) setFavorites(favs);
