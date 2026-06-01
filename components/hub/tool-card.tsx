@@ -69,7 +69,7 @@ export function ToolCard({
           onToggle={onToggleFavorite}
         />
       </div>
-      <div className="flex items-start gap-3 pr-20">
+      <div className="flex items-start gap-3 pb-10 pr-20">
         <Icon
           aria-hidden
           className="mt-0.5 size-5 shrink-0 text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-200"
@@ -90,7 +90,7 @@ export function ToolCard({
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400">
             {display.description}
           </p>
         </div>
