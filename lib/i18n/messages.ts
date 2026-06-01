@@ -19,6 +19,9 @@ export type Messages = {
     favoritesHeading: string;
     favoriteAddAria: string;
     favoriteRemoveAria: string;
+    likeAddAria: string;
+    likeRemoveAria: string;
+    likeLoginRequired: string;
   };
   toolCommon: {
     back: string;
@@ -835,6 +838,9 @@ export const messages: Record<Locale, Messages> = {
       favoritesHeading: "즐겨찾기",
       favoriteAddAria: "즐겨찾기에 추가",
       favoriteRemoveAria: "즐겨찾기에서 제거",
+      likeAddAria: "좋아요",
+      likeRemoveAria: "좋아요 취소",
+      likeLoginRequired: "좋아요는 로그인 후 가능합니다.",
     },
     toolCommon: {
       back: "← BrennHub",
@@ -1802,6 +1808,9 @@ export const messages: Record<Locale, Messages> = {
       favoritesHeading: "Favorites",
       favoriteAddAria: "Add to favorites",
       favoriteRemoveAria: "Remove from favorites",
+      likeAddAria: "Like",
+      likeRemoveAria: "Unlike",
+      likeLoginRequired: "Sign in to like.",
     },
     toolCommon: {
       back: "← BrennHub",

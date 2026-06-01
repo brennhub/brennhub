@@ -1,0 +1,83 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { Heart } from "lucide-react";
+import { useMessages } from "@/lib/i18n/provider";
+import { useCurrentUser } from "@/components/auth/user-provider";
+import { fetchLikes, toggleLike, type LikeState } from "@/lib/hub/likes";
+
+/**
+ * 도구 좋아요 button.
+ * - 로그인 사용자만 toggle 가능. 비로그인 클릭 시 toast 안내 (2초).
+ * - count > 0이면 숫자 표시 (사용자 결정: 0은 숨김 → 숫자만 미노출, button은 노출).
+ * - 카드 우상단 사용 — Link 안에 들어가도 클릭 이벤트 stopPropagation.
+ */
+type Props = {
+  slug: string;
+};
+
+export function LikeButton({ slug }: Props) {
+  const t = useMessages();
+  const user = useCurrentUser();
+  const isLoggedIn = !!user;
+
+  const [state, setState] = useState<LikeState | null>(null);
+  const [toast, setToast] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchLikes(slug).then((s) => {
+      if (!cancelled) setState(s);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  const handleClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isLoggedIn) {
+        setToast(true);
+        window.setTimeout(() => setToast(false), 2000);
+        return;
+      }
+      const next = await toggleLike(slug);
+      if (next) setState(next);
+    },
+    [slug, isLoggedIn],
+  );
+
+  const count = state?.count ?? 0;
+  const liked = state?.liked ?? false;
+
+  return (
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        onClick={handleClick}
+        aria-pressed={liked}
+        aria-label={liked ? t.hub.likeRemoveAria : t.hub.likeAddAria}
+        className="flex h-7 items-center gap-1 rounded-md px-1.5 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-pink-500 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-pink-400"
+      >
+        <Heart
+          className={
+            liked
+              ? "size-4 fill-pink-500 text-pink-500 dark:fill-pink-400 dark:text-pink-400"
+              : "size-4"
+          }
+        />
+        {count > 0 && <span>{count}</span>}
+      </button>
+      {toast && (
+        <span
+          role="status"
+          className="absolute right-0 top-full z-50 mt-1 whitespace-nowrap rounded-md bg-zinc-900 px-2 py-1 text-xs text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900"
+        >
+          {t.hub.likeLoginRequired}
+        </span>
+      )}
+    </span>
+  );
+}

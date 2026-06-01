@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "tool-likes-launch",
+    date: "2026-06-01",
+    tool: "site",
+    kind: "new",
+    title: {
+      ko: "도구 좋아요",
+      en: "Tool likes",
+    },
+    body: {
+      ko: "도구 카드에서 좋아요를 누를 수 있습니다. 로그인 후 가능하고, 누른 만큼 다른 사람에게도 합산된 숫자가 보입니다.",
+      en: "Like tools from the home card. Sign in to toggle — the combined count is visible to everyone.",
+    },
+  },
+  {
     id: "shooter-launch",
     date: "2026-06-01",
     tool: "shooter",

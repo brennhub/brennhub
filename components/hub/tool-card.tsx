@@ -20,6 +20,7 @@ import type { Tool } from "@/lib/tools-registry";
 import { isNew } from "@/lib/hub/categories";
 import { useMessages } from "@/lib/i18n/provider";
 import type { FeedbackTool } from "@/components/feedback-dialog";
+import { LikeButton } from "@/components/hub/like-button";
 
 // shooter는 main에는 없지만 dev 머지 시 자동 흡수 — 아이콘 매핑은 미리 등록.
 const ICON_BY_SLUG: Record<string, LucideIcon> = {
@@ -59,28 +60,31 @@ export function ToolCard({
       href={`/tools/${tool.slug}`}
       className="group relative block h-full rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
     >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onToggleFavorite(tool.slug);
-        }}
-        aria-pressed={isFavorite}
-        aria-label={
-          isFavorite ? t.hub.favoriteRemoveAria : t.hub.favoriteAddAria
-        }
-        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-amber-500 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-amber-400"
-      >
-        <Star
-          className={
-            isFavorite
-              ? "size-4 fill-amber-400 text-amber-400 dark:fill-amber-300 dark:text-amber-300"
-              : "size-4"
+      <div className="absolute right-3 top-3 flex items-center gap-1">
+        <LikeButton slug={tool.slug} />
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleFavorite(tool.slug);
+          }}
+          aria-pressed={isFavorite}
+          aria-label={
+            isFavorite ? t.hub.favoriteRemoveAria : t.hub.favoriteAddAria
           }
-        />
-      </button>
-      <div className="flex items-start gap-3 pr-9">
+          className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-amber-500 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-amber-400"
+        >
+          <Star
+            className={
+              isFavorite
+                ? "size-4 fill-amber-400 text-amber-400 dark:fill-amber-300 dark:text-amber-300"
+                : "size-4"
+            }
+          />
+        </button>
+      </div>
+      <div className="flex items-start gap-3 pr-20">
         <Icon
           aria-hidden
           className="mt-0.5 size-5 shrink-0 text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-200"
