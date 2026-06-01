@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "tool-visits-count",
+    date: "2026-06-02",
+    tool: "site",
+    kind: "new",
+    title: {
+      ko: "도구 방문 수 표시",
+      en: "Tool visit counts",
+    },
+    body: {
+      ko: "최근 30일 동안 도구를 본 횟수가 카드에 표시됩니다. 자주 찾는 도구를 한눈에 알아볼 수 있어요.",
+      en: "Cards show how many times a tool was viewed in the last 30 days. Easier to spot what people use most.",
+    },
+  },
+  {
     id: "main-push-guardrails",
     date: "2026-06-02",
     tool: "site",
