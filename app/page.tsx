@@ -14,7 +14,13 @@ import {
   getFavoritesStorage,
   loadFavoritesForUser,
 } from "@/lib/hub/favorites-storage";
-import { useMessages } from "@/lib/i18n/provider";
+import {
+  fetchDisplays,
+  resolveDisplay,
+  type CardSettings,
+  type OverridesMap,
+} from "@/lib/hub/displays";
+import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/components/auth/user-provider";
 import {
   FeedbackDialog,
@@ -23,8 +29,14 @@ import {
 import { ToolCard } from "@/components/hub/tool-card";
 import { HubSearchInput } from "@/components/hub/search-input";
 
+const DEFAULT_SETTINGS: CardSettings = {
+  description_lines: 3,
+  padding_bottom: 40,
+};
+
 export default function Home() {
   const t = useMessages();
+  const { locale } = useLocale();
   const user = useCurrentUser();
   const isLoggedIn = !!user;
 
@@ -34,6 +46,32 @@ export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [favorites, setFavorites] = useState<HubFavorites>(emptyFavorites());
   const [query, setQuery] = useState("");
+  const [overrides, setOverrides] = useState<OverridesMap>({});
+  const [cardSettings, setCardSettings] =
+    useState<CardSettings>(DEFAULT_SETTINGS);
+
+  // Hub displays (도구 override + 카드 설정) — mount 1회 fetch.
+  useEffect(() => {
+    let cancelled = false;
+    fetchDisplays().then(({ overrides: o, settings }) => {
+      if (cancelled) return;
+      setOverrides(o);
+      setCardSettings(settings);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 도구 → display(locale 적용 + override 머지) resolver.
+  const displayFor = useCallback(
+    (slug: string) => {
+      const fileDefault = t.tools[slug] ?? { name: slug, description: "" };
+      const override = overrides[slug]?.[locale];
+      return resolveDisplay(fileDefault, override);
+    },
+    [t.tools, overrides, locale],
+  );
 
   const storage = useMemo(
     () => getFavoritesStorage(isLoggedIn),
@@ -70,18 +108,12 @@ export default function Home() {
     setDialogOpen(true);
   };
 
-  // 검색 — 단순 substring (현재 로케일 name + description + slug 대상, case-insensitive).
+  // 검색 — override 적용된 표시 텍스트 + slug 대상, case-insensitive.
   const q = query.trim().toLowerCase();
   const matchesQuery = (tool: Tool): boolean => {
     if (!q) return true;
-    const display = t.tools[tool.slug];
-    const hay = (
-      (display?.name ?? "") +
-      " " +
-      (display?.description ?? "") +
-      " " +
-      tool.slug
-    ).toLowerCase();
+    const d = displayFor(tool.slug);
+    const hay = `${d.name} ${d.description} ${tool.slug}`.toLowerCase();
     return hay.includes(q);
   };
 
@@ -200,6 +232,9 @@ export default function Home() {
                         <ToolCard
                           tool={tool}
                           isFavorite={true}
+                          display={displayFor(tool.slug)}
+                          descriptionLines={cardSettings.description_lines}
+                          paddingBottomPx={cardSettings.padding_bottom}
                           onToggleFavorite={handleToggleFavorite}
                           onOpenFeedback={openFeedback}
                         />
@@ -230,6 +265,9 @@ export default function Home() {
                           <ToolCard
                             tool={tool}
                             isFavorite={isFavorite(favorites, tool.slug)}
+                            display={displayFor(tool.slug)}
+                            descriptionLines={cardSettings.description_lines}
+                            paddingBottomPx={cardSettings.padding_bottom}
                             onToggleFavorite={handleToggleFavorite}
                             onOpenFeedback={openFeedback}
                           />

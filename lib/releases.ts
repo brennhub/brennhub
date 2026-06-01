@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "hub-card-admin",
+    date: "2026-06-02",
+    tool: "site",
+    kind: "improved",
+    title: {
+      ko: "카드 텍스트·디자인 다듬기",
+      en: "Card text & design tuning",
+    },
+    body: {
+      ko: "도구 카드의 이름·설명과 카드 세로 여백을 운영자가 직접 다듬을 수 있게 되었어요. 너무 잘리거나 비어 보이는 카드가 줄어듭니다.",
+      en: "Tool names, descriptions, and card spacing can now be tuned in admin — fewer awkwardly cropped or empty-looking cards.",
+    },
+  },
+  {
     id: "favorites-login-required",
     date: "2026-06-02",
     tool: "site",

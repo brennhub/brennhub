@@ -37,9 +37,26 @@ const ICON_BY_SLUG: Record<string, LucideIcon> = {
   shooter: Gamepad2,
 };
 
+// line-clamp Tailwind 클래스 매핑 — number → 클래스 string (purge-safe).
+const LINE_CLAMP_CLASS: Record<number, string> = {
+  2: "line-clamp-2",
+  3: "line-clamp-3",
+  4: "line-clamp-4",
+  5: "line-clamp-5",
+  6: "line-clamp-6",
+  7: "line-clamp-7",
+  8: "line-clamp-8",
+};
+
 type Props = {
   tool: Tool;
   isFavorite: boolean;
+  /** override 적용된 표시값. 미제공 시 i18n default. */
+  display?: { name: string; description: string };
+  /** line-clamp 수 (admin 설정, default 3). */
+  descriptionLines?: number;
+  /** 본문 pb px (admin 설정, default 40). */
+  paddingBottomPx?: number;
   onToggleFavorite: (slug: string) => void;
   onOpenFeedback: (slug: FeedbackTool) => void;
 };
@@ -47,14 +64,20 @@ type Props = {
 export function ToolCard({
   tool,
   isFavorite,
+  display: displayOverride,
+  descriptionLines = 3,
+  paddingBottomPx = 40,
   onToggleFavorite,
   onOpenFeedback,
 }: Props) {
   const t = useMessages();
-  const display = t.tools[tool.slug] ?? { name: tool.slug, description: "" };
+  const fileDefault = t.tools[tool.slug] ?? { name: tool.slug, description: "" };
+  const display = displayOverride ?? fileDefault;
   const Icon = ICON_BY_SLUG[tool.slug] ?? Grid3x3;
   const isLive = tool.status === "live";
   const showNew = isLive && isNew(tool.createdAt);
+
+  const clampClass = LINE_CLAMP_CLASS[descriptionLines] ?? "line-clamp-3";
 
   return (
     <Link
@@ -69,7 +92,10 @@ export function ToolCard({
           onToggle={onToggleFavorite}
         />
       </div>
-      <div className="flex items-start gap-3 pb-10 pr-20">
+      <div
+        className="flex items-start gap-3 pr-20"
+        style={{ paddingBottom: `${paddingBottomPx}px` }}
+      >
         <Icon
           aria-hidden
           className="mt-0.5 size-5 shrink-0 text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-200"
@@ -90,8 +116,9 @@ export function ToolCard({
               </span>
             )}
           </div>
-          <p className="mt-1 line-clamp-4 text-sm text-zinc-600 dark:text-zinc-400">
-
+          <p
+            className={`mt-1 ${clampClass} text-sm text-zinc-600 dark:text-zinc-400`}
+          >
             {display.description}
           </p>
         </div>
