@@ -16,6 +16,7 @@ import { AuthErrorToast } from "@/components/auth/auth-error-toast";
 import { UserProvider } from "@/components/auth/user-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { ToolFavoriteButton } from "@/components/hub/tool-favorite-button";
+import { ToolLikeButton } from "@/components/hub/tool-like-button";
 import { VisitTracker } from "@/components/hub/visit-tracker";
 import { DEFAULT_LOCALE } from "@/lib/i18n/types";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
@@ -118,6 +119,7 @@ export default async function RootLayout({
                   </Suspense>
                   {children}
                   <VisitTracker />
+                  <ToolLikeButton />
                   <ToolFavoriteButton />
                   <FeedbackButton />
                   <SiteFooter />

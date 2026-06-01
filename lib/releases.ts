@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "tool-page-likes",
+    date: "2026-06-02",
+    tool: "site",
+    kind: "improved",
+    title: {
+      ko: "도구 화면에서도 좋아요",
+      en: "Like from inside a tool",
+    },
+    body: {
+      ko: "도구를 쓰는 도중에도 우하단 따봉으로 좋아요를 누를 수 있습니다.",
+      en: "Press the thumbs-up at the bottom-right while using a tool.",
+    },
+  },
+  {
     id: "tool-visits-count",
     date: "2026-06-02",
     tool: "site",
