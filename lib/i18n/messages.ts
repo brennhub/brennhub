@@ -14,6 +14,11 @@ export type Messages = {
       entertainment: string;
     };
     newBadge: string;
+    searchPlaceholder: string;
+    searchEmpty: string;
+    favoritesHeading: string;
+    favoriteAddAria: string;
+    favoriteRemoveAria: string;
   };
   toolCommon: {
     back: string;
@@ -805,6 +810,11 @@ export const messages: Record<Locale, Messages> = {
         entertainment: "엔터테인먼트",
       },
       newBadge: "NEW",
+      searchPlaceholder: "도구 검색…",
+      searchEmpty: "검색 결과가 없습니다.",
+      favoritesHeading: "즐겨찾기",
+      favoriteAddAria: "즐겨찾기에 추가",
+      favoriteRemoveAria: "즐겨찾기에서 제거",
     },
     toolCommon: {
       back: "← BrennHub",
@@ -1743,6 +1753,11 @@ export const messages: Record<Locale, Messages> = {
         entertainment: "Entertainment",
       },
       newBadge: "NEW",
+      searchPlaceholder: "Search tools…",
+      searchEmpty: "No matching tools.",
+      favoritesHeading: "Favorites",
+      favoriteAddAria: "Add to favorites",
+      favoriteRemoveAria: "Remove from favorites",
     },
     toolCommon: {
       back: "← BrennHub",

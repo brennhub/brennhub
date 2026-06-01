@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Pill,
   Sparkles,
+  Star,
   Tag,
   TrendingUp,
   Type,
@@ -36,10 +37,17 @@ const ICON_BY_SLUG: Record<string, LucideIcon> = {
 
 type Props = {
   tool: Tool;
+  isFavorite: boolean;
+  onToggleFavorite: (slug: string) => void;
   onOpenFeedback: (slug: FeedbackTool) => void;
 };
 
-export function ToolCard({ tool, onOpenFeedback }: Props) {
+export function ToolCard({
+  tool,
+  isFavorite,
+  onToggleFavorite,
+  onOpenFeedback,
+}: Props) {
   const t = useMessages();
   const display = t.tools[tool.slug] ?? { name: tool.slug, description: "" };
   const Icon = ICON_BY_SLUG[tool.slug] ?? Grid3x3;
@@ -51,7 +59,28 @@ export function ToolCard({ tool, onOpenFeedback }: Props) {
       href={`/tools/${tool.slug}`}
       className="group relative block h-full rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
     >
-      <div className="flex items-start gap-3">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggleFavorite(tool.slug);
+        }}
+        aria-pressed={isFavorite}
+        aria-label={
+          isFavorite ? t.hub.favoriteRemoveAria : t.hub.favoriteAddAria
+        }
+        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-amber-500 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-amber-400"
+      >
+        <Star
+          className={
+            isFavorite
+              ? "size-4 fill-amber-400 text-amber-400 dark:fill-amber-300 dark:text-amber-300"
+              : "size-4"
+          }
+        />
+      </button>
+      <div className="flex items-start gap-3 pr-9">
         <Icon
           aria-hidden
           className="mt-0.5 size-5 shrink-0 text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-200"

@@ -32,6 +32,9 @@ const STOCK_SIM_SUB_SLUGS = new Set([
   "stock-sim:split-sell",
 ]);
 
+// Hub 자체 사용자 데이터 (registry slug 아님). 즐겨찾기 등.
+const HUB_DATA_SLUGS = new Set(["hub-favorites"]);
+
 async function resolveAuth(): Promise<
   | { ok: true; userId: string; db: D1Database }
   | { ok: false; status: number; error: string }
@@ -46,7 +49,11 @@ async function resolveAuth(): Promise<
 }
 
 function validateTool(tool: string): boolean {
-  return TOOL_SLUGS.has(tool) || STOCK_SIM_SUB_SLUGS.has(tool);
+  return (
+    TOOL_SLUGS.has(tool) ||
+    STOCK_SIM_SUB_SLUGS.has(tool) ||
+    HUB_DATA_SLUGS.has(tool)
+  );
 }
 
 function err(status: number, error: string): Response {
