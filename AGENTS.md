@@ -39,9 +39,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 외부 사용자용 공개 릴리스 노트는 `lib/releases.ts`(파일=소스, git audit trail) ∪ D1 `releases` 테이블(=admin 오버레이/tombstone/신규)이다. `/releases`는 둘을 합쳐 D1 우선·deleted 제외·date desc로 렌더. `/admin/releases`에서 Brenn이 편집·삭제·추가.
 
-**파일에 항목 추가 = 자동으로 `/releases`에 노출** (build/CI 강제 없음, prod 머지 시점에 그대로). admin은 후처리 — 문구 다듬기, 잘못된 항목 숨기기, 파일 없이 직접 추가.
+**파일에 항목 추가 = 자동으로 `/releases`에 노출** (페이지 read는 union이라 build/CI 불요). **main push 시점에 entry 누락은 시스템이 차단** — `.husky/pre-push` hook이 `lib/releases.ts` 변경 없는 main push를 거부.
 
-- **시점**: **dev 머지 시점에 파일 entry 추가** — dev.brennhub.com/releases에서 노출·문구·정렬 미리 검증 → main 머지로 prod 반영(brennhub.com)에 그대로 노출. 작업 thread는 dev 머지 직전/직후 entry 추가가 정상 흐름 (누락 시 prod에 아무 것도 안 떠 silent miss). 다른 CC thread가 dev에 머지하면 그 thread가 entry를 함께 추가.
+- **시점**: **dev 머지 시점에 파일 entry 추가** — dev.brennhub.com/releases에서 노출·문구·정렬 미리 검증 → main 머지로 prod 반영(brennhub.com)에 그대로 노출. 작업 thread는 dev 머지 직전/직후 entry 추가가 정상 흐름. 다른 CC thread가 dev에 머지하면 그 thread가 entry를 함께 추가.
+- **누락 차단 (자동)**: `git push origin main` 시 `.husky/pre-push` hook이 새 commit 범위에서 `lib/releases.ts` 변경을 검사. 없으면 push 차단. 우회 토큰 `[skip-release]`를 머지 commit message에 명시하면 통과 — 사용자 체감 0인 internal refactor·빌드 fix 등에만 사용.
 - **date**: prod 노출 예정일(main 머지 예정일). dev에선 미리 보이지만 사용자 표시상 date는 prod 기준이 정합. main 머지가 미뤄지면 date 갱신.
 - **무엇**: 사용자 체감 신규/개선/수정만. 내부 리팩토링·빌드·인프라 변경은 제외. 판정 기준 — 사용자가 화면에서 차이를 보면 yes, 아니면 no.
 - **말투**: 사용자 언어. 개발 용어(commit, refactor, schema, D1, 마이그레이션 등) 금지. "AI"는 어디서도 노출 X (BrennHub UI 원칙).

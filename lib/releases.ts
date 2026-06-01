@@ -32,6 +32,34 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "shooter-launch",
+    date: "2026-06-01",
+    tool: "shooter",
+    kind: "new",
+    title: {
+      ko: "아케이드 슈터 출시",
+      en: "Arcade Shooter launched",
+    },
+    body: {
+      ko: "키보드와 터치로 즐기는 픽셀 아케이드 슈터입니다. 5웨이브 + 난이도 선택 + 사운드.",
+      en: "A pixel arcade shooter you can play with keyboard or touch. 5 waves, difficulty select, and sound.",
+    },
+  },
+  {
+    id: "profile-page",
+    date: "2026-06-01",
+    tool: "site",
+    kind: "new",
+    title: {
+      ko: "프로필 페이지",
+      en: "Profile page",
+    },
+    body: {
+      ko: "표시 이름을 바꾸거나 계정을 삭제할 수 있는 프로필 페이지가 생겼습니다.",
+      en: "A profile page where you can change your display name or delete your account.",
+    },
+  },
+  {
     id: "hub-categories-favorites-search",
     date: "2026-06-01",
     tool: "site",
