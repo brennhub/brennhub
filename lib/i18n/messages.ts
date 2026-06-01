@@ -5,6 +5,15 @@ export type Messages = {
     title: string;
     subtitle: string;
     empty: string;
+    allCategory: string;
+    categories: {
+      utility: string;
+      finance: string;
+      health: string;
+      lifestyle: string;
+      entertainment: string;
+    };
+    newBadge: string;
   };
   toolCommon: {
     back: string;
@@ -807,6 +816,15 @@ export const messages: Record<Locale, Messages> = {
       title: "BrennHub",
       subtitle: "indie tools by brenn — small, sharp, opinionated.",
       empty: "도구 준비 중. 공장이 예열 중입니다.",
+      allCategory: "전체",
+      categories: {
+        utility: "유틸리티",
+        finance: "파이낸스",
+        health: "건강",
+        lifestyle: "라이프",
+        entertainment: "엔터테인먼트",
+      },
+      newBadge: "NEW",
     },
     toolCommon: {
       back: "← BrennHub",
@@ -1760,6 +1778,15 @@ export const messages: Record<Locale, Messages> = {
       title: "BrennHub",
       subtitle: "indie tools by brenn — small, sharp, opinionated.",
       empty: "No tools yet. The factory is warming up.",
+      allCategory: "All",
+      categories: {
+        utility: "Utility",
+        finance: "Finance",
+        health: "Health",
+        lifestyle: "Lifestyle",
+        entertainment: "Entertainment",
+      },
+      newBadge: "NEW",
     },
     toolCommon: {
       back: "← BrennHub",

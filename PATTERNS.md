@@ -20,6 +20,25 @@
 - State: `idle / submitting / success / error`. 성공 시 2초 후 자동 닫힘.
 - 4-btn 그룹 × 2 (tool, category) + textarea (counter `n/2000`) + email (optional).
 
+### Hub (메인 페이지)
+
+#### ToolCard — `components/hub/tool-card.tsx`
+- 좌상단 Lucide 아이콘 + 이름 (NEW 배지 옆) + 설명 + 우하단 피드백 버튼. 카드 전체 `<Link href="/tools/{slug}">`.
+- 도구 → 아이콘 매핑은 본 파일 `ICON_BY_SLUG` 상수. 새 도구 추가 시 항목 추가.
+- NEW 배지: `isNew(createdAt)` (7일 윈도우, `lib/hub/categories.ts`). live 상태에서만 노출.
+- monochrome 톤 (zinc). 카테고리 색상 코드 X — 좋아요/게시판 등 미래 인터랙션을 위한 슬롯.
+
+#### categories helper — `lib/hub/categories.ts`
+- `CATEGORY_ORDER`: 섹션 표시 순서 (utility → finance → health → lifestyle → entertainment).
+- `groupByCategory(tools)` → `Map<ToolCategory, Tool[]>`.
+- `isNew(createdAt, now?)` → 7일 이내 boolean. `now` 파라미터로 SSR 결정성 확보 가능.
+
+#### app/page.tsx 칩 + 섹션 패턴
+- 상단: 카테고리 칩 row (anchor scroll, smooth). "전체" 칩은 페이지 top.
+- 카드 0개인 카테고리는 섹션 + 칩 모두 노출 X (`sections = CATEGORY_ORDER.filter(...)`).
+- 카테고리 섹션: `<h2>` (text-sm uppercase tracking-wider) + `id={"category-" + slug}` + 1/2/3 col 그리드.
+- 필터링 X — anchor scroll만. 검색·필터링은 도구 15+ 시 Phase 2.
+
 ### Stock-sim shared (3 sub-files 공통)
 
 #### NumberStepper — `components/number-stepper.tsx`
