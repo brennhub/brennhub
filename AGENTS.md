@@ -35,12 +35,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - 수동 deploy 명령 (`npm run deploy` / `wrangler deploy` / `opennextjs-cloudflare deploy`) 은 어떤 경우에도 자동 실행 금지 — 사용자가 명시적으로 지시한 경우에만.
 - 시행 시점: 2026-05-20 dev → main reset 이후. 상세: BRENNHUB.md § 5/6/7.
 
-# 릴리스 노트 기록 (수동, 1단계)
+# 릴리스 노트 기록 (자동, 2단계 — Union 모델)
 
-외부 사용자용 공개 릴리스 노트는 `lib/releases.ts`에 항목 추가만으로 `/releases`에 노출된다.
+외부 사용자용 공개 릴리스 노트는 `lib/releases.ts`(파일=소스, git audit trail) ∪ D1 `releases` 테이블(=admin 오버레이/tombstone/신규)이다. `/releases`는 둘을 합쳐 D1 우선·deleted 제외·date desc로 렌더. `/admin/releases`에서 Brenn이 편집·삭제·추가.
 
-- **시점**: 도구가 main 머지로 prod 반영된 후.
-- **무엇**: 사용자 체감 신규/개선/수정만. 내부 리팩토링·빌드·인프라 변경은 제외.
-- **말투**: 사용자 언어. 개발 용어(commit, refactor, schema, D1 등) 금지. "AI"는 어디서도 노출 X (BrennHub UI 원칙).
-- **항목 모양**: `{ date: "YYYY-MM-DD", tool: <slug>|"site", title: {ko,en}, body: {ko,en}, kind?: "new"|"improved"|"fixed" }`. 정렬은 페이지가 date desc로 처리.
-- 자동화(CI 강제·자동 수집)는 2단계 — 굴려보고 결정.
+**파일에 항목 추가 = 자동으로 `/releases`에 노출** (build/CI 강제 없음, prod 머지 시점에 그대로). admin은 후처리 — 문구 다듬기, 잘못된 항목 숨기기, 파일 없이 직접 추가.
+
+- **시점**: 도구가 main 머지로 prod 반영된 후. 다른 CC thread가 머지하면 그 thread가 파일 entry를 추가하는 게 정상 흐름.
+- **무엇**: 사용자 체감 신규/개선/수정만. 내부 리팩토링·빌드·인프라 변경은 제외. 판정 기준 — 사용자가 화면에서 차이를 보면 yes, 아니면 no.
+- **말투**: 사용자 언어. 개발 용어(commit, refactor, schema, D1, 마이그레이션 등) 금지. "AI"는 어디서도 노출 X (BrennHub UI 원칙).
+- **항목 모양**: `{ id: <stable-kebab>, date: "YYYY-MM-DD", tool: <slug>|"site", title: {ko,en}, body: {ko,en}, kind?: "new"|"improved"|"fixed" }`.
+- **id 규칙**: 파일 entry는 명시적 안정 id 필수 (오버라이드 매칭 키). **한 번 정한 id는 변경 금지** — 변경 시 기존 admin 오버라이드/tombstone이 orphan화되어 silent 유실. 컨벤션: `<tool-slug>-<짧은-feature-or-launch>` (예: `tag-it-launch`, `stock-sim-dividend-csv`).
+- **충돌 안 함**: admin이 동일 id를 편집하면 파일 변경은 가려진다. 파일을 다시 살리려면 admin에서 해당 행을 "복원"하거나 D1 row 자체를 삭제. 즉 파일은 audit, D1은 진실.

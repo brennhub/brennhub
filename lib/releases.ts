@@ -14,6 +14,12 @@
 export type ReleaseKind = "new" | "improved" | "fixed";
 
 export type Release = {
+  /**
+   * 안정 매칭 키 (파일 ↔ D1 union의 join 키). 한 번 정한 후 변경 금지.
+   * 변경 시 기존 admin 오버라이드/tombstone이 orphan화되어 silent 유실됨.
+   * admin 직접 추가분은 nanoid 등으로 별도 생성.
+   */
+  id: string;
   /** YYYY-MM-DD — prod 반영일(main 머지일). */
   date: string;
   /** tools-registry slug 또는 "site"(전역). */
@@ -26,6 +32,7 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "tag-it-launch",
     date: "2026-05-29",
     tool: "tag-it",
     kind: "new",
@@ -39,6 +46,7 @@ export const releases: Release[] = [
     },
   },
   {
+    id: "d1-device-sync",
     date: "2026-05-28",
     tool: "site",
     kind: "new",
@@ -52,6 +60,7 @@ export const releases: Release[] = [
     },
   },
   {
+    id: "google-auth-profile",
     date: "2026-05-26",
     tool: "site",
     kind: "new",
@@ -65,6 +74,7 @@ export const releases: Release[] = [
     },
   },
   {
+    id: "maze-launch",
     date: "2026-05-22",
     tool: "maze",
     kind: "new",
@@ -78,6 +88,7 @@ export const releases: Release[] = [
     },
   },
   {
+    id: "language-maker-launch",
     date: "2026-05-21",
     tool: "language-maker",
     kind: "new",
@@ -91,6 +102,7 @@ export const releases: Release[] = [
     },
   },
   {
+    id: "supp-plan-launch",
     date: "2026-05-17",
     tool: "supp-plan",
     kind: "new",
@@ -104,6 +116,7 @@ export const releases: Release[] = [
     },
   },
   {
+    id: "stock-sim-launch",
     date: "2026-05-14",
     tool: "stock-sim",
     kind: "new",
@@ -117,6 +130,7 @@ export const releases: Release[] = [
     },
   },
   {
+    id: "cron-trans-launch",
     date: "2026-05-12",
     tool: "cron-trans",
     kind: "new",
@@ -130,6 +144,7 @@ export const releases: Release[] = [
     },
   },
   {
+    id: "email-diag-launch",
     date: "2026-05-12",
     tool: "email-diag",
     kind: "new",

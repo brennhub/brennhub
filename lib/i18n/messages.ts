@@ -747,6 +747,55 @@ export type Messages = {
     menu: {
       dashboard: string;
       feedback: string;
+      releases: string;
+    };
+    releases: {
+      title: string;
+      countLabel: string;
+      addNew: string;
+      edit: string;
+      delete: string;
+      restore: string;
+      cancel: string;
+      save: string;
+      saving: string;
+      deleting: string;
+      sourceFile: string;
+      sourceD1: string;
+      tombstoneBadge: string;
+      deletedHint: string;
+      formTitleAdd: string;
+      formTitleEdit: string;
+      idLabel: string;
+      idHint: string;
+      idPlaceholder: string;
+      dateLabel: string;
+      toolLabel: string;
+      toolHint: string;
+      toolPlaceholder: string;
+      kindLabel: string;
+      kindNone: string;
+      kindNew: string;
+      kindImproved: string;
+      kindFixed: string;
+      titleKoLabel: string;
+      titleEnLabel: string;
+      bodyKoLabel: string;
+      bodyEnLabel: string;
+      colDate: string;
+      colTool: string;
+      colKind: string;
+      colTitle: string;
+      colSource: string;
+      colActions: string;
+      empty: string;
+      errorLoad: string;
+      errorSave: string;
+      errorDelete: string;
+      confirmDelete: string;
+      confirmDeleteFile: string;
+      requiredFields: string;
+      invalidDate: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -1606,6 +1655,58 @@ export const messages: Record<Locale, Messages> = {
       menu: {
         dashboard: "대시보드",
         feedback: "피드백",
+        releases: "새 소식",
+      },
+      releases: {
+        title: "새 소식 관리",
+        countLabel: "건",
+        addNew: "+ 항목 추가",
+        edit: "편집",
+        delete: "삭제",
+        restore: "복원",
+        cancel: "취소",
+        save: "저장",
+        saving: "저장 중…",
+        deleting: "삭제 중…",
+        sourceFile: "파일",
+        sourceD1: "관리자",
+        tombstoneBadge: "숨김",
+        deletedHint:
+          "파일 항목이 숨김 처리되어 공개 페이지에 노출되지 않습니다.",
+        formTitleAdd: "새 항목 추가",
+        formTitleEdit: "항목 편집",
+        idLabel: "ID (안정 매칭 키)",
+        idHint:
+          "한 번 정한 ID는 변경 금지. 변경 시 기존 오버라이드가 분리됩니다.",
+        idPlaceholder: "예: my-tool-launch",
+        dateLabel: "날짜 (YYYY-MM-DD)",
+        toolLabel: "도구",
+        toolHint: "tools-registry slug 또는 'site'(전역)",
+        toolPlaceholder: "예: tag-it 또는 site",
+        kindLabel: "종류",
+        kindNone: "지정 안 함",
+        kindNew: "신규",
+        kindImproved: "개선",
+        kindFixed: "수정",
+        titleKoLabel: "제목 (한국어)",
+        titleEnLabel: "제목 (English)",
+        bodyKoLabel: "본문 (한국어)",
+        bodyEnLabel: "본문 (English)",
+        colDate: "날짜",
+        colTool: "도구",
+        colKind: "종류",
+        colTitle: "제목",
+        colSource: "출처",
+        colActions: "작업",
+        empty: "항목이 없습니다.",
+        errorLoad: "목록을 불러오지 못했습니다.",
+        errorSave: "저장에 실패했습니다.",
+        errorDelete: "삭제에 실패했습니다.",
+        confirmDelete: "이 항목을 삭제하시겠습니까?",
+        confirmDeleteFile:
+          "이 항목은 파일에 등록된 항목입니다. 삭제 시 공개 페이지에서 숨김 처리됩니다. 계속할까요?",
+        requiredFields: "ID, 날짜, 도구, 제목, 본문은 모두 필수입니다.",
+        invalidDate: "날짜는 YYYY-MM-DD 형식이어야 합니다.",
       },
     },
     tools: {
@@ -2509,6 +2610,59 @@ export const messages: Record<Locale, Messages> = {
       menu: {
         dashboard: "Dashboard",
         feedback: "Feedback",
+        releases: "Releases",
+      },
+      releases: {
+        title: "Releases admin",
+        countLabel: "items",
+        addNew: "+ Add item",
+        edit: "Edit",
+        delete: "Delete",
+        restore: "Restore",
+        cancel: "Cancel",
+        save: "Save",
+        saving: "Saving…",
+        deleting: "Deleting…",
+        sourceFile: "file",
+        sourceD1: "admin",
+        tombstoneBadge: "hidden",
+        deletedHint:
+          "This file entry is hidden and won't appear on the public page.",
+        formTitleAdd: "Add new item",
+        formTitleEdit: "Edit item",
+        idLabel: "ID (stable match key)",
+        idHint:
+          "Never change an existing ID. Changing it orphans any prior override.",
+        idPlaceholder: "e.g. my-tool-launch",
+        dateLabel: "Date (YYYY-MM-DD)",
+        toolLabel: "Tool",
+        toolHint: "tools-registry slug or 'site' (global)",
+        toolPlaceholder: "e.g. tag-it or site",
+        kindLabel: "Kind",
+        kindNone: "Unset",
+        kindNew: "New",
+        kindImproved: "Improved",
+        kindFixed: "Fixed",
+        titleKoLabel: "Title (Korean)",
+        titleEnLabel: "Title (English)",
+        bodyKoLabel: "Body (Korean)",
+        bodyEnLabel: "Body (English)",
+        colDate: "Date",
+        colTool: "Tool",
+        colKind: "Kind",
+        colTitle: "Title",
+        colSource: "Source",
+        colActions: "Actions",
+        empty: "No items.",
+        errorLoad: "Failed to load items.",
+        errorSave: "Failed to save.",
+        errorDelete: "Failed to delete.",
+        confirmDelete: "Delete this item?",
+        confirmDeleteFile:
+          "This is a file-backed entry. Deleting will hide it from the public page. Continue?",
+        requiredFields:
+          "ID, date, tool, titles and bodies are all required.",
+        invalidDate: "Date must be YYYY-MM-DD.",
       },
     },
     tools: {
