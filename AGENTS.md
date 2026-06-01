@@ -35,6 +35,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - 수동 deploy 명령 (`npm run deploy` / `wrangler deploy` / `opennextjs-cloudflare deploy`) 은 어떤 경우에도 자동 실행 금지 — 사용자가 명시적으로 지시한 경우에만.
 - 시행 시점: 2026-05-20 dev → main reset 이후. 상세: BRENNHUB.md § 5/6/7.
 
+# Main push 자동 강제 (pre-push hook)
+
+`git push origin main` 시 `.husky/pre-push`가 두 가지 검사:
+
+1. **lib/releases.ts 변경 강제** — release entry 누락 차단. 우회 토큰 `[skip-release]` (사용자 체감 0인 internal refactor만).
+2. **dev 검증 강제** — main range의 non-merge commit이 `origin/dev`에 reachable 인지. 즉 feat가 먼저 dev를 거쳤는지. 우회 토큰 `[skip-dev-check]` (hotfix / 사용자 명시 승인 예외만).
+
+검사 둘 다 통과해야 push 성공. 우회 토큰은 머지 commit message에 명시. **토큰 우회는 사용자 명시 승인이 있는 경우에만**; Claude 임의 판단으로 토큰 박지 말 것. 위반 = 신뢰 손실.
+
 # 릴리스 노트 기록 (자동, 2단계 — Union 모델)
 
 외부 사용자용 공개 릴리스 노트는 `lib/releases.ts`(파일=소스, git audit trail) ∪ D1 `releases` 테이블(=admin 오버레이/tombstone/신규)이다. `/releases`는 둘을 합쳐 D1 우선·deleted 제외·date desc로 렌더. `/admin/releases`에서 Brenn이 편집·삭제·추가.
