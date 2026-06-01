@@ -1,84 +1,44 @@
-"use client";
+/**
+ * /releases — Union 모델 (파일 ∪ D1, D1 우선, deleted 제외).
+ * server fetch 후 client-shell에 데이터 전달.
+ *
+ * force-dynamic 명시 — D1 read는 매 요청 fresh. 캐싱 시 admin 수정 반영 지연.
+ * layout이 이미 force-dynamic이지만 페이지 레벨에도 명시 (홈 500 교훈 정합).
+ *
+ * AUTH_DB 미바인딩 시 파일 fallback (graceful, 사용자에게 빈 페이지 보이지 않음).
+ */
 
-import Link from "next/link";
-import { useLocale, useMessages } from "@/lib/i18n/provider";
-import { releases, type Release, type ReleaseKind } from "@/lib/releases";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { releases as fileReleases } from "@/lib/releases";
+import { listPublicReleases } from "@/lib/releases-server";
+import { ReleasesClientShell } from "./client-shell";
 
-export default function ReleasesPage() {
-  const t = useMessages();
-  const r = t.releases;
+export const dynamic = "force-dynamic";
 
-  const sorted = [...releases].sort((a, b) => b.date.localeCompare(a.date));
-
-  return (
-    <main className="mx-auto w-full max-w-3xl px-6 pt-10 pb-20">
-      <Link
-        href="/"
-        className="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-      >
-        {t.toolCommon.back}
-      </Link>
-
-      <header className="mt-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          {r.title}
-        </h1>
-        <p className="mt-3 text-zinc-600 dark:text-zinc-400">{r.subtitle}</p>
-      </header>
-
-      <ol className="mt-10 space-y-6">
-        {sorted.map((item, i) => (
-          <ReleaseItem key={`${item.date}-${item.tool}-${i}`} item={item} />
-        ))}
-      </ol>
-    </main>
-  );
+interface AuthEnv {
+  AUTH_DB?: D1Database;
 }
 
-function ReleaseItem({ item }: { item: Release }) {
-  const t = useMessages();
-  const { locale } = useLocale();
-  const r = t.releases;
-
-  const dateLabel = new Date(`${item.date}T00:00:00Z`).toLocaleDateString(
-    locale === "ko" ? "ko-KR" : "en-US",
-    { year: "numeric", month: "short", day: "numeric" },
-  );
-
-  const toolLabel =
-    item.tool === "site"
-      ? r.toolSite
-      : (t.tools[item.tool]?.name ?? item.tool);
-
-  return (
-    <li className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-zinc-500 dark:text-zinc-400">{dateLabel}</span>
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-          {toolLabel}
-        </span>
-        {item.kind && <KindBadge kind={item.kind} label={r.kind[item.kind]} />}
-      </div>
-      <h2 className="mt-3 text-base font-medium text-zinc-900 dark:text-zinc-50">
-        {item.title[locale]}
-      </h2>
-      <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-        {item.body[locale]}
-      </p>
-    </li>
-  );
-}
-
-function KindBadge({ kind, label }: { kind: ReleaseKind; label: string }) {
-  const cls =
-    kind === "new"
-      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-      : kind === "improved"
-        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-        : "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300";
-  return (
-    <span className={`rounded-full px-2 py-0.5 font-medium ${cls}`}>
-      {label}
-    </span>
-  );
+export default async function ReleasesPage() {
+  let items;
+  try {
+    const { env } = getCloudflareContext();
+    const db = (env as unknown as AuthEnv).AUTH_DB;
+    if (db) {
+      items = await listPublicReleases(
+        db as unknown as Parameters<typeof listPublicReleases>[0],
+      );
+    } else {
+      // AUTH_DB 미바인딩 — 파일만으로 표시 (dev local 등).
+      items = [...fileReleases].sort((a, b) => b.date.localeCompare(a.date));
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!msg.includes("Dynamic server usage")) {
+      console.error("[releases page] D1 read failed:", e);
+    }
+    // D1 오류 fallback — 파일로 graceful 표시 (빈 페이지 회피).
+    items = [...fileReleases].sort((a, b) => b.date.localeCompare(a.date));
+  }
+  return <ReleasesClientShell items={items} />;
 }
