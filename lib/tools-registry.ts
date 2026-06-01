@@ -90,6 +90,7 @@ export const tools: Tool[] = [
     id: "shooter",
     slug: "shooter",
     status: "live",
+    category: "entertainment",
     createdAt: "2026-05-24",
     // 전용 page.tsx 존재 — [slug] fallback이 정적 경로를 emit하지 않도록 hasPage:true.
     hasPage: true,
