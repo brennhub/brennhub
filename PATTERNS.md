@@ -34,10 +34,17 @@
 - `isNew(createdAt, now?)` → 7일 이내 boolean. `now` 파라미터로 SSR 결정성 확보 가능.
 
 #### app/page.tsx 칩 + 섹션 패턴
-- 상단: 카테고리 칩 row (anchor scroll, smooth). "전체" 칩은 페이지 top.
+- 상단: 검색 입력 (`HubSearchInput`) → 칩 row (anchor scroll, smooth). "전체" / "★ 즐겨찾기" (있을 때만) / 카테고리 칩.
 - 카드 0개인 카테고리는 섹션 + 칩 모두 노출 X (`sections = CATEGORY_ORDER.filter(...)`).
 - 카테고리 섹션: `<h2>` (text-sm uppercase tracking-wider) + `id={"category-" + slug}` + 1/2/3 col 그리드.
-- 필터링 X — anchor scroll만. 검색·필터링은 도구 15+ 시 Phase 2.
+- 검색 입력 시 칩 row 숨김 (anchor scroll과 필터링 충돌 방지). 필터링은 도구 name + description + slug substring (현재 로케일).
+
+#### 즐겨찾기 — `lib/hub/favorites.ts` + `favorites-storage.ts`
+- `HubFavorites = { schemaVersion, slugs[], lastModified }`. 순서: 최근 추가 먼저 (unshift).
+- Pure helper: `isFavorite` / `toggleFavorite` / `emptyFavorites`.
+- Storage 분기: 로그인 = D1 (`hub-favorites` tool slug, generic `D1UserData`) / 게스트 = localStorage. 자동 이전 없음 (Phase 2-2 결정 일관).
+- API allowlist: `app/api/user-data/[tool]/route.ts` `HUB_DATA_SLUGS` Set에 `hub-favorites` 등록.
+- 카드 우상단 별표 (`Star`, `aria-pressed`) 토글. 즐겨찾기 섹션은 검색 매치된 즐겨찾기만 노출.
 
 ### Stock-sim shared (3 sub-files 공통)
 
