@@ -32,10 +32,10 @@ export function FeedbackButton() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label={t.button}
-        className="fixed bottom-6 right-6 z-40 flex h-11 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium text-card-foreground shadow-lg transition-colors hover:bg-muted"
+        title={t.button}
+        className="fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-card-foreground shadow-lg transition-colors hover:bg-muted"
       >
-        <MessageSquare className="size-4" />
-        <span className="hidden sm:inline">{t.button}</span>
+        <MessageSquare className="size-5" />
       </button>
       <FeedbackDialog
         open={open}

@@ -7,17 +7,16 @@ import { useMessages } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/components/auth/user-provider";
 import { toolSlugFromPath } from "@/lib/tools/slug-from-path";
 import { fetchLikes, toggleLike, type LikeState } from "@/lib/hub/likes";
+import { useLoginToast } from "@/lib/hub/login-toast";
 
 /**
- * 도구 페이지 우하단 floating 좋아요 (즐겨찾기 toggle 위 stack).
- * pathname이 등록된 도구 페이지가 아니면 null — Hub/admin 등에서는 미노출.
- * Hub 카드 LikeButton과 동일 storage (즉시 동기).
- * 비로그인은 클릭 시 toast 안내 (2초).
+ * 도구 페이지 우하단 floating 좋아요 (즐겨찾기 위 stack).
+ * Hub 카드 LikeButton과 동일 storage. 비로그인 클릭 = 안내 toast.
  *
  * Floating stack (우하단 위→아래):
  *   bottom-32 = 좋아요(본 컴포넌트)
- *   bottom-20 = 즐겨찾기 (ToolFavoriteButton)
- *   bottom-6  = 피드백 (FeedbackButton)
+ *   bottom-20 = 즐겨찾기
+ *   bottom-6  = 피드백
  */
 export function ToolLikeButton() {
   const pathname = usePathname();
@@ -25,9 +24,9 @@ export function ToolLikeButton() {
   const t = useMessages();
   const user = useCurrentUser();
   const isLoggedIn = !!user;
+  const { visible: toast, toggle: toggleToast, buttonRef } = useLoginToast();
 
   const [state, setState] = useState<LikeState | null>(null);
-  const [toast, setToast] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -43,13 +42,12 @@ export function ToolLikeButton() {
   const handleClick = useCallback(async () => {
     if (!slug) return;
     if (!isLoggedIn) {
-      setToast(true);
-      window.setTimeout(() => setToast(false), 2000);
+      toggleToast();
       return;
     }
     const next = await toggleLike(slug);
     if (next) setState(next);
-  }, [slug, isLoggedIn]);
+  }, [slug, isLoggedIn, toggleToast]);
 
   if (!slug) return null;
   const liked = state?.liked ?? false;
@@ -58,6 +56,7 @@ export function ToolLikeButton() {
   return (
     <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={handleClick}
         aria-pressed={liked}
@@ -76,7 +75,7 @@ export function ToolLikeButton() {
       {toast && (
         <span
           role="status"
-          className="fixed bottom-44 right-6 z-50 whitespace-nowrap rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900"
+          className="fixed bottom-32 right-20 z-50 whitespace-nowrap rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900"
         >
           {t.hub.likeLoginRequired}
         </span>

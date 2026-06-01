@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "favorites-login-required",
+    date: "2026-06-02",
+    tool: "site",
+    kind: "improved",
+    title: {
+      ko: "로그인 안내 + 우하단 UI 정리",
+      en: "Sign-in cues + cleaner bottom-right UI",
+    },
+    body: {
+      ko: "즐겨찾기·좋아요는 로그인 후 사용 가능하다는 안내가 더 명확해졌고, 우하단 버튼이 한결 깔끔해졌어요.",
+      en: "Clearer cues that favorites and likes need a sign-in, plus a tidier set of bottom-right buttons.",
+    },
+  },
+  {
     id: "tool-page-likes",
     date: "2026-06-02",
     tool: "site",

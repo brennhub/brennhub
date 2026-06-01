@@ -5,11 +5,12 @@ import { ThumbsUp } from "lucide-react";
 import { useMessages } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/components/auth/user-provider";
 import { fetchLikes, toggleLike, type LikeState } from "@/lib/hub/likes";
+import { useLoginToast } from "@/lib/hub/login-toast";
 
 /**
  * 도구 좋아요 button.
- * - 로그인 사용자만 toggle 가능. 비로그인 클릭 시 toast 안내 (2초).
- * - count > 0이면 숫자 표시 (사용자 결정: 0은 숨김 → 숫자만 미노출, button은 노출).
+ * - 로그인 사용자만 toggle 가능. 비로그인 클릭 = 안내 toast (재클릭/외부 클릭 dismiss).
+ * - count > 0이면 숫자 표시 (0은 button만).
  * - 카드 우상단 사용 — Link 안에 들어가도 클릭 이벤트 stopPropagation.
  */
 type Props = {
@@ -20,9 +21,9 @@ export function LikeButton({ slug }: Props) {
   const t = useMessages();
   const user = useCurrentUser();
   const isLoggedIn = !!user;
+  const { visible: toast, toggle: toggleToast, buttonRef } = useLoginToast();
 
   const [state, setState] = useState<LikeState | null>(null);
-  const [toast, setToast] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,14 +40,13 @@ export function LikeButton({ slug }: Props) {
       e.preventDefault();
       e.stopPropagation();
       if (!isLoggedIn) {
-        setToast(true);
-        window.setTimeout(() => setToast(false), 2000);
+        toggleToast();
         return;
       }
       const next = await toggleLike(slug);
       if (next) setState(next);
     },
-    [slug, isLoggedIn],
+    [slug, isLoggedIn, toggleToast],
   );
 
   const count = state?.count ?? 0;
@@ -55,6 +55,7 @@ export function LikeButton({ slug }: Props) {
   return (
     <span className="relative inline-flex">
       <button
+        ref={buttonRef}
         type="button"
         onClick={handleClick}
         aria-pressed={liked}

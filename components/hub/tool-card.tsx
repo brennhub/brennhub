@@ -9,7 +9,6 @@ import {
   MessageSquare,
   Pill,
   Sparkles,
-  Star,
   Tag,
   TrendingUp,
   Type,
@@ -20,6 +19,7 @@ import type { Tool } from "@/lib/tools-registry";
 import { isNew } from "@/lib/hub/categories";
 import { useMessages } from "@/lib/i18n/provider";
 import type { FeedbackTool } from "@/components/feedback-dialog";
+import { CardFavoriteButton } from "@/components/hub/card-favorite-button";
 import { LikeButton } from "@/components/hub/like-button";
 import { VisitCounter } from "@/components/hub/visit-counter";
 
@@ -63,27 +63,11 @@ export function ToolCard({
     >
       <div className="absolute right-3 top-3 flex items-center gap-1">
         <LikeButton slug={tool.slug} />
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onToggleFavorite(tool.slug);
-          }}
-          aria-pressed={isFavorite}
-          aria-label={
-            isFavorite ? t.hub.favoriteRemoveAria : t.hub.favoriteAddAria
-          }
-          className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-amber-500 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-amber-400"
-        >
-          <Star
-            className={
-              isFavorite
-                ? "size-4 fill-amber-400 text-amber-400 dark:fill-amber-300 dark:text-amber-300"
-                : "size-4"
-            }
-          />
-        </button>
+        <CardFavoriteButton
+          slug={tool.slug}
+          isFavorite={isFavorite}
+          onToggle={onToggleFavorite}
+        />
       </div>
       <div className="flex items-start gap-3 pr-20">
         <Icon
