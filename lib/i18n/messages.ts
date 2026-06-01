@@ -765,6 +765,15 @@ export type Messages = {
       dashboard: string;
       feedback: string;
       releases: string;
+      stats: string;
+    };
+    stats: {
+      title: string;
+      columnTool: string;
+      columnLikes: string;
+      columnVisits30d: string;
+      columnVisitsAll: string;
+      emptyState: string;
     };
     releases: {
       title: string;
@@ -1690,6 +1699,15 @@ export const messages: Record<Locale, Messages> = {
         dashboard: "대시보드",
         feedback: "피드백",
         releases: "새 소식",
+        stats: "통계",
+      },
+      stats: {
+        title: "도구 통계",
+        columnTool: "도구",
+        columnLikes: "좋아요",
+        columnVisits30d: "30일 방문",
+        columnVisitsAll: "전체 방문",
+        emptyState: "아직 집계된 도구가 없습니다.",
       },
       releases: {
         title: "새 소식 관리",
@@ -2662,6 +2680,15 @@ export const messages: Record<Locale, Messages> = {
         dashboard: "Dashboard",
         feedback: "Feedback",
         releases: "Releases",
+        stats: "Stats",
+      },
+      stats: {
+        title: "Tool stats",
+        columnTool: "Tool",
+        columnLikes: "Likes",
+        columnVisits30d: "30d visits",
+        columnVisitsAll: "All visits",
+        emptyState: "No tool stats yet.",
       },
       releases: {
         title: "Releases admin",

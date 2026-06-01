@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Heart } from "lucide-react";
+import { ThumbsUp } from "lucide-react";
 import { useMessages } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/components/auth/user-provider";
 import { fetchLikes, toggleLike, type LikeState } from "@/lib/hub/likes";
@@ -59,12 +59,12 @@ export function LikeButton({ slug }: Props) {
         onClick={handleClick}
         aria-pressed={liked}
         aria-label={liked ? t.hub.likeRemoveAria : t.hub.likeAddAria}
-        className="flex h-7 items-center gap-1 rounded-md px-1.5 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-pink-500 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-pink-400"
+        className="flex h-7 items-center gap-1 rounded-md px-1.5 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
       >
-        <Heart
+        <ThumbsUp
           className={
             liked
-              ? "size-4 fill-pink-500 text-pink-500 dark:fill-pink-400 dark:text-pink-400"
+              ? "size-4 fill-zinc-900 text-zinc-900 dark:fill-zinc-100 dark:text-zinc-100"
               : "size-4"
           }
         />

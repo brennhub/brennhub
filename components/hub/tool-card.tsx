@@ -21,6 +21,7 @@ import { isNew } from "@/lib/hub/categories";
 import { useMessages } from "@/lib/i18n/provider";
 import type { FeedbackTool } from "@/components/feedback-dialog";
 import { LikeButton } from "@/components/hub/like-button";
+import { VisitCounter } from "@/components/hub/visit-counter";
 
 // shooter는 main에는 없지만 dev 머지 시 자동 흡수 — 아이콘 매핑은 미리 등록.
 const ICON_BY_SLUG: Record<string, LucideIcon> = {
@@ -109,6 +110,9 @@ export function ToolCard({
             {display.description}
           </p>
         </div>
+      </div>
+      <div className="absolute bottom-3 left-6">
+        <VisitCounter slug={tool.slug} />
       </div>
       <button
         type="button"
