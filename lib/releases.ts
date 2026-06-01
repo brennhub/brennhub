@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "hub-categories-favorites-search",
+    date: "2026-06-01",
+    tool: "site",
+    kind: "improved",
+    title: {
+      ko: "메인 페이지 — 카테고리·즐겨찾기·검색",
+      en: "Home — categories, favorites, search",
+    },
+    body: {
+      ko: "도구들을 분야별로 묶고, 별표로 즐겨찾기에 담고, 이름으로 빠르게 찾을 수 있습니다. 도구 화면 우하단 별로도 즐겨찾기 토글이 가능합니다.",
+      en: "Tools are grouped by category, you can star them as favorites, and search by name. Toggle favorites from any tool's bottom-right star too.",
+    },
+  },
+  {
     id: "tag-it-launch",
     date: "2026-05-29",
     tool: "tag-it",

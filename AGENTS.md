@@ -41,7 +41,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **파일에 항목 추가 = 자동으로 `/releases`에 노출** (build/CI 강제 없음, prod 머지 시점에 그대로). admin은 후처리 — 문구 다듬기, 잘못된 항목 숨기기, 파일 없이 직접 추가.
 
-- **시점**: 도구가 main 머지로 prod 반영된 후. 다른 CC thread가 머지하면 그 thread가 파일 entry를 추가하는 게 정상 흐름.
+- **시점**: **dev 머지 시점에 파일 entry 추가** — dev.brennhub.com/releases에서 노출·문구·정렬 미리 검증 → main 머지로 prod 반영(brennhub.com)에 그대로 노출. 작업 thread는 dev 머지 직전/직후 entry 추가가 정상 흐름 (누락 시 prod에 아무 것도 안 떠 silent miss). 다른 CC thread가 dev에 머지하면 그 thread가 entry를 함께 추가.
+- **date**: prod 노출 예정일(main 머지 예정일). dev에선 미리 보이지만 사용자 표시상 date는 prod 기준이 정합. main 머지가 미뤄지면 date 갱신.
 - **무엇**: 사용자 체감 신규/개선/수정만. 내부 리팩토링·빌드·인프라 변경은 제외. 판정 기준 — 사용자가 화면에서 차이를 보면 yes, 아니면 no.
 - **말투**: 사용자 언어. 개발 용어(commit, refactor, schema, D1, 마이그레이션 등) 금지. "AI"는 어디서도 노출 X (BrennHub UI 원칙).
 - **항목 모양**: `{ id: <stable-kebab>, date: "YYYY-MM-DD", tool: <slug>|"site", title: {ko,en}, body: {ko,en}, kind?: "new"|"improved"|"fixed" }`.
