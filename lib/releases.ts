@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "main-push-guardrails",
+    date: "2026-06-02",
+    tool: "site",
+    kind: "improved",
+    title: {
+      ko: "배포 안전장치 강화",
+      en: "Deploy guardrails strengthened",
+    },
+    body: {
+      ko: "공식 배포 전에 미리 보기 환경에서 검증을 거쳤는지 시스템이 확인하도록 했습니다. 매주 올라오는 변경이 더 안정적으로 도착할 거예요.",
+      en: "The system now verifies preview-environment checks before each production deploy. Weekly updates should land more reliably.",
+    },
+  },
+  {
     id: "tool-likes-launch",
     date: "2026-06-01",
     tool: "site",
