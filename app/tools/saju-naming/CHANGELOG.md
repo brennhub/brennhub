@@ -144,6 +144,24 @@
 - 상생 채점 = **방향 무관**(다수안). 방향성 `directionBonus`는 1차 출처 확보 후 refinement plug-in (BACKLOG 39-C, 비critical).
 - `RELATION_POINT`(상생 1.0/비화 0.5/상극 0.0) · 가중치 55:45 = 시작값, 최종 캘리브레이션은 39-C (풀 분포 측정).
 
+### Added (39-C 상용도 티어 + char2 best-by-score + 작명 부적합 가드)
+- `scripts/build-staged-frequency.ts` + `scripts/data/staged-frequency.json` — 상용도 `frequency` 1~5 티어 산출 (Unihan kIRG_KSource K0~K2 + 교육용 1,800). 5=교육용 / 4=K0(KS X 1001) / 3=K1 / 2=K2 / 1=그외.
+- `scripts/data/edu-hanja-1800.json` — 교육용 기초한자 1,800 vendored (provenance: 교육부 고시 2000 = 사실, ko.wiktionary 부록 추출, MIT 추출기 동일 출처).
+- `scripts/build-migration-frequency.ts` + `migrations/007_hanja_frequency_tier.sql` — 티어별 UPDATE (15문 / 6,763 row, 티어3=DEFAULT 3 생략). node:sqlite dry-run 분포 일치 0 mismatch. apply는 Brenn 수동.
+- `lib/name-exclude.ts` — `NON_NAME_MEANING_KEYWORDS`(9)/`NON_NAME_EXPLICIT`(14)/`hasNonNameMeaning` 추가. 숫자·기능어(六全同共各一…) 차단. 풀 9,055 의미 스캔 오탐 0 검증(相·玖·鈞·申·巨 등 보호).
+- `docs/learnings/2026-05-29-saju-naming-39c-frequency-tier.md` — 자료원 정찰 + 蘇 포화 병목 발견 + 3+1 레이어 + 정직한 한계 record.
+
+### Changed (39-C 상용도 티어 + char2 상용 우선)
+- `recommendNames` — 첫 글자 cap 버퍼 유지(`PER_FIRST_KEEP=2`, cap-skip) + **007 freq-DESC 풀**로 cap이 **상용 char1·char2**를 lock (구 버그 蘇玟刁의 최저획 char2 刁 고정은 풀이 stroke-ASC였기 때문 — 007로 정반대 해소). 메모리 `O(distinct × PER_FIRST_KEEP)` — pool² 없음.
+- ⚠️ **CPU 503 2회 회귀 → cap-skip 복귀**: char2 best-by-score(전 조합 평가)는 `evaluateSoundOhaeng`(c5-7c 경량 함수의 ~7.6×)×25만 → 단건 1465ms·burst 17/20 503. char2 상위 40 제한(2만)도 3/20 503. **cap-skip(수백 조합, prod 검증)으로 복귀** — char2 best-by-score는 CPU 한계로 보류(sound 함수 경량화 시 재시도, backlog). 007 풀이 char2 상용성 대체 달성. 상세 learnings §3(B).
+- `NameCandidate += freqSum` (이름 한자 상용도 합) + `compareCandidate`(totalScore desc, 동점 freqSum desc) — 상용도는 **점수 미가산**, 풀 선정(route ORDER BY frequency DESC)·동점 tiebreak에만 (음령55/수리45 축 불변).
+- `poc/names-poc.test.ts` — case7(cap-skip 풀순서 상용 char2 우선)·8(상용도 tiebreak)·9(작명 부적합 가드) 추가.
+
+### Decided (39-C 상용도 티어)
+- **frequency 컬럼 재사용** (스키마 변경 0) — route `ORDER BY frequency DESC`(기존, 무효였음) 즉시 유효화. 진짜 빈도 데이터 도착 시 동일 컬럼 교체.
+- **상용도 프록시 = KS X 1001/1002/확장(Unihan, license-clean, 이미 캐시) + 교육용 1,800(고시 사실, license-clean)**. 한국어문회 급수(정밀)는 저작권 blocked → backlog.
+- **蘇 포화 병목 발견 (계획 전제 정정)**: 성씨 蘇 원격(22) 영구 흉 → 음령 포화로 수백 조합 87 동점. frequency는 벽자만 demote, 비-작명 한자 상위 문제는 미해결 → 작명 부적합 가드(D) 추가. 그래도 일반 명사(皇革音) 잔존 = best-effort 경계, 작명 빈도/AI 어감(Task 45) 의존 backlog.
+
 ### Added (39-C 추천 품질 가드)
 - `lib/name-exclude.ts` — 추천 부적합 필터 (희귀 블록 CJK URO 밖 + 부정 의미 키워드 + 명시 블랙리스트). best-effort 휴리스틱.
 

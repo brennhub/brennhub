@@ -49,7 +49,7 @@ next-env.d.ts
 .wrangler/
 .dev.vars
 
-# tool-specific local caches (regenerable, not for repo)
+# saju-naming 빌드 캐시 (rutopio CSV / Unihan 다운로드) — regenerable, not for repo
 /app/tools/saju-naming/scripts/data/.cache/
 
 # local-only assets (screenshots dropped during dev)

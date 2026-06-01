@@ -10,6 +10,7 @@ import { FeedbackDialog, type FeedbackTool } from "./feedback-dialog";
 function feedbackToolFromPath(
   pathname: string | null,
 ): FeedbackTool | undefined {
+  // toolSlugFromPath은 registry 기반 자동 매핑 — shooter 포함 모든 도구 cover.
   const slug = toolSlugFromPath(pathname);
   if (slug) return slug as FeedbackTool;
   if (!pathname || pathname === "/") return undefined;

@@ -10,6 +10,11 @@
  *   자원오행(사주 보완)은 recommend route의 SQL `ja_ohaeng IN(yongsin)` 하드
  *   필터로 처리 — 점수 축 아님 (F3 해결: 풀이 이미 걸러져 점수로 또 매기면 무의미).
  *   각 점수 0-100, 가중 합산 → 정수.
+ *
+ * 상용도(`frequency` 1~5 티어)는 점수 축에 **미가산** (작명 축 오염 회피, 39-C). 두 곳에만:
+ *   - 풀 선정: recommend route `ORDER BY frequency DESC` (상용자 우선 풀 — route 책임).
+ *   - 동점 tiebreak: 같은 totalScore면 `freqSum`(이름 한자 상용도 합) 높은 후보 우선.
+ *   → 흔한 한자가 상위로, 점수 동률에서만 작동 (음령/수리 우열은 불변).
  */
 
 import { calculateSurie } from "./surie";
@@ -107,6 +112,7 @@ export interface NameCandidate {
   surieScore: number;
   soundScore: number;
   totalScore: number;
+  freqSum: number; // 이름 한자 상용도(frequency 1~5) 합 — 동점 tiebreak용 (점수 미가산).
   breakdown: string;
 }
 
@@ -151,6 +157,8 @@ function makeCandidate(
   const soundWeighted = Math.round(soundScore * 0.55);
   const surieWeighted = Math.round(surieScore * 0.45);
   const totalScore = soundWeighted + surieWeighted;
+  // 상용도 합 — 동점 tiebreak 전용 (totalScore 미반영). frequency 없으면 0 취급.
+  const freqSum = chars.reduce((s, c) => s + (c.frequency ?? 0), 0);
   const breakdown = `음령${soundWeighted}+수리${surieWeighted}=${totalScore}`;
 
   return {
@@ -162,13 +170,22 @@ function makeCandidate(
     surieScore,
     soundScore,
     totalScore,
+    freqSum,
     breakdown,
   };
+}
+
+/** 후보 정렬 비교자 — totalScore desc, 동점이면 freqSum desc(상용도 tiebreak). */
+function compareCandidate(a: NameCandidate, b: NameCandidate): number {
+  return b.totalScore - a.totalScore || b.freqSum - a.freqSum;
 }
 
 export function recommendNames(
   options: NameRecommendOptions,
 ): NameCandidate[] {
+  const limit = options.topN;
+  if (limit <= 0) return [];
+
   // 1. inname_ok 필터 (필드 없으면 통과)
   const dbFiltered = options.db.filter(
     (h: HanjaEntry & { inname_ok?: number }) =>
@@ -183,62 +200,50 @@ export function recommendNames(
       !isExcludedFromRecommend({ character: h.character, meaning: h.meaning }),
   );
 
-  // 3. bounded 버퍼(score desc) + 첫 글자당 MAX_PER_FIRST 제한 (39-C 다양성).
-  //    동점 후보가 같은 첫 글자로 버퍼를 독식하면 다양화 불가(dev 회귀) →
-  //    첫 글자별 상한을 두어 다양성 확보. 메모리 O(K) 유지(버킷 누적 X → 503 회피).
-  //    capped 첫 글자는 makeCandidate 전에 skip → CPU 절감.
-  const limit = options.topN;
-  if (limit <= 0) return [];
-  const K = Math.min(200, Math.max(limit * 10, 50));
-  const MAX_PER_FIRST = 2;
-  const buffer: NameCandidate[] = []; // 점수 desc
-  const firstCount = new Map<string, number>();
-  const atCap = (first: string): boolean =>
-    (firstCount.get(first) ?? 0) >= MAX_PER_FIRST;
-  function insertSorted(cand: NameCandidate): void {
-    let lo = 0;
-    let hi = buffer.length;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (buffer[mid].totalScore >= cand.totalScore) lo = mid + 1;
-      else hi = mid;
-    }
-    buffer.splice(lo, 0, cand);
-  }
+  // 3. 첫 글자별 cap 버퍼 (다양성) — 첫 글자당 PER_FIRST_KEEP개.
+  //    핵심: db는 route에서 `frequency DESC`(007 상용도 티어) 정렬 → 풀 순회 시 **상용 한자가
+  //    먼저** 등장. cap을 인카운터순으로 채우면 자연히 **상용 char1·char2**가 선택됨.
+  //    (구 버그 蘇玟刁의 刁=최저획 char2 고정은 풀이 stroke ASC였기 때문 — 007 freq-DESC로 해소.)
+  //    메모리 O(distinct 첫 글자 × PER_FIRST_KEEP) — pool² 없음(OOM 회피).
+  const PER_FIRST_KEEP = 2; // 출력 다양성(첫 글자당 ≤2).
+  const buckets = new Map<string, NameCandidate[]>(); // 각 버킷 compareCandidate desc
+  const bucketFull = (first: string): boolean =>
+    (buckets.get(first)?.length ?? 0) >= PER_FIRST_KEEP;
   function consider(cand: NameCandidate): void {
     const first = cand.hangeul[0] ?? "";
-    if (atCap(first)) return;
-    if (buffer.length < K) {
-      insertSorted(cand);
-      firstCount.set(first, (firstCount.get(first) ?? 0) + 1);
-    } else if (cand.totalScore > buffer[buffer.length - 1].totalScore) {
-      const w = buffer.pop() as NameCandidate;
-      const wf = w.hangeul[0] ?? "";
-      firstCount.set(wf, (firstCount.get(wf) ?? 1) - 1);
-      insertSorted(cand);
-      firstCount.set(first, (firstCount.get(first) ?? 0) + 1);
+    const arr = buckets.get(first);
+    if (!arr) buckets.set(first, [cand]);
+    else if (arr.length < PER_FIRST_KEEP) {
+      arr.push(cand);
+      arr.sort(compareCandidate);
     }
   }
 
-  // 4. 조합 생성 → consider. capped 첫 글자는 makeCandidate 생략 (CPU 절감).
+  // 4. 조합 생성 → consider. 첫 글자 버킷이 차면 skip(cap-skip).
+  //    ⚠️ CPU: evaluateSoundOhaeng는 무거워 무제한/대량 char2 평가 시 Workers CPU 초과 → 503
+  //    (dev 회귀 2회 확인: 무제한 25만 17/20·char2상위40 2만 3/20). cap-skip은 첫 글자별 ~2조합만
+  //    평가(총 ≈ distinct 첫글자 × 2, 수백) → CPU 안전(prod 검증). char2 best-by-score는
+  //    CPU 한계로 보류 — 007 freq-DESC 풀이 상용 char2를 보장(동일 목표 달성).
   if (options.nameLength === 1) {
     for (const c of usable) {
-      if (atCap(c.hangeul[0] ?? "")) continue;
+      if (bucketFull(c.hangeul[0] ?? "")) continue;
       consider(makeCandidate([c], options));
     }
   } else {
     for (let i = 0; i < usable.length; i++) {
       const firstSyl = usable[i].hangeul[0] ?? "";
-      if (atCap(firstSyl)) continue; // 첫 글자 cap → 이 char1 조합 전체 skip
+      if (bucketFull(firstSyl)) continue; // 첫 글자 cap → 이 char1 조합 전체 skip
       for (let j = 0; j < usable.length; j++) {
         if (i === j) continue; // 같은 글자 중복 제외
-        if (atCap(firstSyl)) break; // 루프 중 cap 도달 → 중단
+        if (bucketFull(firstSyl)) break; // 루프 중 cap 도달 → 중단
         consider(makeCandidate([usable[i], usable[j]], options));
       }
     }
   }
 
-  // 5. 다양성 선별 — 첫 글자 distinct 우선 (39-C).
+  // 5. 다양성 선별 — 첫 글자 distinct 우선 (39-C). 각 버킷은 이미 desc.
+  const buffer: NameCandidate[] = [];
+  for (const arr of buckets.values()) buffer.push(...arr);
   return selectDiverse(buffer, limit);
 }
 
@@ -260,19 +265,20 @@ export function selectDiverse(
     else byFirst.set(f, [c]);
   }
   const buckets = [...byFirst.values()]; // buffer가 desc라 각 그룹도 desc
+  for (const b of buckets) b.sort(compareCandidate); // 그룹 내 점수·상용도 desc 보장
   const result: NameCandidate[] = [];
   let rank = 0;
   while (result.length < limit) {
     const tier = buckets.filter((b) => b.length > rank).map((b) => b[rank]);
     if (tier.length === 0) break;
-    tier.sort((a, b) => b.totalScore - a.totalScore);
+    tier.sort(compareCandidate);
     for (const c of tier) {
       if (result.length >= limit) break;
       result.push(c);
     }
     rank++;
   }
-  result.sort((a, b) => b.totalScore - a.totalScore);
+  result.sort(compareCandidate);
   return result;
 }
 

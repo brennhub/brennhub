@@ -471,6 +471,25 @@ export type Messages = {
     unmappedNote: string;
     goToSlots: string;
   };
+  shooter: {
+    title: string;
+    description: string;
+    startButton: string;
+    scoreLabel: string;
+    livesLabel: string;
+    highScoreLabel: string;
+    newHighScore: string;
+    gameOverTitle: string;
+    restartButton: string;
+    controlsHintDesktop: string;
+    controlsHintMobile: string;
+    difficultyLabel: string;
+    difficultyEasy: string;
+    difficultyNormal: string;
+    difficultyHard: string;
+    soundMute: string;
+    soundUnmute: string;
+  };
   maze: {
     title: string;
     description: string;
@@ -637,6 +656,7 @@ export type Messages = {
     toolLineupBuilder: string;
     toolLanguageMaker: string;
     toolMaze: string;
+    toolShooter: string;
     toolTagIt: string;
     categoryLabel: string;
     categoryFeature: string;
@@ -1396,6 +1416,25 @@ export const messages: Record<Locale, Messages> = {
       winTitle: "탈출 성공!",
       winMessage: "도착점에 도달했습니다.",
     },
+    shooter: {
+      title: "아케이드 슈터",
+      description: "우주 함대를 격추하는 세로 스크롤 슈팅 게임",
+      startButton: "시작",
+      scoreLabel: "점수",
+      livesLabel: "생명",
+      highScoreLabel: "최고점",
+      newHighScore: "신기록",
+      gameOverTitle: "게임 오버",
+      restartButton: "다시 시작",
+      controlsHintDesktop: "방향키·WASD로 4방향 이동 / 스페이스 발사",
+      controlsHintMobile: "화면 좌우를 눌러 이동 (자동 발사)",
+      difficultyLabel: "난이도",
+      difficultyEasy: "쉬움",
+      difficultyNormal: "보통",
+      difficultyHard: "어려움",
+      soundMute: "소리 끄기",
+      soundUnmute: "소리 켜기",
+    },
     tagIt: {
       title: "태그잇",
       description:
@@ -1481,6 +1520,7 @@ export const messages: Record<Locale, Messages> = {
       toolLineupBuilder: "축구 베스트 일레븐 만들기",
       toolLanguageMaker: "언어 창조기",
       toolMaze: "픽셀 미로 만들기",
+      toolShooter: "아케이드 슈터",
       toolTagIt: "태그잇",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
@@ -1731,6 +1771,10 @@ export const messages: Record<Locale, Messages> = {
       maze: {
         name: "픽셀 미로 만들기",
         description: "픽셀 격자로 미로를 설계하고 풀이하며 링크로 공유",
+      },
+      shooter: {
+        name: "아케이드 슈터",
+        description: "우주 함대를 격추하는 세로 스크롤 슈팅 게임",
       },
       "tag-it": {
         name: "태그잇",
@@ -2341,6 +2385,25 @@ export const messages: Record<Locale, Messages> = {
       winTitle: "Escaped!",
       winMessage: "You reached the goal.",
     },
+    shooter: {
+      title: "Arcade Shooter",
+      description: "Top-down arcade shoot-'em-up — blast the alien fleet",
+      startButton: "Start",
+      scoreLabel: "Score",
+      livesLabel: "Lives",
+      highScoreLabel: "Best",
+      newHighScore: "New best",
+      gameOverTitle: "Game Over",
+      restartButton: "Restart",
+      controlsHintDesktop: "Arrow keys or WASD to move / Space to fire",
+      controlsHintMobile: "Tap and hold left/right (auto-fire)",
+      difficultyLabel: "Difficulty",
+      difficultyEasy: "Easy",
+      difficultyNormal: "Normal",
+      difficultyHard: "Hard",
+      soundMute: "Mute",
+      soundUnmute: "Unmute",
+    },
     tagIt: {
       title: "Tag-it",
       description:
@@ -2427,6 +2490,7 @@ export const messages: Record<Locale, Messages> = {
       toolLineupBuilder: "Football Best XI Builder",
       toolLanguageMaker: "Language Maker",
       toolMaze: "Pixel Maze Maker",
+      toolShooter: "Arcade Shooter",
       toolTagIt: "Tag-it",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
@@ -2679,6 +2743,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Pixel Maze Maker",
         description:
           "Design pixel-grid mazes, solve them, and share via link",
+      },
+      shooter: {
+        name: "Arcade Shooter",
+        description:
+          "Top-down arcade shoot-'em-up — blast the alien fleet for high scores",
       },
       "tag-it": {
         name: "Tag-it",
