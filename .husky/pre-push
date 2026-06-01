@@ -1,8 +1,15 @@
 #!/usr/bin/env sh
-# main push 시 lib/releases.ts entry 추가 강제.
-# 누락은 silent miss → Cloudflare 빌드되면 /releases에 안 보임.
-# 우회 토큰: 사용자 체감 0인 머지면 commit message에 [skip-release] 추가.
-# 정책: AGENTS.md §"릴리스 노트 기록".
+# main push 강제 검사 — silent miss 차단.
+# 정책 참조: AGENTS.md §"릴리스 노트 기록", BRENNHUB.md §6 "표준 개발 흐름".
+#
+# 검사 1: lib/releases.ts 변경 (release entry 누락 차단)
+#   우회 토큰: [skip-release] — 사용자 체감 0인 internal refactor·빌드 fix
+#
+# 검사 2: dev 검증 (dev 안 거치고 main 직행 차단)
+#   원칙: feat → dev 머지 + push → dev.brennhub.com 검증 → feat → main
+#   우회 토큰: [skip-dev-check] — 사용자가 명시 승인한 예외 (hotfix, 정책 예외 등)
+
+ZERO="0000000000000000000000000000000000000000"
 
 while read local_ref local_sha remote_ref remote_sha
 do
@@ -11,40 +18,74 @@ do
     continue
   fi
 
-  # commit range 결정 (new branch면 모든 commit, 아니면 remote..local)
-  ZERO="0000000000000000000000000000000000000000"
   if [ "$remote_sha" = "$ZERO" ]; then
     range="$local_sha"
   else
     range="$remote_sha..$local_sha"
   fi
 
-  # lib/releases.ts 변경 확인
+  COMMIT_MESSAGES=$(git log "$range" --format=%B 2>/dev/null)
+
+  # ===== 검사 1: lib/releases.ts =====
   if git diff --name-only "$range" 2>/dev/null | grep -q "^lib/releases\.ts$"; then
-    echo "✅ main push: lib/releases.ts 변경 감지 — release entry OK"
+    echo "✅ release entry OK (lib/releases.ts 변경 감지)"
+  elif echo "$COMMIT_MESSAGES" | grep -q "\[skip-release\]"; then
+    echo "⚠️  [skip-release] 우회 토큰 — release 검사 통과"
+  else
+    echo ""
+    echo "❌ main push 차단 — lib/releases.ts 변경 없음"
+    echo ""
+    echo "   📌 사용자 체감 변화가 있는 머지면:"
+    echo "      1. lib/releases.ts 에 새 entry 추가 (id, date, tool, title, body)"
+    echo "      2. AGENTS.md §\"릴리스 노트 기록\" 정책 참조"
+    echo "      3. 새 commit 후 다시 push"
+    echo ""
+    echo "   🤫 사용자 체감 0 (internal refactor / 빌드 fix 등):"
+    echo "      - 머지 commit message에 [skip-release] 토큰 추가 후 다시 push"
+    echo ""
+    exit 1
+  fi
+
+  # ===== 검사 2: dev 검증 =====
+  # main range 내 non-merge commit이 origin/dev에 reachable인지 확인.
+  # = 각 작업 commit이 먼저 dev를 거쳤는지.
+
+  UNVERIFIED=""
+  for sha in $(git rev-list --no-merges "$range" 2>/dev/null); do
+    if ! git merge-base --is-ancestor "$sha" origin/dev 2>/dev/null; then
+      UNVERIFIED="$UNVERIFIED $sha"
+    fi
+  done
+
+  if [ -z "$UNVERIFIED" ]; then
+    echo "✅ dev 검증 OK (push할 작업 commit 모두 origin/dev에 reachable)"
     continue
   fi
 
-  # 우회 토큰 [skip-release] 검사 (commit body 전체)
-  if git log "$range" --format=%B 2>/dev/null | grep -q "\[skip-release\]"; then
-    echo "⚠️  main push: lib/releases.ts 변경 없음 + [skip-release] 우회 토큰 발견 → 통과"
+  # 우회 토큰
+  if echo "$COMMIT_MESSAGES" | grep -q "\[skip-dev-check\]"; then
+    echo "⚠️  [skip-dev-check] 우회 토큰 — dev 검증 통과 (정책 예외)"
     continue
   fi
 
-  # 차단
   echo ""
-  echo "❌ main push 차단 — lib/releases.ts 변경 없음"
+  echo "❌ main push 차단 — dev 검증 누락"
   echo ""
-  echo "   범위: $range"
+  echo "   📌 BRENNHUB.md §6 정책: feat → dev 머지 + push → dev.brennhub.com 검증 → feat → main"
   echo ""
-  echo "   📌 사용자 체감 변화가 있는 머지면:"
-  echo "      1. lib/releases.ts 에 새 entry 추가 (id, date, tool, title, body)"
-  echo "      2. AGENTS.md §\"릴리스 노트 기록\" 정책 참조"
-  echo "      3. 새 commit 후 다시 push"
+  echo "   다음 commit이 origin/dev에 머지되지 않음:"
+  for sha in $UNVERIFIED; do
+    short=$(echo "$sha" | cut -c1-7)
+    subject=$(git log -1 --format=%s "$sha" 2>/dev/null)
+    echo "      $short  $subject"
+  done
   echo ""
-  echo "   🤫 사용자 체감 0 (internal refactor / 빌드 fix 등):"
-  echo "      - 머지 commit message에 [skip-release] 토큰 추가 후 다시 push"
-  echo "      - 또는 그냥 main 머지 직전 머지 commit amend로 토큰 삽입"
+  echo "   해결:"
+  echo "     1. feat → dev 머지 + push → dev.brennhub.com에서 검증"
+  echo "     2. 검증 후 feat → main 머지 + push"
+  echo ""
+  echo "   🤫 hotfix 또는 사용자 명시 승인된 예외:"
+  echo "     - main 머지 commit message에 [skip-dev-check] 토큰 추가 후 다시 push"
   echo ""
   exit 1
 done
