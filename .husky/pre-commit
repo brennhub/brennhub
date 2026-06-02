@@ -1,1 +1,24 @@
+#!/usr/bin/env sh
+# 브랜치 검사: main/dev 직접 commit 차단.
+# 정책: BRENNHUB.md §6 "표준 개발 흐름" — feat 브랜치 작업이 정합.
+# 우회: git commit --no-verify (hotfix 등 드문 경우만).
+
+BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "dev" ]; then
+  echo ""
+  echo "❌ main/dev 직접 commit 금지 (현재 브랜치: $BRANCH)"
+  echo ""
+  echo "   feat 브랜치에서 작업하세요:"
+  echo "     git checkout feat/<task>     # 기존"
+  echo "     git checkout -b feat/<task>  # 신규 (main에서 분기)"
+  echo ""
+  echo "   정책: BRENNHUB.md §6 \"표준 개발 흐름\""
+  echo ""
+  echo "   의도적 우회 (드문 경우 — hotfix 등):"
+  echo "     git commit --no-verify"
+  echo ""
+  exit 1
+fi
+
+# 기존 lint-staged
 npx lint-staged
