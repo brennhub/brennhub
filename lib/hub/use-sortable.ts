@@ -75,11 +75,7 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
     (clientX: number, clientY: number) => {
       const p = pendingRef.current;
       if (!p) return;
-      try {
-        p.target.setPointerCapture(p.pointerId);
-      } catch {
-        // ignore
-      }
+      // pointer capture는 pointerdown 시점에 이미 호출됨 — 중복 호출 X.
       setDraggingIndex(p.index);
       setOverIndex(p.index);
       setPreviewPos({ x: clientX, y: clientY });
@@ -96,7 +92,21 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
       const target = e.currentTarget as HTMLElement;
       const pointerType = e.pointerType || "mouse";
 
+      // 안전망: 이전 드래그가 정리 안 된 채 들어왔으면 정리.
+      if (draggingIndex !== null) {
+        setDraggingIndex(null);
+        setOverIndex(null);
+        setPreviewPos(null);
+      }
       clearPending();
+
+      // ★ 핵심: pointerdown 즉시 setPointerCapture — pointer가 element 밖
+      //   으로 빠져도 move/up 이벤트가 같은 element에 발화 보장.
+      try {
+        target.setPointerCapture(e.pointerId);
+      } catch {
+        // ignore
+      }
 
       const pending: PendingState = {
         index,
