@@ -234,7 +234,6 @@ export default function Home() {
                           isFavorite={true}
                           display={displayFor(tool.slug)}
                           descriptionLines={cardSettings.description_lines}
-                          paddingBottomPx={cardSettings.padding_bottom}
                           onToggleFavorite={handleToggleFavorite}
                           onOpenFeedback={openFeedback}
                         />
@@ -267,7 +266,6 @@ export default function Home() {
                             isFavorite={isFavorite(favorites, tool.slug)}
                             display={displayFor(tool.slug)}
                             descriptionLines={cardSettings.description_lines}
-                            paddingBottomPx={cardSettings.padding_bottom}
                             onToggleFavorite={handleToggleFavorite}
                             onOpenFeedback={openFeedback}
                           />

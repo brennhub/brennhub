@@ -55,8 +55,6 @@ type Props = {
   display?: { name: string; description: string };
   /** line-clamp 수 (admin 설정, default 3). */
   descriptionLines?: number;
-  /** 본문 pb px (admin 설정, default 40). */
-  paddingBottomPx?: number;
   onToggleFavorite: (slug: string) => void;
   onOpenFeedback: (slug: FeedbackTool) => void;
 };
@@ -66,7 +64,6 @@ export function ToolCard({
   isFavorite,
   display: displayOverride,
   descriptionLines = 3,
-  paddingBottomPx = 40,
   onToggleFavorite,
   onOpenFeedback,
 }: Props) {
@@ -82,7 +79,7 @@ export function ToolCard({
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group relative block h-full rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+      className="group relative flex h-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
     >
       <div className="absolute right-3 top-3 flex items-center gap-1">
         <LikeButton slug={tool.slug} />
@@ -92,10 +89,8 @@ export function ToolCard({
           onToggle={onToggleFavorite}
         />
       </div>
-      <div
-        className="flex items-start gap-3 pr-20"
-        style={{ paddingBottom: `${paddingBottomPx}px` }}
-      >
+
+      <div className="flex flex-1 items-start gap-3 pr-20">
         <Icon
           aria-hidden
           className="mt-0.5 size-5 shrink-0 text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-200"
@@ -123,22 +118,24 @@ export function ToolCard({
           </p>
         </div>
       </div>
-      <div className="absolute bottom-3 left-6">
+
+      {/* 하단 row — visit + feedback flow 안 (mt-3 자연 분리) */}
+      <div className="mt-3 flex items-center justify-between">
         <VisitCounter slug={tool.slug} />
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onOpenFeedback(tool.slug as FeedbackTool);
+          }}
+          title={t.feedback.cardIconTooltip}
+          aria-label={t.feedback.cardIconTooltip}
+          className="-mr-1 flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+        >
+          <MessageSquare className="size-4" />
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onOpenFeedback(tool.slug as FeedbackTool);
-        }}
-        title={t.feedback.cardIconTooltip}
-        aria-label={t.feedback.cardIconTooltip}
-        className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-      >
-        <MessageSquare className="size-4" />
-      </button>
     </Link>
   );
 }
