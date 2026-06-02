@@ -95,6 +95,15 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
       // 우측 버튼/멀티 터치 무시
       if (e.button !== undefined && e.button !== 0) return;
 
+      // ★ 인터랙티브 자식 요소(button 등) 위의 pointerdown은 드래그 시작 X.
+      //   setPointerCapture가 click target까지 capture된 element로 옮기는
+      //   브라우저 동작 때문에, button 클릭이 카드 navigation으로 잡혀버림.
+      //   여기서 일찍 return하면 button onClick이 정상 발화 + navigation X.
+      const eventTarget = e.target as HTMLElement | null;
+      if (eventTarget?.closest("button")) {
+        return;
+      }
+
       const target = e.currentTarget as HTMLElement;
       const pointerType = e.pointerType || "mouse";
 
