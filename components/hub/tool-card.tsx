@@ -63,7 +63,7 @@ export function ToolCard({
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group relative flex flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+      className="group relative flex h-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
     >
       <div className="absolute right-3 top-3 flex items-center gap-1">
         <LikeButton slug={tool.slug} />
@@ -74,13 +74,14 @@ export function ToolCard({
         />
       </div>
 
-      <div className="flex items-start gap-3 pr-20">
+      {/* 본문 — title row만 pr-20으로 우상단 버튼 회피, description은 wider */}
+      <div className="flex items-start gap-3">
         <Icon
           aria-hidden
           className="mt-0.5 size-5 shrink-0 text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-200"
         />
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2 pr-20">
             <h3 className="truncate text-lg font-medium text-zinc-900 dark:text-zinc-50">
               {display.name}
             </h3>
@@ -95,14 +96,15 @@ export function ToolCard({
               </span>
             )}
           </div>
-          <p className="mt-1 line-clamp-4 h-20 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 line-clamp-4 text-sm text-zinc-600 dark:text-zinc-400">
             {display.description}
           </p>
         </div>
       </div>
 
-      {/* 하단 row — description 직후 최소 분리 (mt-1) */}
-      <div className="mt-1 flex items-center justify-between">
+      {/* 하단 row — description 직후 (mt-0, 갭 없음). h-full + auto-rows-fr로
+          카드 height 통일, visit/feedback 아래 빈 공간이 카드 끝까지 */}
+      <div className="mt-0 flex items-center justify-between">
         <VisitCounter slug={tool.slug} />
         <button
           type="button"
