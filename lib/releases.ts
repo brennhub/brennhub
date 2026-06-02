@@ -41,8 +41,8 @@ export const releases: Release[] = [
       en: "Card text tuning + tidier spacing",
     },
     body: {
-      ko: "도구 카드의 이름·설명을 운영자가 직접 다듬을 수 있고, 전체 카드의 설명 줄 수를 한 곳에서 조절할 수 있어요. 카드 하단도 더 깔끔해졌습니다.",
-      en: "Tool names and descriptions can be tuned in admin, plus a single control for description line count. Card footers look tidier too.",
+      ko: "도구 카드의 이름·설명을 운영자가 미리보기 카드 안에서 직접 다듬을 수 있어요. 카드 하단도 더 깔끔해졌습니다.",
+      en: "Tool names and descriptions can be tuned right inside a preview card. Card footers look tidier too.",
     },
   },
   {

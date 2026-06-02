@@ -37,24 +37,11 @@ const ICON_BY_SLUG: Record<string, LucideIcon> = {
   shooter: Gamepad2,
 };
 
-// line-clamp Tailwind 클래스 매핑 — number → 클래스 string (purge-safe).
-const LINE_CLAMP_CLASS: Record<number, string> = {
-  2: "line-clamp-2",
-  3: "line-clamp-3",
-  4: "line-clamp-4",
-  5: "line-clamp-5",
-  6: "line-clamp-6",
-  7: "line-clamp-7",
-  8: "line-clamp-8",
-};
-
 type Props = {
   tool: Tool;
   isFavorite: boolean;
   /** override 적용된 표시값. 미제공 시 i18n default. */
   display?: { name: string; description: string };
-  /** line-clamp 수 (admin 설정, default 3). */
-  descriptionLines?: number;
   onToggleFavorite: (slug: string) => void;
   onOpenFeedback: (slug: FeedbackTool) => void;
 };
@@ -63,7 +50,6 @@ export function ToolCard({
   tool,
   isFavorite,
   display: displayOverride,
-  descriptionLines = 3,
   onToggleFavorite,
   onOpenFeedback,
 }: Props) {
@@ -73,8 +59,6 @@ export function ToolCard({
   const Icon = ICON_BY_SLUG[tool.slug] ?? Grid3x3;
   const isLive = tool.status === "live";
   const showNew = isLive && isNew(tool.createdAt);
-
-  const clampClass = LINE_CLAMP_CLASS[descriptionLines] ?? "line-clamp-3";
 
   return (
     <Link
@@ -111,9 +95,7 @@ export function ToolCard({
               </span>
             )}
           </div>
-          <p
-            className={`mt-1 ${clampClass} text-sm text-zinc-600 dark:text-zinc-400`}
-          >
+          <p className="mt-1 line-clamp-4 text-sm text-zinc-600 dark:text-zinc-400">
             {display.description}
           </p>
         </div>
