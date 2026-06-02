@@ -5,6 +5,7 @@ import {
   Clock,
   Gamepad2,
   Grid3x3,
+  GripVertical,
   Mail,
   MessageSquare,
   Pill,
@@ -22,6 +23,7 @@ import type { FeedbackTool } from "@/components/feedback-dialog";
 import { CardFavoriteButton } from "@/components/hub/card-favorite-button";
 import { LikeButton } from "@/components/hub/like-button";
 import { VisitCounter } from "@/components/hub/visit-counter";
+import type { SortableHandle } from "@/lib/hub/use-sortable";
 
 // shooter는 main에는 없지만 dev 머지 시 자동 흡수 — 아이콘 매핑은 미리 등록.
 const ICON_BY_SLUG: Record<string, LucideIcon> = {
@@ -37,11 +39,18 @@ const ICON_BY_SLUG: Record<string, LucideIcon> = {
   shooter: Gamepad2,
 };
 
+type DragHandle = {
+  sortable: SortableHandle;
+  index: number;
+};
+
 type Props = {
   tool: Tool;
   isFavorite: boolean;
   /** override 적용된 표시값. 미제공 시 i18n default. */
   display?: { name: string; description: string };
+  /** 즐겨찾기 섹션에서만 전달 — 드래그 핸들 + 상태. 미제공 시 핸들 미노출. */
+  dragHandle?: DragHandle;
   onToggleFavorite: (slug: string) => void;
   onOpenFeedback: (slug: FeedbackTool) => void;
 };
@@ -50,6 +59,7 @@ export function ToolCard({
   tool,
   isFavorite,
   display: displayOverride,
+  dragHandle,
   onToggleFavorite,
   onOpenFeedback,
 }: Props) {
@@ -60,10 +70,29 @@ export function ToolCard({
   const isLive = tool.status === "live";
   const showNew = isLive && isNew(tool.createdAt);
 
+  const isDragging = dragHandle?.sortable.isDragging(dragHandle.index) ?? false;
+  const isOver =
+    dragHandle?.sortable.isOver(dragHandle.index) ?? false;
+  const draggingActive = dragHandle?.sortable.draggingIndex !== null;
+
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group relative flex w-full flex-col rounded-lg border border-zinc-200 bg-white p-6 pb-3 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+      onClick={(e) => {
+        // 드래그 중 click 발생 시 navigation 차단.
+        if (draggingActive) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+      className={
+        "group relative flex w-full flex-col rounded-lg border bg-white p-6 pb-3 transition-all hover:-translate-y-0.5 dark:bg-zinc-900 " +
+        (isDragging
+          ? "border-zinc-400 opacity-40 dark:border-zinc-500 "
+          : isOver
+            ? "border-amber-400 ring-2 ring-amber-200 dark:border-amber-400 dark:ring-amber-900/40 "
+            : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600 ")
+      }
     >
       <div className="absolute right-3 top-3 flex items-center gap-1">
         <LikeButton slug={tool.slug} />
@@ -72,6 +101,21 @@ export function ToolCard({
           isFavorite={isFavorite}
           onToggle={onToggleFavorite}
         />
+        {dragHandle && (
+          <button
+            type="button"
+            {...dragHandle.sortable.handleProps(dragHandle.index)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            aria-label={t.hub.dragHandleAria}
+            title={t.hub.dragHandleAria}
+            className="flex h-7 w-7 cursor-grab items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 active:cursor-grabbing dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          >
+            <GripVertical className="size-4" />
+          </button>
+        )}
       </div>
 
       {/* 본문 — pr-20은 title row에만 (우상단 like/favorite 버튼 회피).
@@ -82,7 +126,12 @@ export function ToolCard({
           className="mt-0.5 size-5 shrink-0 text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-200"
         />
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2 pr-20">
+          <div
+            className={
+              "flex items-baseline gap-2 " +
+              (dragHandle ? "pr-28" : "pr-20")
+            }
+          >
             <h3 className="truncate text-lg font-medium text-zinc-900 dark:text-zinc-50">
               {display.name}
             </h3>

@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "favorites-drag-reorder",
+    date: "2026-06-03",
+    tool: "site",
+    kind: "new",
+    title: {
+      ko: "즐겨찾기 직접 정렬",
+      en: "Reorder favorites yourself",
+    },
+    body: {
+      ko: "즐겨찾기 영역의 카드를 드래그해 원하는 순서로 바꿀 수 있어요. 카드 우상단의 손잡이 아이콘을 잡아 옮기세요.",
+      en: "Drag favorites into the order you want. Grab the handle at the top-right of each card.",
+    },
+  },
+  {
     id: "hub-card-uniform-height",
     date: "2026-06-02",
     tool: "site",
