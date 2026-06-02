@@ -22,6 +22,7 @@ import type { FeedbackTool } from "@/components/feedback-dialog";
 import { CardFavoriteButton } from "@/components/hub/card-favorite-button";
 import { LikeButton } from "@/components/hub/like-button";
 import { VisitCounter } from "@/components/hub/visit-counter";
+import type { SortableHandle } from "@/lib/hub/use-sortable";
 
 // shooter는 main에는 없지만 dev 머지 시 자동 흡수 — 아이콘 매핑은 미리 등록.
 const ICON_BY_SLUG: Record<string, LucideIcon> = {
@@ -37,11 +38,18 @@ const ICON_BY_SLUG: Record<string, LucideIcon> = {
   shooter: Gamepad2,
 };
 
+type DragHandle = {
+  sortable: SortableHandle;
+  index: number;
+};
+
 type Props = {
   tool: Tool;
   isFavorite: boolean;
   /** override 적용된 표시값. 미제공 시 i18n default. */
   display?: { name: string; description: string };
+  /** 즐겨찾기 섹션에서만 전달 — 카드 전체가 드래그 영역. 미제공 시 일반 카드. */
+  dragHandle?: DragHandle;
   onToggleFavorite: (slug: string) => void;
   onOpenFeedback: (slug: FeedbackTool) => void;
 };
@@ -50,6 +58,7 @@ export function ToolCard({
   tool,
   isFavorite,
   display: displayOverride,
+  dragHandle,
   onToggleFavorite,
   onOpenFeedback,
 }: Props) {
@@ -60,10 +69,30 @@ export function ToolCard({
   const isLive = tool.status === "live";
   const showNew = isLive && isNew(tool.createdAt);
 
+  const isDragging = dragHandle?.sortable.isDragging(dragHandle.index) ?? false;
+  const isOver = dragHandle?.sortable.isOver(dragHandle.index) ?? false;
+
+  const sortableItemProps = dragHandle?.sortable.itemProps(dragHandle.index);
+
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group relative flex w-full flex-col rounded-lg border border-zinc-200 bg-white p-6 pb-3 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+      {...sortableItemProps}
+      draggable={false}
+      onDragStart={(e) => {
+        // <a>의 HTML5 native drag 차단 — 안 막으면 link URL drag 모드로
+        // 전환되어 우리 pointer events가 끊김.
+        e.preventDefault();
+      }}
+      className={
+        "group relative flex w-full flex-col rounded-lg border bg-white p-6 pb-3 transition-all hover:-translate-y-0.5 dark:bg-zinc-900 " +
+        (isDragging
+          ? "border-zinc-400 opacity-30 dark:border-zinc-500 "
+          : isOver
+            ? "border-amber-400 ring-2 ring-amber-200 dark:border-amber-400 dark:ring-amber-900/40 "
+            : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600 ") +
+        (dragHandle ? "cursor-grab active:cursor-grabbing " : "")
+      }
     >
       <div className="absolute right-3 top-3 flex items-center gap-1">
         <LikeButton slug={tool.slug} />

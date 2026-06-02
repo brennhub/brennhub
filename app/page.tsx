@@ -7,6 +7,7 @@ import { CATEGORY_ORDER, groupByCategory } from "@/lib/hub/categories";
 import {
   emptyFavorites,
   isFavorite,
+  reorderFavorites,
   toggleFavorite,
   type HubFavorites,
 } from "@/lib/hub/favorites";
@@ -25,6 +26,7 @@ import {
   FeedbackDialog,
   type FeedbackTool,
 } from "@/components/feedback-dialog";
+import { FavoritesSection } from "@/components/hub/favorites-section";
 import { ToolCard } from "@/components/hub/tool-card";
 import { HubSearchInput } from "@/components/hub/search-input";
 
@@ -88,6 +90,17 @@ export default function Home() {
   const handleToggleFavorite = useCallback(
     async (slug: string) => {
       const next = toggleFavorite(favorites, slug);
+      setFavorites(next);
+      await storage.save(next);
+    },
+    [favorites, storage],
+  );
+
+  // 즐겨찾기 영역 드래그 정렬 — drop 시 1회 D1 PUT.
+  const handleReorderFavorites = useCallback(
+    async (fromIndex: number, toIndex: number) => {
+      const next = reorderFavorites(favorites, fromIndex, toIndex);
+      if (next === favorites) return;
       setFavorites(next);
       await storage.save(next);
     },
@@ -202,35 +215,13 @@ export default function Home() {
           ) : (
             <div className="space-y-12">
               {favoriteTools.length > 0 && (
-                <section
-                  id="favorites"
-                  aria-labelledby="heading-favorites"
-                  className="scroll-mt-6"
-                >
-                  <h2
-                    id="heading-favorites"
-                    className="mb-4 flex items-center gap-1.5 text-sm font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
-                  >
-                    <Star
-                      aria-hidden
-                      className="size-3.5 fill-amber-400 text-amber-400 dark:fill-amber-300 dark:text-amber-300"
-                    />
-                    {t.hub.favoritesHeading}
-                  </h2>
-                  <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {favoriteTools.map((tool) => (
-                      <li key={tool.id}>
-                        <ToolCard
-                          tool={tool}
-                          isFavorite={true}
-                          display={displayFor(tool.slug)}
-                          onToggleFavorite={handleToggleFavorite}
-                          onOpenFeedback={openFeedback}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </section>
+                <FavoritesSection
+                  tools={favoriteTools}
+                  displayFor={displayFor}
+                  onReorder={handleReorderFavorites}
+                  onToggleFavorite={handleToggleFavorite}
+                  onOpenFeedback={openFeedback}
+                />
               )}
 
               {sections.map((cat) => {
