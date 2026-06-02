@@ -78,6 +78,12 @@ export function ToolCard({
     <Link
       href={`/tools/${tool.slug}`}
       {...sortableItemProps}
+      draggable={false}
+      onDragStart={(e) => {
+        // <a>의 HTML5 native drag 차단 — 안 막으면 link URL drag 모드로
+        // 전환되어 우리 pointer events가 끊김.
+        e.preventDefault();
+      }}
       className={
         "group relative flex w-full flex-col rounded-lg border bg-white p-6 pb-3 transition-all hover:-translate-y-0.5 dark:bg-zinc-900 " +
         (isDragging

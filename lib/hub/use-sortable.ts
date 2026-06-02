@@ -60,6 +60,10 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
   const [previewPos, setPreviewPos] = useState<PreviewPos>(null);
   // 드래그 활성됐었는지 — pointerup 후 click 차단 결정에 사용 (한 tick 유지).
   const justDraggedRef = useRef(false);
+  // 동기적 활성 상태 — useState는 비동기, handler 안에서는 ref 사용으로
+  // stale closure 회피.
+  const draggingRef = useRef<number | null>(null);
+  const overRef = useRef<number | null>(null);
 
   const pendingRef = useRef<PendingState | null>(null);
 
@@ -76,6 +80,8 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
       const p = pendingRef.current;
       if (!p) return;
       // pointer capture는 pointerdown 시점에 이미 호출됨 — 중복 호출 X.
+      draggingRef.current = p.index;
+      overRef.current = p.index;
       setDraggingIndex(p.index);
       setOverIndex(p.index);
       setPreviewPos({ x: clientX, y: clientY });
@@ -92,8 +98,14 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
       const target = e.currentTarget as HTMLElement;
       const pointerType = e.pointerType || "mouse";
 
+      // ★ <a> element의 native HTML5 drag 차단 — 안 막으면 브라우저가 link URL
+      //   drag 모드로 전환하고 pointermove/up이 우리 handler에 안 옴.
+      e.preventDefault();
+
       // 안전망: 이전 드래그가 정리 안 된 채 들어왔으면 정리.
-      if (draggingIndex !== null) {
+      if (draggingRef.current !== null) {
+        draggingRef.current = null;
+        overRef.current = null;
         setDraggingIndex(null);
         setOverIndex(null);
         setPreviewPos(null);
@@ -122,7 +134,7 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
       if (pointerType === "touch") {
         pending.longPressTimer = window.setTimeout(() => {
           // 시작 좌표에서 활성 (그 사이 move가 없었으면)
-          if (pendingRef.current === pending && draggingIndex === null) {
+          if (pendingRef.current === pending && draggingRef.current === null) {
             activate(pending.startX, pending.startY);
           }
         }, TOUCH_LONG_PRESS_MS);
@@ -131,14 +143,14 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
 
       pendingRef.current = pending;
     },
-    [itemCount, draggingIndex, activate, clearPending],
+    [itemCount, activate, clearPending],
   );
 
   const handleMove = useCallback(
     (e: React.PointerEvent<HTMLElement>) => {
       const p = pendingRef.current;
-      // 활성 후 — 프리뷰 좌표 update + over 검출.
-      if (draggingIndex !== null) {
+      // 활성 후 — 프리뷰 좌표 update + over 검출 (ref로 동기 체크).
+      if (draggingRef.current !== null) {
         setPreviewPos({ x: e.clientX, y: e.clientY });
         const el = document.elementFromPoint(e.clientX, e.clientY);
         const item = (el as Element | null)?.closest("[data-sort-index]");
@@ -147,7 +159,10 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
           if (attr !== undefined) {
             const idx = parseInt(attr, 10);
             if (!Number.isNaN(idx) && idx >= 0 && idx < itemCount) {
-              setOverIndex((prev) => (prev === idx ? prev : idx));
+              if (overRef.current !== idx) {
+                overRef.current = idx;
+                setOverIndex(idx);
+              }
             }
           }
         }
@@ -163,21 +178,23 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
         activate(e.clientX, e.clientY);
       }
     },
-    [draggingIndex, itemCount, activate],
+    [itemCount, activate],
   );
 
   const handleUp = useCallback(
     (e: React.PointerEvent<HTMLElement>) => {
       const p = pendingRef.current;
-      if (draggingIndex !== null) {
-        // 드래그 활성 상태 — reorder.
-        const from = draggingIndex;
-        const to = overIndex;
+      if (draggingRef.current !== null) {
+        // 드래그 활성 상태 — reorder (ref로 동기 체크).
+        const from = draggingRef.current;
+        const to = overRef.current;
         try {
           (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
         } catch {
           // ignore
         }
+        draggingRef.current = null;
+        overRef.current = null;
         setDraggingIndex(null);
         setOverIndex(null);
         setPreviewPos(null);
@@ -195,7 +212,7 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
       // 비활성 — pending만 정리 (정상 click은 그대로 발생).
       if (p) clearPending();
     },
-    [draggingIndex, overIndex, onReorder, clearPending],
+    [onReorder, clearPending],
   );
 
   // 페이지 떠나면 정리.
