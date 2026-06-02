@@ -74,14 +74,15 @@ export function ToolCard({
         />
       </div>
 
-      {/* 본문 — title row만 pr-20으로 우상단 버튼 회피, description은 wider */}
-      <div className="flex items-start gap-3">
+      {/* 본문 — 외부 flex에 pr-20: 우상단 like/favorite 버튼 영역 회피 + description
+          영역까지 일관 좁힘 (편집기 미리보기와 정확히 동일 wrap). */}
+      <div className="flex items-start gap-3 pr-20">
         <Icon
           aria-hidden
           className="mt-0.5 size-5 shrink-0 text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-200"
         />
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2 pr-20">
+          <div className="flex items-baseline gap-2">
             <h3 className="truncate text-lg font-medium text-zinc-900 dark:text-zinc-50">
               {display.name}
             </h3>
@@ -96,7 +97,7 @@ export function ToolCard({
               </span>
             )}
           </div>
-          <p className="mt-1 line-clamp-3 h-[60px] whitespace-pre-wrap pr-4 text-sm leading-5 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 line-clamp-3 h-[60px] whitespace-pre-wrap text-sm leading-5 text-zinc-600 dark:text-zinc-400">
             {display.description}
           </p>
         </div>
