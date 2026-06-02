@@ -95,14 +95,14 @@ export function ToolCard({
               </span>
             )}
           </div>
-          <p className="mt-1 line-clamp-4 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 line-clamp-4 h-20 text-sm text-zinc-600 dark:text-zinc-400">
             {display.description}
           </p>
         </div>
       </div>
 
-      {/* 하단 row — description 직후 최소 분리 (mt-2) */}
-      <div className="mt-2 flex items-center justify-between">
+      {/* 하단 row — description 직후 최소 분리 (mt-1) */}
+      <div className="mt-1 flex items-center justify-between">
         <VisitCounter slug={tool.slug} />
         <button
           type="button"
