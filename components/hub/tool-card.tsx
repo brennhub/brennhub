@@ -63,7 +63,7 @@ export function ToolCard({
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group relative flex h-52 w-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+      className="group relative flex w-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
     >
       <div className="absolute right-3 top-3 flex items-center gap-1">
         <LikeButton slug={tool.slug} />
@@ -96,15 +96,16 @@ export function ToolCard({
               </span>
             )}
           </div>
-          <p className="mt-1 line-clamp-4 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 line-clamp-3 h-[60px] text-sm leading-5 text-zinc-600 dark:text-zinc-400">
             {display.description}
           </p>
         </div>
       </div>
 
-      {/* 하단 row — mt-auto로 카드 바닥 고정. VisitCounter는 visit 없으면 null
-          반환하므로 button에 ml-auto로 우측 고정 (visit 유무와 무관). */}
-      <div className="mt-auto flex items-center pt-4">
+      {/* 하단 row — description 바로 다음 (mt-3 minimal gap). description 영역이
+          3줄 fixed라 모든 카드 content 합이 동일 → 카드 외곽 height 자동 통일.
+          VisitCounter null 반환 시 button에 ml-auto로 우측 고정. */}
+      <div className="mt-3 flex items-center">
         <VisitCounter slug={tool.slug} />
         <button
           type="button"
