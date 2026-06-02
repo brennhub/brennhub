@@ -63,7 +63,7 @@ export function ToolCard({
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group relative flex h-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+      className="group relative flex h-full w-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
     >
       <div className="absolute right-3 top-3 flex items-center gap-1">
         <LikeButton slug={tool.slug} />
@@ -102,10 +102,9 @@ export function ToolCard({
         </div>
       </div>
 
-      {/* 하단 row — mt-auto로 카드 바닥에 고정. description 길이와 무관하게
-          visit(좌)·feedback(우) 위치가 카드별로 동일. 부모가 flex-col + h-full,
-          li/grid가 auto-rows-fr로 row height 통일 → 카드 외곽 height도 동일. */}
-      <div className="mt-auto flex items-center justify-between pt-4">
+      {/* 하단 row — mt-auto로 카드 바닥 고정. VisitCounter는 visit 없으면 null
+          반환하므로 button에 ml-auto로 우측 고정 (visit 유무와 무관). */}
+      <div className="mt-auto flex items-center pt-4">
         <VisitCounter slug={tool.slug} />
         <button
           type="button"
@@ -116,7 +115,7 @@ export function ToolCard({
           }}
           title={t.feedback.cardIconTooltip}
           aria-label={t.feedback.cardIconTooltip}
-          className="-mr-1 flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          className="-mr-1 ml-auto flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
         >
           <MessageSquare className="size-4" />
         </button>
