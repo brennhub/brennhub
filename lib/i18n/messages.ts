@@ -25,7 +25,6 @@ export type Messages = {
     likeLoginRequired: string;
   };
   toolCommon: {
-    back: string;
     comingSoon: string;
     live: string;
     soon: string;
@@ -767,7 +766,6 @@ export type Messages = {
       feedback: string;
       releases: string;
       stats: string;
-      tools: string;
     };
     stats: {
       title: string;
@@ -855,7 +853,6 @@ export const messages: Record<Locale, Messages> = {
       likeLoginRequired: "좋아요는 로그인 후 가능합니다.",
     },
     toolCommon: {
-      back: "← BrennHub",
       comingSoon: "준비 중.",
       live: "사용 가능",
       soon: "준비 중",
@@ -1703,7 +1700,6 @@ export const messages: Record<Locale, Messages> = {
         feedback: "피드백",
         releases: "새 소식",
         stats: "통계",
-        tools: "도구 카드",
       },
       stats: {
         title: "도구 통계",
@@ -1836,7 +1832,6 @@ export const messages: Record<Locale, Messages> = {
       likeLoginRequired: "Sign in to like.",
     },
     toolCommon: {
-      back: "← BrennHub",
       comingSoon: "Coming soon.",
       live: "live",
       soon: "soon",
@@ -2686,7 +2681,6 @@ export const messages: Record<Locale, Messages> = {
         feedback: "Feedback",
         releases: "Releases",
         stats: "Stats",
-        tools: "Tool cards",
       },
       stats: {
         title: "Tool stats",

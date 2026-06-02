@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "header-hub-banner",
+    date: "2026-06-02",
+    tool: "site",
+    kind: "improved",
+    title: {
+      ko: "어디서나 위쪽 BrennHub을 눌러 홈으로",
+      en: "Tap BrennHub at the top to go home",
+    },
+    body: {
+      ko: "각 페이지의 '← BrennHub' 링크를 없애고, 위쪽 BrennHub을 누르면 홈으로 돌아오게 통일했어요.",
+      en: "Removed the per-page '← BrennHub' link. The BrennHub at the top now takes you home from anywhere.",
+    },
+  },
+  {
     id: "hub-card-admin",
     date: "2026-06-02",
     tool: "site",

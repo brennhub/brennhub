@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import Link from "next/link";
 import { useMessages } from "@/lib/i18n/provider";
 import {
   DEFAULT_FORMATION_ID,
@@ -116,15 +115,6 @@ export function LineupBuilderClientShell() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 pt-6 pb-20">
-      <div className="mb-4">
-        <Link
-          href="/"
-          className="text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-        >
-          {t.toolCommon.back}
-        </Link>
-      </div>
-
       <header className="mb-6">
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           {tl.title}

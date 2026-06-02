@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/tabs";
 import { ColorSchemeToggle } from "@/components/color-scheme-toggle";
 import { CurrencyToggle } from "@/components/currency-toggle";
@@ -15,13 +14,7 @@ export default function StockSimPage() {
   const t = useMessages();
   return (
     <main className="mx-auto w-full max-w-6xl px-6 pt-10 pb-20">
-      <Link
-        href="/"
-        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        {t.toolCommon.back}
-      </Link>
-      <header className="mt-6 mb-8">
+      <header className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           {t.stockSim.title}
         </h1>

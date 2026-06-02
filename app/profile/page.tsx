@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,12 +26,6 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <main className="mx-auto w-full max-w-2xl px-6 pt-10 pb-20">
-        <Link
-          href="/"
-          className="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-        >
-          {t.toolCommon.back}
-        </Link>
         <p className="mt-8 text-zinc-700 dark:text-zinc-300">
           {tp.loginRequired}
         </p>
@@ -90,12 +83,6 @@ export default function ProfilePage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-6 pt-10 pb-20">
-      <Link
-        href="/"
-        className="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-      >
-        {t.toolCommon.back}
-      </Link>
       <h1 className="mt-8 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
         {tp.title}
       </h1>
