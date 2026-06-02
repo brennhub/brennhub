@@ -260,9 +260,10 @@ export function ToolsAdminClient() {
         </div>
       </div>
 
-      {/* 단일 미리보기 카드 — 실제 ToolCard와 동일 layout */}
-      <div className="max-w-md">
-        <div className="group relative flex h-full flex-col rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      {/* 단일 미리보기 카드 — 실제 ToolCard와 동일 너비/padding으로 wrap 일치.
+          메인 hub max-w-5xl + lg:grid-cols-3 + gap-4 기준 카드 너비 ≈ 314px. */}
+      <div className="w-[314px]">
+        <div className="group relative flex h-full flex-col rounded-lg border border-zinc-200 bg-white p-6 pb-3 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-1 items-start gap-3 pr-20">
             <Icon
               aria-hidden
@@ -279,7 +280,7 @@ export function ToolsAdminClient() {
                 value={cur.description}
                 onChange={(e) => updateField("description", e.target.value)}
                 rows={3}
-                className="mt-1 w-full resize-none rounded border border-transparent bg-transparent text-sm text-zinc-600 hover:border-zinc-300 focus:border-zinc-400 focus:outline-none dark:text-zinc-400 dark:hover:border-zinc-700 dark:focus:border-zinc-600"
+                className="mt-1 w-full resize-none rounded border border-transparent bg-transparent pr-4 text-sm leading-5 text-zinc-600 hover:border-zinc-300 focus:border-zinc-400 focus:outline-none dark:text-zinc-400 dark:hover:border-zinc-700 dark:focus:border-zinc-600"
               />
             </div>
           </div>
