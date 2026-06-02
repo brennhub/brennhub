@@ -1,114 +1,221 @@
 /**
- * Pointer events 기반 드래그 정렬 hook — 의존성 0.
+ * Pointer events 기반 드래그 정렬 hook — 의존성 0. 카드 전체가 드래그 영역.
+ *
+ * 활성 조건 (클릭/스크롤과 충돌 차단):
+ *   - mouse: pointerdown 후 dx 또는 dy >= MOUSE_THRESHOLD_PX (5px)
+ *   - touch: pointerdown 후 TOUCH_LONG_PRESS_MS (300ms) 경과 (move 무관) — 이후 자유 이동
+ *
+ * 활성 전엔 navigation 정상(Link 클릭 OK), touch-action: auto (수직 스크롤 정상).
+ * 활성 후엔 navigation 차단 + touch-action: none.
  *
  * 사용:
- *   const sort = useSortable({ itemCount: list.length, onReorder });
- *   <li data-sort-index={i} className={sort.isDragging(i) ? "opacity-50" : ""}>
- *     ...
- *     <button {...sort.handleProps(i)} aria-label="...">
- *       <GripVertical />
- *     </button>
- *   </li>
- *
- * - 핸들 element에 touch-action: none (스크롤 충돌 방지 — 핸들 영역만).
- * - pointerdown 시 setPointerCapture로 동일 핸들에서 move/up 추적.
- * - elementFromPoint로 hover 된 sort item 인덱스 검출 → visual swap.
- * - pointerup 시 onReorder(from, to) 1회 호출 (D1 PUT 타이밍 = drop).
- * - drag 중인 카드 본문 클릭 navigation 방지 = pointerdown stopPropagation + preventDefault.
- *
- * 모바일: pointer events 통합 — touch/mouse 동일 코드. 핸들에만 touch-action: none이라
- * 긴 목록 스크롤은 카드 본문에서 정상.
+ *   const sort = useSortable({ itemCount, onReorder });
+ *   <li data-sort-index={i}><Link {...sort.itemProps(i)}>...</Link></li>
+ *   {sort.draggingIndex !== null && <Preview pos={sort.previewPos} ... />}
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+const MOUSE_THRESHOLD_PX = 5;
+const TOUCH_LONG_PRESS_MS = 300;
 
 type Options = {
   itemCount: number;
   onReorder: (fromIndex: number, toIndex: number) => void;
 };
 
-type HandleProps = {
+type ItemProps = {
   onPointerDown: (e: React.PointerEvent<HTMLElement>) => void;
   onPointerMove: (e: React.PointerEvent<HTMLElement>) => void;
   onPointerUp: (e: React.PointerEvent<HTMLElement>) => void;
   onPointerCancel: (e: React.PointerEvent<HTMLElement>) => void;
-  style: { touchAction: "none" };
+  onClickCapture: (e: React.MouseEvent<HTMLElement>) => void;
+  style: React.CSSProperties;
 };
+
+export type PreviewPos = { x: number; y: number } | null;
 
 export type SortableHandle = {
   draggingIndex: number | null;
   overIndex: number | null;
+  previewPos: PreviewPos;
   isDragging: (index: number) => boolean;
   isOver: (index: number) => boolean;
-  handleProps: (index: number) => HandleProps;
+  itemProps: (index: number) => ItemProps;
+};
+
+type PendingState = {
+  index: number;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  pointerType: string;
+  longPressTimer: number | null;
+  target: HTMLElement;
 };
 
 export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [previewPos, setPreviewPos] = useState<PreviewPos>(null);
+  // 드래그 활성됐었는지 — pointerup 후 click 차단 결정에 사용 (한 tick 유지).
+  const justDraggedRef = useRef(false);
+
+  const pendingRef = useRef<PendingState | null>(null);
+
+  const clearPending = useCallback(() => {
+    const p = pendingRef.current;
+    if (p?.longPressTimer !== null && p?.longPressTimer !== undefined) {
+      window.clearTimeout(p.longPressTimer);
+    }
+    pendingRef.current = null;
+  }, []);
+
+  const activate = useCallback(
+    (clientX: number, clientY: number) => {
+      const p = pendingRef.current;
+      if (!p) return;
+      try {
+        p.target.setPointerCapture(p.pointerId);
+      } catch {
+        // ignore
+      }
+      setDraggingIndex(p.index);
+      setOverIndex(p.index);
+      setPreviewPos({ x: clientX, y: clientY });
+    },
+    [],
+  );
 
   const handleDown = useCallback(
     (index: number) => (e: React.PointerEvent<HTMLElement>) => {
       if (itemCount <= 1) return;
-      e.preventDefault();
-      e.stopPropagation();
+      // 우측 버튼/멀티 터치 무시
+      if (e.button !== undefined && e.button !== 0) return;
+
       const target = e.currentTarget as HTMLElement;
-      try {
-        target.setPointerCapture(e.pointerId);
-      } catch {
-        // 캡처 실패 — pointer 추적은 document 레벨로 fallback (브라우저 기본)
+      const pointerType = e.pointerType || "mouse";
+
+      clearPending();
+
+      const pending: PendingState = {
+        index,
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        pointerType,
+        longPressTimer: null,
+        target,
+      };
+
+      // 터치 — long-press 타이머. 이동 무관, 시간 경과 시 활성.
+      if (pointerType === "touch") {
+        pending.longPressTimer = window.setTimeout(() => {
+          // 시작 좌표에서 활성 (그 사이 move가 없었으면)
+          if (pendingRef.current === pending && draggingIndex === null) {
+            activate(pending.startX, pending.startY);
+          }
+        }, TOUCH_LONG_PRESS_MS);
       }
-      setDraggingIndex(index);
-      setOverIndex(index);
+
+      pendingRef.current = pending;
     },
-    [itemCount],
+    [itemCount, draggingIndex, activate, clearPending],
   );
 
   const handleMove = useCallback(
     (e: React.PointerEvent<HTMLElement>) => {
-      if (draggingIndex === null) return;
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el) return;
-      const item = (el as Element).closest("[data-sort-index]");
-      if (!item) return;
-      const attr = (item as HTMLElement).dataset.sortIndex;
-      if (!attr) return;
-      const idx = parseInt(attr, 10);
-      if (Number.isNaN(idx) || idx < 0 || idx >= itemCount) return;
-      setOverIndex((prev) => (prev === idx ? prev : idx));
+      const p = pendingRef.current;
+      // 활성 후 — 프리뷰 좌표 update + over 검출.
+      if (draggingIndex !== null) {
+        setPreviewPos({ x: e.clientX, y: e.clientY });
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const item = (el as Element | null)?.closest("[data-sort-index]");
+        if (item) {
+          const attr = (item as HTMLElement).dataset.sortIndex;
+          if (attr !== undefined) {
+            const idx = parseInt(attr, 10);
+            if (!Number.isNaN(idx) && idx >= 0 && idx < itemCount) {
+              setOverIndex((prev) => (prev === idx ? prev : idx));
+            }
+          }
+        }
+        return;
+      }
+
+      // 활성 전 — mouse만 threshold 검사. touch는 long-press가 결정.
+      if (!p) return;
+      if (p.pointerType !== "mouse") return;
+      const dx = e.clientX - p.startX;
+      const dy = e.clientY - p.startY;
+      if (Math.abs(dx) >= MOUSE_THRESHOLD_PX || Math.abs(dy) >= MOUSE_THRESHOLD_PX) {
+        activate(e.clientX, e.clientY);
+      }
     },
-    [draggingIndex, itemCount],
+    [draggingIndex, itemCount, activate],
   );
 
   const handleUp = useCallback(
     (e: React.PointerEvent<HTMLElement>) => {
-      if (draggingIndex === null) return;
-      const target = e.currentTarget as HTMLElement;
-      try {
-        target.releasePointerCapture(e.pointerId);
-      } catch {
-        // ignore
+      const p = pendingRef.current;
+      if (draggingIndex !== null) {
+        // 드래그 활성 상태 — reorder.
+        const from = draggingIndex;
+        const to = overIndex;
+        try {
+          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
+        setDraggingIndex(null);
+        setOverIndex(null);
+        setPreviewPos(null);
+        clearPending();
+        justDraggedRef.current = true;
+        // 다음 tick에 클리어 — 같은 이벤트 chain의 click 차단 끝나면.
+        window.setTimeout(() => {
+          justDraggedRef.current = false;
+        }, 0);
+        if (to !== null && to !== from) {
+          onReorder(from, to);
+        }
+        return;
       }
-      const from = draggingIndex;
-      const to = overIndex;
-      setDraggingIndex(null);
-      setOverIndex(null);
-      if (to !== null && to !== from) {
-        onReorder(from, to);
-      }
+      // 비활성 — pending만 정리 (정상 click은 그대로 발생).
+      if (p) clearPending();
     },
-    [draggingIndex, overIndex, onReorder],
+    [draggingIndex, overIndex, onReorder, clearPending],
   );
 
-  const handleProps = useCallback(
-    (index: number): HandleProps => ({
+  // 페이지 떠나면 정리.
+  useEffect(() => {
+    return () => {
+      clearPending();
+    };
+  }, [clearPending]);
+
+  // 클릭 차단 — 드래그 직후 발생하는 click 이벤트는 navigation 막음.
+  const handleClickCapture = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    if (justDraggedRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, []);
+
+  const itemProps = useCallback(
+    (index: number): ItemProps => ({
       onPointerDown: handleDown(index),
       onPointerMove: handleMove,
       onPointerUp: handleUp,
       onPointerCancel: handleUp,
-      style: { touchAction: "none" as const },
+      onClickCapture: handleClickCapture,
+      style: {
+        // 활성 후엔 touch-action: none으로 스크롤 차단. 활성 전엔 정상.
+        touchAction: draggingIndex !== null ? "none" : undefined,
+        userSelect: draggingIndex !== null ? "none" : undefined,
+      },
     }),
-    [handleDown, handleMove, handleUp],
+    [handleDown, handleMove, handleUp, handleClickCapture, draggingIndex],
   );
 
   const isDragging = useCallback(
@@ -123,8 +230,9 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
   return {
     draggingIndex,
     overIndex,
+    previewPos,
     isDragging,
     isOver,
-    handleProps,
+    itemProps,
   };
 }
