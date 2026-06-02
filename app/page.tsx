@@ -17,7 +17,6 @@ import {
 import {
   fetchDisplays,
   resolveDisplay,
-  type CardSettings,
   type OverridesMap,
 } from "@/lib/hub/displays";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
@@ -28,11 +27,6 @@ import {
 } from "@/components/feedback-dialog";
 import { ToolCard } from "@/components/hub/tool-card";
 import { HubSearchInput } from "@/components/hub/search-input";
-
-const DEFAULT_SETTINGS: CardSettings = {
-  description_lines: 3,
-  padding_bottom: 40,
-};
 
 export default function Home() {
   const t = useMessages();
@@ -47,16 +41,13 @@ export default function Home() {
   const [favorites, setFavorites] = useState<HubFavorites>(emptyFavorites());
   const [query, setQuery] = useState("");
   const [overrides, setOverrides] = useState<OverridesMap>({});
-  const [cardSettings, setCardSettings] =
-    useState<CardSettings>(DEFAULT_SETTINGS);
 
-  // Hub displays (도구 override + 카드 설정) — mount 1회 fetch.
+  // Hub displays (도구 override) — mount 1회 fetch.
   useEffect(() => {
     let cancelled = false;
-    fetchDisplays().then(({ overrides: o, settings }) => {
+    fetchDisplays().then(({ overrides: o }) => {
       if (cancelled) return;
       setOverrides(o);
-      setCardSettings(settings);
     });
     return () => {
       cancelled = true;
@@ -233,7 +224,6 @@ export default function Home() {
                           tool={tool}
                           isFavorite={true}
                           display={displayFor(tool.slug)}
-                          descriptionLines={cardSettings.description_lines}
                           onToggleFavorite={handleToggleFavorite}
                           onOpenFeedback={openFeedback}
                         />
@@ -265,7 +255,6 @@ export default function Home() {
                             tool={tool}
                             isFavorite={isFavorite(favorites, tool.slug)}
                             display={displayFor(tool.slug)}
-                            descriptionLines={cardSettings.description_lines}
                             onToggleFavorite={handleToggleFavorite}
                             onOpenFeedback={openFeedback}
                           />
