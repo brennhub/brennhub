@@ -102,9 +102,10 @@ export function ToolCard({
         </div>
       </div>
 
-      {/* 하단 row — description 직후 (mt-0, 갭 없음). h-full + auto-rows-fr로
-          카드 height 통일, visit/feedback 아래 빈 공간이 카드 끝까지 */}
-      <div className="mt-0 flex items-center justify-between">
+      {/* 하단 row — mt-auto로 카드 바닥에 고정. description 길이와 무관하게
+          visit(좌)·feedback(우) 위치가 카드별로 동일. 부모가 flex-col + h-full,
+          li/grid가 auto-rows-fr로 row height 통일 → 카드 외곽 height도 동일. */}
+      <div className="mt-auto flex items-center justify-between pt-4">
         <VisitCounter slug={tool.slug} />
         <button
           type="button"

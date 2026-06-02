@@ -219,7 +219,7 @@ export default function Home() {
                   </h2>
                   <ul className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {favoriteTools.map((tool) => (
-                      <li key={tool.id}>
+                      <li key={tool.id} className="h-full">
                         <ToolCard
                           tool={tool}
                           isFavorite={true}
@@ -250,7 +250,7 @@ export default function Home() {
                     </h2>
                     <ul className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {list.map((tool) => (
-                        <li key={tool.id}>
+                        <li key={tool.id} className="h-full">
                           <ToolCard
                             tool={tool}
                             isFavorite={isFavorite(favorites, tool.slug)}

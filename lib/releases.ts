@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "hub-card-uniform-height",
+    date: "2026-06-02",
+    tool: "site",
+    kind: "fixed",
+    title: {
+      ko: "도구 카드 정렬 통일",
+      en: "Tool cards aligned consistently",
+    },
+    body: {
+      ko: "카드 높이를 도구별로 동일하게 맞추고, 방문 수(왼쪽)와 피드백 버튼(오른쪽)을 카드 하단에 고정했어요.",
+      en: "Cards now share the same height across tools, and the visit count (left) and feedback button (right) sit pinned to the bottom of each card.",
+    },
+  },
+  {
     id: "header-hub-banner",
     date: "2026-06-02",
     tool: "site",
