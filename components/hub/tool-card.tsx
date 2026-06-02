@@ -63,7 +63,7 @@ export function ToolCard({
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group relative flex h-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+      className="group relative flex flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
     >
       <div className="absolute right-3 top-3 flex items-center gap-1">
         <LikeButton slug={tool.slug} />
@@ -74,7 +74,7 @@ export function ToolCard({
         />
       </div>
 
-      <div className="flex flex-1 items-start gap-3 pr-20">
+      <div className="flex items-start gap-3 pr-20">
         <Icon
           aria-hidden
           className="mt-0.5 size-5 shrink-0 text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-200"
@@ -101,8 +101,8 @@ export function ToolCard({
         </div>
       </div>
 
-      {/* 하단 row — visit + feedback flow 안 (mt-3 자연 분리) */}
-      <div className="mt-3 flex items-center justify-between">
+      {/* 하단 row — description 직후 최소 분리 (mt-2) */}
+      <div className="mt-2 flex items-center justify-between">
         <VisitCounter slug={tool.slug} />
         <button
           type="button"
