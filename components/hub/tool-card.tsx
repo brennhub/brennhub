@@ -63,7 +63,7 @@ export function ToolCard({
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="group relative flex h-full w-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+      className="group relative flex h-52 w-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
     >
       <div className="absolute right-3 top-3 flex items-center gap-1">
         <LikeButton slug={tool.slug} />

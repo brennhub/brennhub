@@ -217,9 +217,9 @@ export default function Home() {
                     />
                     {t.hub.favoritesHeading}
                   </h2>
-                  <ul className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {favoriteTools.map((tool) => (
-                      <li key={tool.id} className="flex h-full">
+                      <li key={tool.id}>
                         <ToolCard
                           tool={tool}
                           isFavorite={true}
@@ -248,9 +248,9 @@ export default function Home() {
                     >
                       {t.hub.categories[cat]}
                     </h2>
-                    <ul className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {list.map((tool) => (
-                        <li key={tool.id} className="flex h-full">
+                        <li key={tool.id}>
                           <ToolCard
                             tool={tool}
                             isFavorite={isFavorite(favorites, tool.slug)}
