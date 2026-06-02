@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMessages } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/components/auth/user-provider";
@@ -474,15 +473,6 @@ export function MazeClientShell({ sharedProject }: Props = {}) {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 pt-6 pb-20">
-      <div className="mb-4">
-        <Link
-          href="/"
-          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          {t.toolCommon.back}
-        </Link>
-      </div>
-
       <header className="mb-6">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           {tm.title}

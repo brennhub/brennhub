@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMessages } from "@/lib/i18n/provider";
 
 export default function PrivacyPage() {
@@ -10,14 +9,7 @@ export default function PrivacyPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 pt-10 pb-20">
-      <Link
-        href="/"
-        className="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-      >
-        {t.toolCommon.back}
-      </Link>
-
-      <header className="mt-8">
+      <header>
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           {p.title}
         </h1>
