@@ -96,7 +96,7 @@ export function ToolCard({
               </span>
             )}
           </div>
-          <p className="mt-1 line-clamp-3 h-[60px] text-sm leading-5 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 line-clamp-3 h-[60px] pr-4 text-sm leading-5 text-zinc-600 dark:text-zinc-400">
             {display.description}
           </p>
         </div>
