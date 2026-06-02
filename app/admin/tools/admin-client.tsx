@@ -90,9 +90,12 @@ export function ToolsAdminClient() {
           const slugState: Partial<ToolState> = {};
           for (const locale of LOCALES) {
             const row = map.get(`${tool.slug}:${locale}`);
+            const def = fileDefault(tool.slug, locale);
+            // override 있으면 그 값, 없으면 파일 기본값을 input value로 채워서
+            // 사용자가 그 위에 바로 편집 가능. dirty는 false라 저장 비활성.
             slugState[locale] = {
-              name: row?.name ?? "",
-              description: row?.description ?? "",
+              name: row?.name ?? def.name,
+              description: row?.description ?? def.description,
               isOverride: !!row,
               dirty: false,
             };
@@ -139,7 +142,10 @@ export function ToolsAdminClient() {
     try {
       const name = cur.name.trim();
       const desc = cur.description.trim();
-      const noOverride = !name && !desc;
+      const def = fileDefault(selectedSlug, activeLocale);
+      // 비어있거나 파일 기본값과 동일하면 override 불요 → DELETE.
+      const noOverride =
+        (!name && !desc) || (name === def.name && desc === def.description);
       const res = await fetch(
         `/api/admin/tool-overrides/${encodeURIComponent(selectedSlug)}?locale=${activeLocale}`,
         noOverride
@@ -157,7 +163,7 @@ export function ToolsAdminClient() {
           [selectedSlug]: {
             ...prev[selectedSlug],
             [activeLocale]: noOverride
-              ? { name: "", description: "", isOverride: false, dirty: false }
+              ? { name: def.name, description: def.description, isOverride: false, dirty: false }
               : { ...prev[selectedSlug][activeLocale], isOverride: true, dirty: false },
           },
         }));
@@ -168,13 +174,14 @@ export function ToolsAdminClient() {
   }, [selectedSlug, activeLocale, state]);
 
   const reset = useCallback(() => {
+    const def = fileDefault(selectedSlug, activeLocale);
     setState((prev) => ({
       ...prev,
       [selectedSlug]: {
         ...prev[selectedSlug],
         [activeLocale]: {
-          name: "",
-          description: "",
+          name: def.name,
+          description: def.description,
           isOverride: prev[selectedSlug][activeLocale].isOverride,
           dirty: true,
         },
@@ -198,7 +205,7 @@ export function ToolsAdminClient() {
     );
   }
   if (!selectedTool) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">도구가 없습니다.</p>;
+    return <p className="text-sm text-zinc-500 dark:text-zinc-400">서비스가 없습니다.</p>;
   }
 
   const cur = state[selectedSlug]?.[activeLocale];
@@ -211,17 +218,17 @@ export function ToolsAdminClient() {
     <div>
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          도구 카드 편집
+          카드 편집
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          미리보기 카드 안에서 이름·설명을 직접 다듬으세요. placeholder = 파일 기본값.
+          미리보기 카드 안에서 이름·설명을 직접 수정하세요.
         </p>
       </header>
 
       {/* 컨트롤 */}
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm">
-          <span className="text-zinc-600 dark:text-zinc-400">도구</span>
+          <span className="text-zinc-600 dark:text-zinc-400">서비스</span>
           <select
             value={selectedSlug}
             onChange={(e) => setSelectedSlug(e.target.value)}
@@ -251,15 +258,6 @@ export function ToolsAdminClient() {
             </button>
           ))}
         </div>
-        <span
-          className={
-            cur.isOverride
-              ? "rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-              : "rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-          }
-        >
-          {cur.isOverride ? "수정됨" : "기본값"}
-        </span>
       </div>
 
       {/* 단일 미리보기 카드 — 실제 ToolCard와 동일 layout */}
@@ -275,15 +273,13 @@ export function ToolsAdminClient() {
                 type="text"
                 value={cur.name}
                 onChange={(e) => updateField("name", e.target.value)}
-                placeholder={def.name}
-                className="w-full truncate rounded border border-transparent bg-transparent text-lg font-medium text-zinc-900 placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-400 focus:outline-none dark:text-zinc-50 dark:placeholder:text-zinc-600 dark:hover:border-zinc-700 dark:focus:border-zinc-600"
+                className="w-full truncate rounded border border-transparent bg-transparent text-lg font-medium text-zinc-900 hover:border-zinc-300 focus:border-zinc-400 focus:outline-none dark:text-zinc-50 dark:hover:border-zinc-700 dark:focus:border-zinc-600"
               />
               <textarea
                 value={cur.description}
                 onChange={(e) => updateField("description", e.target.value)}
-                placeholder={def.description}
-                rows={4}
-                className="mt-1 w-full resize-none rounded border border-transparent bg-transparent text-sm text-zinc-600 placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-400 focus:outline-none dark:text-zinc-400 dark:placeholder:text-zinc-600 dark:hover:border-zinc-700 dark:focus:border-zinc-600"
+                rows={3}
+                className="mt-1 w-full resize-none rounded border border-transparent bg-transparent text-sm text-zinc-600 hover:border-zinc-300 focus:border-zinc-400 focus:outline-none dark:text-zinc-400 dark:hover:border-zinc-700 dark:focus:border-zinc-600"
               />
             </div>
           </div>
@@ -306,13 +302,13 @@ export function ToolsAdminClient() {
         >
           {saving ? "저장 중…" : "저장"}
         </button>
-        {cur.isOverride && (
+        {(cur.dirty || cur.isOverride) && (
           <button
             type="button"
             onClick={reset}
             className="text-sm text-zinc-500 underline-offset-4 hover:text-zinc-700 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
           >
-            기본값 복귀
+            되돌리기
           </button>
         )}
       </div>
