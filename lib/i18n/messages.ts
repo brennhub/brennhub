@@ -20,6 +20,7 @@ export type Messages = {
     favoriteAddAria: string;
     favoriteRemoveAria: string;
     favoriteLoginRequired: string;
+    dragHandleAria: string;
     likeAddAria: string;
     likeRemoveAria: string;
     likeLoginRequired: string;
@@ -849,6 +850,7 @@ export const messages: Record<Locale, Messages> = {
       favoriteAddAria: "즐겨찾기에 추가",
       favoriteRemoveAria: "즐겨찾기에서 제거",
       favoriteLoginRequired: "즐겨찾기는 로그인 후 가능합니다.",
+      dragHandleAria: "드래그해서 순서 바꾸기",
       likeAddAria: "좋아요",
       likeRemoveAria: "좋아요 취소",
       likeLoginRequired: "좋아요는 로그인 후 가능합니다.",
@@ -1829,6 +1831,7 @@ export const messages: Record<Locale, Messages> = {
       favoriteAddAria: "Add to favorites",
       favoriteRemoveAria: "Remove from favorites",
       favoriteLoginRequired: "Sign in to use favorites.",
+      dragHandleAria: "Drag to reorder",
       likeAddAria: "Like",
       likeRemoveAria: "Unlike",
       likeLoginRequired: "Sign in to like.",
