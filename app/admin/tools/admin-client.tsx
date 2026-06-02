@@ -248,8 +248,8 @@ export function ToolsAdminClient() {
           메인 hub max-w-5xl + lg:grid-cols-3 + gap-4 기준 카드 너비 ≈ 314px. */}
       <div className="w-[314px]">
         <div className="group relative flex flex-col rounded-lg border border-zinc-200 bg-white p-6 pb-3 dark:border-zinc-800 dark:bg-zinc-900">
-          {/* 외부 flex pr-20: 메인 카드와 동일 — title·description 둘 다 좁은 너비. */}
-          <div className="flex items-start gap-3 pr-20">
+          {/* pr-20은 input(title)에만 — 메인 ToolCard와 동일. description은 wider. */}
+          <div className="flex items-start gap-3">
             <Icon
               aria-hidden
               className="mt-0.5 size-5 shrink-0 text-zinc-500 dark:text-zinc-400"
@@ -259,7 +259,7 @@ export function ToolsAdminClient() {
                 type="text"
                 value={cur.name}
                 onChange={(e) => updateField("name", e.target.value)}
-                className="w-full truncate rounded border border-transparent bg-transparent text-lg font-medium text-zinc-900 hover:border-zinc-300 focus:border-zinc-400 focus:outline-none dark:text-zinc-50 dark:hover:border-zinc-700 dark:focus:border-zinc-600"
+                className="w-full truncate rounded border border-transparent bg-transparent pr-20 text-lg font-medium text-zinc-900 hover:border-zinc-300 focus:border-zinc-400 focus:outline-none dark:text-zinc-50 dark:hover:border-zinc-700 dark:focus:border-zinc-600"
               />
               <textarea
                 value={cur.description}
