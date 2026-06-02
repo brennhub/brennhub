@@ -15,4 +15,5 @@ export const adminMenu: AdminMenuItem[] = [
   { path: "/admin/feedback", labelKey: "feedback" },
   { path: "/admin/releases", labelKey: "releases" },
   { path: "/admin/stats", labelKey: "stats" },
+  { path: "/admin/tools", labelKey: "tools" },
 ];
