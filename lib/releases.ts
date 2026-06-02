@@ -37,12 +37,12 @@ export const releases: Release[] = [
     tool: "site",
     kind: "improved",
     title: {
-      ko: "카드 텍스트·디자인 다듬기",
-      en: "Card text & design tuning",
+      ko: "카드 텍스트 다듬기 + 자연스러운 여백",
+      en: "Card text tuning + tidier spacing",
     },
     body: {
-      ko: "도구 카드의 이름·설명과 카드 세로 여백을 운영자가 직접 다듬을 수 있게 되었어요. 너무 잘리거나 비어 보이는 카드가 줄어듭니다.",
-      en: "Tool names, descriptions, and card spacing can now be tuned in admin — fewer awkwardly cropped or empty-looking cards.",
+      ko: "도구 카드의 이름·설명을 운영자가 직접 다듬을 수 있고, 전체 카드의 설명 줄 수를 한 곳에서 조절할 수 있어요. 카드 하단도 더 깔끔해졌습니다.",
+      en: "Tool names and descriptions can be tuned in admin, plus a single control for description line count. Card footers look tidier too.",
     },
   },
   {

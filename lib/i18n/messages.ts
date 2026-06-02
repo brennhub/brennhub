@@ -768,7 +768,6 @@ export type Messages = {
       releases: string;
       stats: string;
       tools: string;
-      hubCard: string;
     };
     stats: {
       title: string;
@@ -1704,8 +1703,7 @@ export const messages: Record<Locale, Messages> = {
         feedback: "피드백",
         releases: "새 소식",
         stats: "통계",
-        tools: "도구 텍스트",
-        hubCard: "카드 디자인",
+        tools: "도구 카드",
       },
       stats: {
         title: "도구 통계",
@@ -2688,8 +2686,7 @@ export const messages: Record<Locale, Messages> = {
         feedback: "Feedback",
         releases: "Releases",
         stats: "Stats",
-        tools: "Tool text",
-        hubCard: "Card design",
+        tools: "Tool cards",
       },
       stats: {
         title: "Tool stats",
