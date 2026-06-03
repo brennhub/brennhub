@@ -171,7 +171,7 @@ export default function Home() {
           {showChips && (
             <nav
               aria-label="categories"
-              className="mb-10 flex flex-wrap gap-2 border-b border-zinc-200 pb-4 dark:border-zinc-800"
+              className="sticky top-0 z-20 -mx-6 mb-10 flex flex-wrap gap-2 border-b border-zinc-200 bg-zinc-50/95 px-6 pb-3 pt-3 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95"
             >
               <a
                 href="#top"
