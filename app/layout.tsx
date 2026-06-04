@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import "./globals.css";
@@ -15,6 +16,9 @@ import { LoginButtonClient } from "@/components/auth/login-button-client";
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
 import { UserProvider } from "@/components/auth/user-provider";
 import { SiteFooter } from "@/components/site-footer";
+import { ToolFavoriteButton } from "@/components/hub/tool-favorite-button";
+import { ToolLikeButton } from "@/components/hub/tool-like-button";
+import { VisitTracker } from "@/components/hub/visit-tracker";
 import { DEFAULT_LOCALE } from "@/lib/i18n/types";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { getUserFromHeaders } from "@/lib/auth/session";
@@ -106,15 +110,26 @@ export default async function RootLayout({
             <ColorSchemeProvider>
               <CurrencyProvider>
                 <UserProvider user={user}>
-                  <header className="flex justify-end items-center gap-3 px-4 pt-4 sm:px-6">
-                    <ThemeToggle />
-                    <LocaleToggle />
-                    <LoginButtonClient />
+                  <header className="flex justify-between items-center gap-3 px-4 pt-4 sm:px-6">
+                    <Link
+                      href="/"
+                      className="text-base font-semibold tracking-tight text-zinc-900 transition-colors hover:text-zinc-600 dark:text-zinc-50 dark:hover:text-zinc-300"
+                    >
+                      BrennHub
+                    </Link>
+                    <div className="flex items-center gap-3">
+                      <ThemeToggle />
+                      <LocaleToggle />
+                      <LoginButtonClient />
+                    </div>
                   </header>
                   <Suspense fallback={null}>
                     <AuthErrorToast />
                   </Suspense>
                   {children}
+                  <VisitTracker />
+                  <ToolLikeButton />
+                  <ToolFavoriteButton />
                   <FeedbackButton />
                   <SiteFooter />
                 </UserProvider>

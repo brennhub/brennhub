@@ -5,9 +5,27 @@ export type Messages = {
     title: string;
     subtitle: string;
     empty: string;
+    allCategory: string;
+    categories: {
+      utility: string;
+      finance: string;
+      health: string;
+      lifestyle: string;
+      entertainment: string;
+    };
+    newBadge: string;
+    searchPlaceholder: string;
+    searchEmpty: string;
+    favoritesHeading: string;
+    favoriteAddAria: string;
+    favoriteRemoveAria: string;
+    favoriteLoginRequired: string;
+    dragHandleAria: string;
+    likeAddAria: string;
+    likeRemoveAria: string;
+    likeLoginRequired: string;
   };
   toolCommon: {
-    back: string;
     comingSoon: string;
     live: string;
     soon: string;
@@ -457,6 +475,25 @@ export type Messages = {
     unmappedNote: string;
     goToSlots: string;
   };
+  shooter: {
+    title: string;
+    description: string;
+    startButton: string;
+    scoreLabel: string;
+    livesLabel: string;
+    highScoreLabel: string;
+    newHighScore: string;
+    gameOverTitle: string;
+    restartButton: string;
+    controlsHintDesktop: string;
+    controlsHintMobile: string;
+    difficultyLabel: string;
+    difficultyEasy: string;
+    difficultyNormal: string;
+    difficultyHard: string;
+    soundMute: string;
+    soundUnmute: string;
+  };
   maze: {
     title: string;
     description: string;
@@ -547,6 +584,68 @@ export type Messages = {
     shareNotFoundMessage: string;
     sharedBuildOwn: string;
   };
+  tagIt: {
+    title: string;
+    description: string;
+    uploadTitle: string;
+    uploadHint: string;
+    uploadButton: string;
+    limitNotOffice: string;
+    limitFiles: string;
+    limitFileSize: string;
+    limitTotalSize: string;
+    modeLabel: string;
+    modeAuto: string;
+    modeManual: string;
+    modeAutoHint: string;
+    modeManualHint: string;
+    workspaceTitle: string;
+    workspaceEmpty: string;
+    reextracted: string;
+    advancedTitle: string;
+    strengthLabel: string;
+    strengthHint: string;
+    strengthNames: readonly [string, string, string, string, string];
+    strengthDescs: readonly [string, string, string, string, string];
+    scopeLabel: string;
+    scopeBody: string;
+    scopeTables: string;
+    minFreqLabel: string;
+    minFreqHint: string;
+    commonTrayTitle: string;
+    commonTrayHint: string;
+    commonTrayPlaceholder: string;
+    commonTrayEmpty: string;
+    statusPending: string;
+    statusProcessing: string;
+    statusDone: string;
+    statusError: string;
+    errorParse: string;
+    addPlaceholder: string;
+    showMore: string;
+    showLess: string;
+    expandAll: string;
+    download: string;
+    downloadAll: string;
+    emptyCanvas: string;
+    overwriteNote: string;
+    chipSelect: string;
+    chipDelete: string;
+    freqTitle: string;
+    probTitle: string;
+    sectionSelected: string;
+    sectionCandidate: string;
+    selectedEmpty: string;
+    candidateAllAdded: string;
+    searchPlaceholder: string;
+    searchEmpty: string;
+    counter: string;
+    selectAll: string;
+    deselectAll: string;
+    selectTop: string;
+    topNAria: string;
+    capWarning: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -561,6 +660,8 @@ export type Messages = {
     toolLineupBuilder: string;
     toolLanguageMaker: string;
     toolMaze: string;
+    toolShooter: string;
+    toolTagIt: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -624,6 +725,17 @@ export type Messages = {
   };
   footer: {
     privacy: string;
+    releases: string;
+  };
+  releases: {
+    title: string;
+    subtitle: string;
+    toolSite: string;
+    kind: {
+      new: string;
+      improved: string;
+      fixed: string;
+    };
   };
   profile: {
     title: string;
@@ -653,6 +765,65 @@ export type Messages = {
     menu: {
       dashboard: string;
       feedback: string;
+      releases: string;
+      stats: string;
+      tools: string;
+    };
+    stats: {
+      title: string;
+      columnTool: string;
+      columnLikes: string;
+      columnVisits30d: string;
+      columnVisitsAll: string;
+      emptyState: string;
+    };
+    releases: {
+      title: string;
+      countLabel: string;
+      addNew: string;
+      edit: string;
+      delete: string;
+      restore: string;
+      cancel: string;
+      save: string;
+      saving: string;
+      deleting: string;
+      sourceFile: string;
+      sourceD1: string;
+      tombstoneBadge: string;
+      deletedHint: string;
+      formTitleAdd: string;
+      formTitleEdit: string;
+      idLabel: string;
+      idHint: string;
+      idPlaceholder: string;
+      dateLabel: string;
+      toolLabel: string;
+      toolHint: string;
+      toolPlaceholder: string;
+      kindLabel: string;
+      kindNone: string;
+      kindNew: string;
+      kindImproved: string;
+      kindFixed: string;
+      titleKoLabel: string;
+      titleEnLabel: string;
+      bodyKoLabel: string;
+      bodyEnLabel: string;
+      colDate: string;
+      colTool: string;
+      colKind: string;
+      colTitle: string;
+      colSource: string;
+      colActions: string;
+      empty: string;
+      errorLoad: string;
+      errorSave: string;
+      errorDelete: string;
+      confirmDelete: string;
+      confirmDeleteFile: string;
+      requiredFields: string;
+      invalidDate: string;
     };
   };
   tools: Record<string, { name: string; description: string }>;
@@ -664,9 +835,27 @@ export const messages: Record<Locale, Messages> = {
       title: "BrennHub",
       subtitle: "indie tools by brenn — small, sharp, opinionated.",
       empty: "도구 준비 중. 공장이 예열 중입니다.",
+      allCategory: "전체",
+      categories: {
+        utility: "유틸리티",
+        finance: "파이낸스",
+        health: "건강",
+        lifestyle: "라이프",
+        entertainment: "엔터테인먼트",
+      },
+      newBadge: "NEW",
+      searchPlaceholder: "도구 검색…",
+      searchEmpty: "검색 결과가 없습니다.",
+      favoritesHeading: "즐겨찾기",
+      favoriteAddAria: "즐겨찾기에 추가",
+      favoriteRemoveAria: "즐겨찾기에서 제거",
+      favoriteLoginRequired: "즐겨찾기는 로그인 후 가능합니다.",
+      dragHandleAria: "드래그해서 순서 바꾸기",
+      likeAddAria: "좋아요",
+      likeRemoveAria: "좋아요 취소",
+      likeLoginRequired: "좋아요는 로그인 후 가능합니다.",
     },
     toolCommon: {
-      back: "← BrennHub",
       comingSoon: "준비 중.",
       live: "사용 가능",
       soon: "준비 중",
@@ -1245,6 +1434,96 @@ export const messages: Record<Locale, Messages> = {
       winTitle: "탈출 성공!",
       winMessage: "도착점에 도달했습니다.",
     },
+    shooter: {
+      title: "아케이드 슈터",
+      description: "우주 함대를 격추하는 세로 스크롤 슈팅 게임",
+      startButton: "시작",
+      scoreLabel: "점수",
+      livesLabel: "생명",
+      highScoreLabel: "최고점",
+      newHighScore: "신기록",
+      gameOverTitle: "게임 오버",
+      restartButton: "다시 시작",
+      controlsHintDesktop: "방향키·WASD로 4방향 이동 / 스페이스 발사",
+      controlsHintMobile: "화면 좌우를 눌러 이동 (자동 발사)",
+      difficultyLabel: "난이도",
+      difficultyEasy: "쉬움",
+      difficultyNormal: "보통",
+      difficultyHard: "어려움",
+      soundMute: "소리 끄기",
+      soundUnmute: "소리 켜기",
+    },
+    tagIt: {
+      title: "태그잇",
+      description:
+        "오피스 문서(Word·Excel·PowerPoint)를 올리면 본문에서 핵심 키워드를 칩으로 뽑아 줍니다. 고르고 다듬은 태그를 문서 속성에 기록해 다시 내려받으세요. 파일은 브라우저 밖으로 나가지 않습니다.",
+      uploadTitle: "여기에 오피스 문서를 끌어다 놓으세요",
+      uploadHint: "한 번에 최대 5개 · 개당 8MB · 총 15MB · .docx / .xlsx / .pptx",
+      uploadButton: "파일 선택",
+      limitNotOffice: "{name}: .docx / .xlsx / .pptx 만 지원합니다",
+      limitFiles: "최대 {max}개 파일까지만 올릴 수 있습니다",
+      limitFileSize: "{name}: 개당 {max}를 초과했습니다",
+      limitTotalSize: "총 용량 {max}를 초과했습니다",
+      modeLabel: "추출 모드",
+      modeAuto: "자동",
+      modeManual: "수동",
+      modeAutoHint: "본문을 읽어 키워드 칩을 자동으로 뽑아냅니다.",
+      modeManualHint: "빈 캔버스에서 직접 태그를 입력합니다.",
+      workspaceTitle: "추출 결과",
+      workspaceEmpty: "위에서 오피스 문서를 올리면 여기에 키워드 칩이 나타납니다.",
+      reextracted: "갱신됨",
+      advancedTitle: "고급 옵션",
+      strengthLabel: "필터 강도",
+      strengthHint: "왼쪽=관대(다 보여줌) · 오른쪽=엄격(확실한 명사만)",
+      strengthNames: ["관대", "약하게", "균형", "강하게", "엄격"],
+      strengthDescs: [
+        "기호 섞인 토큰만 거릅니다.",
+        "+ 숫자·영문 섞인 단편(5px, F1)도 거릅니다.",
+        "+ 조사·활용형·세는단위까지 거릅니다 (기본).",
+        "+ 약어 감점 강화 + 드물게 나온 단어를 거릅니다.",
+        "+ 약어도 제외하고 확실한 명사만 남깁니다.",
+      ],
+      scopeLabel: "읽기 범위",
+      scopeBody: "본문 (항상)",
+      scopeTables: "표 안 텍스트",
+      minFreqLabel: "최소 등장 횟수",
+      minFreqHint: "이 횟수보다 적게 나온 단어는 제외합니다.",
+      commonTrayTitle: "공통 태그",
+      commonTrayHint: "여기 입력한 태그는 올린 모든 파일에 함께 적용됩니다.",
+      commonTrayPlaceholder: "모든 파일에 넣을 태그 입력 후 Enter",
+      commonTrayEmpty: "아직 공통 태그가 없습니다.",
+      statusPending: "대기 중",
+      statusProcessing: "읽는 중…",
+      statusDone: "완료",
+      statusError: "실패",
+      errorParse:
+        "파일을 읽지 못했습니다. 올바른 .docx / .xlsx / .pptx인지 확인해 주세요.",
+      addPlaceholder: "태그 직접 입력 후 Enter",
+      showMore: "+{n}개 더보기",
+      showLess: "접기",
+      expandAll: "전체 펼치기 ({n})",
+      download: "다운로드",
+      downloadAll: "전체 다운로드 (.zip)",
+      emptyCanvas: "추출된 칩이 여기에 표시됩니다. 직접 입력해도 됩니다.",
+      overwriteNote:
+        "다운로드 파일은 원본과 같은 이름입니다. 덮어쓰지 않도록 주의하세요.",
+      chipSelect: "태그 채택/해제",
+      chipDelete: "삭제",
+      freqTitle: "{n}회 등장",
+      probTitle: "명사 신뢰도 {p}%",
+      sectionSelected: "선택한 태그",
+      sectionCandidate: "후보",
+      selectedEmpty: "아래 후보에서 태그를 골라 담으세요.",
+      candidateAllAdded: "모든 후보를 담았어요.",
+      searchPlaceholder: "후보 칩 검색…",
+      searchEmpty: "검색과 일치하는 후보가 없어요.",
+      counter: "선택 {sel}/{max} · 후보 {cand}",
+      selectAll: "전체 선택",
+      deselectAll: "전체 해제",
+      selectTop: "상위 {n} 담기",
+      topNAria: "상위 몇 개를 담을지",
+      capWarning: "파일당 태그는 최대 {max}개입니다. 상위 {max}개만 담았어요.",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -1259,6 +1538,8 @@ export const messages: Record<Locale, Messages> = {
       toolLineupBuilder: "축구 베스트 일레븐 만들기",
       toolLanguageMaker: "언어 창조기",
       toolMaze: "픽셀 미로 만들기",
+      toolShooter: "아케이드 슈터",
+      toolTagIt: "태그잇",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -1379,6 +1660,17 @@ export const messages: Record<Locale, Messages> = {
     },
     footer: {
       privacy: "개인정보 처리방침",
+      releases: "새 소식",
+    },
+    releases: {
+      title: "새 소식",
+      subtitle: "BrennHub의 최근 업데이트를 한눈에 보세요.",
+      toolSite: "사이트",
+      kind: {
+        new: "신규",
+        improved: "개선",
+        fixed: "수정",
+      },
     },
     profile: {
       title: "내 프로필",
@@ -1409,6 +1701,68 @@ export const messages: Record<Locale, Messages> = {
       menu: {
         dashboard: "대시보드",
         feedback: "피드백",
+        releases: "새 소식",
+        stats: "통계",
+        tools: "카드 편집",
+      },
+      stats: {
+        title: "도구 통계",
+        columnTool: "도구",
+        columnLikes: "좋아요",
+        columnVisits30d: "30일 방문",
+        columnVisitsAll: "전체 방문",
+        emptyState: "아직 집계된 도구가 없습니다.",
+      },
+      releases: {
+        title: "새 소식 관리",
+        countLabel: "건",
+        addNew: "+ 항목 추가",
+        edit: "편집",
+        delete: "삭제",
+        restore: "복원",
+        cancel: "취소",
+        save: "저장",
+        saving: "저장 중…",
+        deleting: "삭제 중…",
+        sourceFile: "파일",
+        sourceD1: "관리자",
+        tombstoneBadge: "숨김",
+        deletedHint:
+          "파일 항목이 숨김 처리되어 공개 페이지에 노출되지 않습니다.",
+        formTitleAdd: "새 항목 추가",
+        formTitleEdit: "항목 편집",
+        idLabel: "ID (안정 매칭 키)",
+        idHint:
+          "한 번 정한 ID는 변경 금지. 변경 시 기존 오버라이드가 분리됩니다.",
+        idPlaceholder: "예: my-tool-launch",
+        dateLabel: "날짜 (YYYY-MM-DD)",
+        toolLabel: "도구",
+        toolHint: "tools-registry slug 또는 'site'(전역)",
+        toolPlaceholder: "예: tag-it 또는 site",
+        kindLabel: "종류",
+        kindNone: "지정 안 함",
+        kindNew: "신규",
+        kindImproved: "개선",
+        kindFixed: "수정",
+        titleKoLabel: "제목 (한국어)",
+        titleEnLabel: "제목 (English)",
+        bodyKoLabel: "본문 (한국어)",
+        bodyEnLabel: "본문 (English)",
+        colDate: "날짜",
+        colTool: "도구",
+        colKind: "종류",
+        colTitle: "제목",
+        colSource: "출처",
+        colActions: "작업",
+        empty: "항목이 없습니다.",
+        errorLoad: "목록을 불러오지 못했습니다.",
+        errorSave: "저장에 실패했습니다.",
+        errorDelete: "삭제에 실패했습니다.",
+        confirmDelete: "이 항목을 삭제하시겠습니까?",
+        confirmDeleteFile:
+          "이 항목은 파일에 등록된 항목입니다. 삭제 시 공개 페이지에서 숨김 처리됩니다. 계속할까요?",
+        requiredFields: "ID, 날짜, 도구, 제목, 본문은 모두 필수입니다.",
+        invalidDate: "날짜는 YYYY-MM-DD 형식이어야 합니다.",
       },
     },
     tools: {
@@ -1446,6 +1800,15 @@ export const messages: Record<Locale, Messages> = {
         name: "픽셀 미로 만들기",
         description: "픽셀 격자로 미로를 설계하고 풀이하며 링크로 공유",
       },
+      shooter: {
+        name: "아케이드 슈터",
+        description: "우주 함대를 격추하는 세로 스크롤 슈팅 게임",
+      },
+      "tag-it": {
+        name: "태그잇",
+        description:
+          "오피스 문서(Word·Excel·PowerPoint)에서 핵심 키워드를 뽑아 칩으로 다듬고 문서 속성에 기록 — 전부 브라우저 안에서",
+      },
     },
   },
   en: {
@@ -1453,9 +1816,27 @@ export const messages: Record<Locale, Messages> = {
       title: "BrennHub",
       subtitle: "indie tools by brenn — small, sharp, opinionated.",
       empty: "No tools yet. The factory is warming up.",
+      allCategory: "All",
+      categories: {
+        utility: "Utility",
+        finance: "Finance",
+        health: "Health",
+        lifestyle: "Lifestyle",
+        entertainment: "Entertainment",
+      },
+      newBadge: "NEW",
+      searchPlaceholder: "Search tools…",
+      searchEmpty: "No matching tools.",
+      favoritesHeading: "Favorites",
+      favoriteAddAria: "Add to favorites",
+      favoriteRemoveAria: "Remove from favorites",
+      favoriteLoginRequired: "Sign in to use favorites.",
+      dragHandleAria: "Drag to reorder",
+      likeAddAria: "Like",
+      likeRemoveAria: "Unlike",
+      likeLoginRequired: "Sign in to like.",
     },
     toolCommon: {
-      back: "← BrennHub",
       comingSoon: "Coming soon.",
       live: "live",
       soon: "soon",
@@ -2036,6 +2417,97 @@ export const messages: Record<Locale, Messages> = {
       winTitle: "Escaped!",
       winMessage: "You reached the goal.",
     },
+    shooter: {
+      title: "Arcade Shooter",
+      description: "Top-down arcade shoot-'em-up — blast the alien fleet",
+      startButton: "Start",
+      scoreLabel: "Score",
+      livesLabel: "Lives",
+      highScoreLabel: "Best",
+      newHighScore: "New best",
+      gameOverTitle: "Game Over",
+      restartButton: "Restart",
+      controlsHintDesktop: "Arrow keys or WASD to move / Space to fire",
+      controlsHintMobile: "Tap and hold left/right (auto-fire)",
+      difficultyLabel: "Difficulty",
+      difficultyEasy: "Easy",
+      difficultyNormal: "Normal",
+      difficultyHard: "Hard",
+      soundMute: "Mute",
+      soundUnmute: "Unmute",
+    },
+    tagIt: {
+      title: "Tag-it",
+      description:
+        "Upload an Office document (Word, Excel, PowerPoint) and it pulls key terms from the text into chips. Curate the tags, write them into the document properties, and download it again. Files never leave your browser.",
+      uploadTitle: "Drop your Office documents here",
+      uploadHint: "Up to 5 at once · 8MB each · 15MB total · .docx / .xlsx / .pptx",
+      uploadButton: "Choose files",
+      limitNotOffice: "{name}: only .docx / .xlsx / .pptx are supported",
+      limitFiles: "You can upload at most {max} files",
+      limitFileSize: "{name}: exceeds {max} per file",
+      limitTotalSize: "Total size exceeds {max}",
+      modeLabel: "Extraction mode",
+      modeAuto: "Auto",
+      modeManual: "Manual",
+      modeAutoHint: "Reads the text and pulls keyword chips automatically.",
+      modeManualHint: "Start from a blank canvas and type tags yourself.",
+      workspaceTitle: "Results",
+      workspaceEmpty:
+        "Upload an Office document above and keyword chips will appear here.",
+      reextracted: "Updated",
+      advancedTitle: "Advanced options",
+      strengthLabel: "Filter strength",
+      strengthHint: "Left = lenient (show more) · Right = strict (clear nouns only)",
+      strengthNames: ["Lenient", "Light", "Balanced", "Strong", "Strict"],
+      strengthDescs: [
+        "Removes only tokens with stray symbols.",
+        "+ Also removes digit/letter fragments (5px, F1).",
+        "+ Removes particles, inflections, and counters (default).",
+        "+ Stronger abbreviation penalty + drops rare words.",
+        "+ Also drops abbreviations, keeping clear nouns only.",
+      ],
+      scopeLabel: "Read scope",
+      scopeBody: "Body (always)",
+      scopeTables: "Text inside tables",
+      minFreqLabel: "Minimum occurrences",
+      minFreqHint: "Words appearing fewer times than this are dropped.",
+      commonTrayTitle: "Common tags",
+      commonTrayHint: "Tags entered here apply to every uploaded file.",
+      commonTrayPlaceholder: "Type a tag for all files, then Enter",
+      commonTrayEmpty: "No common tags yet.",
+      statusPending: "Pending",
+      statusProcessing: "Reading…",
+      statusDone: "Done",
+      statusError: "Failed",
+      errorParse:
+        "Could not read the file. Please check it is a valid .docx / .xlsx / .pptx.",
+      addPlaceholder: "Type a tag, then Enter",
+      showMore: "Show {n} more",
+      showLess: "Show less",
+      expandAll: "Expand all ({n})",
+      download: "Download",
+      downloadAll: "Download all (.zip)",
+      emptyCanvas: "Extracted chips appear here. You can also type your own.",
+      overwriteNote:
+        "Downloads keep the original filename. Take care not to overwrite.",
+      chipSelect: "Select/deselect tag",
+      chipDelete: "Delete",
+      freqTitle: "appears {n}×",
+      probTitle: "noun confidence {p}%",
+      sectionSelected: "Selected tags",
+      sectionCandidate: "Candidates",
+      selectedEmpty: "Pick tags from the candidates below.",
+      candidateAllAdded: "All candidates added.",
+      searchPlaceholder: "Search candidate chips…",
+      searchEmpty: "No candidates match your search.",
+      counter: "Selected {sel}/{max} · Candidates {cand}",
+      selectAll: "Select all",
+      deselectAll: "Clear all",
+      selectTop: "Top {n}",
+      topNAria: "How many top candidates to add",
+      capWarning: "Up to {max} tags per file — kept the top {max}.",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -2050,6 +2522,8 @@ export const messages: Record<Locale, Messages> = {
       toolLineupBuilder: "Football Best XI Builder",
       toolLanguageMaker: "Language Maker",
       toolMaze: "Pixel Maze Maker",
+      toolShooter: "Arcade Shooter",
+      toolTagIt: "Tag-it",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -2169,6 +2643,17 @@ export const messages: Record<Locale, Messages> = {
     },
     footer: {
       privacy: "Privacy Policy",
+      releases: "What's New",
+    },
+    releases: {
+      title: "What's New",
+      subtitle: "Recent updates across BrennHub.",
+      toolSite: "Site",
+      kind: {
+        new: "new",
+        improved: "improved",
+        fixed: "fixed",
+      },
     },
     profile: {
       title: "My Profile",
@@ -2199,6 +2684,69 @@ export const messages: Record<Locale, Messages> = {
       menu: {
         dashboard: "Dashboard",
         feedback: "Feedback",
+        releases: "Releases",
+        stats: "Stats",
+        tools: "Card editor",
+      },
+      stats: {
+        title: "Tool stats",
+        columnTool: "Tool",
+        columnLikes: "Likes",
+        columnVisits30d: "30d visits",
+        columnVisitsAll: "All visits",
+        emptyState: "No tool stats yet.",
+      },
+      releases: {
+        title: "Releases admin",
+        countLabel: "items",
+        addNew: "+ Add item",
+        edit: "Edit",
+        delete: "Delete",
+        restore: "Restore",
+        cancel: "Cancel",
+        save: "Save",
+        saving: "Saving…",
+        deleting: "Deleting…",
+        sourceFile: "file",
+        sourceD1: "admin",
+        tombstoneBadge: "hidden",
+        deletedHint:
+          "This file entry is hidden and won't appear on the public page.",
+        formTitleAdd: "Add new item",
+        formTitleEdit: "Edit item",
+        idLabel: "ID (stable match key)",
+        idHint:
+          "Never change an existing ID. Changing it orphans any prior override.",
+        idPlaceholder: "e.g. my-tool-launch",
+        dateLabel: "Date (YYYY-MM-DD)",
+        toolLabel: "Tool",
+        toolHint: "tools-registry slug or 'site' (global)",
+        toolPlaceholder: "e.g. tag-it or site",
+        kindLabel: "Kind",
+        kindNone: "Unset",
+        kindNew: "New",
+        kindImproved: "Improved",
+        kindFixed: "Fixed",
+        titleKoLabel: "Title (Korean)",
+        titleEnLabel: "Title (English)",
+        bodyKoLabel: "Body (Korean)",
+        bodyEnLabel: "Body (English)",
+        colDate: "Date",
+        colTool: "Tool",
+        colKind: "Kind",
+        colTitle: "Title",
+        colSource: "Source",
+        colActions: "Actions",
+        empty: "No items.",
+        errorLoad: "Failed to load items.",
+        errorSave: "Failed to save.",
+        errorDelete: "Failed to delete.",
+        confirmDelete: "Delete this item?",
+        confirmDeleteFile:
+          "This is a file-backed entry. Deleting will hide it from the public page. Continue?",
+        requiredFields:
+          "ID, date, tool, titles and bodies are all required.",
+        invalidDate: "Date must be YYYY-MM-DD.",
       },
     },
     tools: {
@@ -2237,6 +2785,16 @@ export const messages: Record<Locale, Messages> = {
         name: "Pixel Maze Maker",
         description:
           "Design pixel-grid mazes, solve them, and share via link",
+      },
+      shooter: {
+        name: "Arcade Shooter",
+        description:
+          "Top-down arcade shoot-'em-up — blast the alien fleet for high scores",
+      },
+      "tag-it": {
+        name: "Tag-it",
+        description:
+          "Pull key terms from an Office doc (Word/Excel/PowerPoint) into chips, curate them, and write them to the document properties — all in the browser",
       },
     },
   },
