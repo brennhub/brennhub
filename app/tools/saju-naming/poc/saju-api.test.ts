@@ -15,7 +15,7 @@ type ApiResponse = {
     year: { label: string };
     month: { label: string };
     day: { label: string };
-    hour: { label: string };
+    hour: { label: string } | null; // 시간 미지 시 null (진태양시 격상)
     lunarDate: {
       year: number;
       month: number;
@@ -76,7 +76,8 @@ async function run() {
   check("saju.year.label === 기미", r.saju?.year?.label === "기미", r.saju?.year?.label);
   check("saju.month.label === 경오", r.saju?.month?.label === "경오", r.saju?.month?.label);
   check("saju.day.label === 병신", r.saju?.day?.label === "병신", r.saju?.day?.label);
-  check("saju.hour.label === 신묘", r.saju?.hour?.label === "신묘", r.saju?.hour?.label);
+  // 진태양시 격상 후: OLD '신묘' → NEW '경인' (보정 ~-29분 → 04:31 진태양시 → 寅時·경).
+  check("saju.hour.label === 경인 (진태양시)", r.saju?.hour?.label === "경인", r.saju?.hour?.label);
 
   // lunarDate
   assert.deepStrictEqual(r.saju.lunarDate, {
@@ -149,7 +150,7 @@ async function run() {
     console.log("");
     console.log("케이스 1 응답 요약:");
     console.log(
-      `  ${r.saju.year.label}년 ${r.saju.month.label}월 ${r.saju.day.label}일 ${r.saju.hour.label}시`,
+      `  ${r.saju.year.label}년 ${r.saju.month.label}월 ${r.saju.day.label}일 ${r.saju.hour?.label ?? "(시주 미지)"}시`,
     );
     console.log(
       `  음력: ${r.saju.lunarDate.year}-${r.saju.lunarDate.month}-${r.saju.lunarDate.day}`,
