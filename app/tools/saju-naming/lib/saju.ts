@@ -25,6 +25,10 @@
 // Edge runtime의 esbuild interop에서 module evaluation 실패. vendor 변형 후 named import.
 // 경위: vendor/README.md + CHANGELOG 0.5.1 / 0.5.2 / 0.5.3.
 import { KoreanLunarCalendar } from "./vendor/korean-lunar-calendar.js";
+import {
+  monthBranchIndexByJeolgi,
+  yearForGapjaByLichun,
+} from "./jeolgi";
 
 // ───────────────────────── 상수 ─────────────────────────
 
@@ -310,6 +314,57 @@ function makeHourPillarFromBranch(dayStem: Cheongan, branchIdx: number): Pillar 
   };
 }
 
+/**
+ * 연주 산출 — 절기 입춘 기준 명리학 연도(year)의 60갑자.
+ * 공식: stem_idx = (year − 4) % 10, branch_idx = (year − 4) % 12.
+ *   year 4 = 갑자(0,0) 기점. 출처: 60갑자 표준 cycle (사실).
+ */
+function makeYearPillarFromYear(year: number): Pillar {
+  const yearAdj = year - 4;
+  const stemIdx = ((yearAdj % 10) + 10) % 10;
+  const branchIdx = ((yearAdj % 12) + 12) % 12;
+  const gan = CHEONGAN[stemIdx];
+  const ji = JIJI[branchIdx];
+  return {
+    gan,
+    ji,
+    ganOhaeng: CHEONGAN_OHAENG[gan],
+    jiOhaeng: JIJI_OHAENG[ji],
+    label: `${gan}${ji}`,
+  };
+}
+
+/**
+ * 월주 산출 — 12 월령 절기 기준 月支 + 월두법(年干 → 정월(寅) 천간 base).
+ * 월두법:
+ *   갑·기 년 → 정월 丙寅 (base=2)
+ *   을·경 년 → 戊寅 (base=4)
+ *   병·신 년 → 庚寅 (base=6)
+ *   정·임 년 → 壬寅 (base=8)
+ *   무·계 년 → 甲寅 (base=0)
+ * 출처: 명리학 표준 (사실, 다수 권위서 일관).
+ * @param yearStemIdx 연주 천간 idx (0=갑..9=계)
+ * @param monthBranchIdx 0=寅 ... 11=丑 (jeolgi.monthBranchIndexByJeolgi 결과)
+ */
+function makeMonthPillarFromYearStemAndBranch(
+  yearStemIdx: number,
+  monthBranchIdx: number,
+): Pillar {
+  const base = ((yearStemIdx % 5) * 2 + 2) % 10;
+  const stemIdx = (base + monthBranchIdx) % 10;
+  // monthBranchIdx 0=寅(JIJI[2]) ... 11=丑(JIJI[1]). 지지 인덱스 변환:
+  const jijiIdx = (monthBranchIdx + 2) % 12;
+  const gan = CHEONGAN[stemIdx];
+  const ji = JIJI[jijiIdx];
+  return {
+    gan,
+    ji,
+    ganOhaeng: CHEONGAN_OHAENG[gan],
+    jiOhaeng: JIJI_OHAENG[ji],
+    label: `${gan}${ji}`,
+  };
+}
+
 function countOhaeng(pillars: Pillar[]): OhaengBalance {
   const o: OhaengBalance = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 };
   for (const p of pillars) {
@@ -412,20 +467,25 @@ export function calculateSaju(
   isLunar: boolean = false,
   options: SajuOptions = {},
 ): SajuResult {
-  // 1) 양/음력 입력 → 60갑자 (year/month/lunarDate는 입력 양력 날짜 기준; 절입 정밀화는 범위 외).
+  // 1) 양/음력 입력 → 양력 KST 정규화 + 일주 day-level 60갑자 (라이브러리 day-level은 정확).
+  //    연주/월주는 라이브러리(음력 기반) 산출 폐기 → 입춘/12절기 기준 명리학 표준으로 재산출.
   const cal = new KoreanLunarCalendar();
   if (isLunar) cal.setLunarDate(year, month, day, false);
   else cal.setSolarDate(year, month, day);
 
+  // 양력 정규화 (음력 입력이어도 양력 Y/M/D 추출 — 절기 비교에 사용).
+  const solar = cal.getSolarCalendar() as {
+    year: number;
+    month: number;
+    day: number;
+  };
   const inputGapja = cal.getKoreanGapja() as {
     year: string;
     month: string;
     day: string;
     intercalation: string;
   };
-  const yearPillar = makePillar(inputGapja.year);
-  const monthPillar = makePillar(inputGapja.month);
-  const inputDayPillar = makePillar(inputGapja.day);
+  const inputDayPillar = makePillar(inputGapja.day); // 일주만 라이브러리
 
   const lunar = cal.getLunarCalendar() as {
     year: number;
@@ -439,6 +499,31 @@ export function calculateSaju(
     day: lunar.day,
     intercalation: Boolean(lunar.intercalation),
   };
+
+  // 2) 연주: 입춘 경계 기준 명리학 연도 결정 + 60갑자 산출.
+  //    시간 미지(hour=null) 시 정오(12:00)를 절기 비교 기준으로 가정 (입춘 당일 edge-case 영향 미미).
+  //    절기 비교는 KST 입력 시각 기준 (진태양시 보정 X — 명리 통용).
+  const hourForBoundary = hour ?? 12;
+  const minuteForBoundary = options.minute ?? 0;
+  const { yearForGapja } = yearForGapjaByLichun(
+    solar.year,
+    solar.month,
+    solar.day,
+    hourForBoundary,
+    minuteForBoundary,
+  );
+  const yearPillar = makeYearPillarFromYear(yearForGapja);
+  const yearStemIdx = CHEONGAN.indexOf(yearPillar.gan);
+
+  // 3) 월주: 12 월령 절기 + 월두법.
+  const monthBranchIdx = monthBranchIndexByJeolgi(
+    solar.year,
+    solar.month,
+    solar.day,
+    hourForBoundary,
+    minuteForBoundary,
+  );
+  const monthPillar = makeMonthPillarFromYearStemAndBranch(yearStemIdx, monthBranchIdx);
 
   // 2) 시간 미지: 시주 미지 + ohaeng 시주 제외.
   if (hour === null) {

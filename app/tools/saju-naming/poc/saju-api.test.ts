@@ -74,7 +74,8 @@ async function run() {
 
   // 4기둥
   check("saju.year.label === 기미", r.saju?.year?.label === "기미", r.saju?.year?.label);
-  check("saju.month.label === 경오", r.saju?.month?.label === "경오", r.saju?.month?.label);
+  // 입춘+12절기 격상 후: OLD(라이브러리 음력) '경오' → NEW(입하 1979-05-06 11:47 이후 巳월) '기사'.
+  check("saju.month.label === 기사 (절기 기준)", r.saju?.month?.label === "기사", r.saju?.month?.label);
   check("saju.day.label === 병신", r.saju?.day?.label === "병신", r.saju?.day?.label);
   // 진태양시 격상 후: OLD '신묘' → NEW '경인' (보정 ~-29분 → 04:31 진태양시 → 寅時·경).
   check("saju.hour.label === 경인 (진태양시)", r.saju?.hour?.label === "경인", r.saju?.hour?.label);
@@ -92,19 +93,20 @@ async function run() {
   check("saju.deficient 미존재", r.saju.deficient === undefined);
   check("saju.excessive 미존재", r.saju.excessive === undefined);
 
-  // ohaeng 객체 검증 (외숙모 사주: 목1 화2 토2 금3 수0)
+  // 입춘+12절기 격상 후: 月柱 庚午→己巳 → 금 -1, 토 +1.
+  // 외숙모 사주: 목1 화2 토3 금2 수0
   assert.deepStrictEqual(r.ohaeng.balance, {
     목: 1,
     화: 2,
-    토: 2,
-    금: 3,
+    토: 3,
+    금: 2,
     수: 0,
   });
   assert.deepStrictEqual(r.ohaeng.deficient, ["수"]);
-  assert.deepStrictEqual(r.ohaeng.excessive, ["금"]);
+  assert.deepStrictEqual(r.ohaeng.excessive, ["토"]);
   check("yongsin 수 포함", r.ohaeng.yongsin.includes("수"));
-  check("yongsin 금 미포함 (기신 우선)", !r.ohaeng.yongsin.includes("금"));
-  check("gisin 금 포함", r.ohaeng.gisin.includes("금"));
+  check("yongsin 토 미포함 (기신 우선)", !r.ohaeng.yongsin.includes("토"));
+  check("gisin 토 포함", r.ohaeng.gisin.includes("토"));
   check("nameDirection 문자열", typeof r.ohaeng.nameDirection === "string");
 
   // ─── 케이스 2: 잘못된 JSON ───
