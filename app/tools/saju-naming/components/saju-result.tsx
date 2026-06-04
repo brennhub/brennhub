@@ -99,7 +99,18 @@ export function SajuResultView({ data }: { data: SajuApiResponse }) {
             <PillarColumn label="년주" pillar={saju.year} />
             <PillarColumn label="월주" pillar={saju.month} />
             <PillarColumn label="일주" pillar={saju.day} />
-            <PillarColumn label="시주" pillar={saju.hour} />
+            {saju.hour ? (
+              <PillarColumn label="시주" pillar={saju.hour} />
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-center text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  시주
+                </span>
+                <span className="text-center text-xs text-zinc-400 dark:text-zinc-500">
+                  미지
+                </span>
+              </div>
+            )}
           </div>
           <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
             위 칸 = 천간, 아래 칸 = 지지. 색은 각 글자의 오행을 나타냅니다.

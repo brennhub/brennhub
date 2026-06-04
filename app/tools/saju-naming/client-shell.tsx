@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
-import type { Pillar } from "@/app/tools/saju-naming/lib/saju";
+import type { Pillar, TrueSolarMeta } from "@/app/tools/saju-naming/lib/saju";
 import type { OhaengAnalysis } from "@/app/tools/saju-naming/lib/ohaeng";
 import { SajuInputForm, type SajuFormValues } from "./components/saju-input-form";
 import { SajuResultView } from "./components/saju-result";
@@ -10,20 +10,22 @@ import { NameRecommendSection } from "./components/name-recommend";
 
 /**
  * `/api/saju-naming/saju` 응답 형태.
- * `saju`는 라우트의 `toApiSaju` — SajuResult 중 4기둥 + lunarDate (오행은 `ohaeng` 필드).
+ * `saju`는 라우트의 `toApiSaju` — SajuResult 중 4기둥 + lunarDate + 진태양시 메타.
+ * `hour`는 시간 미지(입력 hour=null) 시 null. `trueSolar`도 그 경우 omit.
  */
 export interface SajuApiResponse {
   saju: {
     year: Pillar;
     month: Pillar;
     day: Pillar;
-    hour: Pillar;
+    hour: Pillar | null;
     lunarDate: {
       year: number;
       month: number;
       day: number;
       intercalation: boolean;
     };
+    trueSolar?: TrueSolarMeta;
   };
   ohaeng: OhaengAnalysis;
 }
