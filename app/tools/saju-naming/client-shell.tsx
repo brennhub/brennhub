@@ -5,6 +5,7 @@ import { useMessages } from "@/lib/i18n/provider";
 import type {
   Pillar,
   SajuRelations,
+  SajuSipsin,
   TrueSolarMeta,
 } from "@/app/tools/saju-naming/lib/saju";
 import type { OhaengAnalysis } from "@/app/tools/saju-naming/lib/ohaeng";
@@ -31,6 +32,7 @@ export interface SajuApiResponse {
     };
     trueSolar?: TrueSolarMeta;
     relations?: SajuRelations; // 합충형파해 감지 (B-2 P1)
+    sipsin?: SajuSipsin; // 십신 (B-3-a)
   };
   ohaeng: OhaengAnalysis;
 }
