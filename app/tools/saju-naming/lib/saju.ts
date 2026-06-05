@@ -29,6 +29,7 @@ import {
   monthBranchIndexByJeolgi,
   yearForGapjaByLichun,
 } from "./jeolgi";
+import { getJijangContributions } from "./jijang";
 
 // ───────────────────────── 상수 ─────────────────────────
 
@@ -257,8 +258,8 @@ export interface SajuResult {
   day: Pillar;
   hour: HourPillar;
   ohaeng: OhaengBalance;
-  deficient: Ohaeng[]; // count ≤ 1
-  excessive: Ohaeng[]; // count ≥ 3
+  deficient: Ohaeng[]; // count ≤ 0.5 (B-1 격상, 지장간 일수 비례)
+  excessive: Ohaeng[]; // count ≥ 2.5
   lunarDate: {
     year: number;
     month: number;
@@ -365,21 +366,40 @@ function makeMonthPillarFromYearStemAndBranch(
   };
 }
 
+/**
+ * 사주 8점 오행 점수 (천간 1점 + 지지 = 지장간 일수 비례 1점 분배).
+ *
+ * 영역 B-1 격상 (지장간 도입): 지지 표면 오행(jiOhaeng) 단순 카운트 폐기 →
+ *   지장간 일수 비례 분배 (lib/jijang.ts). 8점 총합 유지, 정밀화.
+ * 출처/근거: lib/jijang.ts docstring (위키 CC BY-SA + KCI ART002596264).
+ */
 function countOhaeng(pillars: Pillar[]): OhaengBalance {
   const o: OhaengBalance = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 };
   for (const p of pillars) {
-    o[p.ganOhaeng] += 1;
-    o[p.jiOhaeng] += 1;
+    o[p.ganOhaeng] += 1; // 천간 1점 (그대로)
+    // 지지: 표면 오행 폐기 → 지장간 일수 비례 분배 (합 1.0).
+    const contrib = getJijangContributions(p.ji);
+    o.목 += contrib.목;
+    o.화 += contrib.화;
+    o.토 += contrib.토;
+    o.금 += contrib.금;
+    o.수 += contrib.수;
   }
   return o;
 }
 
+// 임계 — 8점 시스템 평균 1.6점/오행 (4 pillar 시) 또는 1.2점 (3 pillar, 시주 미지).
+// deficient ≤ 0.5 / excessive ≥ 2.5 (평균의 ~⅓ / ~1.5× 비례 환산, B-1 잠정).
+// 억부 용신 격상(B-3) 시 일간 강약 기반 휴리스틱으로 재검토 예정.
+const DEFICIENT_THRESHOLD = 0.5;
+const EXCESSIVE_THRESHOLD = 2.5;
+
 function findDeficient(o: OhaengBalance): Ohaeng[] {
-  return (Object.keys(o) as Ohaeng[]).filter((k) => o[k] <= 1);
+  return (Object.keys(o) as Ohaeng[]).filter((k) => o[k] <= DEFICIENT_THRESHOLD);
 }
 
 function findExcessive(o: OhaengBalance): Ohaeng[] {
-  return (Object.keys(o) as Ohaeng[]).filter((k) => o[k] >= 3);
+  return (Object.keys(o) as Ohaeng[]).filter((k) => o[k] >= EXCESSIVE_THRESHOLD);
 }
 
 // ───────────────── 진태양시 보정 파이프라인 ─────────────────

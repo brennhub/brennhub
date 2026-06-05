@@ -93,15 +93,15 @@ async function run() {
   check("saju.deficient 미존재", r.saju.deficient === undefined);
   check("saju.excessive 미존재", r.saju.excessive === undefined);
 
-  // 입춘+12절기 격상 후: 月柱 庚午→己巳 → 금 -1, 토 +1.
-  // 외숙모 사주: 목1 화2 토3 금2 수0
-  assert.deepStrictEqual(r.ohaeng.balance, {
-    목: 1,
-    화: 2,
-    토: 3,
-    금: 2,
-    수: 0,
-  });
+  // B-1 격상 (지장간 일수 비례): 8점 시스템 유지, fraction 점수.
+  // 외숙모 (기미·기사·병신·경인): 목≈0.633 / 화≈2.066 / 토≈3.299 / 금≈1.766 / 수≈0.233.
+  const tol = 0.01;
+  check(`balance 목≈0.633 (${r.ohaeng.balance.목})`, Math.abs(r.ohaeng.balance.목 - 0.633) < tol);
+  check(`balance 화≈2.066 (${r.ohaeng.balance.화})`, Math.abs(r.ohaeng.balance.화 - 2.066) < tol);
+  check(`balance 토≈3.299 (${r.ohaeng.balance.토})`, Math.abs(r.ohaeng.balance.토 - 3.299) < tol);
+  check(`balance 금≈1.766 (${r.ohaeng.balance.금})`, Math.abs(r.ohaeng.balance.금 - 1.766) < tol);
+  check(`balance 수≈0.233 (${r.ohaeng.balance.수})`, Math.abs(r.ohaeng.balance.수 - 0.233) < tol);
+  // 임계 4-α (≤0.5 / ≥2.5): deficient [수] / excessive [토] — 보존.
   assert.deepStrictEqual(r.ohaeng.deficient, ["수"]);
   assert.deepStrictEqual(r.ohaeng.excessive, ["토"]);
   check("yongsin 수 포함", r.ohaeng.yongsin.includes("수"));

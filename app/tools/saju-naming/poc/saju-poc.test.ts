@@ -27,6 +27,9 @@ import {
   type Pillar,
 } from "../lib/saju";
 import { jeolgiKST } from "../lib/jeolgi";
+import { JIJANG_TABLE, getJijangContributions } from "../lib/jijang";
+import { analyzeOhaeng } from "../lib/ohaeng";
+import { JIJI } from "../lib/saju";
 
 const failures: string[] = [];
 function check(label: string, cond: boolean, hint?: unknown): void {
@@ -51,14 +54,22 @@ function isPillar(h: Pillar | { unknown: true }): h is Pillar {
   check("case1 dstApplied=false", r.trueSolar?.dstApplied === false);
   check("case1 meridian=135", r.trueSolar?.meridian === 135);
   check("case1 dayPillarShifted=false", r.trueSolar?.dayPillarShifted === false);
-  // ohaeng 변동: 月柱 경오(금·화) → 기사(토·화). 금 -1, 토 +1.
-  check("case1 목=1", r.ohaeng.목 === 1);
-  check("case1 화=2", r.ohaeng.화 === 2);
-  check("case1 토=3 (월주 기사 → 토+1)", r.ohaeng.토 === 3);
-  check("case1 금=2 (월주 경오 → 금-1)", r.ohaeng.금 === 2);
-  check("case1 수=0", r.ohaeng.수 === 0);
-  // findDeficient ≤ 1 (목 1·수 0 포함). excessive ≥ 3 (토 3).
-  check("case1 deficient=['목','수']", JSON.stringify(r.deficient) === JSON.stringify(["목", "수"]));
+  // B-1 격상 (지장간 일수 비례). 사주 기미·기사·병신·경인 → 지지 미·사·신·인 분배:
+  //   미 (고지) 丁9+乙3+己18 → 화 0.300 + 목 0.100 + 토 0.600
+  //   사 (생지) 戊7+庚7+丙16 → 토 0.233 + 금 0.233 + 화 0.533
+  //   신 (생지) 戊7+壬7+庚16 → 토 0.233 + 수 0.233 + 금 0.533
+  //   인 (생지) 戊7+丙7+甲16 → 토 0.233 + 화 0.233 + 목 0.533
+  // 천간 (기·기·병·경) → 토 2, 화 1, 금 1.
+  // 총: 목 0.633, 화 2.066, 토 3.299, 금 1.766, 수 0.233. 합 = 8.0.
+  check("case1 목≈0.633", Math.abs(r.ohaeng.목 - 0.633) < 0.01, r.ohaeng.목);
+  check("case1 화≈2.066", Math.abs(r.ohaeng.화 - 2.066) < 0.01, r.ohaeng.화);
+  check("case1 토≈3.299", Math.abs(r.ohaeng.토 - 3.299) < 0.01, r.ohaeng.토);
+  check("case1 금≈1.766", Math.abs(r.ohaeng.금 - 1.766) < 0.01, r.ohaeng.금);
+  check("case1 수≈0.233", Math.abs(r.ohaeng.수 - 0.233) < 0.01, r.ohaeng.수);
+  // 임계 4-α (deficient ≤0.5, excessive ≥2.5).
+  //   수 0.233 ≤ 0.5 ✓ deficient. 목 0.633 > 0.5 → not deficient.
+  //   토 3.299 ≥ 2.5 ✓ excessive. 화 2.066 < 2.5 → not excessive.
+  check("case1 deficient=['수']", JSON.stringify(r.deficient) === JSON.stringify(["수"]));
   check("case1 excessive=['토']", JSON.stringify(r.excessive) === JSON.stringify(["토"]));
 }
 
@@ -67,14 +78,14 @@ function isPillar(h: Pillar | { unknown: true }): h is Pillar {
   const r = calculateSaju(1979, 5, 29, null, false);
   check("case2 hour unknown", "unknown" in r.hour);
   check("case2 trueSolar undefined", r.trueSolar === undefined);
-  // 입춘+12절기 격상 후 月柱=기사. ohaeng 3주 카운트:
-  //   year 기미: 기(토)+미(토). month 기사: 기(토)+사(화). day 병신: 병(화)+신(금).
-  //   → 목 0, 화 2, 토 3, 금 1, 수 0.
-  check("case2 목=0", r.ohaeng.목 === 0);
-  check("case2 화=2", r.ohaeng.화 === 2);
-  check("case2 토=3", r.ohaeng.토 === 3);
-  check("case2 금=1", r.ohaeng.금 === 1);
-  check("case2 수=0", r.ohaeng.수 === 0);
+  // 3 pillar (기미·기사·병신). 천간 토 2 + 화 1. 지지 미·사·신 분배:
+  //   목 0.1, 화 0.833, 토 1.066, 금 0.766, 수 0.233.
+  // 총: 목 0.1, 화 1.833, 토 3.066, 금 0.766, 수 0.233. 합 = 6.0.
+  check("case2 목≈0.1", Math.abs(r.ohaeng.목 - 0.1) < 0.01);
+  check("case2 화≈1.833", Math.abs(r.ohaeng.화 - 1.833) < 0.01);
+  check("case2 토≈3.066", Math.abs(r.ohaeng.토 - 3.066) < 0.01);
+  check("case2 금≈0.766", Math.abs(r.ohaeng.금 - 0.766) < 0.01);
+  check("case2 수≈0.233", Math.abs(r.ohaeng.수 - 0.233) < 0.01);
 }
 
 // ─── case 3 — 1957-08-15 14:00 (DST + 127.5° 자오선) ───
@@ -244,13 +255,52 @@ function isPillar(h: Pillar | { unknown: true }): h is Pillar {
   // (구체 시각 검증보다 자오선/연도 무결성 확인)
 }
 
+// ─── case 13 — 지장간 표 검증 (위키 verbatim) ───
+{
+  // 12지지 일수 합 = 30 (각 지지 1.0 contribution)
+  for (const jiji of JIJI) {
+    const entries = JIJANG_TABLE[jiji];
+    const totalDays = entries.reduce((s, e) => s + e.days, 0);
+    check(`case13 ${jiji} 일수 합=30`, totalDays === 30, totalDays);
+    const c = getJijangContributions(jiji);
+    const sum = c.목 + c.화 + c.토 + c.금 + c.수;
+    check(`case13 ${jiji} 오행 합=1.0`, Math.abs(sum - 1) < 0.0001, sum);
+  }
+  // 자 (왕지, 壬10+癸20 = 전부 수)
+  const cJa = getJijangContributions("자");
+  check("case13 자 수=1.0", Math.abs(cJa.수 - 1) < 0.0001, cJa.수);
+  // 인 (생지, 戊7+丙7+甲16 = 토 7/30 + 화 7/30 + 목 16/30)
+  const cIn = getJijangContributions("인");
+  check("case13 인 목≈16/30", Math.abs(cIn.목 - 16 / 30) < 0.0001);
+  check("case13 인 화≈7/30", Math.abs(cIn.화 - 7 / 30) < 0.0001);
+  check("case13 인 토≈7/30", Math.abs(cIn.토 - 7 / 30) < 0.0001);
+  // 午 특수 (병10+기9+정11 → 화 21/30, 토 9/30)
+  const cOh = getJijangContributions("오");
+  check("case13 오 화=21/30 (병10+정11)", Math.abs(cOh.화 - 21 / 30) < 0.0001);
+  check("case13 오 토=9/30 (기9)", Math.abs(cOh.토 - 9 / 30) < 0.0001);
+}
+
+// ─── case 14 — analyzeOhaeng 임계 4-α 통일 (saju.ts ↔ ohaeng.ts) ───
+{
+  // 합성 fraction balance — 임계 경계 검증
+  const synth = { 목: 0.4, 화: 1.5, 토: 2.8, 금: 0.6, 수: 0.5 };
+  const a = analyzeOhaeng(synth);
+  // deficient ≤ 0.5: 목(0.4)·수(0.5). 금(0.6) > 0.5 → not.
+  check("case14 목(0.4) deficient", a.deficient.includes("목"));
+  check("case14 수(0.5) deficient", a.deficient.includes("수"));
+  check("case14 금(0.6) not deficient", !a.deficient.includes("금"));
+  // excessive ≥ 2.5: 토(2.8). 화(1.5) → not.
+  check("case14 토(2.8) excessive", a.excessive.includes("토"));
+  check("case14 화(1.5) not excessive", !a.excessive.includes("화"));
+}
+
 if (failures.length === 0) {
-  console.log("✅ saju 명식 PoC 통과 (12 case + 부수).");
+  console.log("✅ saju 명식 PoC 통과 (14 case + 부수).");
   console.log("");
   console.log("(verbatim 변동 — 진태양시) 1979-05-29 05:00 시주: OLD '신묘' → NEW '경인'.");
   console.log("(verbatim 변동 — 12절기) 1979-05-29 월주: OLD(라이브러리 음력) '경오' → NEW(입하 기준) '기사'.");
-  console.log("  → ohaeng: 토 +1 (월주 토), 금 -1 (월주 경 → 기). deficient/excessive 변동.");
-  console.log("(verbatim) 2024 입춘 KASI 17:27 — 우리 +6초 / 입하 KASI 09:10 — 우리 +8초 (VSOP87 절단 ±51초 max).");
+  console.log("(verbatim 변동 — 지장간 B-1) 오행 정수 → fraction. 외숙모 토 3 → 3.299, 수 0 → 0.233, 목 1 → 0.633.");
+  console.log("  → 임계 ≤0.5 / ≥2.5 (사주 ≤1 / ≥3에서 변경). deficient ['목','수'] → ['수'].");
 } else {
   console.error(`❌ PoC 실패 ${failures.length}건:`);
   for (const f of failures) console.error(`  - ${f}`);
