@@ -16,6 +16,7 @@
 import {
   calculateSaju,
   type Pillar,
+  type SajuRelations,
   type SajuResult,
   type TrueSolarMeta,
 } from "@/app/tools/saju-naming/lib/saju";
@@ -136,6 +137,8 @@ interface ApiSaju {
   lunarDate: SajuResult["lunarDate"];
   /** 진태양시 보정 메타. 시간 미지 시 omit. */
   trueSolar?: TrueSolarMeta;
+  /** 합충형파해 감지 결과 (B-2 P1, 표시만). */
+  relations?: SajuRelations;
 }
 
 function toApiSaju(r: SajuResult): ApiSaju {
@@ -147,6 +150,7 @@ function toApiSaju(r: SajuResult): ApiSaju {
     hour,
     lunarDate: r.lunarDate,
     ...(r.trueSolar ? { trueSolar: r.trueSolar } : {}),
+    ...(r.relations ? { relations: r.relations } : {}),
   };
 }
 

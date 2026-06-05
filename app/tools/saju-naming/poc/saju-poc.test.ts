@@ -30,6 +30,7 @@ import { jeolgiKST } from "../lib/jeolgi";
 import { JIJANG_TABLE, getJijangContributions } from "../lib/jijang";
 import { analyzeOhaeng } from "../lib/ohaeng";
 import { JIJI } from "../lib/saju";
+import { detectRelations } from "../lib/relations";
 
 const failures: string[] = [];
 function check(label: string, cond: boolean, hint?: unknown): void {
@@ -294,13 +295,128 @@ function isPillar(h: Pillar | { unknown: true }): h is Pillar {
   check("case14 화(1.5) not excessive", !a.excessive.includes("화"));
 }
 
+// ─── case 15 — 외숙모 합충 감지 (B-2 P1) ───
+{
+  const r = calculateSaju(1979, 5, 29, 5, false);
+  const rel = r.relations;
+  check("case15 relations 존재", rel !== undefined);
+  if (rel) {
+    // 사·신 육합 (수): 月·日 지지
+    const jiHapSashin = rel.jiHap.find(
+      (e) => e.members.includes("사") && e.members.includes("신"),
+    );
+    check("case15 육합 사·신 (월·일) → 수", jiHapSashin?.resultOhaeng === "수");
+    // 충 인·신: 일·시 지지
+    const chungInsin = rel.chung.find(
+      (e) => e.members.includes("인") && e.members.includes("신"),
+    );
+    check("case15 충 인·신 (일·시)", chungInsin !== undefined);
+    // 삼형 인·사·신 (지세지형)
+    const samhyung = rel.hyung.find(
+      (e) =>
+        e.kind === "삼형" &&
+        e.members.includes("인") &&
+        e.members.includes("사") &&
+        e.members.includes("신"),
+    );
+    check("case15 삼형 인·사·신 (지세지형)", samhyung !== undefined);
+    // 파 사·신 (육합과 동시)
+    const paSashin = rel.pa.find(
+      (e) => e.members.includes("사") && e.members.includes("신"),
+    );
+    check("case15 파 사·신 (월·일)", paSashin !== undefined);
+    // 해 사·인 (월·시)
+    const haeSain = rel.hae.find(
+      (e) => e.members.includes("사") && e.members.includes("인"),
+    );
+    check("case15 해 사·인 (월·시)", haeSain !== undefined);
+  }
+}
+
+// ─── case 16 — detectRelations 합성 (다양 표 검증) ───
+{
+  // 천간합 갑·기 (직접 호출)
+  const r1 = detectRelations(
+    [
+      { gan: "갑", position: "year" },
+      { gan: "기", position: "day" },
+    ],
+    [],
+  );
+  check("case16 천간합 갑·기 → 토", r1.ganHap[0]?.resultOhaeng === "토");
+
+  // 충 자·오
+  const r2 = detectRelations(
+    [],
+    [
+      { ji: "자", position: "year" },
+      { ji: "오", position: "day" },
+    ],
+  );
+  check("case16 충 자·오", r2.chung.length === 1);
+
+  // 삼합 신·자·진 → 수국
+  const r3 = detectRelations(
+    [],
+    [
+      { ji: "신", position: "year" },
+      { ji: "자", position: "month" },
+      { ji: "진", position: "day" },
+    ],
+  );
+  check("case16 삼합 신·자·진 → 수", r3.samhap[0]?.resultOhaeng === "수");
+
+  // 방합 인·묘·진 → 목 (동방)
+  const r4 = detectRelations(
+    [],
+    [
+      { ji: "인", position: "year" },
+      { ji: "묘", position: "month" },
+      { ji: "진", position: "day" },
+    ],
+  );
+  check("case16 방합 인·묘·진 → 목", r4.banghap[0]?.resultOhaeng === "목");
+
+  // 자형 진·진 (동일 글자 2개)
+  const r5 = detectRelations(
+    [],
+    [
+      { ji: "진", position: "year" },
+      { ji: "진", position: "day" },
+    ],
+  );
+  check("case16 자형 진·진", r5.hyung.some((e) => e.kind === "자형"));
+
+  // 자묘 상형 (무례지형)
+  const r6 = detectRelations(
+    [],
+    [
+      { ji: "자", position: "year" },
+      { ji: "묘", position: "day" },
+    ],
+  );
+  check("case16 상형 자·묘", r6.hyung.some((e) => e.kind === "상형"));
+
+  // 자미: 해 + 원진 동시 감지
+  const r7 = detectRelations(
+    [],
+    [
+      { ji: "자", position: "year" },
+      { ji: "미", position: "day" },
+    ],
+  );
+  check("case16 자·미 해 감지", r7.hae.length === 1);
+  check("case16 자·미 원진 동시 감지", r7.wonjin.length === 1);
+}
+
 if (failures.length === 0) {
-  console.log("✅ saju 명식 PoC 통과 (14 case + 부수).");
+  console.log("✅ saju 명식 PoC 통과 (16 case + 부수).");
   console.log("");
   console.log("(verbatim 변동 — 진태양시) 1979-05-29 05:00 시주: OLD '신묘' → NEW '경인'.");
   console.log("(verbatim 변동 — 12절기) 1979-05-29 월주: OLD(라이브러리 음력) '경오' → NEW(입하 기준) '기사'.");
   console.log("(verbatim 변동 — 지장간 B-1) 오행 정수 → fraction. 외숙모 토 3 → 3.299, 수 0 → 0.233, 목 1 → 0.633.");
-  console.log("  → 임계 ≤0.5 / ≥2.5 (사주 ≤1 / ≥3에서 변경). deficient ['목','수'] → ['수'].");
+  console.log("(verbatim 신규 — 합충 B-2) 외숙모 relations: 육합 사·신(수) / 충 인·신 / 삼형 인·사·신 / 파 사·신 / 해 사·인.");
+  console.log("  → P1 감지+표시만, 추천 영향 0.");
 } else {
   console.error(`❌ PoC 실패 ${failures.length}건:`);
   for (const f of failures) console.error(`  - ${f}`);
