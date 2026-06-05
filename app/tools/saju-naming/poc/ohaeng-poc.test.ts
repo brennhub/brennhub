@@ -1,20 +1,21 @@
 /**
- * 오행 분석 (analyzeOhaeng) 검증.
+ * 단순 카운트 용신 (simpleCountYongsin) 검증.
  *
  * 실행: npx tsx app/tools/saju-naming/poc/ohaeng-poc.test.ts
  *
- * 외숙모 사주 케이스: 기미년 경오월 병신일 신묘시 → balance { 목:1, 화:2, 토:2, 금:3, 수:0 }.
+ * 외숙모 합성 balance { 목:1, 화:2, 토:2, 금:3, 수:0 }.
  * 기대: deficient=[수], excessive=[금], yongsin 수 포함 + 금 미포함 (기신 우선).
  *
- * 이전엔 lib/ohaeng.ts 안에 inline으로 있었지만 Edge runtime 빌드 시
- * process.exit 호출이 번들에 끌려와 실패 → 별도 PoC test 파일로 분리.
+ * B-3-c 격상 후: analyzeOhaeng는 강약/일간/월지/십신 등 필요. 본 PoC는
+ * 단순 카운트 로직만 단독 검증 → simpleCountYongsin(yongsin.ts에서 export)
+ * 직접 호출. analyzeOhaeng 통합 검증은 saju-poc.test.ts에서 수행.
  */
 
-import { analyzeOhaeng } from "../lib/ohaeng";
+import { simpleCountYongsin } from "../lib/yongsin";
 import type { OhaengBalance } from "../lib/saju";
 
 const balance: OhaengBalance = { 목: 1, 화: 2, 토: 2, 금: 3, 수: 0 };
-const result = analyzeOhaeng(balance);
+const result = simpleCountYongsin(balance);
 
 const failures: string[] = [];
 function check<T>(label: string, actual: T, expected: T) {
