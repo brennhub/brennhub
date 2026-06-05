@@ -5,11 +5,15 @@
  * 상극: 목극토, 토극수, 수극화, 화극금, 금극목 (내가 극하는 것)
  *
  * 용신/기신 결정 규칙 (단순화):
- *   1. deficient(== 0) 오행 → 직접 용신
+ *   1. deficient(≤ 0.5) 오행 → 직접 용신
  *   2. deficient를 상생해주는(생기는 쪽) 오행 → 용신 (간접 보완)
- *   3. excessive(≥ 3) 오행 → 기신
+ *   3. excessive(≥ 2.5) 오행 → 기신
  *   4. excessive를 상생해주는 오행 → 기신 (강화하므로 피함)
  *   5. 충돌 시 기신 우선 (과다 오행을 더 강화하는 건 피함이 핵심)
+ *
+ * 임계 (B-1, 2026-06-04 격상): 지장간 일수 비례 fraction 점수 도입 →
+ *   deficient ≤ 0.5 / excessive ≥ 2.5 (saju.ts findDeficient/Excessive 동일 임계로 통일).
+ *   억부 용신 격상(B-3)에서 일간 강약 기반 휴리스틱으로 재검토 예정.
  */
 
 import type { Ohaeng, OhaengBalance } from "./saju";
@@ -54,18 +58,21 @@ function generatedBy(o: Ohaeng): Ohaeng {
 
 export interface OhaengAnalysis {
   balance: OhaengBalance;
-  deficient: Ohaeng[]; // count === 0
-  excessive: Ohaeng[]; // count >= 3
+  deficient: Ohaeng[]; // count ≤ 0.5 (B-1 격상, 지장간 일수 비례)
+  excessive: Ohaeng[]; // count ≥ 2.5
   yongsin: Ohaeng[]; // 이름에 넣으면 좋은 오행
   gisin: Ohaeng[]; // 이름에 피해야 할 오행
   nameDirection: string; // 한 줄 요약
 }
 
+const DEFICIENT_THRESHOLD = 0.5;
+const EXCESSIVE_THRESHOLD = 2.5;
+
 // ───────────────────────── 메인 ─────────────────────────
 
 export function analyzeOhaeng(balance: OhaengBalance): OhaengAnalysis {
-  const deficient = OHAENG_ORDER.filter((o) => balance[o] === 0);
-  const excessive = OHAENG_ORDER.filter((o) => balance[o] >= 3);
+  const deficient = OHAENG_ORDER.filter((o) => balance[o] <= DEFICIENT_THRESHOLD);
+  const excessive = OHAENG_ORDER.filter((o) => balance[o] >= EXCESSIVE_THRESHOLD);
 
   // 용신 후보 수집
   const yongsinSet = new Set<Ohaeng>();
