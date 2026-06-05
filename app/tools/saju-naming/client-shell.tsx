@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
 import type {
   Pillar,
+  SajuGangyak,
   SajuRelations,
   SajuSipsin,
   TrueSolarMeta,
@@ -33,6 +34,7 @@ export interface SajuApiResponse {
     trueSolar?: TrueSolarMeta;
     relations?: SajuRelations; // 합충형파해 감지 (B-2 P1)
     sipsin?: SajuSipsin; // 십신 (B-3-a)
+    gangyak?: SajuGangyak; // 강약 (B-3-b)
   };
   ohaeng: OhaengAnalysis;
 }

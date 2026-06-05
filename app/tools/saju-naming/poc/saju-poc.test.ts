@@ -32,6 +32,7 @@ import { analyzeOhaeng } from "../lib/ohaeng";
 import { JIJI } from "../lib/saju";
 import { detectRelations } from "../lib/relations";
 import { getSipsin, getSipsinGroup } from "../lib/sipsin";
+import { evaluateDeuglyeong, evaluateDeukji } from "../lib/gangyak";
 
 const failures: string[] = [];
 function check(label: string, cond: boolean, hint?: unknown): void {
@@ -467,14 +468,79 @@ function isPillar(h: Pillar | { unknown: true }): h is Pillar {
   check("case19 sipsin 추가 (영향 0)", r.sipsin !== undefined);
 }
 
+// ─── case 20 — 외숙모 강약 verbatim (B-3-b) ───
+{
+  const r = calculateSaju(1979, 5, 29, 5, false);
+  const g = r.gangyak;
+  check("case20 gangyak 존재", g !== undefined);
+  if (g) {
+    // 월지 사(火) 본기 병(火) == 일간 병(火) → 비견 → 득령 O
+    check("case20 득령 O (월지 사 본기 병=화 == 일간 병)", g.deuglyeong === true);
+    check("case20 월지 본기 천간=병", g.raw.monthMainStem === "병");
+    check("case20 월지 본기 오행=화", g.raw.monthMainOhaeng === "화");
+    // 일지 신(金) 지장간 戊·壬·庚 — 일간 병(火)의 비겁(火)/인성(木) 없음 → 득지 X
+    check("case20 득지 X (일지 신 지장간에 화/목 없음)", g.deukji === false);
+    // 월·일지 외 자리에서 식상(설기) 우세 → 득세 X
+    check("case20 득세 X (support < drain)", g.deukse === false);
+    // 라벨 = 강변약 (O·X·X)
+    check("case20 라벨=강변약", g.label === "강변약");
+    check("case20 3단=중화", g.category === "중화");
+    // raw 수치 (sim 결과 verbatim)
+    check("case20 support≈1.167", Math.abs(g.raw.supportCount - 1.167) < 0.01, g.raw.supportCount);
+    check("case20 drain≈3.833", Math.abs(g.raw.drainCount - 3.833) < 0.01, g.raw.drainCount);
+  }
+}
+
+// ─── case 21 — 3원소 합성 검증 + 8분류 매핑 ───
+{
+  // 득령 합성 — 일간 갑(목) 기준
+  // 갑이 월지 인(목·본기 갑)에 있으면 비견 → 득령 O
+  const dRyeong1 = evaluateDeuglyeong("갑", { gan: "병", ji: "인", label: "병인" });
+  check("case21 득령 — 갑·인(본기 갑=목,비견) → O", dRyeong1.deuglyeong === true);
+  // 갑이 월지 자(수·본기 계)에 있으면 인성 → 득령 O
+  const dRyeong2 = evaluateDeuglyeong("갑", { gan: "병", ji: "자", label: "병자" });
+  check("case21 득령 — 갑·자(본기 계=수,인성) → O", dRyeong2.deuglyeong === true);
+  // 갑이 월지 사(화·본기 병)에 있으면 식상 → 득령 X
+  const dRyeong3 = evaluateDeuglyeong("갑", { gan: "병", ji: "사", label: "병사" });
+  check("case21 득령 — 갑·사(본기 병=화,식상) → X", dRyeong3.deuglyeong === false);
+  // 갑이 월지 신(금·본기 경)에 있으면 관성 → 득령 X
+  const dRyeong4 = evaluateDeuglyeong("갑", { gan: "병", ji: "신", label: "병신" });
+  check("case21 득령 — 갑·신(본기 경=금,관성) → X", dRyeong4.deuglyeong === false);
+
+  // 득지 합성 — 일간 갑(목)
+  // 일지 인(지장간 무·병·갑) → 갑 존재 → 득지 O
+  const dJi1 = evaluateDeukji("갑", { gan: "병", ji: "인", label: "병인" });
+  check("case21 득지 — 갑·인(지장간 갑 존재,비견) → O", dJi1.deukji === true);
+  // 일지 신(지장간 무·임·경) → 목·수(인성) 미존재? 수는 임 → 인성 O → 득지 O
+  const dJi2 = evaluateDeukji("갑", { gan: "병", ji: "신", label: "병신" });
+  check("case21 득지 — 갑·신(지장간 임=수,인성) → O", dJi2.deukji === true);
+  // 일지 미(지장간 정·을·기) → 을(목·비겁) 존재 → 득지 O
+  const dJi3 = evaluateDeukji("갑", { gan: "병", ji: "미", label: "병미" });
+  check("case21 득지 — 갑·미(지장간 을=목,비겁) → O", dJi3.deukji === true);
+  // 일지 오(지장간 병·기·정) → 화·토·화 모두 비겁/인성 아님 → 득지 X
+  const dJi4 = evaluateDeukji("갑", { gan: "병", ji: "오", label: "병오" });
+  check("case21 득지 — 갑·오(지장간 화·토만) → X", dJi4.deukji === false);
+}
+
+// ─── case 22 — 추천 영향 0 (외숙모 ohaeng/용신/방향 보존, gangyak는 추가만) ───
+{
+  const r = calculateSaju(1979, 5, 29, 5, false);
+  check("case22 ohaeng 보존 — 토 ≈3.3", Math.abs(r.ohaeng.토 - 3.3) < 0.01);
+  check("case22 deficient 보존 — [수]", JSON.stringify(r.deficient) === JSON.stringify(["수"]));
+  check("case22 excessive 보존 — [토]", JSON.stringify(r.excessive) === JSON.stringify(["토"]));
+  check("case22 sipsin 보존 (B-3-a)", r.sipsin !== undefined);
+  check("case22 gangyak 추가 (영향 0)", r.gangyak !== undefined);
+}
+
 if (failures.length === 0) {
-  console.log("✅ saju 명식 PoC 통과 (19 case + 부수).");
+  console.log("✅ saju 명식 PoC 통과 (22 case + 부수).");
   console.log("");
   console.log("(verbatim 변동 — 진태양시) 1979-05-29 05:00 시주: OLD '신묘' → NEW '경인'.");
   console.log("(verbatim 변동 — 12절기) 1979-05-29 월주: OLD(라이브러리 음력) '경오' → NEW(입하 기준) '기사'.");
   console.log("(verbatim 변동 — 지장간 B-1) 오행 정수 → fraction. 외숙모 토 3 → 3.299, 수 0 → 0.233.");
   console.log("(verbatim 신규 — 합충 B-2) 외숙모 relations: 육합 사·신(수) / 충 인·신 / 삼형 인·사·신 / 파 사·신 / 해 사·인.");
   console.log("(verbatim 신규 — 십신 B-3-a) 외숙모 일간 병(화·양). 5 그룹: 식상 3.300 (압도) · 비겁 2.067 · 재성 1.767 · 인성 0.633 · 관성 0.233 (매우 약).");
+  console.log("(verbatim 신규 — 강약 B-3-b) 외숙모 득령 O · 득지 X · 득세 X (support 1.167 vs drain 3.833) → 강변약 (중화). 월령 강한 출발이나 일지·세력 모두 약함.");
   console.log("  → 모두 P1 감지+표시만, 추천 영향 0.");
 } else {
   console.error(`❌ PoC 실패 ${failures.length}건:`);
