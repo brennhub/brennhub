@@ -33,6 +33,7 @@ import { JIJI } from "../lib/saju";
 import { detectRelations } from "../lib/relations";
 import { getSipsin, getSipsinGroup } from "../lib/sipsin";
 import { evaluateDeuglyeong, evaluateDeukji } from "../lib/gangyak";
+import { evaluateYongsin, simpleCountYongsin } from "../lib/yongsin";
 
 const failures: string[] = [];
 function check(label: string, cond: boolean, hint?: unknown): void {
@@ -283,11 +284,12 @@ function isPillar(h: Pillar | { unknown: true }): h is Pillar {
   check("case13 오 토=9/30 (기9)", Math.abs(cOh.토 - 9 / 30) < 0.0001);
 }
 
-// ─── case 14 — analyzeOhaeng 임계 4-α 통일 (saju.ts ↔ ohaeng.ts) ───
+// ─── case 14 — 단순카운트 임계 4-α 통일 (B-3-c 부분 대체 후, 중화/참고 메타 검증) ───
 {
-  // 합성 fraction balance — 임계 경계 검증
+  // B-3-c 격상: analyzeOhaeng는 강약 등 필요 → 단순카운트 로직만 단독 검증.
+  // simpleCountYongsin은 yongsin.ts에서 export (중화 분기 + ohaeng-poc 공유).
   const synth = { 목: 0.4, 화: 1.5, 토: 2.8, 금: 0.6, 수: 0.5 };
-  const a = analyzeOhaeng(synth);
+  const a = simpleCountYongsin(synth);
   // deficient ≤ 0.5: 목(0.4)·수(0.5). 금(0.6) > 0.5 → not.
   check("case14 목(0.4) deficient", a.deficient.includes("목"));
   check("case14 수(0.5) deficient", a.deficient.includes("수"));
@@ -532,8 +534,98 @@ function isPillar(h: Pillar | { unknown: true }): h is Pillar {
   check("case22 gangyak 추가 (영향 0)", r.gangyak !== undefined);
 }
 
+// ─── case 23 — 외숙모 중화 → 단순카운트 보존 + johuMeta conflict=null (B-3-c) ───
+{
+  const r = calculateSaju(1979, 5, 29, 5, false);
+  const y = evaluateYongsin(r.ohaeng, r.day.gan, r.gangyak, r.month.ji, r.sipsin);
+  check("case23 method=simple-count (중화 분기)", y.yongsinMeta.method === "simple-count");
+  check("case23 baseGroup=null", y.yongsinMeta.baseGroup === null);
+  check("case23 yongsin=[금,수] 보존", JSON.stringify(y.yongsin) === JSON.stringify(["금", "수"]));
+  check("case23 gisin=[화,토] 보존", JSON.stringify(y.gisin) === JSON.stringify(["화", "토"]));
+  check("case23 nameDirection 보존", y.nameDirection === "금·수 오행 한자 위주로 추천");
+  check("case23 johuMeta 존재 (사월=난)", y.johuMeta !== null);
+  if (y.johuMeta) {
+    check("case23 johuMeta.ohaeng=수", y.johuMeta.ohaeng === "수");
+    check("case23 johuMeta.tendency=난", y.johuMeta.tendency === "난");
+    // ⚠️ 수가 yongsin 포함 → conflict=null/applied=true (Plan 결정 7건 우선순위)
+    check("case23 johuMeta.conflict=null (yongsin 포함)", y.johuMeta.conflict === null);
+    check("case23 johuMeta.applied=true", y.johuMeta.applied === true);
+  }
+}
+
+// ─── case 24 — C2 갑 신약 → 억부 변동 (보조 그룹, 사주 있는 것만) ───
+{
+  const r = calculateSaju(1979, 6, 16, 12, false);
+  const y = evaluateYongsin(r.ohaeng, r.day.gan, r.gangyak, r.month.ji, r.sipsin);
+  check("case24 일간=갑·라벨=약·카테고리=신약", r.day.gan === "갑" && r.gangyak.label === "약" && r.gangyak.category === "신약");
+  check("case24 method=eokbu", y.yongsinMeta.method === "eokbu");
+  check("case24 baseGroup=보조", y.yongsinMeta.baseGroup === "보조");
+  // 보조 그룹 = 인성(수)·비겁(목). C2 비겁=1.633, 인성=0 → yongsin=[목]만
+  check("case24 yongsin=[목] (인성 count=0 제외)", JSON.stringify(y.yongsin) === JSON.stringify(["목"]));
+  // 반대 그룹 전체 = 식상(화)·재성(토)·관성(금)
+  check("case24 gisin=[화,토,금]", JSON.stringify(y.gisin) === JSON.stringify(["화", "토", "금"]));
+  check("case24 nameDirection 포함 '약 사주'", y.nameDirection.startsWith("약 사주"));
+  // 오월 → 조후 수, yongsin/gisin 모두 미포함 → neutral
+  if (y.johuMeta) {
+    check("case24 johuMeta.conflict=neutral", y.johuMeta.conflict === "neutral");
+    check("case24 johuMeta.applied=true", y.johuMeta.applied === true);
+  }
+}
+
+// ─── case 25 — C6 갑 최강/신강 → 억부 변동 (억제 그룹, count 정렬) ───
+{
+  const r = calculateSaju(2008, 12, 30, 8, false);
+  const y = evaluateYongsin(r.ohaeng, r.day.gan, r.gangyak, r.month.ji, r.sipsin);
+  check("case25 일간=갑·라벨=최강·카테고리=신강", r.day.gan === "갑" && r.gangyak.label === "최강" && r.gangyak.category === "신강");
+  check("case25 method=eokbu", y.yongsinMeta.method === "eokbu");
+  check("case25 baseGroup=억제", y.yongsinMeta.baseGroup === "억제");
+  // 억제 그룹 = 식상(화)·재성(토)·관성(금). 관성 count=0 제외, 정렬: 재성 1.6 > 식상 1.0
+  check("case25 yongsin=[토,화] (관성 count=0 제외, 재성>식상 정렬)", JSON.stringify(y.yongsin) === JSON.stringify(["토", "화"]));
+  // 반대 = 인성(수)·비겁(목)
+  check("case25 gisin=[수,목]", JSON.stringify(y.gisin) === JSON.stringify(["수", "목"]));
+  // 자월 → 조후 화 (한). 화 ∈ yongsin → conflict=null/applied=true
+  if (y.johuMeta) {
+    check("case25 johuMeta.ohaeng=화", y.johuMeta.ohaeng === "화");
+    check("case25 johuMeta.tendency=한", y.johuMeta.tendency === "한");
+    check("case25 johuMeta.conflict=null (yongsin 포함)", y.johuMeta.conflict === null);
+  }
+}
+
+// ─── case 26 — C7 경 강/신강 + 환절기 진 → johuMeta=null ───
+{
+  const r = calculateSaju(2008, 4, 20, 12, false);
+  const y = evaluateYongsin(r.ohaeng, r.day.gan, r.gangyak, r.month.ji, r.sipsin);
+  check("case26 일간=경·라벨=강·카테고리=신강", r.day.gan === "경" && r.gangyak.label === "강" && r.gangyak.category === "신강");
+  check("case26 method=eokbu", y.yongsinMeta.method === "eokbu");
+  // 억제 그룹 = 식상(수)·재성(목)·관성(화). 정렬: 관성 1.766 > 식상 1.1 > 재성 0.833
+  check("case26 yongsin=[화,수,목] (count desc)", JSON.stringify(y.yongsin) === JSON.stringify(["화", "수", "목"]));
+  // 진월 환절기 → johuMeta=null
+  check("case26 johuMeta=null (환절기 진)", y.johuMeta === null);
+}
+
+// ─── case 27 — 추천 영향 분기 (중화 보존 + 신강/신약 변동) ───
+{
+  // C1 외숙모 (중화) 보존 확인
+  const r1 = calculateSaju(1979, 5, 29, 5, false);
+  const y1 = evaluateYongsin(r1.ohaeng, r1.day.gan, r1.gangyak, r1.month.ji, r1.sipsin);
+  check("case27 C1 외숙모 simple-count", y1.yongsinMeta.method === "simple-count");
+
+  // C3 무 약변강 (중화) 보존 확인
+  const r3 = calculateSaju(1992, 8, 20, 14, false);
+  const y3 = evaluateYongsin(r3.ohaeng, r3.day.gan, r3.gangyak, r3.month.ji, r3.sipsin);
+  check("case27 C3 무 simple-count", y3.yongsinMeta.method === "simple-count");
+  check("case27 C3 yongsin=[목,수] 보존", JSON.stringify(y3.yongsin) === JSON.stringify(["목", "수"]));
+
+  // C5 임 신약 변동 확인 (사주 있는 그룹 정렬)
+  const r5 = calculateSaju(1979, 7, 4, 8, false);
+  const y5 = evaluateYongsin(r5.ohaeng, r5.day.gan, r5.gangyak, r5.month.ji, r5.sipsin);
+  check("case27 C5 임 eokbu", y5.yongsinMeta.method === "eokbu");
+  // 비겁(수) 2.233 > 인성(금) 1.533 → [수,금]
+  check("case27 C5 yongsin=[수,금] (count desc)", JSON.stringify(y5.yongsin) === JSON.stringify(["수", "금"]));
+}
+
 if (failures.length === 0) {
-  console.log("✅ saju 명식 PoC 통과 (22 case + 부수).");
+  console.log("✅ saju 명식 PoC 통과 (27 case + 부수).");
   console.log("");
   console.log("(verbatim 변동 — 진태양시) 1979-05-29 05:00 시주: OLD '신묘' → NEW '경인'.");
   console.log("(verbatim 변동 — 12절기) 1979-05-29 월주: OLD(라이브러리 음력) '경오' → NEW(입하 기준) '기사'.");
@@ -541,7 +633,9 @@ if (failures.length === 0) {
   console.log("(verbatim 신규 — 합충 B-2) 외숙모 relations: 육합 사·신(수) / 충 인·신 / 삼형 인·사·신 / 파 사·신 / 해 사·인.");
   console.log("(verbatim 신규 — 십신 B-3-a) 외숙모 일간 병(화·양). 5 그룹: 식상 3.300 (압도) · 비겁 2.067 · 재성 1.767 · 인성 0.633 · 관성 0.233 (매우 약).");
   console.log("(verbatim 신규 — 강약 B-3-b) 외숙모 득령 O · 득지 X · 득세 X (support 1.167 vs drain 3.833) → 강변약 (중화). 월령 강한 출발이나 일지·세력 모두 약함.");
-  console.log("  → 모두 P1 감지+표시만, 추천 영향 0.");
+  console.log("(verbatim 신규 — 억부 B-3-c) 외숙모 = 강변약(중화) → simple-count 분기 유지, yongsin=[금,수] 보존. johuMeta=수(난,사월), 수가 yongsin 포함 → conflict=null/applied=true.");
+  console.log("  C2 갑 약/신약 → eokbu, yongsin=[목] (인성=0 제외) / C5 임 약/신약 → eokbu, yongsin=[수,금] (count desc) / C6 갑 최강/신강 → eokbu, yongsin=[토,화] (관성=0 제외, 재성>식상 정렬) / C7 경 강/신강 → eokbu, yongsin=[화,수,목].");
+  console.log("  ⚠️ 중화는 단순카운트 유지(검증 모델). 신강/신약만 억부 적용 — 강약 모델 한계(월령 동등 가중) 노출 회피.");
 } else {
   console.error(`❌ PoC 실패 ${failures.length}건:`);
   for (const f of failures) console.error(`  - ${f}`);

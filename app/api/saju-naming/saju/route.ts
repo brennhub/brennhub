@@ -200,7 +200,18 @@ export async function POST(req: Request): Promise<Response> {
         dst: validated.dst,
       },
     );
-    const ohaeng = analyzeOhaeng(saju.ohaeng);
+    // B-3-c 격상: analyzeOhaeng 시그니처 확장 — 강약/일간/월지/십신 추가.
+    // gangyak·sipsin은 calculateSaju에서 항상 생성됨 (B-3-a/b 통합 후).
+    if (!saju.gangyak || !saju.sipsin) {
+      throw new Error("gangyak/sipsin 누락 — B-3-a/b 통합 후 항상 존재 가정");
+    }
+    const ohaeng = analyzeOhaeng(
+      saju.ohaeng,
+      saju.day.gan,
+      saju.gangyak,
+      saju.month.ji,
+      saju.sipsin,
+    );
     return Response.json({
       saju: toApiSaju(saju),
       ohaeng,
