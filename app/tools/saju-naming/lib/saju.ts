@@ -30,6 +30,13 @@ import {
   yearForGapjaByLichun,
 } from "./jeolgi";
 import { getJijangContributions } from "./jijang";
+import { detectRelations, type SajuRelations } from "./relations";
+
+export type {
+  RelationEntry,
+  RelationKind,
+  SajuRelations,
+} from "./relations";
 
 // ───────────────────────── 상수 ─────────────────────────
 
@@ -268,6 +275,8 @@ export interface SajuResult {
   };
   /** 진태양시 보정 메타. hour: { unknown: true } 시 undefined. */
   trueSolar?: TrueSolarMeta;
+  /** 합충형파해 감지 결과 (영역 B-2, P1 — 표시만, 추천 영향 0). */
+  relations?: SajuRelations;
 }
 
 /** calculateSaju 보조 옵션 — 모두 optional. 미지정 시 한국 표준 default. */
@@ -548,6 +557,18 @@ export function calculateSaju(
   // 2) 시간 미지: 시주 미지 + ohaeng 시주 제외.
   if (hour === null) {
     const ohaeng = countOhaeng([yearPillar, monthPillar, inputDayPillar]);
+    const relations = detectRelations(
+      [
+        { gan: yearPillar.gan, position: "year" },
+        { gan: monthPillar.gan, position: "month" },
+        { gan: inputDayPillar.gan, position: "day" },
+      ],
+      [
+        { ji: yearPillar.ji, position: "year" },
+        { ji: monthPillar.ji, position: "month" },
+        { ji: inputDayPillar.ji, position: "day" },
+      ],
+    );
     return {
       year: yearPillar,
       month: monthPillar,
@@ -557,6 +578,7 @@ export function calculateSaju(
       deficient: findDeficient(ohaeng),
       excessive: findExcessive(ohaeng),
       lunarDate,
+      relations,
     };
   }
 
@@ -595,6 +617,22 @@ export function calculateSaju(
 
   const ohaeng = countOhaeng([yearPillar, monthPillar, dayPillar, hourPillar]);
 
+  // 합충형파해 감지 (B-2 P1, 표시만 — 추천 영향 0).
+  const relations = detectRelations(
+    [
+      { gan: yearPillar.gan, position: "year" },
+      { gan: monthPillar.gan, position: "month" },
+      { gan: dayPillar.gan, position: "day" },
+      { gan: hourPillar.gan, position: "hour" },
+    ],
+    [
+      { ji: yearPillar.ji, position: "year" },
+      { ji: monthPillar.ji, position: "month" },
+      { ji: dayPillar.ji, position: "day" },
+      { ji: hourPillar.ji, position: "hour" },
+    ],
+  );
+
   return {
     year: yearPillar,
     month: monthPillar,
@@ -605,5 +643,6 @@ export function calculateSaju(
     excessive: findExcessive(ohaeng),
     lunarDate,
     trueSolar: corrected.meta,
+    relations,
   };
 }

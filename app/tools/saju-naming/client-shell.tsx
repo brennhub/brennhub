@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
-import type { Pillar, TrueSolarMeta } from "@/app/tools/saju-naming/lib/saju";
+import type {
+  Pillar,
+  SajuRelations,
+  TrueSolarMeta,
+} from "@/app/tools/saju-naming/lib/saju";
 import type { OhaengAnalysis } from "@/app/tools/saju-naming/lib/ohaeng";
 import { SajuInputForm, type SajuFormValues } from "./components/saju-input-form";
 import { SajuResultView } from "./components/saju-result";
@@ -26,6 +30,7 @@ export interface SajuApiResponse {
       intercalation: boolean;
     };
     trueSolar?: TrueSolarMeta;
+    relations?: SajuRelations; // 합충형파해 감지 (B-2 P1)
   };
   ohaeng: OhaengAnalysis;
 }
