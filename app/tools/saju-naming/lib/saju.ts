@@ -32,6 +32,7 @@ import {
 import { getJijangContributions } from "./jijang";
 import { detectRelations, type SajuRelations } from "./relations";
 import { getSajuSipsin, type SajuSipsin } from "./sipsin";
+import { evaluateGangyak, type SajuGangyak } from "./gangyak";
 
 export type {
   RelationEntry,
@@ -45,6 +46,12 @@ export type {
   Sipsin,
   SipsinGroup,
 } from "./sipsin";
+export type {
+  GangyakCategory,
+  GangyakLabel,
+  GangyakRaw,
+  SajuGangyak,
+} from "./gangyak";
 
 // ───────────────────────── 상수 ─────────────────────────
 
@@ -287,6 +294,8 @@ export interface SajuResult {
   relations?: SajuRelations;
   /** 십신 (B-3-a, 일간 기준 5 그룹 — 표시만, 추천 영향 0). */
   sipsin?: SajuSipsin;
+  /** 일간 강약 (B-3-b, 득령·득지·득세 → 8분류 — 표시만, 추천 영향 0). */
+  gangyak?: SajuGangyak;
 }
 
 /** calculateSaju 보조 옵션 — 모두 optional. 미지정 시 한국 표준 default. */
@@ -584,6 +593,11 @@ export function calculateSaju(
       month: monthPillar,
       day: inputDayPillar,
     });
+    const gangyak = evaluateGangyak(
+      inputDayPillar.gan,
+      { year: yearPillar, month: monthPillar, day: inputDayPillar },
+      sipsin,
+    );
     return {
       year: yearPillar,
       month: monthPillar,
@@ -595,6 +609,7 @@ export function calculateSaju(
       lunarDate,
       relations,
       sipsin,
+      gangyak,
     };
   }
 
@@ -657,6 +672,13 @@ export function calculateSaju(
     hour: hourPillar,
   });
 
+  // 강약 (B-3-b, 득령·득지·득세 → 8분류 — 표시만, 추천 영향 0).
+  const gangyak = evaluateGangyak(
+    dayPillar.gan,
+    { year: yearPillar, month: monthPillar, day: dayPillar, hour: hourPillar },
+    sipsin,
+  );
+
   return {
     year: yearPillar,
     month: monthPillar,
@@ -669,5 +691,6 @@ export function calculateSaju(
     trueSolar: corrected.meta,
     relations,
     sipsin,
+    gangyak,
   };
 }

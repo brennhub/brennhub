@@ -16,6 +16,7 @@
 import {
   calculateSaju,
   type Pillar,
+  type SajuGangyak,
   type SajuRelations,
   type SajuResult,
   type SajuSipsin,
@@ -142,6 +143,8 @@ interface ApiSaju {
   relations?: SajuRelations;
   /** 십신 (B-3-a, 표시만). */
   sipsin?: SajuSipsin;
+  /** 강약 (B-3-b, 표시만). */
+  gangyak?: SajuGangyak;
 }
 
 function toApiSaju(r: SajuResult): ApiSaju {
@@ -155,6 +158,7 @@ function toApiSaju(r: SajuResult): ApiSaju {
     ...(r.trueSolar ? { trueSolar: r.trueSolar } : {}),
     ...(r.relations ? { relations: r.relations } : {}),
     ...(r.sipsin ? { sipsin: r.sipsin } : {}),
+    ...(r.gangyak ? { gangyak: r.gangyak } : {}),
   };
 }
 
