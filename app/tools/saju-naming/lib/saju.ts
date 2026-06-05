@@ -31,12 +31,20 @@ import {
 } from "./jeolgi";
 import { getJijangContributions } from "./jijang";
 import { detectRelations, type SajuRelations } from "./relations";
+import { getSajuSipsin, type SajuSipsin } from "./sipsin";
 
 export type {
   RelationEntry,
   RelationKind,
   SajuRelations,
 } from "./relations";
+export type {
+  JijangSipsinEntry,
+  PillarSipsin,
+  SajuSipsin,
+  Sipsin,
+  SipsinGroup,
+} from "./sipsin";
 
 // ───────────────────────── 상수 ─────────────────────────
 
@@ -277,6 +285,8 @@ export interface SajuResult {
   trueSolar?: TrueSolarMeta;
   /** 합충형파해 감지 결과 (영역 B-2, P1 — 표시만, 추천 영향 0). */
   relations?: SajuRelations;
+  /** 십신 (B-3-a, 일간 기준 5 그룹 — 표시만, 추천 영향 0). */
+  sipsin?: SajuSipsin;
 }
 
 /** calculateSaju 보조 옵션 — 모두 optional. 미지정 시 한국 표준 default. */
@@ -569,6 +579,11 @@ export function calculateSaju(
         { ji: inputDayPillar.ji, position: "day" },
       ],
     );
+    const sipsin = getSajuSipsin(inputDayPillar.gan, {
+      year: yearPillar,
+      month: monthPillar,
+      day: inputDayPillar,
+    });
     return {
       year: yearPillar,
       month: monthPillar,
@@ -579,6 +594,7 @@ export function calculateSaju(
       excessive: findExcessive(ohaeng),
       lunarDate,
       relations,
+      sipsin,
     };
   }
 
@@ -633,6 +649,14 @@ export function calculateSaju(
     ],
   );
 
+  // 십신 (B-3-a, 일간 기준 — 표시만, 추천 영향 0).
+  const sipsin = getSajuSipsin(dayPillar.gan, {
+    year: yearPillar,
+    month: monthPillar,
+    day: dayPillar,
+    hour: hourPillar,
+  });
+
   return {
     year: yearPillar,
     month: monthPillar,
@@ -644,5 +668,6 @@ export function calculateSaju(
     lunarDate,
     trueSolar: corrected.meta,
     relations,
+    sipsin,
   };
 }

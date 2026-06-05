@@ -18,6 +18,7 @@ import {
   type Pillar,
   type SajuRelations,
   type SajuResult,
+  type SajuSipsin,
   type TrueSolarMeta,
 } from "@/app/tools/saju-naming/lib/saju";
 import { analyzeOhaeng } from "@/app/tools/saju-naming/lib/ohaeng";
@@ -139,6 +140,8 @@ interface ApiSaju {
   trueSolar?: TrueSolarMeta;
   /** 합충형파해 감지 결과 (B-2 P1, 표시만). */
   relations?: SajuRelations;
+  /** 십신 (B-3-a, 표시만). */
+  sipsin?: SajuSipsin;
 }
 
 function toApiSaju(r: SajuResult): ApiSaju {
@@ -151,6 +154,7 @@ function toApiSaju(r: SajuResult): ApiSaju {
     lunarDate: r.lunarDate,
     ...(r.trueSolar ? { trueSolar: r.trueSolar } : {}),
     ...(r.relations ? { relations: r.relations } : {}),
+    ...(r.sipsin ? { sipsin: r.sipsin } : {}),
   };
 }
 

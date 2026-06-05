@@ -31,6 +31,7 @@ import { JIJANG_TABLE, getJijangContributions } from "../lib/jijang";
 import { analyzeOhaeng } from "../lib/ohaeng";
 import { JIJI } from "../lib/saju";
 import { detectRelations } from "../lib/relations";
+import { getSipsin, getSipsinGroup } from "../lib/sipsin";
 
 const failures: string[] = [];
 function check(label: string, cond: boolean, hint?: unknown): void {
@@ -409,14 +410,72 @@ function isPillar(h: Pillar | { unknown: true }): h is Pillar {
   check("case16 자·미 원진 동시 감지", r7.wonjin.length === 1);
 }
 
+// ─── case 17 — 외숙모 십신 verbatim (B-3-a) ───
+{
+  const r = calculateSaju(1979, 5, 29, 5, false);
+  const sp = r.sipsin;
+  check("case17 sipsin 존재", sp !== undefined);
+  if (sp) {
+    check("case17 일간=병", sp.dayStem === "병");
+    // 년 천간 기(토·음): 병(화·양) → 토(생함) + 음양 다름 → 상관
+    check("case17 년 천간 상관", sp.year.stemSipsin === "상관");
+    // 월 천간 기 → 상관 (동일)
+    check("case17 월 천간 상관", sp.month.stemSipsin === "상관");
+    // 일 천간 병(자신) → 비견
+    check("case17 일 천간 비견", sp.day.stemSipsin === "비견");
+    // 시 천간 경(금·양): 병이 극함(화→금) + 양양 동 → 편재
+    check("case17 시 천간 편재", sp.hour?.stemSipsin === "편재");
+    // groupCounts 합 8.0 (4 천간 4 + 4 지지 일수비례 4)
+    const sum = Object.values(sp.groupCounts).reduce((a, b) => a + b, 0);
+    check("case17 groupCounts 합=8.0", Math.abs(sum - 8) < 0.01, sum);
+    // 식상 압도 (≈ 3.3)
+    check("case17 식상 압도(≈3.3)", Math.abs(sp.groupCounts.식상 - 3.3) < 0.01);
+    // 관성 매우 약 (≈ 0.233 — 일주 신 지장간 壬 7日만)
+    check("case17 관성 매우 약(≈0.233)", Math.abs(sp.groupCounts.관성 - 0.233) < 0.01);
+  }
+}
+
+// ─── case 18 — getSipsin 합성 검증 (10 종 + 그룹) ───
+{
+  // 일간 갑(목·양) 기준 모든 십신 매핑
+  check("case18 갑→갑 = 비견 (오행같음·음양동)", getSipsin("갑", "갑") === "비견");
+  check("case18 갑→을 = 겁재 (오행같음·음양이)", getSipsin("갑", "을") === "겁재");
+  check("case18 갑→병 = 식신 (생·동)", getSipsin("갑", "병") === "식신");
+  check("case18 갑→정 = 상관 (생·이)", getSipsin("갑", "정") === "상관");
+  check("case18 갑→무 = 편재 (극·동)", getSipsin("갑", "무") === "편재");
+  check("case18 갑→기 = 정재 (극·이)", getSipsin("갑", "기") === "정재");
+  check("case18 갑→경 = 편관 (극당함·동)", getSipsin("갑", "경") === "편관");
+  check("case18 갑→신 = 정관 (극당함·이)", getSipsin("갑", "신") === "정관");
+  check("case18 갑→임 = 편인 (생받음·동)", getSipsin("갑", "임") === "편인");
+  check("case18 갑→계 = 정인 (생받음·이)", getSipsin("갑", "계") === "정인");
+  // 그룹
+  check("case18 비견 → 비겁 그룹", getSipsinGroup("비견") === "비겁");
+  check("case18 식신 → 식상 그룹", getSipsinGroup("식신") === "식상");
+  check("case18 편재 → 재성 그룹", getSipsinGroup("편재") === "재성");
+  check("case18 정관 → 관성 그룹", getSipsinGroup("정관") === "관성");
+  check("case18 정인 → 인성 그룹", getSipsinGroup("정인") === "인성");
+}
+
+// ─── case 19 — 추천 영향 0 확인 (외숙모 ohaeng/용신/방향 보존, 단순 카운트 그대로) ───
+{
+  const r = calculateSaju(1979, 5, 29, 5, false);
+  // 단순 카운트 ohaeng (B-1)은 그대로
+  check("case19 ohaeng 보존 — 토 ≈3.3", Math.abs(r.ohaeng.토 - 3.3) < 0.01);
+  check("case19 deficient 보존 — [수]", JSON.stringify(r.deficient) === JSON.stringify(["수"]));
+  check("case19 excessive 보존 — [토]", JSON.stringify(r.excessive) === JSON.stringify(["토"]));
+  // sipsin은 추가 (영향 0)
+  check("case19 sipsin 추가 (영향 0)", r.sipsin !== undefined);
+}
+
 if (failures.length === 0) {
-  console.log("✅ saju 명식 PoC 통과 (16 case + 부수).");
+  console.log("✅ saju 명식 PoC 통과 (19 case + 부수).");
   console.log("");
   console.log("(verbatim 변동 — 진태양시) 1979-05-29 05:00 시주: OLD '신묘' → NEW '경인'.");
   console.log("(verbatim 변동 — 12절기) 1979-05-29 월주: OLD(라이브러리 음력) '경오' → NEW(입하 기준) '기사'.");
-  console.log("(verbatim 변동 — 지장간 B-1) 오행 정수 → fraction. 외숙모 토 3 → 3.299, 수 0 → 0.233, 목 1 → 0.633.");
+  console.log("(verbatim 변동 — 지장간 B-1) 오행 정수 → fraction. 외숙모 토 3 → 3.299, 수 0 → 0.233.");
   console.log("(verbatim 신규 — 합충 B-2) 외숙모 relations: 육합 사·신(수) / 충 인·신 / 삼형 인·사·신 / 파 사·신 / 해 사·인.");
-  console.log("  → P1 감지+표시만, 추천 영향 0.");
+  console.log("(verbatim 신규 — 십신 B-3-a) 외숙모 일간 병(화·양). 5 그룹: 식상 3.300 (압도) · 비겁 2.067 · 재성 1.767 · 인성 0.633 · 관성 0.233 (매우 약).");
+  console.log("  → 모두 P1 감지+표시만, 추천 영향 0.");
 } else {
   console.error(`❌ PoC 실패 ${failures.length}건:`);
   for (const f of failures) console.error(`  - ${f}`);
