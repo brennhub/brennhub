@@ -20,6 +20,7 @@
 import { calculateSurie } from "./surie";
 import { evaluateSoundOhaeng } from "./sound-ohaeng";
 import { isExcludedFromRecommend } from "./name-exclude";
+import { buildEumyangMeta, type EumyangMeta } from "./eumyang";
 
 // ───────────────────────── 발음오행 ─────────────────────────
 
@@ -114,6 +115,8 @@ export interface NameCandidate {
   totalScore: number;
   freqSum: number; // 이름 한자 상용도(frequency 1~5) 합 — 동점 tiebreak용 (점수 미가산).
   breakdown: string;
+  /** C-1 신규: 음양 배열 메타. result="흉"이면 길 후보 부족 시 fallback 보충된 후보. */
+  eumyang: EumyangMeta;
 }
 
 export interface NameRecommendOptions {
@@ -161,6 +164,9 @@ function makeCandidate(
   const freqSum = chars.reduce((s, c) => s + (c.frequency ?? 0), 0);
   const breakdown = `음령${soundWeighted}+수리${surieWeighted}=${totalScore}`;
 
+  // C-1 음양 배열 메타 — 원획(won_stroke) 홀짝, 점수 모델 미반영.
+  const eumyang = buildEumyangMeta(options.sungStroke, wonStrokes);
+
   return {
     hanja,
     hangeul,
@@ -172,6 +178,7 @@ function makeCandidate(
     totalScore,
     freqSum,
     breakdown,
+    eumyang,
   };
 }
 
@@ -244,7 +251,18 @@ export function recommendNames(
   // 5. 다양성 선별 — 첫 글자 distinct 우선 (39-C). 각 버킷은 이미 desc.
   const buffer: NameCandidate[] = [];
   for (const arr of buckets.values()) buffer.push(...arr);
-  return selectDiverse(buffer, limit);
+
+  // 6. C-1 음양 배열 후처리 — 길 우선 채움, 부족 시 흉 fallback (Plan 안전장치).
+  //    nameLength=1 풀이 작을 때 흉만 남아도 추천 0 회피 + 사용자에 부조화 가시화.
+  const gilBuffer = buffer.filter((c) => c.eumyang.result === "길");
+  const hyungBuffer = buffer.filter((c) => c.eumyang.result === "흉");
+  const gilSelected = selectDiverse(gilBuffer, limit);
+  if (gilSelected.length >= limit) return gilSelected;
+  const need = limit - gilSelected.length;
+  const hyungSelected = selectDiverse(hyungBuffer, need);
+  const combined = [...gilSelected, ...hyungSelected];
+  combined.sort(compareCandidate);
+  return combined;
 }
 
 /**
