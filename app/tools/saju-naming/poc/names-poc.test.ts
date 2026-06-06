@@ -301,11 +301,57 @@ check("case9 共 추천 미등장", !joined9.includes("共"));
   check("case10e 共 가드 보존", !joined10e.includes("共"));
 }
 
+// case 11 — char2 다양성 가드 (C-1 후속, 외숙모 了 독점 해소).
+//   조치 A: consider 그룹 내 char2 unique 강제 + 점수 max 유지
+//   조치 B: selectDiverse 3단 fallback (char1·char2 distinct → char1 distinct → 전체)
+{
+  // 11-a) 같은 char2 한 글자가 풀 상위 freq에서 독점하는 시나리오 — 다양성 검증
+  //       풀: 모든 char1 = 다른 첫 글자 + char2 후보가 일부 동일 c2 ("수" 다발) + 다른 c2
+  const diverseC2: HanjaEntry[] = [
+    // char1 후보 (각각 다른 첫 글자)
+    { character: "佳", hangeul: "가", stroke: 8, won_stroke: 8, ohaeng: "목", meaning: "아름다울 가", frequency: 5 },
+    { character: "奈", hangeul: "나", stroke: 8, won_stroke: 8, ohaeng: "화", meaning: "어찌 나", frequency: 5 },
+    { character: "多", hangeul: "다", stroke: 6, won_stroke: 6, ohaeng: "수", meaning: "많을 다", frequency: 5 },
+    // char2 후보: "수" 다발 + 다른 c2 1개
+    { character: "洙", hangeul: "수", stroke: 9, won_stroke: 9, ohaeng: "수", meaning: "물가 수", frequency: 5 },
+    { character: "銖", hangeul: "수", stroke: 14, won_stroke: 14, ohaeng: "금", meaning: "저울눈 수", frequency: 4 },
+    { character: "琇", hangeul: "수", stroke: 11, won_stroke: 11, ohaeng: "금", meaning: "옥돌 수", frequency: 4 },
+    { character: "美", hangeul: "미", stroke: 9, won_stroke: 9, ohaeng: "수", meaning: "아름다울 미", frequency: 5 },
+  ];
+  const r11a = recommendNames({ ...SUNG, nameLength: 2, topN: 6, db: diverseC2 });
+  // 각 char1 그룹 내 char2 unique 강제 → 풀 c2가 (수,수,수,미) 시 c2 다양 ≥2 등장 보장
+  const c2Set = new Set(r11a.map((c) => c.hangeul[1] ?? ""));
+  check(
+    "case11a result에 char2 distinct ≥ 2 (그룹 내 unique + Phase 1 char1·char2 distinct)",
+    c2Set.size >= 2,
+  );
+  check("case11a 첫 글자 distinct ≥ 3 (char1 다양성 보존)", new Set(r11a.map((c) => c.hangeul[0])).size >= 3);
+
+  // 11-b) char1 distinct 보존 (Phase 2 fallback 정상 동작) — 풀이 길 후보 부족해도 char1 다양화
+  //   ⚠️ Phase 1 단독 검증은 풀 크기 + 음양 분포 의존. 본 검증은 char1 distinct만 (case4 회귀 보존).
+  //   Phase 1 strict 검증은 case11a에서 c2 set ≥ 2로 간접 확인.
+  const phase1Pool: HanjaEntry[] = [
+    { character: "佳", hangeul: "가", stroke: 8, won_stroke: 8, ohaeng: "목", meaning: "아름다울 가", frequency: 5 },
+    { character: "奈", hangeul: "나", stroke: 8, won_stroke: 8, ohaeng: "화", meaning: "어찌 나", frequency: 5 },
+    { character: "多", hangeul: "다", stroke: 6, won_stroke: 6, ohaeng: "수", meaning: "많을 다", frequency: 5 },
+    { character: "亞", hangeul: "아", stroke: 8, won_stroke: 8, ohaeng: "토", meaning: "버금 아", frequency: 5 },
+  ];
+  const r11b = recommendNames({ ...SUNG, nameLength: 2, topN: 3, db: phase1Pool });
+  check(
+    "case11b topN=3 — char1 distinct 보존 (Phase 2 fallback)",
+    new Set(r11b.map((c) => c.hangeul[0])).size === r11b.length,
+  );
+
+  // 11-c) nameLength=1은 char2 logic skip (기존 동작 보존)
+  const r11c = recommendNames({ ...SUNG, nameLength: 1, topN: 3, db: phase1Pool });
+  check("case11c nameLength=1 첫 글자 distinct (char2 logic skip)", new Set(r11c.map((c) => c.hangeul[0])).size === r11c.length);
+}
+
 if (failures.length > 0) {
   console.error(`PoC 실패 ${failures.length}건:`);
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
 console.log(
-  `PoC 통과 — recommendNames 10 case (n=2 / n=1 / 음령 통합 / 다양성 / 대형풀 / 제외 필터 / char2 cap-skip 풀순서 / 상용도 tiebreak / 작명 부적합 가드 / 음양 배열 C-1) · 음령 55%+수리 45% · 39-C 품질 가드 + 음양 길 우선 + 흉 fallback.`,
+  `PoC 통과 — recommendNames 11 case (n=2 / n=1 / 음령 통합 / 다양성 / 대형풀 / 제외 필터 / char2 cap-skip 풀순서 / 상용도 tiebreak / 작명 부적합 가드 / 음양 배열 C-1 / char2 다양성 가드) · 음령 55%+수리 45% · 39-C 가드 + 음양 길 우선/흉 fallback + char2 unique 그룹 내 + Phase1·2·3 fallback.`,
 );
