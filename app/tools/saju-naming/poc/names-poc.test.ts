@@ -347,11 +347,50 @@ check("case9 共 추천 미등장", !joined9.includes("共"));
   check("case11c nameLength=1 첫 글자 distinct (char2 logic skip)", new Set(r11c.map((c) => c.hangeul[0])).size === r11c.length);
 }
 
+// case 12 — C-2-pre 풀 상단 ws≤2 의미 가드 (11자 명시 제외 + 5자 보존 검증)
+{
+  // 12-a) 명백 부적합 11자 EXPLICIT_EXCLUDE 차단 검증
+  const blockChars = ["乂", "乃", "了", "人", "入", "冂", "几", "刀", "匕", "匸", "卜"];
+  for (const ch of blockChars) {
+    check(`case12a ${ch} 차단`, isExcludedFromRecommend({ character: ch, meaning: "테스트" }));
+  }
+
+  // 12-b) 보존 5자 통과 검증 (과잉 제외 방지)
+  const preserveChars = [
+    { ch: "乙", meaning: "새 을" },             // 천간
+    { ch: "丁", meaning: "넷째 천간 정" },       // 천간
+    { ch: "儿", meaning: "어진 사람 인" },       // 긍정
+    { ch: "力", meaning: "힘 력" },             // 긍정
+    { ch: "刁", meaning: "조두 조" },           // 애매
+  ];
+  for (const { ch, meaning } of preserveChars) {
+    check(`case12b ${ch}(${meaning}) 통과 보존`, !isExcludedFromRecommend({ character: ch, meaning }));
+  }
+
+  // 12-c) 통합: seed + 부적합 11자 + 보존 5자 → 부적합 미등장, 보존 통과 가능성
+  const seed12: HanjaEntry[] = [
+    ...seed,
+    // 부적합 (모두 미등장 기대)
+    { character: "了", hangeul: "료", stroke: 2, won_stroke: 2, ohaeng: "금", meaning: "마칠 료", frequency: 5 },
+    { character: "刀", hangeul: "도", stroke: 2, won_stroke: 2, ohaeng: "금", meaning: "칼 도", frequency: 5 },
+    { character: "人", hangeul: "인", stroke: 2, won_stroke: 2, ohaeng: "화", meaning: "사람 인", frequency: 5 },
+    { character: "入", hangeul: "입", stroke: 2, won_stroke: 2, ohaeng: "목", meaning: "들 입", frequency: 5 },
+    // 보존 (통과 가능)
+    { character: "乙", hangeul: "을", stroke: 1, won_stroke: 1, ohaeng: "목", meaning: "새 을", frequency: 5 },
+    { character: "力", hangeul: "력", stroke: 2, won_stroke: 2, ohaeng: "토", meaning: "힘 력", frequency: 5 },
+  ];
+  const r12 = recommendNames({ ...SUNG, nameLength: 2, topN: 30, db: seed12 });
+  const joined12 = r12.map((c) => c.hanja).join("");
+  for (const ch of blockChars) {
+    check(`case12c ${ch} 추천 미등장`, !joined12.includes(ch));
+  }
+}
+
 if (failures.length > 0) {
   console.error(`PoC 실패 ${failures.length}건:`);
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
 console.log(
-  `PoC 통과 — recommendNames 11 case (n=2 / n=1 / 음령 통합 / 다양성 / 대형풀 / 제외 필터 / char2 cap-skip 풀순서 / 상용도 tiebreak / 작명 부적합 가드 / 음양 배열 C-1 / char2 다양성 가드) · 음령 55%+수리 45% · 39-C 가드 + 음양 길 우선/흉 fallback + char2 unique 그룹 내 + Phase1·2·3 fallback.`,
+  `PoC 통과 — recommendNames 12 case (n=2 / n=1 / 음령 통합 / 다양성 / 대형풀 / 제외 필터 / char2 cap-skip / 상용도 tiebreak / 작명 부적합 가드 / 음양 C-1 / char2 다양성 / 풀 상단 ws≤2 의미 가드 C-2-pre) · 음령 55%+수리 45% · 39-C + ws≤2 11자 EXPLICIT 차단 + 5자(乙·丁·儿·力·刁) 보존.`,
 );
