@@ -212,17 +212,49 @@ export function recommendNames(
   //    먼저** 등장. cap을 인카운터순으로 채우면 자연히 **상용 char1·char2**가 선택됨.
   //    (구 버그 蘇玟刁의 刁=최저획 char2 고정은 풀이 stroke ASC였기 때문 — 007 freq-DESC로 해소.)
   //    메모리 O(distinct 첫 글자 × PER_FIRST_KEEP) — pool² 없음(OOM 회피).
+  //
+  //    ⚠️ C-1 후속(char2 다양성): dev 회귀에서 외숙모 char2 = 了 100% 독점 발견
+  //    (予了·兮了·化了·壬了·巨了). 원인 = D1 풀 정렬(freq DESC + stroke ASC)에서 了가
+  //    풀 최상단 + j 루프가 매번 풀 맨 앞부터 → 동점 점수 후보의 char2가 同 글자.
+  //    조치 A — consider 시 **그룹 내 char2 unique 강제** (점수 max 유지): 같은 char1 그룹에
+  //              동일 char2 후보가 있으면 점수 더 높은 것 keep. cap 미차면 다른 char2 admit.
+  //              → 각 char1 그룹에 다양 char2 보장. global cap 회피 (작은 풀에서 case4b 손실 방지).
+  //    조치 B — selectDiverse 3단 fallback: char1·char2 distinct → char1 distinct → 전체.
+  //    결정론·점수 모델·39-C 가드·음양 필터 모두 무오염.
+  //    nameLength=1: char2=""이라 group 내 unique = 일반 cap 동작 (skip).
   const PER_FIRST_KEEP = 2; // 출력 다양성(첫 글자당 ≤2).
   const buckets = new Map<string, NameCandidate[]>(); // 각 버킷 compareCandidate desc
   const bucketFull = (first: string): boolean =>
     (buckets.get(first)?.length ?? 0) >= PER_FIRST_KEEP;
   function consider(cand: NameCandidate): void {
     const first = cand.hangeul[0] ?? "";
+    const second = cand.hangeul[1] ?? ""; // nameLength=1 → ""
     const arr = buckets.get(first);
-    if (!arr) buckets.set(first, [cand]);
-    else if (arr.length < PER_FIRST_KEEP) {
+    if (!arr) {
+      buckets.set(first, [cand]);
+      return;
+    }
+    // 그룹 내 같은 char2 후보가 있으면 점수 max 유지 (교체 또는 skip).
+    if (second) {
+      const dupIdx = arr.findIndex((c) => c.hangeul[1] === second);
+      if (dupIdx >= 0) {
+        if (compareCandidate(cand, arr[dupIdx]) < 0) {
+          arr[dupIdx] = cand;
+          arr.sort(compareCandidate);
+        }
+        return;
+      }
+    }
+    // 새 char2 — cap 미차면 admit, 차면 최저 점수와 교체(점수 max 유지).
+    if (arr.length < PER_FIRST_KEEP) {
       arr.push(cand);
       arr.sort(compareCandidate);
+    } else {
+      const lowest = arr[arr.length - 1];
+      if (compareCandidate(cand, lowest) < 0) {
+        arr[arr.length - 1] = cand;
+        arr.sort(compareCandidate);
+      }
     }
   }
 
@@ -266,36 +298,66 @@ export function recommendNames(
 }
 
 /**
- * 점수 desc 버퍼에서 topN 선택 — 첫 글자 distinct 우선 (다양성).
- *   버퍼를 첫 글자별로 그룹 후 rank 0(각 그룹 best)부터 라운드로빈 → distinct 우선.
- *   topN ≤ distinct 첫 글자 수면 전원 distinct. 최종 점수 desc 정렬.
+ * 점수 desc 버퍼에서 topN 선택 — char1·char2 distinct 우선, 3단 fallback.
+ *
+ * C-1 후속(char2 다양성, 외숙모 了 독점 해소):
+ *   Phase 1: char1·char2 둘 다 distinct (작명 다양성 핵심).
+ *   Phase 2: char1만 distinct, char2 중복 허용 (기존 동작).
+ *   Phase 3: 남은 모든 후보 (점수 desc) — 풀 부족 fallback.
+ *
+ * nameLength=1 (char2 = "") → Phase 1에서 char2 logic 자동 skip → char1 distinct만.
+ *
+ * 시그니처 유지 — 외부 호출처(PoC 등) 무영향.
+ * 입력 buffer는 정렬 무관 (내부에서 compareCandidate desc 정렬).
  */
 export function selectDiverse(
   buffer: NameCandidate[],
   limit: number,
 ): NameCandidate[] {
   if (limit <= 0) return [];
-  const byFirst = new Map<string, NameCandidate[]>();
-  for (const c of buffer) {
-    const f = c.hangeul[0] ?? "";
-    const arr = byFirst.get(f);
-    if (arr) arr.push(c);
-    else byFirst.set(f, [c]);
-  }
-  const buckets = [...byFirst.values()]; // buffer가 desc라 각 그룹도 desc
-  for (const b of buckets) b.sort(compareCandidate); // 그룹 내 점수·상용도 desc 보장
+  // 점수 desc 정렬 (입력 정렬 무관 보장)
+  const sorted = [...buffer].sort(compareCandidate);
+  const used = new Set<NameCandidate>();
+  const usedC1 = new Set<string>();
+  const usedC2 = new Set<string>();
   const result: NameCandidate[] = [];
-  let rank = 0;
-  while (result.length < limit) {
-    const tier = buckets.filter((b) => b.length > rank).map((b) => b[rank]);
-    if (tier.length === 0) break;
-    tier.sort(compareCandidate);
-    for (const c of tier) {
-      if (result.length >= limit) break;
-      result.push(c);
-    }
-    rank++;
+
+  // Phase 1: char1·char2 둘 다 distinct
+  for (const c of sorted) {
+    if (result.length >= limit) break;
+    const c1 = c.hangeul[0] ?? "";
+    const c2 = c.hangeul[1] ?? "";
+    if (usedC1.has(c1)) continue;
+    if (c2 && usedC2.has(c2)) continue;
+    usedC1.add(c1);
+    if (c2) usedC2.add(c2);
+    result.push(c);
+    used.add(c);
   }
+
+  // Phase 2: char1만 distinct (char2 중복 허용)
+  if (result.length < limit) {
+    for (const c of sorted) {
+      if (result.length >= limit) break;
+      if (used.has(c)) continue;
+      const c1 = c.hangeul[0] ?? "";
+      if (usedC1.has(c1)) continue;
+      usedC1.add(c1);
+      result.push(c);
+      used.add(c);
+    }
+  }
+
+  // Phase 3: 남은 모든 후보 (점수 desc)
+  if (result.length < limit) {
+    for (const c of sorted) {
+      if (result.length >= limit) break;
+      if (used.has(c)) continue;
+      result.push(c);
+      used.add(c);
+    }
+  }
+
   result.sort(compareCandidate);
   return result;
 }
