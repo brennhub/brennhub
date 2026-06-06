@@ -222,6 +222,7 @@ Task 단위 체크리스트. 완료 시 `[x]` + CHANGELOG에 요약 이동.
 
 ### Task 47 — i18n
 - [ ] `lib/i18n/messages.ts`에 `sajuNaming.*` namespace (ko 우선, en은 후순위)
+- [ ] **분석 가시화 UI 라벨 포함** — `saju-result.tsx` 기존 hardcoded + 신규 `saju-result-gangyak.tsx` (강약·득령·득지·득세·조후·억부·중화 라벨/풀이) + `saju-result-detail.tsx` (십신·합충형파해 11종 라벨) + `name-recommend.tsx` CandidateCard 음양 chip(양음·길·흉). 현재 한국어 hardcoded (기존 saju-result 패턴 일관). 도구 전체 점진 전환 필요.
 
 ### Task 48 — MCP 선택
 - [ ] 사주 계산을 외부 MCP 노출할지 결정 (B2B 가능성)
