@@ -7,6 +7,8 @@ import {
 import { cn } from "@/lib/utils";
 import type { Pillar } from "@/app/tools/saju-naming/lib/saju";
 import type { SajuApiResponse } from "../client-shell";
+import { GangyakSection } from "./saju-result-gangyak";
+import { DetailSection } from "./saju-result-detail";
 
 /** 오행별 표시 스타일 (전통 오행 색 계열). */
 const OHAENG: Record<
@@ -220,6 +222,16 @@ export function SajuResultView({ data }: { data: SajuApiResponse }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* 일간 강약 + 조후 (B-3-b·B-3-c) — graceful degrade: 항상 산출 가능. */}
+      {saju.gangyak && (
+        <GangyakSection gangyak={saju.gangyak} ohaeng={ohaeng} />
+      )}
+
+      {/* 십신·합충 상세 (B-3-a + B-2) — 접기 카드. relations 없으면 십신만. */}
+      {saju.sipsin && (
+        <DetailSection sipsin={saju.sipsin} relations={saju.relations} />
+      )}
     </div>
   );
 }
