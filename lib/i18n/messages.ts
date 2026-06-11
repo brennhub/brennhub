@@ -646,6 +646,19 @@ export type Messages = {
     topNAria: string;
     capWarning: string;
   };
+  tarot: {
+    title: string;
+    intro: string;
+    trustLine: string;
+    startButton: string;
+    dictionaryLink: string;
+    comingSoon: string;
+    domain_love: string;
+    domain_work: string;
+    domain_money: string;
+    domain_relation: string;
+    domain_self: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -662,6 +675,7 @@ export type Messages = {
     toolMaze: string;
     toolShooter: string;
     toolTagIt: string;
+    toolTarot: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -1524,6 +1538,20 @@ export const messages: Record<Locale, Messages> = {
       topNAria: "상위 몇 개를 담을지",
       capWarning: "파일당 태그는 최대 {max}개입니다. 상위 {max}개만 담았어요.",
     },
+    tarot: {
+      title: "타로 테이블",
+      intro:
+        "변하지 않는 카드 사전으로 읽는 3장 타로. 셔플부터 오픈까지, 모든 단계를 당신의 손으로.",
+      trustLine: "모든 해석은 공개된 사전에서 나옵니다",
+      startButton: "리딩 시작",
+      dictionaryLink: "카드 사전 열람",
+      comingSoon: "준비 중입니다",
+      domain_love: "연애",
+      domain_work: "일·직업",
+      domain_money: "돈",
+      domain_relation: "관계",
+      domain_self: "자기",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -1540,6 +1568,7 @@ export const messages: Record<Locale, Messages> = {
       toolMaze: "픽셀 미로 만들기",
       toolShooter: "아케이드 슈터",
       toolTagIt: "태그잇",
+      toolTarot: "타로 테이블",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -1808,6 +1837,11 @@ export const messages: Record<Locale, Messages> = {
         name: "태그잇",
         description:
           "오피스 문서(Word·Excel·PowerPoint)에서 핵심 키워드를 뽑아 칩으로 다듬고 문서 속성에 기록 — 전부 브라우저 안에서",
+      },
+      tarot: {
+        name: "타로 테이블",
+        description:
+          "변하지 않는 공개 카드 사전으로 읽는 3장 타로 — 메이저 아르카나 22장, 질문은 기기 밖으로 나가지 않습니다",
       },
     },
   },
@@ -2508,6 +2542,20 @@ export const messages: Record<Locale, Messages> = {
       topNAria: "How many top candidates to add",
       capWarning: "Up to {max} tags per file — kept the top {max}.",
     },
+    tarot: {
+      title: "Tarot Table",
+      intro:
+        "A three-card tarot read from an unchanging card dictionary. Shuffle, cut, and reveal — every step by your own hand.",
+      trustLine: "Every interpretation comes from a public dictionary",
+      startButton: "Start reading",
+      dictionaryLink: "Browse the card dictionary",
+      comingSoon: "Coming soon",
+      domain_love: "Love",
+      domain_work: "Work",
+      domain_money: "Money",
+      domain_relation: "Relationships",
+      domain_self: "Self",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -2524,6 +2572,7 @@ export const messages: Record<Locale, Messages> = {
       toolMaze: "Pixel Maze Maker",
       toolShooter: "Arcade Shooter",
       toolTagIt: "Tag-it",
+      toolTarot: "Tarot Table",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -2795,6 +2844,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Tag-it",
         description:
           "Pull key terms from an Office doc (Word/Excel/PowerPoint) into chips, curate them, and write them to the document properties — all in the browser",
+      },
+      tarot: {
+        name: "Tarot Table",
+        description:
+          "A three-card tarot read from an unchanging public card dictionary — 22 major arcana, your question never leaves your device",
       },
     },
   },

@@ -20,6 +20,7 @@
 ### 라이프 (lifestyle)
 - **사주 작명** `/tools/saju-naming` — 사주팔자 + 성명학 기반 작명. [상세](app/tools/saju-naming/README.md)
 - **축구 베스트 일레븐 만들기** `/tools/lineup-builder` — 포메이션·선수 명단·등번호 시각 구성 + PNG 다운로드. [상세](app/tools/lineup-builder/README.md)
+- **타로 테이블** `/tools/tarot` — 변하지 않는 공개 카드 사전으로 읽는 3장 타로 (메이저 아르카나 22장). 전부 브라우저 안. [상세](app/tools/tarot/README.md)
 
 ### 엔터테인먼트 (entertainment)
 - **언어 창조기** `/tools/language-maker` — 픽셀 글리프를 그리고 입력값에 1:1 매핑해 실시간 변환·이미지 공유. [상세](app/tools/language-maker/README.md)

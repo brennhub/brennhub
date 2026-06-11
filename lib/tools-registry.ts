@@ -104,4 +104,13 @@ export const tools: Tool[] = [
     // 클라이언트 전용 도구 (D1·서버 없음). hasPage: [slug] fallback 충돌 방지.
     hasPage: true,
   },
+  {
+    id: "tarot",
+    slug: "tarot",
+    status: "live",
+    category: "lifestyle",
+    createdAt: "2026-06-10",
+    // 클라이언트 전용 결정론 타로 (D1·서버 없음). hasPage: [slug] fallback 충돌 방지.
+    hasPage: true,
+  },
 ];
