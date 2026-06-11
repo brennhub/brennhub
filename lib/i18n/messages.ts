@@ -652,7 +652,12 @@ export type Messages = {
     trustLine: string;
     startButton: string;
     dictionaryLink: string;
-    comingSoon: string;
+    dictTitle: string;
+    dictIntro: string;
+    dictBack: string;
+    dictMetaElement: string;
+    dictMetaAstrology: string;
+    dictMetaSymbols: string;
     domain_love: string;
     domain_work: string;
     domain_money: string;
@@ -1594,7 +1599,13 @@ export const messages: Record<Locale, Messages> = {
       trustLine: "모든 해석은 공개된 사전에서 나옵니다",
       startButton: "리딩 시작",
       dictionaryLink: "카드 사전 열람",
-      comingSoon: "준비 중입니다",
+      dictTitle: "카드 사전",
+      dictIntro:
+        "메이저 아르카나 22장의 정/역 의미 전체를 공개합니다. 모든 리딩은 이 사전에서만 나옵니다.",
+      dictBack: "타로 테이블로 돌아가기",
+      dictMetaElement: "원소",
+      dictMetaAstrology: "점성",
+      dictMetaSymbols: "상징",
       domain_love: "연애",
       domain_work: "일·직업",
       domain_money: "돈",
@@ -2647,7 +2658,13 @@ export const messages: Record<Locale, Messages> = {
       trustLine: "Every interpretation comes from a public dictionary",
       startButton: "Start reading",
       dictionaryLink: "Browse the card dictionary",
-      comingSoon: "Coming soon",
+      dictTitle: "Card dictionary",
+      dictIntro:
+        "The full upright and reversed meanings of all 22 major arcana, in the open. Every reading comes from this dictionary alone.",
+      dictBack: "Back to Tarot Table",
+      dictMetaElement: "Element",
+      dictMetaAstrology: "Astrology",
+      dictMetaSymbols: "Symbols",
       domain_love: "Love",
       domain_work: "Work",
       domain_money: "Money",

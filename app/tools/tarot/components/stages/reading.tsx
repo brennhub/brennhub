@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
@@ -287,6 +288,13 @@ export function Reading({
           {tt.newReading}
         </button>
       </div>
+
+      <Link
+        href="/tools/tarot/cards"
+        className="mx-auto text-sm text-muted-foreground underline-offset-2 hover:underline"
+      >
+        {tt.dictionaryLink}
+      </Link>
     </div>
   );
 }

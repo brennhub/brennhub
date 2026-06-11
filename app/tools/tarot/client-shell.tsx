@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
 import { TAROT_CARDS } from "@/lib/tarot/cards";
@@ -187,16 +188,12 @@ export function TarotClientShell() {
           >
             {tt.startButton}
           </button>
-          <div className="flex w-full flex-col items-center gap-1 sm:w-auto">
-            <button
-              type="button"
-              disabled
-              className="w-full rounded-lg px-6 py-3 font-medium text-muted-foreground ring-1 ring-foreground/15 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-            >
-              {tt.dictionaryLink}
-            </button>
-            <p className="text-xs text-muted-foreground">{tt.comingSoon}</p>
-          </div>
+          <Link
+            href="/tools/tarot/cards"
+            className="w-full rounded-lg px-6 py-3 text-center font-medium ring-1 ring-foreground/15 sm:w-auto"
+          >
+            {tt.dictionaryLink}
+          </Link>
         </div>
 
         {savedReading && (
