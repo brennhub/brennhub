@@ -696,6 +696,15 @@ export type Messages = {
     readingAllKeywordsHide: string;
     readingWaite: string;
     readingWaiteHide: string;
+    verifyShow: string;
+    verifyHide: string;
+    verifyIntro: string;
+    verifyPayload: string;
+    verifyDisplay: string;
+    verifyPicked: string;
+    verifyPickedNth: string;
+    verifyChoice: string;
+    entryLastReading: string;
     newReading: string;
   };
   feedback: {
@@ -1628,6 +1637,15 @@ export const messages: Record<Locale, Messages> = {
       readingAllKeywordsHide: "전체 키워드 접기",
       readingWaite: "Waite 원문 보기",
       readingWaiteHide: "Waite 원문 접기",
+      verifyShow: "검증 보기",
+      verifyHide: "검증 접기",
+      verifyIntro: "직접 재계산해 비교할 수 있습니다.",
+      verifyPayload: "해시 원본 — 카드 순서 + nonce",
+      verifyDisplay: "표시용 — 해시에 포함되지 않음",
+      verifyPicked: "뽑은 위치",
+      verifyPickedNth: "{n}번째",
+      verifyChoice: "선택한 방향",
+      entryLastReading: "지난 리딩 보기",
       newReading: "새 리딩",
     },
     feedback: {
@@ -2673,6 +2691,15 @@ export const messages: Record<Locale, Messages> = {
       readingAllKeywordsHide: "Hide all keywords",
       readingWaite: "View Waite's original text",
       readingWaiteHide: "Hide Waite's original text",
+      verifyShow: "Show verification",
+      verifyHide: "Hide verification",
+      verifyIntro: "You can recompute the hash yourself and compare.",
+      verifyPayload: "Hash payload — card order + nonce",
+      verifyDisplay: "For display — not part of the hash",
+      verifyPicked: "Picked positions",
+      verifyPickedNth: "#{n}",
+      verifyChoice: "Chosen orientation",
+      entryLastReading: "View your last reading",
       newReading: "New reading",
     },
     feedback: {

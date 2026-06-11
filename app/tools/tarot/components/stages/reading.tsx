@@ -4,15 +4,17 @@ import { useState } from "react";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 import { toRoman } from "@/lib/tarot/glyphs";
+import { buildSealPayload } from "@/lib/tarot/ritual";
 import type { Domain, OrientationEntry, TarotCard as TarotCardData } from "@/lib/tarot/types";
+import { SealBadge } from "../seal-badge";
 
 /**
  * S8 리딩 — 질문이 리딩의 제목(대가의 회수). 카드별: essence(항상) →
  * 매칭 키워드 강조 + gloss(도메인 뱃지와 동일 강조색 = "이 해석이 어느 사전
  * 의미에서 왔는지"의 시각 증명) → 비매칭은 접힘(숨기지 않되 강조만) →
- * 매칭 0개면 mute 정직 문구 → Waite 원문 토글.
+ * 매칭 0개면 mute 정직 문구 → Waite 원문 토글 → '검증' 토글(커밋-리빌 원본 공개).
  * 본문(essence·gloss)은 ko 전용 합의 — 카드 이름만 locale을 따른다.
- * 같은 리딩 재뽑기 없음 — '새 리딩'은 S0부터.
+ * 같은 리딩 재뽑기 없음 — '새 리딩'은 S0부터. 저장된 리딩 보기에도 동일 컴포넌트.
  */
 export type DrawnCard = { card: TarotCardData; orientation: "upright" | "reversed" };
 
@@ -20,6 +22,12 @@ type ReadingProps = {
   question: string;
   domain: Domain;
   cards: readonly DrawnCard[];
+  /** 검증 토글용 봉인 원본 — order·nonce = 해시 payload / pickedIndices·choice = 표시용. */
+  order: readonly number[];
+  nonce: string;
+  hash: string;
+  pickedIndices: readonly number[];
+  choice: "upright" | "reversed";
   onNewReading: () => void;
 };
 
@@ -131,7 +139,68 @@ function CardSection({
   );
 }
 
-export function Reading({ question, domain, cards, onNewReading }: ReadingProps) {
+/** 접힌 '검증' 섹션 — 봉인 해시 + 원본 공개. 해시 payload와 표시용 정보를 구분 명시. */
+function VerifySection({
+  order,
+  nonce,
+  hash,
+  pickedIndices,
+  choice,
+}: Pick<ReadingProps, "order" | "nonce" | "hash" | "pickedIndices" | "choice">) {
+  const tt = useMessages().tarot;
+  const [open, setOpen] = useState(false);
+
+  return (
+    <section className="rounded-lg bg-card p-4 ring-1 ring-foreground/10">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+      >
+        {open ? tt.verifyHide : tt.verifyShow}
+      </button>
+      {open && (
+        <div className="mt-3 flex flex-col gap-3">
+          <SealBadge hash={hash} />
+          <p className="text-center text-xs text-muted-foreground">{tt.verifyIntro}</p>
+          <div>
+            <p className="text-[10px] tracking-wide text-muted-foreground uppercase">
+              {tt.verifyPayload}
+            </p>
+            <p className="mt-1 font-mono text-[10px] break-all text-muted-foreground">
+              {buildSealPayload(order, nonce)}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] tracking-wide text-muted-foreground uppercase">
+              {tt.verifyDisplay}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {tt.verifyPicked}:{" "}
+              {pickedIndices.map((p) => tt.verifyPickedNth.replace("{n}", String(p + 1))).join(" · ")}
+              {" / "}
+              {tt.verifyChoice}:{" "}
+              {choice === "reversed" ? tt.orientationReversed : tt.orientationUpright}
+            </p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function Reading({
+  question,
+  domain,
+  cards,
+  order,
+  nonce,
+  hash,
+  pickedIndices,
+  choice,
+  onNewReading,
+}: ReadingProps) {
   const tt = useMessages().tarot;
   const positions = [tt.positionPast, tt.positionPresent, tt.positionFuture];
   const domainLabel = tt[`domain_${domain}` as keyof typeof tt] as string;
@@ -156,6 +225,14 @@ export function Reading({ question, domain, cards, onNewReading }: ReadingProps)
           />
         ))}
       </div>
+
+      <VerifySection
+        order={order}
+        nonce={nonce}
+        hash={hash}
+        pickedIndices={pickedIndices}
+        choice={choice}
+      />
 
       <button
         type="button"

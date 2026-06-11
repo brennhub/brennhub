@@ -13,6 +13,12 @@ import {
   type RitualRng,
 } from "@/lib/tarot/ritual";
 import { initialRitualState, ritualReducer, type Stage } from "@/lib/tarot/ritual-state";
+import {
+  loadLastReading,
+  READING_SCHEMA_VERSION,
+  saveLastReading,
+  type SavedReading,
+} from "@/lib/tarot/reading-storage";
 import { TarotCard } from "./components/tarot-card";
 import { ChoiceStage } from "./components/stages/choice-stage";
 import { CutStage } from "./components/stages/cut-stage";
@@ -26,8 +32,7 @@ import { ShuffleStage } from "./components/stages/shuffle-stage";
 /**
  * 의식 플로우 오케스트레이터 — 단일 페이지 상태머신 (라우트 이동 없음).
  * 전환 가드·비가역 불변식은 lib/tarot/ritual-state.ts 리듀서가 단일 권위.
- * S8 리딩은 Task 3 — 현재 result는 임시 결과 화면.
- * ?debug=1: 22장 앞면 그리드 (entry 한정, 편집장 dev 검수용).
+ * result(S8) 진입 시 마지막 리딩 1건을 localStorage에 저장 — S0 '지난 리딩 보기'로 복원.
  */
 
 /** "처음부터 다시" — 모달 없는 인라인 2탭 확인 (3초 후 자동 복귀). */
@@ -63,10 +68,11 @@ export function TarotClientShell() {
   // sha256 비동기 확정 중 재진입 방지 — 리듀서 가드와 이중 방어
   const finalizingRef = useRef(false);
 
-  // useSearchParams 대신 location 직접 읽기 — Suspense 경계 불필요 (tag-it 선례)
-  const [debug, setDebug] = useState(false);
+  // 마지막 리딩 — hydrate 후 로드 (PATTERNS.md localStorage 패턴), '지난 리딩 보기' 진입점.
+  const [savedReading, setSavedReading] = useState<SavedReading | null>(null);
+  const [viewingSaved, setViewingSaved] = useState(false);
   useEffect(() => {
-    setDebug(new URLSearchParams(window.location.search).get("debug") === "1");
+    setSavedReading(loadLastReading());
   }, []);
 
   const handleQuestionSubmit = () => {
@@ -77,6 +83,7 @@ export function TarotClientShell() {
   const handleReset = () => {
     finalizingRef.current = false;
     setRng(null);
+    setViewingSaved(false);
     dispatch({ type: "RESET" });
   };
 
@@ -92,6 +99,28 @@ export function TarotClientShell() {
         }))
       : [];
 
+  // result 진입 시 마지막 리딩 저장 — 동일 데이터 덮어쓰기라 StrictMode 이중 실행 무해.
+  const stage = state.stage;
+  const domain = state.domain;
+  useEffect(() => {
+    if (stage !== "result" || !seal || !choice || !domain) return;
+    const reading: SavedReading = {
+      schemaVersion: READING_SCHEMA_VERSION,
+      savedAt: new Date().toISOString(),
+      question: state.question,
+      domain,
+      cardIds: state.pickedIndices.map((p) => seal.deck[p]),
+      choice,
+      order: seal.deck,
+      nonce: seal.nonce,
+      hash: seal.hash,
+      pickedIndices: state.pickedIndices,
+    };
+    saveLastReading(reading);
+    setSavedReading(reading);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seal·pickedIndices는 result 진입 시점에 불변 확정
+  }, [stage, seal, choice, domain]);
+
   /** 3번째 더미 탭 = 비가역 확정: 순열·nonce 고정 + 봉인 해시 계산. */
   const handlePickPile = async (pile: number) => {
     if (state.stage !== "cut" || state.piles === null || state.seal !== null) return;
@@ -106,6 +135,28 @@ export function TarotClientShell() {
       dispatch({ type: "CUT_FINALIZE", seal: { deck, nonce, hash } });
     }
   };
+
+  // '지난 리딩 보기' — 의식 스테이지 밖의 읽기 전용 뷰 (S8 컴포넌트 재사용, 검증 토글 포함)
+  if (state.stage === "entry" && viewingSaved && savedReading) {
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-8 pb-16">
+        <Reading
+          question={savedReading.question}
+          domain={savedReading.domain}
+          cards={savedReading.cardIds.map((id) => ({
+            card: TAROT_CARDS[id],
+            orientation: savedReading.choice,
+          }))}
+          order={savedReading.order}
+          nonce={savedReading.nonce}
+          hash={savedReading.hash}
+          pickedIndices={savedReading.pickedIndices}
+          choice={savedReading.choice}
+          onNewReading={handleReset}
+        />
+      </main>
+    );
+  }
 
   if (state.stage === "entry") {
     return (
@@ -148,17 +199,14 @@ export function TarotClientShell() {
           </div>
         </div>
 
-        {debug && (
-          <section className="mt-16">
-            <h2 className="mb-4 text-sm font-medium text-muted-foreground">
-              deck preview (debug)
-            </h2>
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
-              {TAROT_CARDS.map((card) => (
-                <TarotCard key={card.slug} face="front" card={card} size="sm" />
-              ))}
-            </div>
-          </section>
+        {savedReading && (
+          <button
+            type="button"
+            onClick={() => setViewingSaved(true)}
+            className="mx-auto mt-8 block text-sm text-muted-foreground underline-offset-2 hover:underline"
+          >
+            {tt.entryLastReading}
+          </button>
         )}
       </main>
     );
@@ -223,24 +271,18 @@ export function TarotClientShell() {
         />
       )}
 
-      {state.stage === "result" && state.seal && state.domain && (
-        <>
-          <Reading
-            question={state.question}
-            domain={state.domain}
-            cards={drawn}
-            onNewReading={handleReset}
-          />
-          {/* ?debug=1 한정 — 봉인 원본 노출. Task 3 검증 토글(Commit B)이 대체 후 제거 예정. */}
-          {debug && (
-            <span
-              hidden
-              data-debug-deck={state.seal.deck.join(",")}
-              data-debug-nonce={state.seal.nonce}
-              data-debug-picked={state.pickedIndices.join(",")}
-            />
-          )}
-        </>
+      {state.stage === "result" && state.seal && state.domain && state.userChoice && (
+        <Reading
+          question={state.question}
+          domain={state.domain}
+          cards={drawn}
+          order={state.seal.deck}
+          nonce={state.seal.nonce}
+          hash={state.seal.hash}
+          pickedIndices={state.pickedIndices}
+          choice={state.userChoice}
+          onNewReading={handleReset}
+        />
       )}
 
       {RESTARTABLE.includes(state.stage) && <RestartLink onReset={handleReset} />}
