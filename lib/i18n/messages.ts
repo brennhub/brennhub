@@ -678,7 +678,8 @@ export type Messages = {
     sealLabel: string;
     continueButton: string;
     deckAria: string;
-    dealInstruction: string;
+    spreadInstruction: string;
+    spreadCardAria: string;
     positionPast: string;
     positionPresent: string;
     positionFuture: string;
@@ -1605,7 +1606,8 @@ export const messages: Record<Locale, Messages> = {
       sealLabel: "봉인 SHA-256",
       continueButton: "계속",
       deckAria: "카드 덱",
-      dealInstruction: "덱을 탭해 카드를 한 장씩 내려놓으세요",
+      spreadInstruction: "펼쳐진 카드 가운데 마음이 가는 세 장을 차례로 탭하세요",
+      spreadCardAria: "뒷면 카드 {n}번",
       positionPast: "과거",
       positionPresent: "현재",
       positionFuture: "미래",
@@ -2643,7 +2645,8 @@ export const messages: Record<Locale, Messages> = {
       sealLabel: "Seal SHA-256",
       continueButton: "Continue",
       deckAria: "Card deck",
-      dealInstruction: "Tap the deck to lay down one card at a time",
+      spreadInstruction: "Tap three cards that draw you in, one at a time",
+      spreadCardAria: "Face-down card {n}",
       positionPast: "Past",
       positionPresent: "Present",
       positionFuture: "Future",

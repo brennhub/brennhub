@@ -80,14 +80,14 @@ export function TarotClientShell() {
     dispatch({ type: "RESET" });
   };
 
-  // 뽑힌 3장 — 방향은 S6 선택(userChoice)이 단일 소스 (2026-06-11 단층 정정).
+  // 뽑힌 3장 — 카드 = 봉인 덱에서 사용자가 탭한 위치(S5), 방향 = S6 선택 단일 소스.
   // TAROT_CARDS는 id 순 정렬이 생성기 assert로 보장됨 — index 접근 안전.
   const seal = state.seal;
   const choice = state.userChoice;
   const drawn =
-    seal && choice
-      ? seal.deck.slice(0, 3).map((id) => ({
-          card: TAROT_CARDS[id],
+    seal && choice && state.pickedIndices.length === 3
+      ? state.pickedIndices.map((deckPos) => ({
+          card: TAROT_CARDS[seal.deck[deckPos]],
           orientation: choice,
         }))
       : [];
@@ -204,8 +204,8 @@ export function TarotClientShell() {
 
       {state.stage === "deal" && (
         <DealStage
-          dealtCount={state.dealtCount}
-          onDeal={() => dispatch({ type: "DEAL_TAP" })}
+          pickedIndices={state.pickedIndices}
+          onPick={(index) => dispatch({ type: "DEAL_PICK", index })}
           onDone={() => dispatch({ type: "DEAL_DONE" })}
         />
       )}
