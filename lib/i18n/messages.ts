@@ -678,6 +678,20 @@ export type Messages = {
     sealLabel: string;
     continueButton: string;
     deckAria: string;
+    dealInstruction: string;
+    positionPast: string;
+    positionPresent: string;
+    positionFuture: string;
+    choiceCopy: string;
+    choiceUpright: string;
+    choiceReversed: string;
+    holdHint: string;
+    openInstruction: string;
+    orientationUpright: string;
+    orientationReversed: string;
+    resultTempTitle: string;
+    resultTempNote: string;
+    newReading: string;
   };
   feedback: {
     button: string;
@@ -1591,6 +1605,21 @@ export const messages: Record<Locale, Messages> = {
       sealLabel: "봉인 SHA-256",
       continueButton: "계속",
       deckAria: "카드 덱",
+      dealInstruction: "덱을 탭해 카드를 한 장씩 내려놓으세요",
+      positionPast: "과거",
+      positionPresent: "현재",
+      positionFuture: "미래",
+      choiceCopy:
+        "카드의 방향은 이미 정해져 있습니다. 당신의 선택이 그것을 그대로 두거나, 전부 뒤집습니다.",
+      choiceUpright: "정방향으로 뒤집기",
+      choiceReversed: "역방향으로 뒤집기",
+      holdHint: "꾹 눌러 확정",
+      openInstruction: "과거부터 순서대로 카드를 탭해 뒤집으세요",
+      orientationUpright: "정방향",
+      orientationReversed: "역방향",
+      resultTempTitle: "뽑힌 카드",
+      resultTempNote: "자세한 리딩 화면은 준비 중입니다",
+      newReading: "새 리딩",
     },
     feedback: {
       button: "피드백",
@@ -2615,6 +2644,21 @@ export const messages: Record<Locale, Messages> = {
       sealLabel: "Seal SHA-256",
       continueButton: "Continue",
       deckAria: "Card deck",
+      dealInstruction: "Tap the deck to lay down one card at a time",
+      positionPast: "Past",
+      positionPresent: "Present",
+      positionFuture: "Future",
+      choiceCopy:
+        "The cards' orientations are already set. Your choice leaves them as they are — or flips them all.",
+      choiceUpright: "Flip to upright",
+      choiceReversed: "Flip to reversed",
+      holdHint: "Press and hold to confirm",
+      openInstruction: "Tap each card to turn it over, starting with the past",
+      orientationUpright: "Upright",
+      orientationReversed: "Reversed",
+      resultTempTitle: "Your cards",
+      resultTempNote: "The full reading view is on its way",
+      newReading: "New reading",
     },
     feedback: {
       button: "Feedback",

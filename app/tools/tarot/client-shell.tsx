@@ -7,6 +7,7 @@ import {
   buildSealPayload,
   createRitualRng,
   drawOrientationBits,
+  finalOrientation,
   randomNonceHex,
   recombine,
   sha256Hex,
@@ -15,9 +16,13 @@ import {
 } from "@/lib/tarot/ritual";
 import { initialRitualState, ritualReducer, type Stage } from "@/lib/tarot/ritual-state";
 import { TarotCard } from "./components/tarot-card";
+import { ChoiceStage } from "./components/stages/choice-stage";
 import { CutStage } from "./components/stages/cut-stage";
+import { DealStage } from "./components/stages/deal-stage";
 import { GroundingStage } from "./components/stages/grounding-stage";
+import { OpenStage } from "./components/stages/open-stage";
 import { QuestionStage } from "./components/stages/question-stage";
+import { ResultTemp } from "./components/stages/result-temp";
 import { ShuffleStage } from "./components/stages/shuffle-stage";
 
 /**
@@ -76,6 +81,18 @@ export function TarotClientShell() {
     setRng(null);
     dispatch({ type: "RESET" });
   };
+
+  // 뽑힌 3장 + 최종 방향 = 숨은 비트(S4) XOR 전역 선택(S6) — 2층 메커니즘.
+  // TAROT_CARDS는 id 순 정렬이 생성기 assert로 보장됨 — index 접근 안전.
+  const seal = state.seal;
+  const choice = state.userChoice;
+  const drawn =
+    seal && choice
+      ? seal.deck.slice(0, 3).map((id, k) => ({
+          card: TAROT_CARDS[id],
+          orientation: finalOrientation(seal.bits[k], choice),
+        }))
+      : [];
 
   /** 3번째 더미 탭 = 비가역 확정: 순열·방향 비트·nonce 고정 + 봉인 해시 계산. */
   const handlePickPile = async (pile: number) => {
@@ -189,11 +206,35 @@ export function TarotClientShell() {
         />
       )}
 
-      {/* S5~S7 + 임시 결과: 다음 커밋에서 단계별 구현 */}
-      {(state.stage === "deal" || state.stage === "choice" || state.stage === "open" || state.stage === "result") && (
-        <div className="flex flex-1 flex-col items-center justify-center">
-          <p className="text-sm text-muted-foreground">{tt.comingSoon}</p>
-        </div>
+      {state.stage === "deal" && (
+        <DealStage
+          dealtCount={state.dealtCount}
+          onDeal={() => dispatch({ type: "DEAL_TAP" })}
+          onDone={() => dispatch({ type: "DEAL_DONE" })}
+        />
+      )}
+
+      {state.stage === "choice" && (
+        <ChoiceStage onConfirm={(choice) => dispatch({ type: "CHOICE_CONFIRM", choice })} />
+      )}
+
+      {state.stage === "open" && (
+        <OpenStage
+          cards={drawn}
+          flippedCount={state.flippedCount}
+          onFlip={() => dispatch({ type: "FLIP_NEXT" })}
+          onAllOpen={() => dispatch({ type: "OPEN_DONE" })}
+        />
+      )}
+
+      {state.stage === "result" && state.seal && (
+        <ResultTemp
+          question={state.question}
+          domain={state.domain}
+          cards={drawn}
+          sealHash={state.seal.hash}
+          onNewReading={handleReset}
+        />
       )}
 
       {RESTARTABLE.includes(state.stage) && <RestartLink onReset={handleReset} />}
