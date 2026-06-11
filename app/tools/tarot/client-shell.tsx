@@ -1,12 +1,24 @@
 "use client";
 
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
 import { TAROT_CARDS } from "@/lib/tarot/cards";
+import {
+  buildSealPayload,
+  createRitualRng,
+  drawOrientationBits,
+  randomNonceHex,
+  recombine,
+  sha256Hex,
+  shufflePass,
+  type RitualRng,
+} from "@/lib/tarot/ritual";
 import { initialRitualState, ritualReducer, type Stage } from "@/lib/tarot/ritual-state";
 import { TarotCard } from "./components/tarot-card";
+import { CutStage } from "./components/stages/cut-stage";
 import { GroundingStage } from "./components/stages/grounding-stage";
 import { QuestionStage } from "./components/stages/question-stage";
+import { ShuffleStage } from "./components/stages/shuffle-stage";
 
 /**
  * 의식 플로우 오케스트레이터 — 단일 페이지 상태머신 (라우트 이동 없음).
@@ -42,11 +54,44 @@ export function TarotClientShell() {
   const tt = t.tarot;
   const [state, dispatch] = useReducer(ritualReducer, initialRitualState);
 
+  // 의식 1회분 RNG — S2 제출 시 생성, 셔플 드래그·컷 탭의 엔트로피를 누적.
+  // 내부 가변이지만 신원은 의식 내내 고정 (state로 두어 렌더 접근 안전).
+  const [rng, setRng] = useState<RitualRng | null>(null);
+  // sha256 비동기 확정 중 재진입 방지 — 리듀서 가드와 이중 방어
+  const finalizingRef = useRef(false);
+
   // useSearchParams 대신 location 직접 읽기 — Suspense 경계 불필요 (tag-it 선례)
   const [debug, setDebug] = useState(false);
   useEffect(() => {
     setDebug(new URLSearchParams(window.location.search).get("debug") === "1");
   }, []);
+
+  const handleQuestionSubmit = () => {
+    setRng(createRitualRng());
+    dispatch({ type: "QUESTION_SUBMIT" });
+  };
+
+  const handleReset = () => {
+    finalizingRef.current = false;
+    setRng(null);
+    dispatch({ type: "RESET" });
+  };
+
+  /** 3번째 더미 탭 = 비가역 확정: 순열·방향 비트·nonce 고정 + 봉인 해시 계산. */
+  const handlePickPile = async (pile: number) => {
+    if (state.stage !== "cut" || state.piles === null || state.seal !== null || !rng) return;
+    if (state.picked.includes(pile) || state.picked.length >= 3) return;
+    const nextPicked = [...state.picked, pile];
+    dispatch({ type: "CUT_PICK_PILE", pile });
+    if (nextPicked.length === 3 && !finalizingRef.current) {
+      finalizingRef.current = true;
+      const deck = recombine(state.piles, nextPicked);
+      const bits = drawOrientationBits(rng);
+      const nonce = randomNonceHex(16);
+      const hash = await sha256Hex(buildSealPayload(deck, bits, nonce));
+      dispatch({ type: "CUT_FINALIZE", seal: { deck, bits, nonce, hash } });
+    }
+  };
 
   if (state.stage === "entry") {
     return (
@@ -117,25 +162,41 @@ export function TarotClientShell() {
           domain={state.domain}
           onQuestionChange={(value) => dispatch({ type: "SET_QUESTION", value })}
           onDomainSelect={(value) => dispatch({ type: "SET_DOMAIN", value })}
-          onSubmit={() => dispatch({ type: "QUESTION_SUBMIT" })}
+          onSubmit={handleQuestionSubmit}
         />
       )}
 
-      {/* S3~S7 + 임시 결과: 다음 커밋들에서 단계별 구현 */}
-      {(state.stage === "shuffle" ||
-        state.stage === "cut" ||
-        state.stage === "deal" ||
-        state.stage === "choice" ||
-        state.stage === "open" ||
-        state.stage === "result") && (
+      {state.stage === "shuffle" && rng && (
+        <ShuffleStage
+          rng={rng}
+          shuffleCount={state.shuffleCount}
+          onGesture={() => dispatch({ type: "SHUFFLE_APPLY", deck: shufflePass(state.deck, rng) })}
+          onDone={() => dispatch({ type: "SHUFFLE_DONE" })}
+          onEditQuestion={() => dispatch({ type: "BACK_TO_QUESTION" })}
+        />
+      )}
+
+      {state.stage === "cut" && rng && (
+        <CutStage
+          piles={state.piles}
+          picked={state.picked}
+          seal={state.seal}
+          rng={rng}
+          onSplit={(first, second) => dispatch({ type: "CUT_SPLIT", first, second })}
+          onResetSplit={() => dispatch({ type: "CUT_RESET_SPLIT" })}
+          onPickPile={handlePickPile}
+          onContinue={() => dispatch({ type: "CUT_CONTINUE" })}
+        />
+      )}
+
+      {/* S5~S7 + 임시 결과: 다음 커밋에서 단계별 구현 */}
+      {(state.stage === "deal" || state.stage === "choice" || state.stage === "open" || state.stage === "result") && (
         <div className="flex flex-1 flex-col items-center justify-center">
           <p className="text-sm text-muted-foreground">{tt.comingSoon}</p>
         </div>
       )}
 
-      {RESTARTABLE.includes(state.stage) && (
-        <RestartLink onReset={() => dispatch({ type: "RESET" })} />
-      )}
+      {RESTARTABLE.includes(state.stage) && <RestartLink onReset={handleReset} />}
     </main>
   );
 }

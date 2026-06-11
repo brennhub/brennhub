@@ -667,6 +667,17 @@ export type Messages = {
     toShuffle: string;
     restart: string;
     restartConfirm: string;
+    shuffleInstruction: string;
+    shuffleDone: string;
+    editQuestion: string;
+    cutSplitInstruction: string;
+    cutOrderInstruction: string;
+    cutPileCount: string;
+    cutRedo: string;
+    irreversibleNote: string;
+    sealLabel: string;
+    continueButton: string;
+    deckAria: string;
   };
   feedback: {
     button: string;
@@ -1569,6 +1580,17 @@ export const messages: Record<Locale, Messages> = {
       toShuffle: "셔플로",
       restart: "처음부터 다시",
       restartConfirm: "정말 처음부터 다시 할까요?",
+      shuffleInstruction: "카드를 쓸어 넘기며 직접 섞으세요",
+      shuffleDone: "이제 됐어요",
+      editQuestion: "질문 수정",
+      cutSplitInstruction: "덱에서 자를 두 지점을 탭하세요",
+      cutOrderInstruction: "합칠 순서대로 더미를 탭하세요",
+      cutPileCount: "{n}장",
+      cutRedo: "다시 자르기",
+      irreversibleNote: "이제 되돌릴 수 없습니다",
+      sealLabel: "봉인 SHA-256",
+      continueButton: "계속",
+      deckAria: "카드 덱",
     },
     feedback: {
       button: "피드백",
@@ -2582,6 +2604,17 @@ export const messages: Record<Locale, Messages> = {
       toShuffle: "To the shuffle",
       restart: "Start over",
       restartConfirm: "Really start over from the beginning?",
+      shuffleInstruction: "Sweep the deck to shuffle it yourself",
+      shuffleDone: "That feels right",
+      editQuestion: "Edit question",
+      cutSplitInstruction: "Tap two points to cut the deck",
+      cutOrderInstruction: "Tap the piles in the order to restack them",
+      cutPileCount: "{n} cards",
+      cutRedo: "Cut again",
+      irreversibleNote: "There is no going back now",
+      sealLabel: "Seal SHA-256",
+      continueButton: "Continue",
+      deckAria: "Card deck",
     },
     feedback: {
       button: "Feedback",
