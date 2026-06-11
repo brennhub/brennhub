@@ -5,6 +5,7 @@ import { useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 import type { Seal } from "@/lib/tarot/ritual-state";
 import { DECK_SIZE } from "@/lib/tarot/ritual-state";
+import { SealBadge } from "../seal-badge";
 
 /**
  * S4 컷 — 두 지점 탭으로 3더미 분할 → 합칠 순서대로 탭 (선택 순서 = 실제 덱 순열).
@@ -121,14 +122,7 @@ export function CutStage({
       {seal !== null && (
         <div className="flex w-full animate-in flex-col items-center gap-4 fade-in duration-700">
           <p className="text-center font-medium">{tt.irreversibleNote}</p>
-          <p className="w-full max-w-sm text-center">
-            <span className="mr-2 text-[10px] tracking-wide text-muted-foreground uppercase">
-              {tt.sealLabel}
-            </span>
-            <span className="font-mono text-[10px] break-all text-muted-foreground">
-              {seal.hash}
-            </span>
-          </p>
+          <SealBadge hash={seal.hash} />
           <button
             type="button"
             onClick={onContinue}

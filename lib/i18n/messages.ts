@@ -675,7 +675,8 @@ export type Messages = {
     cutPileCount: string;
     cutRedo: string;
     irreversibleNote: string;
-    sealLabel: string;
+    sealBadgeLabel: string;
+    sealExplain: string;
     continueButton: string;
     deckAria: string;
     spreadInstruction: string;
@@ -1603,7 +1604,8 @@ export const messages: Record<Locale, Messages> = {
       cutPileCount: "{n}장",
       cutRedo: "다시 자르기",
       irreversibleNote: "이제 되돌릴 수 없습니다",
-      sealLabel: "봉인 SHA-256",
+      sealBadgeLabel: "봉인",
+      sealExplain: "이 봉인은 카드를 고르기 전에 덱이 고정되어 있었음을 증명합니다.",
       continueButton: "계속",
       deckAria: "카드 덱",
       spreadInstruction: "펼쳐진 카드 가운데 마음이 가는 세 장을 차례로 탭하세요",
@@ -2642,7 +2644,8 @@ export const messages: Record<Locale, Messages> = {
       cutPileCount: "{n} cards",
       cutRedo: "Cut again",
       irreversibleNote: "There is no going back now",
-      sealLabel: "Seal SHA-256",
+      sealBadgeLabel: "Seal",
+      sealExplain: "This seal proves the deck was fixed before you chose your cards.",
       continueButton: "Continue",
       deckAria: "Card deck",
       spreadInstruction: "Tap three cards that draw you in, one at a time",

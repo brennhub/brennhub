@@ -79,10 +79,10 @@ export function DealStage({ pickedIndices, onPick, onDone }: DealStageProps) {
                   style={arcStyle(col)}
                 >
                   {picked ? (
-                    // 빈자리 유지 — 재배열 없음, 비인터랙티브
+                    // 빈자리 유지 — 재배열 없음. pointer-events-none: 틈으로 보이는 이웃 카드 탭이 통과해야 한다
                     <div
                       aria-hidden="true"
-                      className="aspect-[7/12] w-16 rounded-lg border border-dashed border-foreground/20"
+                      className="pointer-events-none aspect-[7/12] w-16 rounded-lg border border-dashed border-foreground/20"
                     />
                   ) : (
                     <button

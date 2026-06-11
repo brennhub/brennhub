@@ -224,13 +224,24 @@ export function TarotClientShell() {
       )}
 
       {state.stage === "result" && state.seal && (
-        <ResultTemp
-          question={state.question}
-          domain={state.domain}
-          cards={drawn}
-          sealHash={state.seal.hash}
-          onNewReading={handleReset}
-        />
+        <>
+          <ResultTemp
+            question={state.question}
+            domain={state.domain}
+            cards={drawn}
+            sealHash={state.seal.hash}
+            onNewReading={handleReset}
+          />
+          {/* ?debug=1 한정 — 봉인 원본(순서+nonce) 노출로 커밋-리빌 검증 가능. S8 '검증' 토글(Task 3)의 임시 대용. */}
+          {debug && (
+            <span
+              hidden
+              data-debug-deck={state.seal.deck.join(",")}
+              data-debug-nonce={state.seal.nonce}
+              data-debug-picked={state.pickedIndices.join(",")}
+            />
+          )}
+        </>
       )}
 
       {RESTARTABLE.includes(state.stage) && <RestartLink onReset={handleReset} />}
