@@ -705,6 +705,7 @@ export type Messages = {
     verifyPickedNth: string;
     verifyChoice: string;
     entryLastReading: string;
+    shareImage: string;
     newReading: string;
   };
   feedback: {
@@ -1646,6 +1647,7 @@ export const messages: Record<Locale, Messages> = {
       verifyPickedNth: "{n}번째",
       verifyChoice: "선택한 방향",
       entryLastReading: "지난 리딩 보기",
+      shareImage: "이미지로 공유",
       newReading: "새 리딩",
     },
     feedback: {
@@ -2700,6 +2702,7 @@ export const messages: Record<Locale, Messages> = {
       verifyPickedNth: "#{n}",
       verifyChoice: "Chosen orientation",
       entryLastReading: "View your last reading",
+      shareImage: "Share as image",
       newReading: "New reading",
     },
     feedback: {

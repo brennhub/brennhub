@@ -5,6 +5,7 @@ import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 import { toRoman } from "@/lib/tarot/glyphs";
 import { buildSealPayload } from "@/lib/tarot/ritual";
+import { renderShareImage } from "@/lib/tarot/share-image";
 import type { Domain, OrientationEntry, TarotCard as TarotCardData } from "@/lib/tarot/types";
 import { SealBadge } from "../seal-badge";
 
@@ -202,8 +203,44 @@ export function Reading({
   onNewReading,
 }: ReadingProps) {
   const tt = useMessages().tarot;
+  const { locale } = useLocale();
   const positions = [tt.positionPast, tt.positionPresent, tt.positionFuture];
   const domainLabel = tt[`domain_${domain}` as keyof typeof tt] as string;
+
+  /** 공유 — navigator.share(파일) 가능 시 네이티브 시트, 아니면 PNG 다운로드. 질문 미전달. */
+  const handleShare = async () => {
+    const canvas = renderShareImage({
+      cards: cards.map(({ card, orientation }, i) => ({
+        roman: toRoman(card.id),
+        name: locale === "en" ? card.name.en : card.name.ko,
+        sub: locale === "en" ? card.name.ko : card.name.en,
+        positionLabel: positions[i],
+        orientationLabel:
+          orientation === "reversed" ? tt.orientationReversed : tt.orientationUpright,
+        reversed: orientation === "reversed",
+      })),
+      toolLine: `${tt.title} — BrennHub`,
+      urlLine: "brennhub.com/tools/tarot",
+    });
+    const filename = `tarot-${new Date().toISOString().slice(0, 10)}.png`;
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (blob && typeof navigator.share === "function") {
+      const file = new File([blob], filename, { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file] });
+          return;
+        } catch {
+          // 사용자가 시트를 닫음 — 다운로드로 폴백하지 않고 종료 (의도된 취소)
+          return;
+        }
+      }
+    }
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = filename;
+    a.click();
+  };
 
   return (
     <div className="flex flex-1 animate-in flex-col gap-8 pt-4 fade-in duration-700">
@@ -234,13 +271,22 @@ export function Reading({
         choice={choice}
       />
 
-      <button
-        type="button"
-        onClick={onNewReading}
-        className="mx-auto rounded-lg bg-primary px-8 py-3 font-medium text-primary-foreground"
-      >
-        {tt.newReading}
-      </button>
+      <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+        <button
+          type="button"
+          onClick={handleShare}
+          className="w-full rounded-lg px-8 py-3 font-medium ring-1 ring-foreground/20 sm:w-auto"
+        >
+          {tt.shareImage}
+        </button>
+        <button
+          type="button"
+          onClick={onNewReading}
+          className="w-full rounded-lg bg-primary px-8 py-3 font-medium text-primary-foreground sm:w-auto"
+        >
+          {tt.newReading}
+        </button>
+      </div>
     </div>
   );
 }
