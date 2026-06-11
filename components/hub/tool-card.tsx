@@ -7,6 +7,7 @@ import {
   Grid3x3,
   Mail,
   MessageSquare,
+  MoonStar,
   Pill,
   Sparkles,
   Tag,
@@ -36,6 +37,7 @@ const ICON_BY_SLUG: Record<string, LucideIcon> = {
   "language-maker": Type,
   maze: Grid3x3,
   shooter: Gamepad2,
+  tarot: MoonStar,
 };
 
 type DragHandle = {
