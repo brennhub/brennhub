@@ -658,6 +658,40 @@ export type Messages = {
     domain_money: string;
     domain_relation: string;
     domain_self: string;
+    groundingLine: string;
+    questionTitle: string;
+    questionPlaceholder: string;
+    questionShownNote: string;
+    questionPrivacyNote: string;
+    domainLabel: string;
+    toShuffle: string;
+    restart: string;
+    restartConfirm: string;
+    shuffleInstruction: string;
+    shuffleDone: string;
+    editQuestion: string;
+    cutSplitInstruction: string;
+    cutOrderInstruction: string;
+    cutPileCount: string;
+    cutRedo: string;
+    irreversibleNote: string;
+    sealLabel: string;
+    continueButton: string;
+    deckAria: string;
+    dealInstruction: string;
+    positionPast: string;
+    positionPresent: string;
+    positionFuture: string;
+    choiceCopy: string;
+    choiceUpright: string;
+    choiceReversed: string;
+    holdHint: string;
+    openInstruction: string;
+    orientationUpright: string;
+    orientationReversed: string;
+    resultTempTitle: string;
+    resultTempNote: string;
+    newReading: string;
   };
   feedback: {
     button: string;
@@ -1551,6 +1585,41 @@ export const messages: Record<Locale, Messages> = {
       domain_money: "돈",
       domain_relation: "관계",
       domain_self: "자기",
+      groundingLine: "마음속 질문을 하나로 좁혀보세요",
+      questionTitle: "질문을 적어주세요",
+      questionPlaceholder: "지금 마음에 걸리는 것을 그대로 적어보세요",
+      questionShownNote: "리딩 화면에 그대로 표시됩니다",
+      questionPrivacyNote: "질문은 이 기기 밖으로 나가지 않습니다",
+      domainLabel: "질문의 영역",
+      toShuffle: "셔플로",
+      restart: "처음부터 다시",
+      restartConfirm: "정말 처음부터 다시 할까요?",
+      shuffleInstruction: "카드를 쓸어 넘기며 직접 섞으세요",
+      shuffleDone: "이제 됐어요",
+      editQuestion: "질문 수정",
+      cutSplitInstruction: "덱에서 자를 두 지점을 탭하세요",
+      cutOrderInstruction: "합칠 순서대로 더미를 탭하세요",
+      cutPileCount: "{n}장",
+      cutRedo: "다시 자르기",
+      irreversibleNote: "이제 되돌릴 수 없습니다",
+      sealLabel: "봉인 SHA-256",
+      continueButton: "계속",
+      deckAria: "카드 덱",
+      dealInstruction: "덱을 탭해 카드를 한 장씩 내려놓으세요",
+      positionPast: "과거",
+      positionPresent: "현재",
+      positionFuture: "미래",
+      choiceCopy:
+        "카드의 방향은 이미 정해져 있습니다. 당신의 선택이 그것을 그대로 두거나, 전부 뒤집습니다.",
+      choiceUpright: "정방향으로 뒤집기",
+      choiceReversed: "역방향으로 뒤집기",
+      holdHint: "꾹 눌러 확정",
+      openInstruction: "과거부터 순서대로 카드를 탭해 뒤집으세요",
+      orientationUpright: "정방향",
+      orientationReversed: "역방향",
+      resultTempTitle: "뽑힌 카드",
+      resultTempNote: "자세한 리딩 화면은 준비 중입니다",
+      newReading: "새 리딩",
     },
     feedback: {
       button: "피드백",
@@ -2555,6 +2624,41 @@ export const messages: Record<Locale, Messages> = {
       domain_money: "Money",
       domain_relation: "Relationships",
       domain_self: "Self",
+      groundingLine: "Let your mind settle on a single question",
+      questionTitle: "Write your question",
+      questionPlaceholder: "Put into words what weighs on you right now",
+      questionShownNote: "It will appear on your reading, word for word",
+      questionPrivacyNote: "Your question never leaves this device",
+      domainLabel: "Area of your question",
+      toShuffle: "To the shuffle",
+      restart: "Start over",
+      restartConfirm: "Really start over from the beginning?",
+      shuffleInstruction: "Sweep the deck to shuffle it yourself",
+      shuffleDone: "That feels right",
+      editQuestion: "Edit question",
+      cutSplitInstruction: "Tap two points to cut the deck",
+      cutOrderInstruction: "Tap the piles in the order to restack them",
+      cutPileCount: "{n} cards",
+      cutRedo: "Cut again",
+      irreversibleNote: "There is no going back now",
+      sealLabel: "Seal SHA-256",
+      continueButton: "Continue",
+      deckAria: "Card deck",
+      dealInstruction: "Tap the deck to lay down one card at a time",
+      positionPast: "Past",
+      positionPresent: "Present",
+      positionFuture: "Future",
+      choiceCopy:
+        "The cards' orientations are already set. Your choice leaves them as they are — or flips them all.",
+      choiceUpright: "Flip to upright",
+      choiceReversed: "Flip to reversed",
+      holdHint: "Press and hold to confirm",
+      openInstruction: "Tap each card to turn it over, starting with the past",
+      orientationUpright: "Upright",
+      orientationReversed: "Reversed",
+      resultTempTitle: "Your cards",
+      resultTempNote: "The full reading view is on its way",
+      newReading: "New reading",
     },
     feedback: {
       button: "Feedback",

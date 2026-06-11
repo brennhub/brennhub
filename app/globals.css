@@ -56,6 +56,23 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* 타로 테이블 S1 그라운딩 — 호흡 펄스 (3.5s × 2사이클 = 7s 고정 페이싱) */
+@theme {
+  --animate-tarot-breathe: tarot-breathe 3.5s ease-in-out infinite;
+
+  @keyframes tarot-breathe {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.35;
+    }
+    50% {
+      transform: scale(1.18);
+      opacity: 0.8;
+    }
+  }
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
