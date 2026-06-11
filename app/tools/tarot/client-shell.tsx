@@ -1,0 +1,288 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useReducer, useRef, useState } from "react";
+import { useMessages } from "@/lib/i18n/provider";
+import { TAROT_CARDS } from "@/lib/tarot/cards";
+import {
+  buildSealPayload,
+  createRitualRng,
+  randomNonceHex,
+  recombine,
+  sha256Hex,
+  shufflePass,
+  type RitualRng,
+} from "@/lib/tarot/ritual";
+import { initialRitualState, ritualReducer, type Stage } from "@/lib/tarot/ritual-state";
+import {
+  loadLastReading,
+  READING_SCHEMA_VERSION,
+  saveLastReading,
+  type SavedReading,
+} from "@/lib/tarot/reading-storage";
+import { TarotCard } from "./components/tarot-card";
+import { ChoiceStage } from "./components/stages/choice-stage";
+import { CutStage } from "./components/stages/cut-stage";
+import { DealStage } from "./components/stages/deal-stage";
+import { GroundingStage } from "./components/stages/grounding-stage";
+import { OpenStage } from "./components/stages/open-stage";
+import { QuestionStage } from "./components/stages/question-stage";
+import { Reading } from "./components/stages/reading";
+import { ShuffleStage } from "./components/stages/shuffle-stage";
+
+/**
+ * 의식 플로우 오케스트레이터 — 단일 페이지 상태머신 (라우트 이동 없음).
+ * 전환 가드·비가역 불변식은 lib/tarot/ritual-state.ts 리듀서가 단일 권위.
+ * result(S8) 진입 시 마지막 리딩 1건을 localStorage에 저장 — S0 '지난 리딩 보기'로 복원.
+ */
+
+/** "처음부터 다시" — 모달 없는 인라인 2탭 확인 (3초 후 자동 복귀). */
+function RestartLink({ onReset }: { onReset: () => void }) {
+  const tt = useMessages().tarot;
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const id = setTimeout(() => setArmed(false), 3000);
+    return () => clearTimeout(id);
+  }, [armed]);
+  return (
+    <button
+      type="button"
+      onClick={() => (armed ? onReset() : setArmed(true))}
+      className="mx-auto mt-12 block text-xs text-muted-foreground underline-offset-2 hover:underline"
+    >
+      {armed ? tt.restartConfirm : tt.restart}
+    </button>
+  );
+}
+
+const RESTARTABLE: readonly Stage[] = ["shuffle", "cut", "deal", "choice", "open"];
+
+export function TarotClientShell() {
+  const t = useMessages();
+  const tt = t.tarot;
+  const [state, dispatch] = useReducer(ritualReducer, initialRitualState);
+
+  // 의식 1회분 RNG — S2 제출 시 생성, 셔플 드래그·컷 탭의 엔트로피를 누적.
+  // 내부 가변이지만 신원은 의식 내내 고정 (state로 두어 렌더 접근 안전).
+  const [rng, setRng] = useState<RitualRng | null>(null);
+  // sha256 비동기 확정 중 재진입 방지 — 리듀서 가드와 이중 방어
+  const finalizingRef = useRef(false);
+
+  // 마지막 리딩 — hydrate 후 로드 (PATTERNS.md localStorage 패턴), '지난 리딩 보기' 진입점.
+  const [savedReading, setSavedReading] = useState<SavedReading | null>(null);
+  const [viewingSaved, setViewingSaved] = useState(false);
+  useEffect(() => {
+    setSavedReading(loadLastReading());
+  }, []);
+
+  const handleQuestionSubmit = () => {
+    setRng(createRitualRng());
+    dispatch({ type: "QUESTION_SUBMIT" });
+  };
+
+  const handleReset = () => {
+    finalizingRef.current = false;
+    setRng(null);
+    setViewingSaved(false);
+    dispatch({ type: "RESET" });
+  };
+
+  // 뽑힌 3장 — 카드 = 봉인 덱에서 사용자가 탭한 위치(S5), 방향 = S6 선택 단일 소스.
+  // TAROT_CARDS는 id 순 정렬이 생성기 assert로 보장됨 — index 접근 안전.
+  const seal = state.seal;
+  const choice = state.userChoice;
+  const drawn =
+    seal && choice && state.pickedIndices.length === 3
+      ? state.pickedIndices.map((deckPos) => ({
+          card: TAROT_CARDS[seal.deck[deckPos]],
+          orientation: choice,
+        }))
+      : [];
+
+  // result 진입 시 마지막 리딩 저장 — 동일 데이터 덮어쓰기라 StrictMode 이중 실행 무해.
+  const stage = state.stage;
+  const domain = state.domain;
+  useEffect(() => {
+    if (stage !== "result" || !seal || !choice || !domain) return;
+    const reading: SavedReading = {
+      schemaVersion: READING_SCHEMA_VERSION,
+      savedAt: new Date().toISOString(),
+      question: state.question,
+      domain,
+      cardIds: state.pickedIndices.map((p) => seal.deck[p]),
+      choice,
+      order: seal.deck,
+      nonce: seal.nonce,
+      hash: seal.hash,
+      pickedIndices: state.pickedIndices,
+    };
+    saveLastReading(reading);
+    setSavedReading(reading);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seal·pickedIndices는 result 진입 시점에 불변 확정
+  }, [stage, seal, choice, domain]);
+
+  /** 3번째 더미 탭 = 비가역 확정: 순열·nonce 고정 + 봉인 해시 계산. */
+  const handlePickPile = async (pile: number) => {
+    if (state.stage !== "cut" || state.piles === null || state.seal !== null) return;
+    if (state.picked.includes(pile) || state.picked.length >= 3) return;
+    const nextPicked = [...state.picked, pile];
+    dispatch({ type: "CUT_PICK_PILE", pile });
+    if (nextPicked.length === 3 && !finalizingRef.current) {
+      finalizingRef.current = true;
+      const deck = recombine(state.piles, nextPicked);
+      const nonce = randomNonceHex(16);
+      const hash = await sha256Hex(buildSealPayload(deck, nonce));
+      dispatch({ type: "CUT_FINALIZE", seal: { deck, nonce, hash } });
+    }
+  };
+
+  // '지난 리딩 보기' — 의식 스테이지 밖의 읽기 전용 뷰 (S8 컴포넌트 재사용, 검증 토글 포함)
+  if (state.stage === "entry" && viewingSaved && savedReading) {
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-8 pb-16">
+        <Reading
+          question={savedReading.question}
+          domain={savedReading.domain}
+          cards={savedReading.cardIds.map((id) => ({
+            card: TAROT_CARDS[id],
+            orientation: savedReading.choice,
+          }))}
+          order={savedReading.order}
+          nonce={savedReading.nonce}
+          hash={savedReading.hash}
+          pickedIndices={savedReading.pickedIndices}
+          choice={savedReading.choice}
+          onNewReading={handleReset}
+        />
+      </main>
+    );
+  }
+
+  if (state.stage === "entry") {
+    return (
+      <main className="mx-auto w-full max-w-3xl px-6 pt-10 pb-20">
+        <header>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            {tt.title}
+          </h1>
+          <p className="mt-3 text-muted-foreground">{tt.intro}</p>
+        </header>
+
+        {/* 3장 스프레드 예고 — 장식 */}
+        <div aria-hidden="true" className="my-12 flex items-center justify-center">
+          <TarotCard face="back" size="md" className="-rotate-6 translate-x-3" />
+          <TarotCard face="back" size="md" className="z-10 -translate-y-2" />
+          <TarotCard face="back" size="md" className="rotate-6 -translate-x-3" />
+        </div>
+
+        <p className="mx-auto w-fit rounded-full bg-card px-4 py-2 text-center text-sm ring-1 ring-foreground/10">
+          {tt.trustLine}
+        </p>
+
+        <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <button
+            type="button"
+            onClick={() => dispatch({ type: "START" })}
+            className="w-full rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground sm:w-auto"
+          >
+            {tt.startButton}
+          </button>
+          <Link
+            href="/tools/tarot/cards"
+            className="w-full rounded-lg px-6 py-3 text-center font-medium ring-1 ring-foreground/15 sm:w-auto"
+          >
+            {tt.dictionaryLink}
+          </Link>
+        </div>
+
+        {savedReading && (
+          <button
+            type="button"
+            onClick={() => setViewingSaved(true)}
+            className="mx-auto mt-8 block text-sm text-muted-foreground underline-offset-2 hover:underline"
+          >
+            {tt.entryLastReading}
+          </button>
+        )}
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-8 pb-16">
+      {state.stage === "grounding" && (
+        <GroundingStage onDone={() => dispatch({ type: "GROUNDING_DONE" })} />
+      )}
+
+      {state.stage === "question" && (
+        <QuestionStage
+          question={state.question}
+          domain={state.domain}
+          onQuestionChange={(value) => dispatch({ type: "SET_QUESTION", value })}
+          onDomainSelect={(value) => dispatch({ type: "SET_DOMAIN", value })}
+          onSubmit={handleQuestionSubmit}
+        />
+      )}
+
+      {state.stage === "shuffle" && rng && (
+        <ShuffleStage
+          rng={rng}
+          shuffleCount={state.shuffleCount}
+          onGesture={() => dispatch({ type: "SHUFFLE_APPLY", deck: shufflePass(state.deck, rng) })}
+          onDone={() => dispatch({ type: "SHUFFLE_DONE" })}
+          onEditQuestion={() => dispatch({ type: "BACK_TO_QUESTION" })}
+        />
+      )}
+
+      {state.stage === "cut" && (
+        <CutStage
+          piles={state.piles}
+          picked={state.picked}
+          seal={state.seal}
+          onSplit={(first, second) => dispatch({ type: "CUT_SPLIT", first, second })}
+          onResetSplit={() => dispatch({ type: "CUT_RESET_SPLIT" })}
+          onPickPile={handlePickPile}
+          onContinue={() => dispatch({ type: "CUT_CONTINUE" })}
+        />
+      )}
+
+      {state.stage === "deal" && (
+        <DealStage
+          pickedIndices={state.pickedIndices}
+          onPick={(index) => dispatch({ type: "DEAL_PICK", index })}
+          onDone={() => dispatch({ type: "DEAL_DONE" })}
+        />
+      )}
+
+      {state.stage === "choice" && (
+        <ChoiceStage onConfirm={(choice) => dispatch({ type: "CHOICE_CONFIRM", choice })} />
+      )}
+
+      {state.stage === "open" && (
+        <OpenStage
+          cards={drawn}
+          flippedCount={state.flippedCount}
+          onFlip={() => dispatch({ type: "FLIP_NEXT" })}
+          onAllOpen={() => dispatch({ type: "OPEN_DONE" })}
+        />
+      )}
+
+      {state.stage === "result" && state.seal && state.domain && state.userChoice && (
+        <Reading
+          question={state.question}
+          domain={state.domain}
+          cards={drawn}
+          order={state.seal.deck}
+          nonce={state.seal.nonce}
+          hash={state.seal.hash}
+          pickedIndices={state.pickedIndices}
+          choice={state.userChoice}
+          onNewReading={handleReset}
+        />
+      )}
+
+      {RESTARTABLE.includes(state.stage) && <RestartLink onReset={handleReset} />}
+    </main>
+  );
+}

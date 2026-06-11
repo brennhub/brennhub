@@ -646,6 +646,73 @@ export type Messages = {
     topNAria: string;
     capWarning: string;
   };
+  tarot: {
+    title: string;
+    intro: string;
+    trustLine: string;
+    startButton: string;
+    dictionaryLink: string;
+    dictTitle: string;
+    dictIntro: string;
+    dictBack: string;
+    dictMetaElement: string;
+    dictMetaAstrology: string;
+    dictMetaSymbols: string;
+    domain_love: string;
+    domain_work: string;
+    domain_money: string;
+    domain_relation: string;
+    domain_self: string;
+    groundingLine: string;
+    questionTitle: string;
+    questionPlaceholder: string;
+    questionShownNote: string;
+    questionPrivacyNote: string;
+    domainLabel: string;
+    toShuffle: string;
+    restart: string;
+    restartConfirm: string;
+    shuffleInstruction: string;
+    shuffleDone: string;
+    editQuestion: string;
+    cutSplitInstruction: string;
+    cutOrderInstruction: string;
+    cutPileCount: string;
+    cutRedo: string;
+    irreversibleNote: string;
+    sealBadgeLabel: string;
+    sealExplain: string;
+    continueButton: string;
+    deckAria: string;
+    spreadInstruction: string;
+    spreadCardAria: string;
+    positionPast: string;
+    positionPresent: string;
+    positionFuture: string;
+    choiceCopy: string;
+    choiceUpright: string;
+    choiceReversed: string;
+    holdHint: string;
+    openInstruction: string;
+    orientationUpright: string;
+    orientationReversed: string;
+    readingMute: string;
+    readingAllKeywords: string;
+    readingAllKeywordsHide: string;
+    readingWaite: string;
+    readingWaiteHide: string;
+    verifyShow: string;
+    verifyHide: string;
+    verifyIntro: string;
+    verifyPayload: string;
+    verifyDisplay: string;
+    verifyPicked: string;
+    verifyPickedNth: string;
+    verifyChoice: string;
+    entryLastReading: string;
+    shareImage: string;
+    newReading: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -662,6 +729,7 @@ export type Messages = {
     toolMaze: string;
     toolShooter: string;
     toolTagIt: string;
+    toolTarot: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -1524,6 +1592,75 @@ export const messages: Record<Locale, Messages> = {
       topNAria: "상위 몇 개를 담을지",
       capWarning: "파일당 태그는 최대 {max}개입니다. 상위 {max}개만 담았어요.",
     },
+    tarot: {
+      title: "타로 테이블",
+      intro:
+        "변하지 않는 카드 사전으로 읽는 3장 타로. 셔플부터 오픈까지, 모든 단계를 당신의 손으로.",
+      trustLine: "모든 해석은 공개된 사전에서 나옵니다",
+      startButton: "리딩 시작",
+      dictionaryLink: "카드 사전 열람",
+      dictTitle: "카드 사전",
+      dictIntro:
+        "메이저 아르카나 22장의 정/역 의미 전체를 공개합니다. 모든 리딩은 이 사전에서만 나옵니다.",
+      dictBack: "타로 테이블로 돌아가기",
+      dictMetaElement: "원소",
+      dictMetaAstrology: "점성",
+      dictMetaSymbols: "상징",
+      domain_love: "연애",
+      domain_work: "일·직업",
+      domain_money: "돈",
+      domain_relation: "관계",
+      domain_self: "자기",
+      groundingLine: "마음속 질문을 하나로 좁혀보세요",
+      questionTitle: "질문을 적어주세요",
+      questionPlaceholder: "지금 마음에 걸리는 것을 그대로 적어보세요",
+      questionShownNote: "리딩 화면에 그대로 표시됩니다",
+      questionPrivacyNote: "질문은 이 기기 밖으로 나가지 않습니다",
+      domainLabel: "질문의 영역",
+      toShuffle: "셔플로",
+      restart: "처음부터 다시",
+      restartConfirm: "정말 처음부터 다시 할까요?",
+      shuffleInstruction: "카드를 쓸어 넘기며 직접 섞으세요",
+      shuffleDone: "이제 됐어요",
+      editQuestion: "질문 수정",
+      cutSplitInstruction: "덱에서 자를 두 지점을 탭하세요",
+      cutOrderInstruction: "합칠 순서대로 더미를 탭하세요",
+      cutPileCount: "{n}장",
+      cutRedo: "다시 자르기",
+      irreversibleNote: "이제 되돌릴 수 없습니다",
+      sealBadgeLabel: "봉인",
+      sealExplain: "이 봉인은 카드를 고르기 전에 덱이 고정되어 있었음을 증명합니다.",
+      continueButton: "계속",
+      deckAria: "카드 덱",
+      spreadInstruction: "펼쳐진 카드 가운데 마음이 가는 세 장을 차례로 탭하세요",
+      spreadCardAria: "뒷면 카드 {n}번",
+      positionPast: "과거",
+      positionPresent: "현재",
+      positionFuture: "미래",
+      choiceCopy: "세 장을 어느 방향으로 뒤집을지, 당신이 정합니다. 되돌릴 수 없습니다.",
+      choiceUpright: "정방향으로 뒤집기",
+      choiceReversed: "역방향으로 뒤집기",
+      holdHint: "꾹 눌러 확정",
+      openInstruction: "과거부터 순서대로 카드를 탭해 뒤집으세요",
+      orientationUpright: "정방향",
+      orientationReversed: "역방향",
+      readingMute: "이 카드는 {domain}에 직접 닿는 키워드가 없어요. 전체 의미로 보세요.",
+      readingAllKeywords: "전체 키워드 보기",
+      readingAllKeywordsHide: "전체 키워드 접기",
+      readingWaite: "Waite 원문 보기",
+      readingWaiteHide: "Waite 원문 접기",
+      verifyShow: "검증 보기",
+      verifyHide: "검증 접기",
+      verifyIntro: "직접 재계산해 비교할 수 있습니다.",
+      verifyPayload: "해시 원본 — 카드 순서 + nonce",
+      verifyDisplay: "표시용 — 해시에 포함되지 않음",
+      verifyPicked: "뽑은 위치",
+      verifyPickedNth: "{n}번째",
+      verifyChoice: "선택한 방향",
+      entryLastReading: "지난 리딩 보기",
+      shareImage: "이미지로 공유",
+      newReading: "새 리딩",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -1540,6 +1677,7 @@ export const messages: Record<Locale, Messages> = {
       toolMaze: "픽셀 미로 만들기",
       toolShooter: "아케이드 슈터",
       toolTagIt: "태그잇",
+      toolTarot: "타로 테이블",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -1808,6 +1946,11 @@ export const messages: Record<Locale, Messages> = {
         name: "태그잇",
         description:
           "오피스 문서(Word·Excel·PowerPoint)에서 핵심 키워드를 뽑아 칩으로 다듬고 문서 속성에 기록 — 전부 브라우저 안에서",
+      },
+      tarot: {
+        name: "타로 테이블",
+        description:
+          "변하지 않는 공개 카드 사전으로 읽는 3장 타로 — 메이저 아르카나 22장, 질문은 기기 밖으로 나가지 않습니다",
       },
     },
   },
@@ -2508,6 +2651,77 @@ export const messages: Record<Locale, Messages> = {
       topNAria: "How many top candidates to add",
       capWarning: "Up to {max} tags per file — kept the top {max}.",
     },
+    tarot: {
+      title: "Tarot Table",
+      intro:
+        "A three-card tarot read from an unchanging card dictionary. Shuffle, cut, and reveal — every step by your own hand.",
+      trustLine: "Every interpretation comes from a public dictionary",
+      startButton: "Start reading",
+      dictionaryLink: "Browse the card dictionary",
+      dictTitle: "Card dictionary",
+      dictIntro:
+        "The full upright and reversed meanings of all 22 major arcana, in the open. Every reading comes from this dictionary alone.",
+      dictBack: "Back to Tarot Table",
+      dictMetaElement: "Element",
+      dictMetaAstrology: "Astrology",
+      dictMetaSymbols: "Symbols",
+      domain_love: "Love",
+      domain_work: "Work",
+      domain_money: "Money",
+      domain_relation: "Relationships",
+      domain_self: "Self",
+      groundingLine: "Let your mind settle on a single question",
+      questionTitle: "Write your question",
+      questionPlaceholder: "Put into words what weighs on you right now",
+      questionShownNote: "It will appear on your reading, word for word",
+      questionPrivacyNote: "Your question never leaves this device",
+      domainLabel: "Area of your question",
+      toShuffle: "To the shuffle",
+      restart: "Start over",
+      restartConfirm: "Really start over from the beginning?",
+      shuffleInstruction: "Sweep the deck to shuffle it yourself",
+      shuffleDone: "That feels right",
+      editQuestion: "Edit question",
+      cutSplitInstruction: "Tap two points to cut the deck",
+      cutOrderInstruction: "Tap the piles in the order to restack them",
+      cutPileCount: "{n} cards",
+      cutRedo: "Cut again",
+      irreversibleNote: "There is no going back now",
+      sealBadgeLabel: "Seal",
+      sealExplain: "This seal proves the deck was fixed before you chose your cards.",
+      continueButton: "Continue",
+      deckAria: "Card deck",
+      spreadInstruction: "Tap three cards that draw you in, one at a time",
+      spreadCardAria: "Face-down card {n}",
+      positionPast: "Past",
+      positionPresent: "Present",
+      positionFuture: "Future",
+      choiceCopy:
+        "You decide which way all three cards will face. There is no going back.",
+      choiceUpright: "Flip to upright",
+      choiceReversed: "Flip to reversed",
+      holdHint: "Press and hold to confirm",
+      openInstruction: "Tap each card to turn it over, starting with the past",
+      orientationUpright: "Upright",
+      orientationReversed: "Reversed",
+      readingMute:
+        "This card has no keywords that touch {domain} directly. Read it by its overall meaning.",
+      readingAllKeywords: "Show all keywords",
+      readingAllKeywordsHide: "Hide all keywords",
+      readingWaite: "View Waite's original text",
+      readingWaiteHide: "Hide Waite's original text",
+      verifyShow: "Show verification",
+      verifyHide: "Hide verification",
+      verifyIntro: "You can recompute the hash yourself and compare.",
+      verifyPayload: "Hash payload — card order + nonce",
+      verifyDisplay: "For display — not part of the hash",
+      verifyPicked: "Picked positions",
+      verifyPickedNth: "#{n}",
+      verifyChoice: "Chosen orientation",
+      entryLastReading: "View your last reading",
+      shareImage: "Share as image",
+      newReading: "New reading",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -2524,6 +2738,7 @@ export const messages: Record<Locale, Messages> = {
       toolMaze: "Pixel Maze Maker",
       toolShooter: "Arcade Shooter",
       toolTagIt: "Tag-it",
+      toolTarot: "Tarot Table",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -2795,6 +3010,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Tag-it",
         description:
           "Pull key terms from an Office doc (Word/Excel/PowerPoint) into chips, curate them, and write them to the document properties — all in the browser",
+      },
+      tarot: {
+        name: "Tarot Table",
+        description:
+          "A three-card tarot read from an unchanging public card dictionary — 22 major arcana, your question never leaves your device",
       },
     },
   },

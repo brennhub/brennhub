@@ -19,7 +19,8 @@ export type FeedbackTool =
   | "language-maker"
   | "maze"
   | "shooter"
-  | "tag-it";
+  | "tag-it"
+  | "tarot";
 
 type Category = "feature" | "improvement" | "complaint" | "other";
 
@@ -139,6 +140,7 @@ export function FeedbackDialog({ open, onOpenChange, defaultTool }: Props) {
     { value: "maze", label: t.toolMaze },
     { value: "shooter", label: t.toolShooter },
     { value: "tag-it", label: t.toolTagIt },
+    { value: "tarot", label: t.toolTarot },
   ];
   const categoryOptions: { value: Category; label: string }[] = [
     { value: "feature", label: t.categoryFeature },

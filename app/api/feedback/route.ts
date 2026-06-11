@@ -14,6 +14,7 @@ const TOOLS = [
   "maze",
   "shooter",
   "tag-it",
+  "tarot",
 ] as const;
 const CATEGORIES = ["feature", "improvement", "complaint", "other"] as const;
 

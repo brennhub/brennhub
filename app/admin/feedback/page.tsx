@@ -25,6 +25,7 @@ const TOOL_LABEL: Record<string, string> = {
   maze: "픽셀 미로 만들기",
   shooter: "아케이드 슈터",
   "tag-it": "태그잇",
+  tarot: "타로 테이블",
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
