@@ -231,9 +231,9 @@ export function Reading({
         try {
           await navigator.share({ files: [file] });
           return;
-        } catch {
-          // 사용자가 시트를 닫음 — 다운로드로 폴백하지 않고 종료 (의도된 취소)
-          return;
+        } catch (err) {
+          // 사용자가 시트를 닫은 경우만 종료 — 그 외 실패는 다운로드로 폴백
+          if (err instanceof Error && err.name === "AbortError") return;
         }
       }
     }

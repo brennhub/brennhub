@@ -9,9 +9,9 @@
 |---|---|---|
 | Task 1 — 스캐폴드 + 카드 데이터 | ✅ 완료 | feat/tarot → dev 머지·배포 확인 (0.1.0) |
 | Task 2 — 의식 플로우 S0~S7 | ✅ 완료 | feat/tarot → dev 머지·배포 확인 (0.2.0). 편집장 dev 검수 완료 (2026-06-11) |
-| Task 2.5 — 단층 정정 + 검수 피드백 | ✅ 코드 완료 (0.2.1) | 정/역 단층 전환(2층 XOR 폐기·편집장 확정) + S3 스월 + S5 스프레드 선택 + SealBadge. push·dev 재검수 대기 |
-| Task 3 — S8 리딩·저장·공유·사전 열람 | ⬜ 미착수 | 아래 프롬프트로 투입 |
-| main 머지 | ⬜ | **Task 3 완료 + 사용자 dev 확인 후에만.** `lib/releases.ts` entry 필수 (pre-push hook이 강제) |
+| Task 2.5 — 단층 정정 + 검수 피드백 | ✅ 완료 (0.2.1) | 정/역 단층 전환(2층 XOR 폐기·편집장 확정) + S3 스월 + S5 스프레드 선택 + SealBadge. dev 배포·스모크 확인 |
+| Task 3 — S8 리딩·저장·공유·사전 열람 | ✅ 코드 완료 (0.3.0) | S8·검증 토글·localStorage 저장·공유 PNG·/tools/tarot/cards. **push·dev 검수 대기** |
+| main 머지 | ⬜ | **사용자 dev 확인 후에만.** `lib/releases.ts` entry 필수 (pre-push hook이 강제) — id 후보 `tarot-launch` |
 
 **Task 2 검수 결과** (2026-06-11, dev.brennhub.com/tools/tarot): 편집장이 **정/역을 단층으로 확정** — "고른 방향이 세 장 전체에 그대로 적용"이 올바른 명세. 기존 2층(숨은 비트 × 선택 XOR) 명세·불변식은 Task 2.5에서 정정.
 
