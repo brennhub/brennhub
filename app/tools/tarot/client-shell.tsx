@@ -20,7 +20,7 @@ import { DealStage } from "./components/stages/deal-stage";
 import { GroundingStage } from "./components/stages/grounding-stage";
 import { OpenStage } from "./components/stages/open-stage";
 import { QuestionStage } from "./components/stages/question-stage";
-import { ResultTemp } from "./components/stages/result-temp";
+import { Reading } from "./components/stages/reading";
 import { ShuffleStage } from "./components/stages/shuffle-stage";
 
 /**
@@ -223,16 +223,15 @@ export function TarotClientShell() {
         />
       )}
 
-      {state.stage === "result" && state.seal && (
+      {state.stage === "result" && state.seal && state.domain && (
         <>
-          <ResultTemp
+          <Reading
             question={state.question}
             domain={state.domain}
             cards={drawn}
-            sealHash={state.seal.hash}
             onNewReading={handleReset}
           />
-          {/* ?debug=1 한정 — 봉인 원본(순서+nonce) 노출로 커밋-리빌 검증 가능. S8 '검증' 토글(Task 3)의 임시 대용. */}
+          {/* ?debug=1 한정 — 봉인 원본 노출. Task 3 검증 토글(Commit B)이 대체 후 제거 예정. */}
           {debug && (
             <span
               hidden

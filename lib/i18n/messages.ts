@@ -691,8 +691,11 @@ export type Messages = {
     openInstruction: string;
     orientationUpright: string;
     orientationReversed: string;
-    resultTempTitle: string;
-    resultTempNote: string;
+    readingMute: string;
+    readingAllKeywords: string;
+    readingAllKeywordsHide: string;
+    readingWaite: string;
+    readingWaiteHide: string;
     newReading: string;
   };
   feedback: {
@@ -1620,8 +1623,11 @@ export const messages: Record<Locale, Messages> = {
       openInstruction: "과거부터 순서대로 카드를 탭해 뒤집으세요",
       orientationUpright: "정방향",
       orientationReversed: "역방향",
-      resultTempTitle: "뽑힌 카드",
-      resultTempNote: "자세한 리딩 화면은 준비 중입니다",
+      readingMute: "이 카드는 {domain}에 직접 닿는 키워드가 없어요. 전체 의미로 보세요.",
+      readingAllKeywords: "전체 키워드 보기",
+      readingAllKeywordsHide: "전체 키워드 접기",
+      readingWaite: "Waite 원문 보기",
+      readingWaiteHide: "Waite 원문 접기",
       newReading: "새 리딩",
     },
     feedback: {
@@ -2661,8 +2667,12 @@ export const messages: Record<Locale, Messages> = {
       openInstruction: "Tap each card to turn it over, starting with the past",
       orientationUpright: "Upright",
       orientationReversed: "Reversed",
-      resultTempTitle: "Your cards",
-      resultTempNote: "The full reading view is on its way",
+      readingMute:
+        "This card has no keywords that touch {domain} directly. Read it by its overall meaning.",
+      readingAllKeywords: "Show all keywords",
+      readingAllKeywordsHide: "Hide all keywords",
+      readingWaite: "View Waite's original text",
+      readingWaiteHide: "Hide Waite's original text",
       newReading: "New reading",
     },
     feedback: {
