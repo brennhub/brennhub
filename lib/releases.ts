@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "tarot-launch",
+    date: "2026-06-11",
+    tool: "tarot",
+    kind: "new",
+    title: {
+      ko: "새 도구: 타로 테이블",
+      en: "New tool: Tarot Table",
+    },
+    body: {
+      ko: "변하지 않는 카드 사전으로 읽는 3장 타로가 열렸어요. 직접 섞고, 자르고, 펼쳐진 22장 중 세 장을 골라 뒤집으세요 — 모든 해석은 공개된 카드 사전에서만 나오고, 카드를 고르기 전에 덱이 고정되어 있었다는 것도 직접 확인할 수 있어요. 질문은 기기 밖으로 나가지 않습니다.",
+      en: "A three-card tarot read from an unchanging card dictionary. Shuffle, cut, and pick three of the 22 spread cards yourself — every interpretation comes from the public card dictionary alone, and you can verify the deck was fixed before you chose. Your question never leaves your device.",
+    },
+  },
+  {
     id: "favorites-drag-reorder",
     date: "2026-06-03",
     tool: "site",
