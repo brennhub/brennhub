@@ -6,8 +6,6 @@ import { TAROT_CARDS } from "@/lib/tarot/cards";
 import {
   buildSealPayload,
   createRitualRng,
-  drawOrientationBits,
-  finalOrientation,
   randomNonceHex,
   recombine,
   sha256Hex,
@@ -82,31 +80,30 @@ export function TarotClientShell() {
     dispatch({ type: "RESET" });
   };
 
-  // 뽑힌 3장 + 최종 방향 = 숨은 비트(S4) XOR 전역 선택(S6) — 2층 메커니즘.
+  // 뽑힌 3장 — 방향은 S6 선택(userChoice)이 단일 소스 (2026-06-11 단층 정정).
   // TAROT_CARDS는 id 순 정렬이 생성기 assert로 보장됨 — index 접근 안전.
   const seal = state.seal;
   const choice = state.userChoice;
   const drawn =
     seal && choice
-      ? seal.deck.slice(0, 3).map((id, k) => ({
+      ? seal.deck.slice(0, 3).map((id) => ({
           card: TAROT_CARDS[id],
-          orientation: finalOrientation(seal.bits[k], choice),
+          orientation: choice,
         }))
       : [];
 
-  /** 3번째 더미 탭 = 비가역 확정: 순열·방향 비트·nonce 고정 + 봉인 해시 계산. */
+  /** 3번째 더미 탭 = 비가역 확정: 순열·nonce 고정 + 봉인 해시 계산. */
   const handlePickPile = async (pile: number) => {
-    if (state.stage !== "cut" || state.piles === null || state.seal !== null || !rng) return;
+    if (state.stage !== "cut" || state.piles === null || state.seal !== null) return;
     if (state.picked.includes(pile) || state.picked.length >= 3) return;
     const nextPicked = [...state.picked, pile];
     dispatch({ type: "CUT_PICK_PILE", pile });
     if (nextPicked.length === 3 && !finalizingRef.current) {
       finalizingRef.current = true;
       const deck = recombine(state.piles, nextPicked);
-      const bits = drawOrientationBits(rng);
       const nonce = randomNonceHex(16);
-      const hash = await sha256Hex(buildSealPayload(deck, bits, nonce));
-      dispatch({ type: "CUT_FINALIZE", seal: { deck, bits, nonce, hash } });
+      const hash = await sha256Hex(buildSealPayload(deck, nonce));
+      dispatch({ type: "CUT_FINALIZE", seal: { deck, nonce, hash } });
     }
   };
 
@@ -193,12 +190,11 @@ export function TarotClientShell() {
         />
       )}
 
-      {state.stage === "cut" && rng && (
+      {state.stage === "cut" && (
         <CutStage
           piles={state.piles}
           picked={state.picked}
           seal={state.seal}
-          rng={rng}
           onSplit={(first, second) => dispatch({ type: "CUT_SPLIT", first, second })}
           onResetSplit={() => dispatch({ type: "CUT_RESET_SPLIT" })}
           onPickPile={handlePickPile}

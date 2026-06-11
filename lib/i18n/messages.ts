@@ -1609,8 +1609,7 @@ export const messages: Record<Locale, Messages> = {
       positionPast: "과거",
       positionPresent: "현재",
       positionFuture: "미래",
-      choiceCopy:
-        "카드의 방향은 이미 정해져 있습니다. 당신의 선택이 그것을 그대로 두거나, 전부 뒤집습니다.",
+      choiceCopy: "세 장을 어느 방향으로 뒤집을지, 당신이 정합니다. 되돌릴 수 없습니다.",
       choiceUpright: "정방향으로 뒤집기",
       choiceReversed: "역방향으로 뒤집기",
       holdHint: "꾹 눌러 확정",
@@ -2649,7 +2648,7 @@ export const messages: Record<Locale, Messages> = {
       positionPresent: "Present",
       positionFuture: "Future",
       choiceCopy:
-        "The cards' orientations are already set. Your choice leaves them as they are — or flips them all.",
+        "You decide which way all three cards will face. There is no going back.",
       choiceUpright: "Flip to upright",
       choiceReversed: "Flip to reversed",
       holdHint: "Press and hold to confirm",

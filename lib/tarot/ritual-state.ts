@@ -23,8 +23,6 @@ export type Stage =
 export type Seal = {
   /** 확정 순서 22장. index 0 = top. deck[0]→과거, [1]→현재, [2]→미래. */
   deck: readonly number[];
-  /** 숨은 방향 비트, deck과 정렬. 1 = 역방향. S6 선택 전까지 사용자에게 비공개. */
-  bits: readonly (0 | 1)[];
   nonce: string;
   /** SHA-256(buildSealPayload(...)) hex 64자. */
   hash: string;
@@ -43,7 +41,7 @@ export type RitualState = {
   /** != null === 비가역 진입점. */
   seal: Seal | null;
   dealtCount: 0 | 1 | 2 | 3;
-  /** S6 전역 선택 — 봉인 해시에 포함되지 않음 (선택 전 상태 증명이 해시의 목적). */
+  /** S6 선택 = 세 장 전체 방향의 단일 소스 (2026-06-11 단층 정정). 해시 불포함 — 투명한 선택이라 증명 불필요. */
   userChoice: "upright" | "reversed" | null;
   flippedCount: 0 | 1 | 2 | 3;
 };

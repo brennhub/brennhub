@@ -8,23 +8,24 @@
 | Task | 상태 | 비고 |
 |---|---|---|
 | Task 1 — 스캐폴드 + 카드 데이터 | ✅ 완료 | feat/tarot → dev 머지·배포 확인 (0.1.0) |
-| Task 2 — 의식 플로우 S0~S7 | ✅ 완료 | feat/tarot → dev 머지·배포 확인 (0.2.0). **사용자 dev 검수 대기** |
+| Task 2 — 의식 플로우 S0~S7 | ✅ 완료 | feat/tarot → dev 머지·배포 확인 (0.2.0). 편집장 dev 검수 완료 (2026-06-11) |
+| Task 2.5 — 단층 정정 + 검수 피드백 | 🔄 진행 중 | 정/역 단층 전환(2층 XOR 폐기·편집장 확정) + S3 스월 + S5 스프레드 선택 + SealBadge |
 | Task 3 — S8 리딩·저장·공유·사전 열람 | ⬜ 미착수 | 아래 프롬프트로 투입 |
 | main 머지 | ⬜ | **Task 3 완료 + 사용자 dev 확인 후에만.** `lib/releases.ts` entry 필수 (pre-push hook이 강제) |
 
-**Task 2 검수 포인트** (dev.brennhub.com/tools/tarot): 전체 플로우 ~2분 · 2층 검증("정방향으로 뒤집기" 선택에도 일부 카드는 역방향이어야 정상 — 전부 정방향이면 버그) · 셔플 드래그 손맛 · 홀드 1.5초 링 · 모바일 세로 · 라이트/다크.
+**Task 2 검수 결과** (2026-06-11, dev.brennhub.com/tools/tarot): 편집장이 **정/역을 단층으로 확정** — "고른 방향이 세 장 전체에 그대로 적용"이 올바른 명세. 기존 2층(숨은 비트 × 선택 XOR) 명세·불변식은 Task 2.5에서 정정.
 
 ## 재개 절차
 
 1. `git checkout feat/tarot && git merge main` (feat는 도구당 long-lived 1개)
-2. 먼저 읽기: 본 폴더 README.md(와이어 정본·2층 메커니즘·커밋-리빌·봉인 payload 포맷) + 루트 PATTERNS.md(localStorage hydrate/persist/schemaVersion)
+2. 먼저 읽기: 본 폴더 README.md(와이어 정본·정/역 단층·커밋-리빌·봉인 payload 포맷) + 루트 PATTERNS.md(localStorage hydrate/persist/schemaVersion)
 3. plan 제시 → 승인 후 구현. 논리적 commit 분할. `npm run build` 통과 + commit까지 진행하고 **push 직전 정지** — 사용자 확인 후 push
 4. dev 머지·main 머지는 사용자 지시로만
 
 ## 구현 시 핵심 불변식 (변경 금지)
 
-- **봉인 payload 정본**: `tarot-seal-v1|order:<22 ids>|bits:<22자 0/1>|nonce:<32hex>` → SHA-256 hex 64자. S8 '검증' 토글은 이 문자열을 재구성·재해시한다 — 포맷 변경 = 검증 깨짐. (`lib/tarot/ritual.ts buildSealPayload`)
-- **최종 방향** = `finalOrientation(seal.bits[k], userChoice)` — 2층 XOR. 단층 단순화 금지.
+- **봉인 payload 정본**: `tarot-seal-v1|order:<22 ids>|nonce:<32hex>` → SHA-256 hex 64자. S8 '검증' 토글은 이 문자열을 재구성·재해시한다 — 포맷 변경 = 검증 깨짐. (`lib/tarot/ritual.ts buildSealPayload`. 2026-06-11 단층 정정으로 bits 필드 제거)
+- **카드 방향** = S6 `userChoice` 단일 소스 — 단층 (2026-06-11 편집장 확정, 2층 XOR 폐기).
 - 비가역·전환 가드의 단일 권위는 `lib/tarot/ritual-state.ts` 리듀서.
 - 임시 결과 화면 `components/stages/result-temp.tsx`를 S8로 교체. entry의 `?debug=1` 덱 그리드는 S8 완성 시 제거 가능.
 
@@ -36,7 +37,7 @@
 먼저 읽기: app/tools/tarot/README.md, PATTERNS.md(localStorage hydrate/persist/schemaVersion 패턴). 시작 전 feat/tarot에서 git merge main.
 
 범위:
-1. S8 리딩 화면: 상단에 사용자가 적은 질문 원문(따옴표) + 도메인 뱃지(대가의 회수 — 질문이 리딩의 제목). 카드별 섹션: essence(항상 표시) → 선택 도메인 매칭 키워드 강조 + gloss(도메인 칩과 동일 색으로 시각 연결) → 비매칭 키워드는 접힘('전체 키워드 보기' 토글 — 숨기지 않되 강조만) → 매칭 키워드 0개면 mute 정직 문구("이 카드는 [도메인]에 직접 닿지 않아요" + essence) → 'Waite 원문 보기' 토글(영문 원문 그대로). '검증' 접힌 토글: S4 봉인 해시의 원본(카드 순서 + 방향 비트 + nonce)을 공개해 커밋-리빌 검증 가능하게. 같은 리딩 재뽑기 버튼 없음 — '새 리딩'은 S0(그라운딩)부터.
+1. S8 리딩 화면: 상단에 사용자가 적은 질문 원문(따옴표) + 도메인 뱃지(대가의 회수 — 질문이 리딩의 제목). 카드별 섹션: essence(항상 표시) → 선택 도메인 매칭 키워드 강조 + gloss(도메인 칩과 동일 색으로 시각 연결) → 비매칭 키워드는 접힘('전체 키워드 보기' 토글 — 숨기지 않되 강조만) → 매칭 키워드 0개면 mute 정직 문구("이 카드는 [도메인]에 직접 닿지 않아요" + essence) → 'Waite 원문 보기' 토글(영문 원문 그대로). '검증' 접힌 토글: S4 봉인 해시의 원본(카드 순서 + nonce — 2026-06-11 단층 정정 반영)을 공개해 커밋-리빌 검증 가능하게. 같은 리딩 재뽑기 버튼 없음 — '새 리딩'은 S0(그라운딩)부터.
 2. 저장: 마지막 리딩 1건 localStorage(hydrate/persist/schemaVersion — PATTERNS.md 패턴 그대로). 재방문 시 S0에 '지난 리딩 보기' 진입점. 질문 포함 저장 — 기기 내에만.
 3. 공유 이미지: canvas.toDataURL로 직접 그리기 — html2canvas 사용 금지(Tailwind v4 + Lightning CSS 환경에서 빈 PNG, lineup-builder에서 확인된 제약). 구성: 카드 3장(타이포 렌더) + 이름 + 방향 + 도구명 + URL. 기본값 질문 미포함.
 4. 사전 열람: app/tools/tarot/cards/page.tsx — 22장 브라우즈(server component, cards 데이터 렌더). 카드별 정/역 essence·키워드(도메인 태그)·gloss·Waite 원문. S0와 S8에서 링크 연결. 투명성 증명 + SEO 자산.
