@@ -652,7 +652,12 @@ export type Messages = {
     trustLine: string;
     startButton: string;
     dictionaryLink: string;
-    comingSoon: string;
+    dictTitle: string;
+    dictIntro: string;
+    dictBack: string;
+    dictMetaElement: string;
+    dictMetaAstrology: string;
+    dictMetaSymbols: string;
     domain_love: string;
     domain_work: string;
     domain_money: string;
@@ -691,8 +696,21 @@ export type Messages = {
     openInstruction: string;
     orientationUpright: string;
     orientationReversed: string;
-    resultTempTitle: string;
-    resultTempNote: string;
+    readingMute: string;
+    readingAllKeywords: string;
+    readingAllKeywordsHide: string;
+    readingWaite: string;
+    readingWaiteHide: string;
+    verifyShow: string;
+    verifyHide: string;
+    verifyIntro: string;
+    verifyPayload: string;
+    verifyDisplay: string;
+    verifyPicked: string;
+    verifyPickedNth: string;
+    verifyChoice: string;
+    entryLastReading: string;
+    shareImage: string;
     newReading: string;
   };
   feedback: {
@@ -1581,7 +1599,13 @@ export const messages: Record<Locale, Messages> = {
       trustLine: "모든 해석은 공개된 사전에서 나옵니다",
       startButton: "리딩 시작",
       dictionaryLink: "카드 사전 열람",
-      comingSoon: "준비 중입니다",
+      dictTitle: "카드 사전",
+      dictIntro:
+        "메이저 아르카나 22장의 정/역 의미 전체를 공개합니다. 모든 리딩은 이 사전에서만 나옵니다.",
+      dictBack: "타로 테이블로 돌아가기",
+      dictMetaElement: "원소",
+      dictMetaAstrology: "점성",
+      dictMetaSymbols: "상징",
       domain_love: "연애",
       domain_work: "일·직업",
       domain_money: "돈",
@@ -1620,8 +1644,21 @@ export const messages: Record<Locale, Messages> = {
       openInstruction: "과거부터 순서대로 카드를 탭해 뒤집으세요",
       orientationUpright: "정방향",
       orientationReversed: "역방향",
-      resultTempTitle: "뽑힌 카드",
-      resultTempNote: "자세한 리딩 화면은 준비 중입니다",
+      readingMute: "이 카드는 {domain}에 직접 닿는 키워드가 없어요. 전체 의미로 보세요.",
+      readingAllKeywords: "전체 키워드 보기",
+      readingAllKeywordsHide: "전체 키워드 접기",
+      readingWaite: "Waite 원문 보기",
+      readingWaiteHide: "Waite 원문 접기",
+      verifyShow: "검증 보기",
+      verifyHide: "검증 접기",
+      verifyIntro: "직접 재계산해 비교할 수 있습니다.",
+      verifyPayload: "해시 원본 — 카드 순서 + nonce",
+      verifyDisplay: "표시용 — 해시에 포함되지 않음",
+      verifyPicked: "뽑은 위치",
+      verifyPickedNth: "{n}번째",
+      verifyChoice: "선택한 방향",
+      entryLastReading: "지난 리딩 보기",
+      shareImage: "이미지로 공유",
       newReading: "새 리딩",
     },
     feedback: {
@@ -2621,7 +2658,13 @@ export const messages: Record<Locale, Messages> = {
       trustLine: "Every interpretation comes from a public dictionary",
       startButton: "Start reading",
       dictionaryLink: "Browse the card dictionary",
-      comingSoon: "Coming soon",
+      dictTitle: "Card dictionary",
+      dictIntro:
+        "The full upright and reversed meanings of all 22 major arcana, in the open. Every reading comes from this dictionary alone.",
+      dictBack: "Back to Tarot Table",
+      dictMetaElement: "Element",
+      dictMetaAstrology: "Astrology",
+      dictMetaSymbols: "Symbols",
       domain_love: "Love",
       domain_work: "Work",
       domain_money: "Money",
@@ -2661,8 +2704,22 @@ export const messages: Record<Locale, Messages> = {
       openInstruction: "Tap each card to turn it over, starting with the past",
       orientationUpright: "Upright",
       orientationReversed: "Reversed",
-      resultTempTitle: "Your cards",
-      resultTempNote: "The full reading view is on its way",
+      readingMute:
+        "This card has no keywords that touch {domain} directly. Read it by its overall meaning.",
+      readingAllKeywords: "Show all keywords",
+      readingAllKeywordsHide: "Hide all keywords",
+      readingWaite: "View Waite's original text",
+      readingWaiteHide: "Hide Waite's original text",
+      verifyShow: "Show verification",
+      verifyHide: "Hide verification",
+      verifyIntro: "You can recompute the hash yourself and compare.",
+      verifyPayload: "Hash payload — card order + nonce",
+      verifyDisplay: "For display — not part of the hash",
+      verifyPicked: "Picked positions",
+      verifyPickedNth: "#{n}",
+      verifyChoice: "Chosen orientation",
+      entryLastReading: "View your last reading",
+      shareImage: "Share as image",
       newReading: "New reading",
     },
     feedback: {
