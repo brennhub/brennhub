@@ -37,7 +37,7 @@
 먼저 읽기: app/tools/tarot/README.md, PATTERNS.md(localStorage hydrate/persist/schemaVersion 패턴). 시작 전 feat/tarot에서 git merge main.
 
 범위:
-1. S8 리딩 화면: 상단에 사용자가 적은 질문 원문(따옴표) + 도메인 뱃지(대가의 회수 — 질문이 리딩의 제목). 카드별 섹션: essence(항상 표시) → 선택 도메인 매칭 키워드 강조 + gloss(도메인 칩과 동일 색으로 시각 연결) → 비매칭 키워드는 접힘('전체 키워드 보기' 토글 — 숨기지 않되 강조만) → 매칭 키워드 0개면 mute 정직 문구("이 카드는 [도메인]에 직접 닿지 않아요" + essence) → 'Waite 원문 보기' 토글(영문 원문 그대로). '검증' 접힌 토글: S4 봉인 해시의 원본(카드 순서 + nonce — 2026-06-11 단층 정정 반영)을 공개해 커밋-리빌 검증 가능하게. 같은 리딩 재뽑기 버튼 없음 — '새 리딩'은 S0(그라운딩)부터.
+1. S8 리딩 화면: 상단에 사용자가 적은 질문 원문(따옴표) + 도메인 뱃지(대가의 회수 — 질문이 리딩의 제목). 카드별 섹션: essence(항상 표시) → 선택 도메인 매칭 키워드 강조 + gloss(도메인 칩과 동일 색으로 시각 연결) → 비매칭 키워드는 접힘('전체 키워드 보기' 토글 — 숨기지 않되 강조만) → 매칭 키워드 0개면 mute 정직 문구("이 카드는 [도메인]에 직접 닿지 않아요" + essence) → 'Waite 원문 보기' 토글(영문 원문 그대로). '검증' 접힌 토글: S4 봉인 해시의 원본(카드 순서 + nonce + pickedIndices)을 공개해 커밋-리빌 검증 가능하게 — 해시 payload는 순서+nonce, pickedIndices는 스프레드 선택 위치 표시용. 같은 리딩 재뽑기 버튼 없음 — '새 리딩'은 S0(그라운딩)부터.
 2. 저장: 마지막 리딩 1건 localStorage(hydrate/persist/schemaVersion — PATTERNS.md 패턴 그대로). 재방문 시 S0에 '지난 리딩 보기' 진입점. 질문 포함 저장 — 기기 내에만.
 3. 공유 이미지: canvas.toDataURL로 직접 그리기 — html2canvas 사용 금지(Tailwind v4 + Lightning CSS 환경에서 빈 PNG, lineup-builder에서 확인된 제약). 구성: 카드 3장(타이포 렌더) + 이름 + 방향 + 도구명 + URL. 기본값 질문 미포함.
 4. 사전 열람: app/tools/tarot/cards/page.tsx — 22장 브라우즈(server component, cards 데이터 렌더). 카드별 정/역 essence·키워드(도메인 태그)·gloss·Waite 원문. S0와 S8에서 링크 연결. 투명성 증명 + SEO 자산.
