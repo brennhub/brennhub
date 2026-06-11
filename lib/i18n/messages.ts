@@ -658,6 +658,15 @@ export type Messages = {
     domain_money: string;
     domain_relation: string;
     domain_self: string;
+    groundingLine: string;
+    questionTitle: string;
+    questionPlaceholder: string;
+    questionShownNote: string;
+    questionPrivacyNote: string;
+    domainLabel: string;
+    toShuffle: string;
+    restart: string;
+    restartConfirm: string;
   };
   feedback: {
     button: string;
@@ -1551,6 +1560,15 @@ export const messages: Record<Locale, Messages> = {
       domain_money: "돈",
       domain_relation: "관계",
       domain_self: "자기",
+      groundingLine: "마음속 질문을 하나로 좁혀보세요",
+      questionTitle: "질문을 적어주세요",
+      questionPlaceholder: "지금 마음에 걸리는 것을 그대로 적어보세요",
+      questionShownNote: "리딩 화면에 그대로 표시됩니다",
+      questionPrivacyNote: "질문은 이 기기 밖으로 나가지 않습니다",
+      domainLabel: "질문의 영역",
+      toShuffle: "셔플로",
+      restart: "처음부터 다시",
+      restartConfirm: "정말 처음부터 다시 할까요?",
     },
     feedback: {
       button: "피드백",
@@ -2555,6 +2573,15 @@ export const messages: Record<Locale, Messages> = {
       domain_money: "Money",
       domain_relation: "Relationships",
       domain_self: "Self",
+      groundingLine: "Let your mind settle on a single question",
+      questionTitle: "Write your question",
+      questionPlaceholder: "Put into words what weighs on you right now",
+      questionShownNote: "It will appear on your reading, word for word",
+      questionPrivacyNote: "Your question never leaves this device",
+      domainLabel: "Area of your question",
+      toShuffle: "To the shuffle",
+      restart: "Start over",
+      restartConfirm: "Really start over from the beginning?",
     },
     feedback: {
       button: "Feedback",
