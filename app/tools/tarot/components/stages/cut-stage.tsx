@@ -3,20 +3,19 @@
 import { useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
-import type { RitualRng } from "@/lib/tarot/ritual";
 import type { Seal } from "@/lib/tarot/ritual-state";
 import { DECK_SIZE } from "@/lib/tarot/ritual-state";
+import { SealBadge } from "../seal-badge";
 
 /**
  * S4 컷 — 두 지점 탭으로 3더미 분할 → 합칠 순서대로 탭 (선택 순서 = 실제 덱 순열).
- * 3번째 더미 탭이 비가역 확정 트리거: 순서·방향 비트 고정 + 봉인 해시 표시.
+ * 3번째 더미 탭이 비가역 확정 트리거: 순서 고정 + 봉인 해시 표시.
  * 확정 이후 이전 단계 복귀 불가 — 수정하려면 처음부터 (리듀서가 강제).
  */
 type CutStageProps = {
   piles: readonly [readonly number[], readonly number[], readonly number[]] | null;
   picked: readonly number[];
   seal: Seal | null;
-  rng: RitualRng;
   onSplit: (first: number, second: number) => void;
   onResetSplit: () => void;
   onPickPile: (pile: number) => void;
@@ -27,7 +26,6 @@ export function CutStage({
   piles,
   picked,
   seal,
-  rng,
   onSplit,
   onResetSplit,
   onPickPile,
@@ -41,8 +39,6 @@ export function CutStage({
     const rect = e.currentTarget.getBoundingClientRect();
     const ratio = (e.clientX - rect.left) / rect.width;
     const boundary = Math.min(DECK_SIZE - 1, Math.max(1, Math.round(ratio * DECK_SIZE)));
-    rng.mix(e.clientX | 0);
-    rng.mix((e.timeStamp * 1000) | 0);
     if (firstBoundary === null) {
       setFirstBoundary(boundary);
     } else if (boundary !== firstBoundary) {
@@ -54,11 +50,8 @@ export function CutStage({
     // 동일 경계 재탭은 무시 — 두 지점이 달라야 3더미가 성립
   };
 
-  const handlePilePick = (pile: number, e: React.PointerEvent<HTMLButtonElement>) => {
+  const handlePilePick = (pile: number) => {
     if (seal !== null || picked.includes(pile)) return;
-    rng.mix(e.clientX | 0);
-    rng.mix(e.clientY | 0);
-    rng.mix((e.timeStamp * 1000) | 0);
     onPickPile(pile);
   };
 
@@ -98,7 +91,7 @@ export function CutStage({
                   key={i}
                   type="button"
                   disabled={seal !== null || order !== -1}
-                  onPointerDown={(e) => handlePilePick(i, e)}
+                  onPointerDown={() => handlePilePick(i)}
                   className={cn(
                     "relative flex-1 select-none rounded-lg border-2 border-foreground/50 bg-card px-2 py-6 text-center transition-opacity",
                     order !== -1 && "opacity-40",
@@ -129,14 +122,7 @@ export function CutStage({
       {seal !== null && (
         <div className="flex w-full animate-in flex-col items-center gap-4 fade-in duration-700">
           <p className="text-center font-medium">{tt.irreversibleNote}</p>
-          <p className="w-full max-w-sm text-center">
-            <span className="mr-2 text-[10px] tracking-wide text-muted-foreground uppercase">
-              {tt.sealLabel}
-            </span>
-            <span className="font-mono text-[10px] break-all text-muted-foreground">
-              {seal.hash}
-            </span>
-          </p>
+          <SealBadge hash={seal.hash} />
           <button
             type="button"
             onClick={onContinue}

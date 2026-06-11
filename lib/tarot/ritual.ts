@@ -1,6 +1,7 @@
 /**
- * 의식 플로우 순수 로직 — RNG · 셔플 · 컷 · 봉인 해시 · 방향 결정.
+ * 의식 플로우 순수 로직 — RNG · 셔플 · 컷 · 봉인 해시.
  * 전부 client-side (Web Crypto). 이 도구에서 Math.random 사용 금지.
+ * 카드 방향은 S6 사용자 선택(userChoice)이 단일 소스 — 여기서 계산하지 않는다.
  */
 
 /**
@@ -65,11 +66,6 @@ export function recombine(
   return order.flatMap((i) => [...piles[i]]);
 }
 
-/** 카드별 숨은 방향 비트 — 1 = 역방향. 컷 재결합 순간에만 호출. */
-export function drawOrientationBits(rng: RitualRng, n = 22): (0 | 1)[] {
-  return Array.from({ length: n }, () => (rng.nextUint32() & 1) as 0 | 1);
-}
-
 /** 16바이트 hex nonce. (lib/auth/random.ts randomHex와 동일 패턴 — auth 번들 미수입 위해 자체 구현) */
 export function randomNonceHex(bytes = 16): string {
   const buf = new Uint8Array(bytes);
@@ -82,16 +78,12 @@ export function randomNonceHex(bytes = 16): string {
 /**
  * 봉인 payload 정본 — S8 '검증' 토글(Task 3)이 이 문자열을 재구성해 재해시한다.
  * 포맷 변경 = 검증 호환 깨짐. 변경 금지.
- *   tarot-seal-v1|order:<id,22개>|bits:<0/1 22자>|nonce:<32 hex>
- * bits[k] = deck[k]의 숨은 방향 (1 = 역방향). S6 선택은 포함하지 않는다 —
- * 해시는 "선택 전" 상태의 증명이고, 최종 방향은 bits XOR choice로 계산된다.
+ *   tarot-seal-v1|order:<id,22개>|nonce:<32 hex>
+ * 증명 대상 = "카드를 고르기 전에 덱 순서가 고정되어 있었다."
+ * 방향은 S6에서 사용자가 투명하게 선택하므로 증명 대상이 아니다 (2026-06-11 단층 정정).
  */
-export function buildSealPayload(
-  deck: readonly number[],
-  bits: readonly (0 | 1)[],
-  nonce: string,
-): string {
-  return `tarot-seal-v1|order:${deck.join(",")}|bits:${bits.join("")}|nonce:${nonce}`;
+export function buildSealPayload(deck: readonly number[], nonce: string): string {
+  return `tarot-seal-v1|order:${deck.join(",")}|nonce:${nonce}`;
 }
 
 export async function sha256Hex(text: string): Promise<string> {
@@ -99,18 +91,4 @@ export async function sha256Hex(text: string): Promise<string> {
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-}
-
-/**
- * ★ 2층 정/역 메커니즘의 코드 정본 — 코드 리뷰 최우선 확인 항목.
- * 최종 방향 = 숨은 비트(S4 고정) XOR 전역 선택(S6).
- * 선택이 숨은 상태를 그대로 보존하거나(정방향) 전부 반전한다(역방향).
- * 단층 '방향 고르기'(선택=결과 직결)로 단순화 금지 — 시그니처가 죽는다.
- */
-export function finalOrientation(
-  bit: 0 | 1,
-  choice: "upright" | "reversed",
-): "upright" | "reversed" {
-  const reversed = (bit === 1) !== (choice === "reversed");
-  return reversed ? "reversed" : "upright";
 }

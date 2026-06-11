@@ -21,10 +21,8 @@ export type Stage =
   | "result"; // 임시 결과 — Task 3에서 S8 리딩으로 교체
 
 export type Seal = {
-  /** 확정 순서 22장. index 0 = top. deck[0]→과거, [1]→현재, [2]→미래. */
+  /** 확정 순서 22장. index 0 = top. S5 스프레드는 이 순서를 좌→우로 그대로 펼친다 (추가 난수 없음). */
   deck: readonly number[];
-  /** 숨은 방향 비트, deck과 정렬. 1 = 역방향. S6 선택 전까지 사용자에게 비공개. */
-  bits: readonly (0 | 1)[];
   nonce: string;
   /** SHA-256(buildSealPayload(...)) hex 64자. */
   hash: string;
@@ -42,8 +40,9 @@ export type RitualState = {
   picked: readonly number[];
   /** != null === 비가역 진입점. */
   seal: Seal | null;
-  dealtCount: 0 | 1 | 2 | 3;
-  /** S6 전역 선택 — 봉인 해시에 포함되지 않음 (선택 전 상태 증명이 해시의 목적). */
+  /** S5에서 탭한 덱 위치(0~21), 탭 순서대로 — [0]=과거, [1]=현재, [2]=미래. Task 3 검증 표시에도 사용. */
+  pickedIndices: readonly number[];
+  /** S6 선택 = 세 장 전체 방향의 단일 소스 (2026-06-11 단층 정정). 해시 불포함 — 투명한 선택이라 증명 불필요. */
   userChoice: "upright" | "reversed" | null;
   flippedCount: 0 | 1 | 2 | 3;
 };
@@ -62,7 +61,7 @@ export type RitualAction =
   | { type: "CUT_PICK_PILE"; pile: number }
   | { type: "CUT_FINALIZE"; seal: Seal }
   | { type: "CUT_CONTINUE" }
-  | { type: "DEAL_TAP" }
+  | { type: "DEAL_PICK"; index: number }
   | { type: "DEAL_DONE" }
   | { type: "CHOICE_CONFIRM"; choice: "upright" | "reversed" }
   | { type: "FLIP_NEXT" }
@@ -80,7 +79,7 @@ export const initialRitualState: RitualState = {
   piles: null,
   picked: [],
   seal: null,
-  dealtCount: 0,
+  pickedIndices: [],
   userChoice: null,
   flippedCount: 0,
 };
@@ -158,13 +157,19 @@ export function ritualReducer(state: RitualState, action: RitualAction): RitualS
     case "CUT_CONTINUE":
       return state.stage === "cut" && state.seal !== null ? { ...state, stage: "deal" } : state;
 
-    case "DEAL_TAP":
-      return state.stage === "deal" && state.dealtCount < 3
-        ? { ...state, dealtCount: (state.dealtCount + 1) as 1 | 2 | 3 }
+    // 탭 = 확정 (취소 없음). 동일 위치 재탭·범위 밖 index는 무시.
+    case "DEAL_PICK":
+      return state.stage === "deal" &&
+        state.pickedIndices.length < 3 &&
+        Number.isInteger(action.index) &&
+        action.index >= 0 &&
+        action.index < DECK_SIZE &&
+        !state.pickedIndices.includes(action.index)
+        ? { ...state, pickedIndices: [...state.pickedIndices, action.index] }
         : state;
 
     case "DEAL_DONE":
-      return state.stage === "deal" && state.dealtCount === 3
+      return state.stage === "deal" && state.pickedIndices.length === 3
         ? { ...state, stage: "choice" }
         : state;
 

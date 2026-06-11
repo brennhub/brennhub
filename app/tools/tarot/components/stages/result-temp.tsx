@@ -4,6 +4,7 @@ import { useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 import { toRoman } from "@/lib/tarot/glyphs";
 import type { Domain, TarotCard as TarotCardData } from "@/lib/tarot/types";
+import { SealBadge } from "../seal-badge";
 
 /**
  * 임시 결과 화면 — Task 3에서 S8 리딩(essence·키워드 강조·gloss·mute·원전·검증)으로 교체.
@@ -55,12 +56,7 @@ export function ResultTemp({ question, domain, cards, sealHash, onNewReading }: 
         </ul>
       </div>
 
-      <p className="text-center">
-        <span className="mr-2 text-[10px] tracking-wide text-muted-foreground uppercase">
-          {tt.sealLabel}
-        </span>
-        <span className="font-mono text-[10px] break-all text-muted-foreground">{sealHash}</span>
-      </p>
+      <SealBadge hash={sealHash} />
 
       <p className="text-center text-xs text-muted-foreground">{tt.resultTempNote}</p>
 
