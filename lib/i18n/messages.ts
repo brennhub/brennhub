@@ -712,6 +712,8 @@ export type Messages = {
     entryLastReading: string;
     shareImage: string;
     newReading: string;
+    soundMute: string;
+    soundUnmute: string;
   };
   feedback: {
     button: string;
@@ -1660,6 +1662,8 @@ export const messages: Record<Locale, Messages> = {
       entryLastReading: "지난 리딩 보기",
       shareImage: "이미지로 공유",
       newReading: "새 리딩",
+      soundMute: "소리 끄기",
+      soundUnmute: "소리 켜기",
     },
     feedback: {
       button: "피드백",
@@ -2721,6 +2725,8 @@ export const messages: Record<Locale, Messages> = {
       entryLastReading: "View your last reading",
       shareImage: "Share as image",
       newReading: "New reading",
+      soundMute: "Mute",
+      soundUnmute: "Unmute",
     },
     feedback: {
       button: "Feedback",
