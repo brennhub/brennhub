@@ -1,5 +1,49 @@
 # 타로 테이블 (Tarot Table) CHANGELOG
 
+## 0.4.2 — BGM 음원 재인코딩 7.7MB → 3.9MB (2026-06-12)
+
+**What** — `ambient.mp3` 320kbps CBR → VBR V5(~130kbps) 재인코딩(편집장 수행, 음량 무변경). 모바일 데이터 절반 이하.
+
+**Verify** — 디코드 재확인(249.887s — 디코더가 인코더 패딩 보정, 타임라인 동일) · 루프 경계 재실측: 꼬리 페이드 ~246.5s 시작, 245s 지점 RMS 0.058(음악 레벨) → **LOOP_END_S=245 유지 판정**(상수 무변경, 주석만 갱신) · 브라우저 재검증 5/5(진입 무음·재생·음소거 영속·S8 페이드아웃).
+
+## 0.4.1 — Task 4.5: BGM 엔진 전환 — 합성 → 음원 파일 (2026-06-12)
+
+**What** — 합성 엔진(드론 3-osc·필터 스윕·종소리·임펄스 리버브) 전부 제거, `public/tarot/ambient.mp3` 루프 재생으로 교체. 컨트롤러 API·수명주기(S0 무음→gesture 시작→S8 침묵)·음소거 토글·localStorage·visibilitychange·세션/generation 가드는 무변경 — 엔진 속만 교체.
+
+**Why** — 편집장 판정: 합성 드론이 리딩에 방해. 라이선스 확인된 음원으로 전환.
+
+**Where**
+- `lib/tarot/ambient.ts` — fetch+decodeAudioData(페이지 수명 1회 캐시, 실패도 캐시=무음 폴백 확정) → BufferSource loop. 디코드 완료 시점 페이드인(S1 그라운딩 7s = 자연 로딩 버퍼; 디코드 전 stop 시 gen·fadingOut 가드가 중단)
+- `public/tarot/ambient.mp3` — 7.7MB, 249.9s 스테레오 44.1kHz
+
+**결정 기록**
+- 출처: "Relax - Relaxing Music" / APALONBeats / pixabay.com/music/beats-relax-relaxing-music-540590 — Pixabay Content License(상업 가능·표기 불요). Content ID 등록 트랙 — 영상 클레임 가능성은 사이트 재생과 무관.
+- 루프 경계 실측: 머리 페이드 없음(loopStart 0) / 꼬리 ~246s부터 페이드아웃 → **loopEnd 245s**로 당겨 루프 클릭 방지. 클릭 청취 최종 판정은 dev 편집장 몫.
+- MASTER_LEVEL 0.16 → 0.35 재튜닝(합성보다 트랙이 잔잔함) — 체감 조정 전제.
+- 합성 엔진 코드는 git 히스토리(0.4.0)가 보존 — 죽은 코드 잔류 0.
+
+**Verify** — 빌드 그린 · 브라우저 RMS: 진입 무음 / 시작 후 음원 재생 / 음소거 토글·영속 / S8 페이드아웃 / visibilitychange / ctx 재사용 / mp3 차단 시 무음 폴백(페이지 에러 0) · 루프 경계 RMS 수치 확인(loopEnd-0.5s가 음악 레벨).
+
+## 0.4.0 — Task 4: 의식 앰비언트 BGM (2026-06-12)
+
+**What** — Web Audio 합성 앰비언트(외부 라이브러리·오디오 파일 0): 저음 드론(A2+P5+옥타브, 디튠 비팅, 0.02Hz 필터 스윕) + 드문 종소리(A 메이저 펜타토닉 + 합성 임펄스 3s 홀 잔향). [리딩 시작] gesture에서 시작 → S1 페이드인 2.5s → S8 진입 페이드아웃 1.8s("답은 침묵 속에서"). 의식 화면 우상단 음소거 토글(localStorage 영속, 기본 ON, 160ms 페이드). visibilitychange 시 suspend/복귀.
+
+**Why** — 편집장 지시: 의식에 신비로운 BGM. 입구 무음·의식 소리·리딩 침묵의 대비가 페이싱 설계("느림이 제품")를 청각으로 확장.
+
+**Where**
+- `lib/tarot/ambient.ts` — 컨트롤러(클로저 팩토리 + lazy 싱글톤). 2층 노드 수명: 페이지(ctx·muteGain·리버브 캐시) / 세션(sessionGain 페이드 + generation 가드 — osc.stop 취소 불가라 페이드아웃 중 재시작은 구 세션 폐기 + 새 그래프)
+- `app/tools/tarot/client-shell.tsx` — start([리딩 시작] onClick, dispatch 앞 — gesture 콜스택에서 resume) / stop ×3(result 이펙트·handleReset·unmount cleanup) / SoundToggle(maze play-controls 스타일)
+
+**결정 기록**
+- autoplay 정책상 S0 진입 즉시 재생 불가 → [리딩 시작] 탭 = BGM 시작점으로 설계 수용.
+- 공포 회피 원칙: 단2도·트라이톤·고Q 레조넌스·비조화 partial 금지 — 협화(루트·5도·옥타브·메이저 펜타토닉)만.
+- visibilitychange는 ctx.suspend/resume (masterGain 0 비채택 — 모바일 배터리). repo 첫 도입 패턴.
+- BGM 음 선택은 Math.random — ritual.ts의 금지는 카드 결과 공정성 영역, BGM은 리딩과 무관(주석 명기).
+- iOS 무음 스위치 무음은 OS 동작 — 수용, README 명기. 사운드 파라미터는 편집장 체감 후 조정 전제(상수 블록).
+- 음원 파일 교체 트랙 BACKLOG 등재 (컨트롤러 API 유지 전제).
+
+**Verify** — 커밋별 빌드 그린 · 브라우저 검증(AnalyserNode RMS): 진입 시 무음 / 시작 후 발음 / 음소거 토글·영속 / S8 페이드아웃 / 재시작 시 ctx 재사용 / visibilitychange suspend·resume. 실기기 무드·레벨 체감은 dev 배포 후 편집장 몫.
+
 ## 0.3.0 — Task 3: S8 리딩 + 저장 + 공유 + 사전 열람 (2026-06-11)
 
 **What** — ① **S8 리딩**: 질문 원문 + 도메인 뱃지(대가의 회수), 카드별 essence(항상) → 매칭 키워드 강조 + gloss(뱃지와 동일 강조색 = 출처 시각 연결) → 비매칭 접힘 토글(강조만, gloss는 매칭만) → mute 정직 문구 → Waite 원문 토글(1910 출처) ② **검증 토글**: payload 문자열(order+nonce) 그대로 공개, 표시용(pickedIndices·choice)은 "해시에 포함되지 않음" 구분 명시, "직접 재계산해 비교할 수 있습니다" 안내 ③ **저장**: 마지막 리딩 1건 localStorage(봉인 원본 포함) + S0 '지난 리딩 보기' ④ **공유 PNG**: canvas 직접 렌더 1080×1350, share 시트 → 다운로드 폴백 ⑤ **사전 열람** `/tools/tarot/cards`: 22장 정/역 essence·키워드(도메인 태그)·gloss·Waite 원문 전체 공개.
