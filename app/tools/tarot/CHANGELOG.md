@@ -1,5 +1,23 @@
 # 타로 테이블 (Tarot Table) CHANGELOG
 
+## 0.4.1 — Task 4.5: BGM 엔진 전환 — 합성 → 음원 파일 (2026-06-12)
+
+**What** — 합성 엔진(드론 3-osc·필터 스윕·종소리·임펄스 리버브) 전부 제거, `public/tarot/ambient.mp3` 루프 재생으로 교체. 컨트롤러 API·수명주기(S0 무음→gesture 시작→S8 침묵)·음소거 토글·localStorage·visibilitychange·세션/generation 가드는 무변경 — 엔진 속만 교체.
+
+**Why** — 편집장 판정: 합성 드론이 리딩에 방해. 라이선스 확인된 음원으로 전환.
+
+**Where**
+- `lib/tarot/ambient.ts` — fetch+decodeAudioData(페이지 수명 1회 캐시, 실패도 캐시=무음 폴백 확정) → BufferSource loop. 디코드 완료 시점 페이드인(S1 그라운딩 7s = 자연 로딩 버퍼; 디코드 전 stop 시 gen·fadingOut 가드가 중단)
+- `public/tarot/ambient.mp3` — 7.7MB, 249.9s 스테레오 44.1kHz
+
+**결정 기록**
+- 출처: "Relax - Relaxing Music" / APALONBeats / pixabay.com/music/beats-relax-relaxing-music-540590 — Pixabay Content License(상업 가능·표기 불요). Content ID 등록 트랙 — 영상 클레임 가능성은 사이트 재생과 무관.
+- 루프 경계 실측: 머리 페이드 없음(loopStart 0) / 꼬리 ~246s부터 페이드아웃 → **loopEnd 245s**로 당겨 루프 클릭 방지. 클릭 청취 최종 판정은 dev 편집장 몫.
+- MASTER_LEVEL 0.16 → 0.35 재튜닝(합성보다 트랙이 잔잔함) — 체감 조정 전제.
+- 합성 엔진 코드는 git 히스토리(0.4.0)가 보존 — 죽은 코드 잔류 0.
+
+**Verify** — 빌드 그린 · 브라우저 RMS: 진입 무음 / 시작 후 음원 재생 / 음소거 토글·영속 / S8 페이드아웃 / visibilitychange / ctx 재사용 / mp3 차단 시 무음 폴백(페이지 에러 0) · 루프 경계 RMS 수치 확인(loopEnd-0.5s가 음악 레벨).
+
 ## 0.4.0 — Task 4: 의식 앰비언트 BGM (2026-06-12)
 
 **What** — Web Audio 합성 앰비언트(외부 라이브러리·오디오 파일 0): 저음 드론(A2+P5+옥타브, 디튠 비팅, 0.02Hz 필터 스윕) + 드문 종소리(A 메이저 펜타토닉 + 합성 임펄스 3s 홀 잔향). [리딩 시작] gesture에서 시작 → S1 페이드인 2.5s → S8 진입 페이드아웃 1.8s("답은 침묵 속에서"). 의식 화면 우상단 음소거 토글(localStorage 영속, 기본 ON, 160ms 페이드). visibilitychange 시 suspend/복귀.

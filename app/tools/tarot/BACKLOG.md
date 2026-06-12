@@ -15,7 +15,7 @@ MVP(Task 1~3)에서 의도적으로 보류한 항목.
 
 ## 사운드
 
-- **앰비언트 음원 파일 교체 트랙** — v1.x, 합성 BGM을 제작 음원으로 교체 검토 (라이선스·번들 사이즈 트레이드오프, `getAmbientController()` API는 유지).
+- **앰비언트 음원 파일 교체 트랙** — ✅ **완료 (0.4.1)**: Pixabay 라이선스 음원으로 전환, 합성 엔진 제거. 이후 음원 교체는 `public/tarot/ambient.mp3` 파일 스왑 + `ambient.ts` 상수(LOOP_*·MASTER_LEVEL) 조정만.
 
 ## 모드·기능
 
