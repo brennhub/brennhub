@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "tarot-ambient-bgm",
+    date: "2026-06-12",
+    tool: "tarot",
+    kind: "new",
+    title: {
+      ko: "타로 테이블 — 의식 BGM 추가",
+      en: "Tarot Table — ambient music for the ritual",
+    },
+    body: {
+      ko: "리딩을 시작하면 잔잔한 배경 음악이 의식을 감쌉니다. 셔플부터 오픈까지 함께 흐르다가, 리딩 화면에서는 조용해져요 — 답은 침묵 속에서. 화면 위 스피커 아이콘으로 언제든 끄고 켤 수 있고, 선택은 기억됩니다.",
+      en: "A calm ambient track now accompanies the ritual. It plays from shuffle to reveal, then falls silent on the reading screen — the answer arrives in silence. Toggle it anytime with the speaker icon; your choice is remembered.",
+    },
+  },
+  {
     id: "tarot-launch",
     date: "2026-06-11",
     tool: "tarot",
