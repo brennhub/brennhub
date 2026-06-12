@@ -208,6 +208,12 @@ function createAmbientController(): AmbientController {
       generation += 1;
       const sessionGain = c.createGain();
       sessionGain.connect(muteGain);
+      // 리버브 wet도 세션 게인을 거친다 — 페이드아웃 시 잔향 꼬리까지 함께 침묵.
+      // 직전 세션으로의 구 edge는 여기서 일괄 절단 (페이드아웃 중 재시작 누적 방지).
+      if (wetGain) {
+        wetGain.disconnect();
+        wetGain.connect(sessionGain);
+      }
       const s: Session = {
         gen: generation,
         sessionGain,
@@ -290,6 +296,7 @@ function createAmbientController(): AmbientController {
         () => {
           // 그 사이 새 세션이 시작됐으면(generation 전진) suspend·리스너 해제 금지
           if (generation !== gen) return;
+          wetGain?.disconnect();
           s.sessionGain.disconnect();
           if (visibilityHandler) {
             document.removeEventListener("visibilitychange", visibilityHandler);
