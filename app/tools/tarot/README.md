@@ -90,11 +90,13 @@ interface OrientationEntry {
 
 ## 앰비언트 BGM (의식 사운드)
 
-- **합성 스택** (`lib/tarot/ambient.ts` — 외부 라이브러리·오디오 파일 0, raw Web Audio): 저음 드론(A2 루트+완전5도+옥타브 3-osc, ±5~6c 디튠 비팅, lowpass 450Hz ← 0.02Hz LFO 스윕) + 드문 종소리(A 메이저 펜타토닉, 8~20s 랜덤, 합성 임펄스 3s 홀 잔향). 단2도·트라이톤·고Q·비조화 partial 회피 — 신비/공포 경계 설계.
-- **수명주기**: S0 입구 무음 → **[리딩 시작] 탭 = user gesture에서 AudioContext 생성/resume** (브라우저 autoplay 정책상 페이지 진입 즉시 재생 불가) → S1 페이드인 2.5s → S2~S7 유지 → S8 진입 페이드아웃 1.8s 정지("답은 침묵 속에서") → 새 리딩 시 동일 사이클. 탭 전환(visibilitychange) 시 suspend/복귀.
+- **엔진** (`lib/tarot/ambient.ts`): 음원 파일 재생 — `public/tarot/ambient.mp3`(7.7MB, 249.9s 스테레오)를 [리딩 시작] gesture에서 `fetch`+`decodeAudioData` → `AudioBufferSourceNode` 루프. 디코드 완료 시점 페이드인 — S1 그라운딩 7초가 자연 로딩 버퍼. 로드/디코드 실패 = 무음 폴백(콘솔 경고만, UI 에러 없음). 루프 경계 `loopEnd=245s`(꼬리 ~246s부터 트랙 자체 페이드 — 당겨서 루프 클릭 방지).
+- **출처**: "Relax - Relaxing Music" / APALONBeats — https://pixabay.com/music/beats-relax-relaxing-music-540590/ · **Pixabay Content License** (상업 사용 가능, 저작자 표기 불요). Content ID 등록 트랙 — 영상 업로드 시 클레임 가능성 있음, 사이트 내 재생과는 무관.
+- **이력**: 0.4.0의 합성 엔진(드론+종소리)은 편집장 판정("리딩에 방해")으로 0.4.1에서 제거 — 구현은 git 히스토리 참조.
+- **수명주기**: S0 입구 무음 → **[리딩 시작] 탭 = user gesture에서 AudioContext 생성/resume** (브라우저 autoplay 정책상 페이지 진입 즉시 재생 불가) → 페이드인 2.5s → S2~S7 유지 → S8 진입 페이드아웃 1.8s 정지("답은 침묵 속에서") → 새 리딩 시 동일 사이클. 탭 전환(visibilitychange) 시 suspend/복귀.
 - **음소거 토글**: 의식 화면 우상단 스피커 아이콘, localStorage `brennhub-tarot-ambient-muted` 영속, 기본 ON, 토글 ~160ms 짧은 페이드.
 - **한계 (수용)**: iOS 무음 스위치가 켜져 있으면 Web Audio도 무음 — OS 동작이라 우회하지 않는다. iOS의 드문 resume 실패는 음소거 토글/탭 복귀에서 재시도.
-- **파라미터는 편집장 체감 후 조정 전제** — ambient.ts 상단 상수 블록만 만지면 된다 (레벨·페이드·종 빈도·스케일 전부).
+- **파라미터는 편집장 체감 후 조정 전제** — ambient.ts 상단 상수 블록(MASTER_LEVEL·페이드·LOOP_*)만 만지면 된다. 음원 교체 = 파일 스왑 + 상수 조정.
 
 ## 데이터 파이프라인
 
