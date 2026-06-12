@@ -1,5 +1,25 @@
 # 타로 테이블 (Tarot Table) CHANGELOG
 
+## 0.4.0 — Task 4: 의식 앰비언트 BGM (2026-06-12)
+
+**What** — Web Audio 합성 앰비언트(외부 라이브러리·오디오 파일 0): 저음 드론(A2+P5+옥타브, 디튠 비팅, 0.02Hz 필터 스윕) + 드문 종소리(A 메이저 펜타토닉 + 합성 임펄스 3s 홀 잔향). [리딩 시작] gesture에서 시작 → S1 페이드인 2.5s → S8 진입 페이드아웃 1.8s("답은 침묵 속에서"). 의식 화면 우상단 음소거 토글(localStorage 영속, 기본 ON, 160ms 페이드). visibilitychange 시 suspend/복귀.
+
+**Why** — 편집장 지시: 의식에 신비로운 BGM. 입구 무음·의식 소리·리딩 침묵의 대비가 페이싱 설계("느림이 제품")를 청각으로 확장.
+
+**Where**
+- `lib/tarot/ambient.ts` — 컨트롤러(클로저 팩토리 + lazy 싱글톤). 2층 노드 수명: 페이지(ctx·muteGain·리버브 캐시) / 세션(sessionGain 페이드 + generation 가드 — osc.stop 취소 불가라 페이드아웃 중 재시작은 구 세션 폐기 + 새 그래프)
+- `app/tools/tarot/client-shell.tsx` — start([리딩 시작] onClick, dispatch 앞 — gesture 콜스택에서 resume) / stop ×3(result 이펙트·handleReset·unmount cleanup) / SoundToggle(maze play-controls 스타일)
+
+**결정 기록**
+- autoplay 정책상 S0 진입 즉시 재생 불가 → [리딩 시작] 탭 = BGM 시작점으로 설계 수용.
+- 공포 회피 원칙: 단2도·트라이톤·고Q 레조넌스·비조화 partial 금지 — 협화(루트·5도·옥타브·메이저 펜타토닉)만.
+- visibilitychange는 ctx.suspend/resume (masterGain 0 비채택 — 모바일 배터리). repo 첫 도입 패턴.
+- BGM 음 선택은 Math.random — ritual.ts의 금지는 카드 결과 공정성 영역, BGM은 리딩과 무관(주석 명기).
+- iOS 무음 스위치 무음은 OS 동작 — 수용, README 명기. 사운드 파라미터는 편집장 체감 후 조정 전제(상수 블록).
+- 음원 파일 교체 트랙 BACKLOG 등재 (컨트롤러 API 유지 전제).
+
+**Verify** — 커밋별 빌드 그린 · 브라우저 검증(AnalyserNode RMS): 진입 시 무음 / 시작 후 발음 / 음소거 토글·영속 / S8 페이드아웃 / 재시작 시 ctx 재사용 / visibilitychange suspend·resume. 실기기 무드·레벨 체감은 dev 배포 후 편집장 몫.
+
 ## 0.3.0 — Task 3: S8 리딩 + 저장 + 공유 + 사전 열람 (2026-06-11)
 
 **What** — ① **S8 리딩**: 질문 원문 + 도메인 뱃지(대가의 회수), 카드별 essence(항상) → 매칭 키워드 강조 + gloss(뱃지와 동일 강조색 = 출처 시각 연결) → 비매칭 접힘 토글(강조만, gloss는 매칭만) → mute 정직 문구 → Waite 원문 토글(1910 출처) ② **검증 토글**: payload 문자열(order+nonce) 그대로 공개, 표시용(pickedIndices·choice)은 "해시에 포함되지 않음" 구분 명시, "직접 재계산해 비교할 수 있습니다" 안내 ③ **저장**: 마지막 리딩 1건 localStorage(봉인 원본 포함) + S0 '지난 리딩 보기' ④ **공유 PNG**: canvas 직접 렌더 1080×1350, share 시트 → 다운로드 폴백 ⑤ **사전 열람** `/tools/tarot/cards`: 22장 정/역 essence·키워드(도메인 태그)·gloss·Waite 원문 전체 공개.

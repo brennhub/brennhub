@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { Volume2, VolumeX } from "lucide-react";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
+import { getAmbientController } from "@/lib/tarot/ambient";
 import { TAROT_CARDS } from "@/lib/tarot/cards";
 import {
   buildSealPayload,
@@ -58,6 +60,24 @@ function RestartLink({ onReset }: { onReset: () => void }) {
 
 const RESTARTABLE: readonly Stage[] = ["shuffle", "cut", "deal", "choice", "open"];
 
+/** 의식 화면 구석 음소거 토글 — maze play-controls 스타일 (Volume2/VolumeX). */
+function SoundToggle({ muted, onToggle }: { muted: boolean; onToggle: () => void }) {
+  const tt = useMessages().tarot;
+  const label = muted ? tt.soundUnmute : tt.soundMute;
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={label}
+      aria-pressed={muted}
+      title={label}
+      className="absolute top-5 right-5 z-10 flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+    >
+      {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+    </button>
+  );
+}
+
 export function TarotClientShell() {
   const t = useMessages();
   const tt = t.tarot;
@@ -82,10 +102,22 @@ export function TarotClientShell() {
   };
 
   const handleReset = () => {
+    getAmbientController().stop(); // 의식 중단/새 리딩 — BGM 페이드아웃
     finalizingRef.current = false;
     setRng(null);
     setViewingSaved(false);
     dispatch({ type: "RESET" });
+  };
+
+  // 음소거 미러 — hydrate 후 localStorage 반영 (render에서 컨트롤러 호출 금지)
+  const [soundMuted, setSoundMuted] = useState(false);
+  useEffect(() => {
+    setSoundMuted(getAmbientController().isMuted());
+  }, []);
+  const handleToggleMute = () => {
+    const next = !soundMuted;
+    getAmbientController().setMuted(next);
+    setSoundMuted(next);
   };
 
   // 뽑힌 3장 — 카드 = 봉인 덱에서 사용자가 탭한 위치(S5), 방향 = S6 선택 단일 소스.
@@ -121,6 +153,14 @@ export function TarotClientShell() {
     setSavedReading(reading);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- seal·pickedIndices는 result 진입 시점에 불변 확정
   }, [stage, seal, choice, domain]);
+
+  // S8(result) 진입 = 침묵 — BGM 페이드아웃 ("답은 침묵 속에서"). 저장 이펙트와 의도적 분리.
+  useEffect(() => {
+    if (stage === "result") getAmbientController().stop();
+  }, [stage]);
+
+  // 클라이언트 네비게이션 이탈 시 BGM 잔류 차단 — 모듈 싱글톤은 unmount 후에도 살아있다.
+  useEffect(() => () => getAmbientController().stop(), []);
 
   /** 3번째 더미 탭 = 비가역 확정: 순열·nonce 고정 + 봉인 해시 계산. */
   const handlePickPile = async (pile: number) => {
@@ -183,7 +223,11 @@ export function TarotClientShell() {
         <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <button
             type="button"
-            onClick={() => dispatch({ type: "START" })}
+            onClick={() => {
+              // gesture 콜스택 안에서 ctx 생성/resume — autoplay 정책 (iOS 핵심)
+              getAmbientController().start();
+              dispatch({ type: "START" });
+            }}
             className="w-full rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground sm:w-auto"
           >
             {tt.startButton}
@@ -210,7 +254,12 @@ export function TarotClientShell() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-8 pb-16">
+    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-8 pb-16">
+      {/* S1~S7 의식 화면 구석 음소거 토글 — result(S8)는 이미 침묵이라 제외 */}
+      {state.stage !== "result" && (
+        <SoundToggle muted={soundMuted} onToggle={handleToggleMute} />
+      )}
+
       {state.stage === "grounding" && (
         <GroundingStage onDone={() => dispatch({ type: "GROUNDING_DONE" })} />
       )}

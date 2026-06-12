@@ -88,6 +88,14 @@ interface OrientationEntry {
 - 공유는 이미지 카드만 — 질문 텍스트 기본 미포함.
 - 공유 이미지는 `canvas.toDataURL()` 직접 그리기 — **html2canvas 금지** (Tailwind v4 + Lightning CSS에서 빈 PNG, lineup-builder에서 확인된 제약).
 
+## 앰비언트 BGM (의식 사운드)
+
+- **합성 스택** (`lib/tarot/ambient.ts` — 외부 라이브러리·오디오 파일 0, raw Web Audio): 저음 드론(A2 루트+완전5도+옥타브 3-osc, ±5~6c 디튠 비팅, lowpass 450Hz ← 0.02Hz LFO 스윕) + 드문 종소리(A 메이저 펜타토닉, 8~20s 랜덤, 합성 임펄스 3s 홀 잔향). 단2도·트라이톤·고Q·비조화 partial 회피 — 신비/공포 경계 설계.
+- **수명주기**: S0 입구 무음 → **[리딩 시작] 탭 = user gesture에서 AudioContext 생성/resume** (브라우저 autoplay 정책상 페이지 진입 즉시 재생 불가) → S1 페이드인 2.5s → S2~S7 유지 → S8 진입 페이드아웃 1.8s 정지("답은 침묵 속에서") → 새 리딩 시 동일 사이클. 탭 전환(visibilitychange) 시 suspend/복귀.
+- **음소거 토글**: 의식 화면 우상단 스피커 아이콘, localStorage `brennhub-tarot-ambient-muted` 영속, 기본 ON, 토글 ~160ms 짧은 페이드.
+- **한계 (수용)**: iOS 무음 스위치가 켜져 있으면 Web Audio도 무음 — OS 동작이라 우회하지 않는다. iOS의 드문 resume 실패는 음소거 토글/탭 복귀에서 재시도.
+- **파라미터는 편집장 체감 후 조정 전제** — ambient.ts 상단 상수 블록만 만지면 된다 (레벨·페이드·종 빈도·스케일 전부).
+
 ## 데이터 파이프라인
 
 ```
@@ -115,6 +123,7 @@ lib/tarot/
 ├── types.ts               §6.1 스키마
 ├── cards.ts               생성물 — 22장 typed const (검수 수정은 여기 직접)
 ├── glyphs.ts              toRoman + 점성 글리프 맵 (VS15 텍스트 표현)
+├── ambient.ts             의식 앰비언트 BGM — Web Audio 합성 (드론+종소리, mute 영속)
 ├── ritual.ts              RNG(crypto+인터랙션 엔트로피)·셔플·컷·봉인 payload (방향은 userChoice 단일 소스)
 ├── ritual-state.ts        Stage 리듀서 — 비가역 불변식의 단일 권위 (seal 후 복귀 액션 거부)
 ├── reading-storage.ts     마지막 리딩 1건 localStorage — schemaVersion + 봉인 원본 포함, 로드 시 일관성 검사
