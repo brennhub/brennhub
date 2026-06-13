@@ -154,12 +154,8 @@ export function TarotClientShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- seal·pickedIndices는 result 진입 시점에 불변 확정
   }, [stage, seal, choice, domain]);
 
-  // S8(result) 진입 = 침묵 — BGM 페이드아웃 ("답은 침묵 속에서"). 저장 이펙트와 의도적 분리.
-  useEffect(() => {
-    if (stage === "result") getAmbientController().stop();
-  }, [stage]);
-
-  // 클라이언트 네비게이션 이탈 시 BGM 잔류 차단 — 모듈 싱글톤은 unmount 후에도 살아있다.
+  // BGM은 S8(리딩)에서도 계속 — S8 침묵 설계는 실청취 판정으로 폐기(2026-06-12).
+  // 정지 시점은 둘: handleReset(새 리딩/처음부터) · 아래 unmount cleanup(페이지 이탈).
   useEffect(() => () => getAmbientController().stop(), []);
 
   /** 3번째 더미 탭 = 비가역 확정: 순열·nonce 고정 + 봉인 해시 계산. */
@@ -254,11 +250,11 @@ export function TarotClientShell() {
   }
 
   return (
-    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-8 pb-16">
-      {/* S1~S7 의식 화면 구석 음소거 토글 — result(S8)는 이미 침묵이라 제외 */}
-      {state.stage !== "result" && (
-        <SoundToggle muted={soundMuted} onToggle={handleToggleMute} />
-      )}
+    // overflow-x-clip: 셔플 궤도(반경 최대 96px)가 390px 뷰포트 밖으로 나가도 가로 스크롤 미발생
+    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-clip px-6 pt-8 pb-16">
+      {/* 의식 화면 구석 음소거 토글 — S8 포함 (BGM 연속 재생, 2026-06-12 정정).
+          '지난 리딩 보기'는 entry 분기 별도 main — BGM 세션 없음·토글 비노출. */}
+      <SoundToggle muted={soundMuted} onToggle={handleToggleMute} />
 
       {state.stage === "grounding" && (
         <GroundingStage onDone={() => dispatch({ type: "GROUNDING_DONE" })} />
