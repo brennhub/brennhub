@@ -22,8 +22,8 @@ const CARD_H = 329; // aspect-[7/12]
 // ── 휘젓기·산포 상수 (편집장 체감 후 조정) ──
 const STIR_STEP = 80; // 누적 이동 임계(px) — 1회 자리교환
 const STIR_MIN_MS = 130; // reshuffle 최소 간격 — 전이 thrash 방지
-const SCATTER_ROT = 8; // 산포 회전(±deg) — AABB 클램프에 반영
-const MARGIN = 12; // 무대 가장자리 여백(px)
+const SCATTER_ROT = 4; // 산포 회전(±deg) — 작게 둬 AABB 폭을 줄임 → 모바일서도 가로 더 넓게
+const MARGIN = 6; // 무대 가장자리 여백(px)
 const TRANSITION_MS = 280;
 // 초기 loose pile (중심 근처) — 휘저으면 무대로 산포
 const INITIAL: Pose[] = [
