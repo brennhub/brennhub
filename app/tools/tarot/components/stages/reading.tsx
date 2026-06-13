@@ -18,14 +18,21 @@ import { SealBadge } from "../seal-badge";
  * 본문(essence·gloss)은 ko 전용 합의 — 카드 이름만 locale을 따른다.
  * 같은 리딩 재뽑기 없음 — '새 리딩'은 S0부터. 저장된 리딩 보기에도 동일 컴포넌트.
  */
-export type DrawnCard = { card: TarotCardData; orientation: "upright" | "reversed" };
+export type DrawnCard = {
+  card: TarotCardData;
+  /** 컷에서 고정된 숨은 방향(2층 ①). */
+  hidden: "upright" | "reversed";
+  /** 최종 방향 = 숨은 비트 × 선택(2층 ②). */
+  orientation: "upright" | "reversed";
+};
 
 type ReadingProps = {
   question: string;
   domain: Domain;
   cards: readonly DrawnCard[];
-  /** 검증 토글용 봉인 원본 — order·nonce = 해시 payload / pickedIndices·choice = 표시용. */
+  /** 검증 토글용 봉인 원본 — order·bits·nonce = 해시 payload(v2) / pickedIndices·choice = 표시용. */
   order: readonly number[];
+  bits: readonly (0 | 1)[];
   nonce: string;
   hash: string;
   pickedIndices: readonly number[];
@@ -144,11 +151,12 @@ function CardSection({
 /** 접힌 '검증' 섹션 — 봉인 해시 + 원본 공개. 해시 payload와 표시용 정보를 구분 명시. */
 function VerifySection({
   order,
+  bits,
   nonce,
   hash,
   pickedIndices,
   choice,
-}: Pick<ReadingProps, "order" | "nonce" | "hash" | "pickedIndices" | "choice">) {
+}: Pick<ReadingProps, "order" | "bits" | "nonce" | "hash" | "pickedIndices" | "choice">) {
   const tt = useMessages().tarot;
   const [open, setOpen] = useState(false);
 
@@ -171,7 +179,7 @@ function VerifySection({
               {tt.verifyPayload}
             </p>
             <p className="mt-1 font-mono text-[10px] break-all text-muted-foreground">
-              {buildSealPayload(order, nonce)}
+              {buildSealPayload(order, bits, nonce)}
             </p>
           </div>
           <div>
@@ -217,6 +225,7 @@ export function Reading({
   domain,
   cards,
   order,
+  bits,
   nonce,
   hash,
   pickedIndices,
@@ -336,6 +345,7 @@ export function Reading({
 
       <VerifySection
         order={order}
+        bits={bits}
         nonce={nonce}
         hash={hash}
         pickedIndices={pickedIndices}
