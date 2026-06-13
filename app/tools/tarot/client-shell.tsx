@@ -219,7 +219,12 @@ export function TarotClientShell() {
         <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <button
             type="button"
-            onClick={() => dispatch({ type: "START" })}
+            onClick={() => {
+              // 그라운딩 진입과 동시에 BGM 로딩+페이드인 시작 — 호흡 단계가 mp3 디코드 버퍼.
+              // [리딩 시작]이 user gesture라 autoplay 정책 충족(iOS resume).
+              getAmbientController().start();
+              dispatch({ type: "START" });
+            }}
             className="w-full rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground sm:w-auto"
           >
             {tt.startButton}
@@ -248,21 +253,13 @@ export function TarotClientShell() {
   return (
     // overflow-x-clip: 셔플 궤도(반경 최대 96px)가 390px 뷰포트 밖으로 나가도 가로 스크롤 미발생
     <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-clip px-6 pt-8 pb-16">
-      {/* 음소거 토글 — 그라운딩은 무음이라 비노출, 질문~S8 노출 (BGM 연속 재생).
+      {/* 음소거 토글 — 그라운딩부터 음악 재생되므로 의식 전 단계 노출.
           '지난 리딩 보기'는 entry 분기 별도 main — BGM 세션 없음·토글 비노출. */}
-      {state.stage !== "grounding" && (
-        <SoundToggle muted={soundMuted} onToggle={handleToggleMute} />
-      )}
+      <SoundToggle muted={soundMuted} onToggle={handleToggleMute} />
 
       {state.stage === "grounding" && (
-        <GroundingStage
-          onReady={() => {
-            // "준비됐어요" 제스처 콜스택에서 BGM 시작 — autoplay 정책·iOS resume 충족.
-            // 호흡 단계는 침묵, 질문부터 음악.
-            getAmbientController().start();
-            dispatch({ type: "GROUNDING_DONE" });
-          }}
-        />
+        // BGM은 [리딩 시작]에서 이미 시작 — "준비됐어요"는 질문 전환만(마음 정리됐으면 진행).
+        <GroundingStage onReady={() => dispatch({ type: "GROUNDING_DONE" })} />
       )}
 
       {state.stage === "question" && (
