@@ -710,6 +710,10 @@ export type Messages = {
     verifyPicked: string;
     verifyPickedNth: string;
     verifyChoice: string;
+    verifyLayHeading: string;
+    verifyLayLine: string;
+    flipHorizontal: string;
+    flipVertical: string;
     entryLastReading: string;
     shareImage: string;
     shareCopy: string;
@@ -1667,6 +1671,10 @@ export const messages: Record<Locale, Messages> = {
       verifyPicked: "뽑은 위치",
       verifyPickedNth: "{n}번째",
       verifyChoice: "선택한 방향",
+      verifyLayHeading: "놓여 있던 방향 → 뒤집기 → 최종",
+      verifyLayLine: "{pos}: {hidden}으로 놓여 있던 카드를 {axis} 뒤집어 → {final}",
+      flipHorizontal: "가로로",
+      flipVertical: "세로로",
       entryLastReading: "지난 리딩 보기",
       shareImage: "이미지로 공유",
       shareCopy: "이미지 복사",
@@ -2737,6 +2745,10 @@ export const messages: Record<Locale, Messages> = {
       verifyPicked: "Picked positions",
       verifyPickedNth: "#{n}",
       verifyChoice: "Chosen orientation",
+      verifyLayHeading: "How each card lay → flip → final",
+      verifyLayLine: "{pos}: lay {hidden}, flipped {axis} → {final}",
+      flipHorizontal: "horizontally",
+      flipVertical: "vertically",
       entryLastReading: "View your last reading",
       shareImage: "Share as image",
       shareCopy: "Copy image",

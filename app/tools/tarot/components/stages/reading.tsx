@@ -18,14 +18,21 @@ import { SealBadge } from "../seal-badge";
  * 본문(essence·gloss)은 ko 전용 합의 — 카드 이름만 locale을 따른다.
  * 같은 리딩 재뽑기 없음 — '새 리딩'은 S0부터. 저장된 리딩 보기에도 동일 컴포넌트.
  */
-export type DrawnCard = { card: TarotCardData; orientation: "upright" | "reversed" };
+export type DrawnCard = {
+  card: TarotCardData;
+  /** 컷에서 고정된 숨은 방향(2층 ①). */
+  hidden: "upright" | "reversed";
+  /** 최종 방향 = 숨은 비트 × 선택(2층 ②). */
+  orientation: "upright" | "reversed";
+};
 
 type ReadingProps = {
   question: string;
   domain: Domain;
   cards: readonly DrawnCard[];
-  /** 검증 토글용 봉인 원본 — order·nonce = 해시 payload / pickedIndices·choice = 표시용. */
+  /** 검증 토글용 봉인 원본 — order·bits·nonce = 해시 payload(v2) / pickedIndices·choice = 표시용. */
   order: readonly number[];
+  bits: readonly (0 | 1)[];
   nonce: string;
   hash: string;
   pickedIndices: readonly number[];
@@ -144,13 +151,21 @@ function CardSection({
 /** 접힌 '검증' 섹션 — 봉인 해시 + 원본 공개. 해시 payload와 표시용 정보를 구분 명시. */
 function VerifySection({
   order,
+  bits,
   nonce,
   hash,
   pickedIndices,
   choice,
-}: Pick<ReadingProps, "order" | "nonce" | "hash" | "pickedIndices" | "choice">) {
+  cards,
+  positions,
+}: Pick<ReadingProps, "order" | "bits" | "nonce" | "hash" | "pickedIndices" | "choice" | "cards"> & {
+  positions: readonly string[];
+}) {
   const tt = useMessages().tarot;
   const [open, setOpen] = useState(false);
+  const axisLabel = choice === "reversed" ? tt.flipVertical : tt.flipHorizontal;
+  const oriLabel = (o: "upright" | "reversed") =>
+    o === "reversed" ? tt.orientationReversed : tt.orientationUpright;
 
   return (
     <section className="rounded-lg bg-card p-4 ring-1 ring-foreground/10">
@@ -171,7 +186,7 @@ function VerifySection({
               {tt.verifyPayload}
             </p>
             <p className="mt-1 font-mono text-[10px] break-all text-muted-foreground">
-              {buildSealPayload(order, nonce)}
+              {buildSealPayload(order, bits, nonce)}
             </p>
           </div>
           <div>
@@ -185,6 +200,23 @@ function VerifySection({
               {tt.verifyChoice}:{" "}
               {choice === "reversed" ? tt.orientationReversed : tt.orientationUpright}
             </p>
+          </div>
+          {/* 카드별 "놓인 방향 → 뒤집는 축 → 최종" — 선택 전에 이미 정해져 있었음을 보여준다. */}
+          <div>
+            <p className="text-[10px] tracking-wide text-muted-foreground uppercase">
+              {tt.verifyLayHeading}
+            </p>
+            <ul className="mt-1 flex flex-col gap-1">
+              {cards.map((c, i) => (
+                <li key={c.card.slug} className="text-xs text-muted-foreground break-keep">
+                  {tt.verifyLayLine
+                    .replace("{pos}", positions[i])
+                    .replace("{hidden}", oriLabel(c.hidden))
+                    .replace("{axis}", axisLabel)
+                    .replace("{final}", oriLabel(c.orientation))}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       )}
@@ -217,6 +249,7 @@ export function Reading({
   domain,
   cards,
   order,
+  bits,
   nonce,
   hash,
   pickedIndices,
@@ -336,10 +369,13 @@ export function Reading({
 
       <VerifySection
         order={order}
+        bits={bits}
         nonce={nonce}
         hash={hash}
         pickedIndices={pickedIndices}
         choice={choice}
+        cards={cards}
+        positions={positions}
       />
 
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">

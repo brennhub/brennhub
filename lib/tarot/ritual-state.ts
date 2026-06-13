@@ -23,6 +23,8 @@ export type Stage =
 export type Seal = {
   /** 확정 순서 22장. index 0 = top. S5 스프레드는 이 순서를 좌→우로 그대로 펼친다 (추가 난수 없음). */
   deck: readonly number[];
+  /** 카드별 숨은 방향 비트(deck과 정렬, 0=정방향 놓임/1=역방향 놓임). 2층 메커니즘 ①층 — 컷에서 고정. */
+  bits: readonly (0 | 1)[];
   nonce: string;
   /** SHA-256(buildSealPayload(...)) hex 64자. */
   hash: string;
