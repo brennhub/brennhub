@@ -181,12 +181,13 @@ export function ShuffleStage({
     <div className="flex flex-1 animate-in flex-col items-center justify-center gap-6 fade-in duration-700">
       <p className="shrink-0 text-center text-sm text-muted-foreground">{tt.shuffleInstruction}</p>
 
-      {/* 무대 — 고정 높이(궤도 측정·원형 충분). 카드 22장은 중심 둘레 디스크 궤도. */}
+      {/* 무대 — 고정 높이(궤도 측정·원형 충분). 카드 22장은 중심 둘레 디스크 궤도.
+          overflow-x-clip: 궤도가 화면 밖으로 나가도 가로 스크롤 미발생(Task 14에서 main→여기로 한정). */}
       <div
         ref={areaRef}
         role="img"
         aria-label={tt.deckAria}
-        className="relative h-[56dvh] w-full cursor-grab touch-none select-none active:cursor-grabbing [-webkit-touch-callout:none]"
+        className="relative h-[56dvh] w-full cursor-grab touch-none overflow-x-clip select-none active:cursor-grabbing [-webkit-touch-callout:none]"
         style={{ touchAction: "none" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
