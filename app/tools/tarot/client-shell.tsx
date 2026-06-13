@@ -289,7 +289,6 @@ export function TarotClientShell() {
       {state.stage === "shuffle" && rng && (
         <ShuffleStage
           rng={rng}
-          shuffleCount={state.shuffleCount}
           onGesture={() => dispatch({ type: "SHUFFLE_APPLY", deck: shufflePass(state.deck, rng) })}
           onDone={() => dispatch({ type: "SHUFFLE_DONE" })}
           onEditQuestion={() => dispatch({ type: "BACK_TO_QUESTION" })}

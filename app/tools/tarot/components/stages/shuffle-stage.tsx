@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
 import type { RitualRng } from "@/lib/tarot/ritual";
 import { DECK_SIZE } from "@/lib/tarot/ritual-state";
@@ -23,6 +23,7 @@ const CARD_H = 329; // aspect-[7/12]
 const STIR_STEP = 80; // 누적 이동(px)마다 z 순열 + onGesture 1회
 const STIR_MIN_MS = 130; // 순열 최소 간격
 const ANGLE_PER_PX = 0.012; // 누적 px → 궤도각 전진(rad). 80px ≈ 0.96rad(~55°)
+const REVEAL_REVOLUTIONS = 5; // [이제 됐어요] 등장 = 누적 회전 5바퀴(≈10π). 편집장 체감 조정.
 const ROT_WOBBLE = 4; // 카드 기울임 진폭(±deg) — AABB 클램프에 반영
 const MARGIN = 6; // 무대 가장자리 여백(px)
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5)); // ≈2.399rad — 해바라기 위상 분산
@@ -40,28 +41,24 @@ const INITIAL = Array.from({ length: LAYER_COUNT }, (_, i) => ({
 
 type ShuffleStageProps = {
   rng: RitualRng;
-  shuffleCount: number;
   onGesture: () => void;
   onDone: () => void;
   onEditQuestion: () => void;
 };
 
-export function ShuffleStage({
-  rng,
-  shuffleCount,
-  onGesture,
-  onDone,
-  onEditQuestion,
-}: ShuffleStageProps) {
+export function ShuffleStage({ rng, onGesture, onDone, onEditQuestion }: ShuffleStageProps) {
   const tt = useMessages().tarot;
   const areaRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>(Array(LAYER_COUNT).fill(null));
+  // 누적 회전 5바퀴 넘으면 [이제 됐어요] 등장 (은밀 — 진행 표시 없음)
+  const [ready, setReady] = useState(false);
   const s = useRef({
     active: false,
     lastX: 0,
     lastY: 0,
     accum: 0,
     theta: 0,
+    totalRot: 0,
     lastReshuffleAt: 0,
     rx: 60,
     ry: 60,
@@ -131,12 +128,15 @@ export function ShuffleStage({
     const d = Math.hypot(e.clientX - c.lastX, e.clientY - c.lastY);
     c.lastX = e.clientX;
     c.lastY = e.clientY;
+    const dTheta = d * ANGLE_PER_PX;
     c.accum += d;
-    c.theta += d * ANGLE_PER_PX; // 누적 이동 → 궤도각 전진
+    c.theta += dTheta; // 누적 이동 → 궤도각 전진
+    c.totalRot += Math.abs(dTheta); // 누적 회전량 — 5바퀴 게이트
     rng.mix(e.clientX | 0);
     rng.mix(e.clientY | 0);
     rng.mix((e.timeStamp * 1000) | 0);
     applyOrbit(); // 매 move마다 궤도 위치 갱신 (정지 시 자동 정지)
+    if (!ready && c.totalRot >= REVEAL_REVOLUTIONS * 2 * Math.PI) setReady(true);
     // STIR_STEP마다 z 순열 + 실제 셔플 1패스 — 계속 저으면 계속 섞임
     if (c.accum >= STIR_STEP && e.timeStamp - c.lastReshuffleAt >= STIR_MIN_MS) {
       c.accum -= STIR_STEP;
@@ -186,7 +186,7 @@ export function ShuffleStage({
 
       <div className="flex shrink-0 flex-col items-center gap-3">
         <div className="flex h-12 items-center">
-          {shuffleCount >= 3 && (
+          {ready && (
             <button
               type="button"
               onClick={onDone}
