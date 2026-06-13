@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 import { toRoman } from "@/lib/tarot/glyphs";
@@ -192,6 +192,26 @@ function VerifySection({
   );
 }
 
+/** 경량 토스트 — fixed top-center, 자동 dismiss. 전역 provider 없어 자체 구현(외부 라이브러리 0). */
+function Toast({ message, onDone }: { message: string; onDone: () => void }) {
+  const onDoneRef = useRef(onDone);
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
+  useEffect(() => {
+    const id = setTimeout(() => onDoneRef.current(), 2500);
+    return () => clearTimeout(id);
+  }, [message]);
+  return (
+    <div
+      role="status"
+      className="fixed top-4 left-1/2 z-50 -translate-x-1/2 animate-in rounded-full bg-foreground px-4 py-2 text-sm text-background shadow-lg fade-in slide-in-from-top-2"
+    >
+      {message}
+    </div>
+  );
+}
+
 export function Reading({
   question,
   domain,
@@ -208,9 +228,19 @@ export function Reading({
   const positions = [tt.positionPast, tt.positionPresent, tt.positionFuture];
   const domainLabel = tt[`domain_${domain}` as keyof typeof tt] as string;
 
-  /** 공유 — navigator.share(파일) 가능 시 네이티브 시트, 아니면 PNG 다운로드. 질문 미전달. */
-  const handleShare = async () => {
-    const canvas = renderShareImage({
+  // 토스트 + key로 같은 메시지 연속 트리거에도 재마운트(타이머 리셋)
+  const [toast, setToast] = useState<{ msg: string; key: number } | null>(null);
+  const showToast = (msg: string) => setToast({ msg, key: Date.now() });
+
+  // 이미지 클립보드 복사 지원 여부 — mount 후 판정 (SSR/hydration 안전)
+  const [canCopy, setCanCopy] = useState(false);
+  useEffect(() => {
+    setCanCopy(typeof ClipboardItem !== "undefined" && typeof navigator.clipboard?.write === "function");
+  }, []);
+
+  /** 공유 이미지 canvas — 질문 미전달(파라미터 부재 구조 유지). */
+  const buildCanvas = () =>
+    renderShareImage({
       cards: cards.map(({ card, orientation }, i) => {
         const entry = card[orientation];
         const matched = entry.keywords.filter((k) => k.domains.includes(domain));
@@ -235,24 +265,52 @@ export function Reading({
       toolLine: `${tt.title} — BrennHub`,
       urlLine: "brennhub.com/tools/tarot",
     });
-    const filename = `tarot-${new Date().toISOString().slice(0, 10)}.png`;
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+
+  const canvasToBlob = (canvas: HTMLCanvasElement) =>
+    new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+
+  const download = (canvas: HTMLCanvasElement) => {
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `tarot-${new Date().toISOString().slice(0, 10)}.png`;
+    a.click();
+  };
+
+  /** 공유 — navigator.share(파일) 가능 시 시트, 아니면 PNG 다운로드. 모든 경로 토스트 피드백. */
+  const handleShare = async () => {
+    const canvas = buildCanvas();
+    const blob = await canvasToBlob(canvas);
     if (blob && typeof navigator.share === "function") {
-      const file = new File([blob], filename, { type: "image/png" });
+      const file = new File([blob], "tarot.png", { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
         try {
           await navigator.share({ files: [file] });
+          showToast(tt.shareToastShared);
           return;
         } catch (err) {
-          // 사용자가 시트를 닫은 경우만 종료 — 그 외 실패는 다운로드로 폴백
+          // 사용자가 시트를 닫은 경우만 종료(무토스트) — 그 외 실패는 다운로드 폴백
           if (err instanceof Error && err.name === "AbortError") return;
+          download(canvas);
+          showToast(tt.shareToastSaved);
+          return;
         }
       }
     }
-    const a = document.createElement("a");
-    a.href = canvas.toDataURL("image/png");
-    a.download = filename;
-    a.click();
+    // share 미지원 → 저장
+    download(canvas);
+    showToast(tt.shareToastSaveFallback);
+  };
+
+  /** 복사 — canvas → 클립보드 이미지. Safari는 await 후 gesture 소실 가능(Edge/Chromium/Android 타깃). */
+  const handleCopy = async () => {
+    try {
+      const blob = await canvasToBlob(buildCanvas());
+      if (!blob) throw new Error("blob null");
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      showToast(tt.shareToastCopied);
+    } catch {
+      showToast(tt.shareToastCopyFail);
+    }
   };
 
   return (
@@ -292,6 +350,15 @@ export function Reading({
         >
           {tt.shareImage}
         </button>
+        {canCopy && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="w-full rounded-lg px-8 py-3 font-medium ring-1 ring-foreground/20 sm:w-auto"
+          >
+            {tt.shareCopy}
+          </button>
+        )}
         <button
           type="button"
           onClick={onNewReading}
@@ -300,6 +367,8 @@ export function Reading({
           {tt.newReading}
         </button>
       </div>
+
+      {toast && <Toast key={toast.key} message={toast.msg} onDone={() => setToast(null)} />}
 
       <Link
         href="/tools/tarot/cards"
