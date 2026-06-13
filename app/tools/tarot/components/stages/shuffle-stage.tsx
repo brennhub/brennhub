@@ -152,17 +152,16 @@ export function ShuffleStage({
   };
 
   return (
-    <div className="flex flex-1 animate-in flex-col fade-in duration-700">
-      <p className="mt-2 shrink-0 text-center text-sm text-muted-foreground">
-        {tt.shuffleInstruction}
-      </p>
+    // 중앙 클러스터 — 안내문·무대·버튼이 화면 중앙에 적정 간격으로 모임(극단 배치 아님).
+    <div className="flex flex-1 animate-in flex-col items-center justify-center gap-6 fade-in duration-700">
+      <p className="shrink-0 text-center text-sm text-muted-foreground">{tt.shuffleInstruction}</p>
 
-      {/* 무대 — 가용 폭 가득·세로 충분. 카드는 중심 둘레 궤도. */}
+      {/* 무대 — 고정 높이(궤도 측정·원형 충분). 카드 22장은 중심 둘레 디스크 궤도. */}
       <div
         ref={areaRef}
         role="img"
         aria-label={tt.deckAria}
-        className="relative w-full flex-1 cursor-grab touch-none select-none active:cursor-grabbing [-webkit-touch-callout:none]"
+        className="relative h-[56dvh] w-full cursor-grab touch-none select-none active:cursor-grabbing [-webkit-touch-callout:none]"
         style={{ touchAction: "none" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -185,7 +184,7 @@ export function ShuffleStage({
         ))}
       </div>
 
-      <div className="flex shrink-0 flex-col items-center gap-4 pt-2 pb-2">
+      <div className="flex shrink-0 flex-col items-center gap-3">
         <div className="flex h-12 items-center">
           {shuffleCount >= 3 && (
             <button

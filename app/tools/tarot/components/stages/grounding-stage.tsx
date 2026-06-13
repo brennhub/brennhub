@@ -13,7 +13,7 @@ export function GroundingStage({ onReady }: { onReady: () => void }) {
 
   return (
     // -mx-6 + px-6: main의 px-6 패딩을 상쇄해 다크 패널을 가로로 가득 (배경 확대), 내용은 다시 들여씀
-    <div className="-mx-6 flex min-h-[70dvh] flex-1 animate-in flex-col items-center justify-center gap-12 rounded-2xl bg-[oklch(0.13_0_0)] px-6 text-[oklch(0.93_0_0)] fade-in duration-1000">
+    <div className="-mx-6 flex min-h-[70dvh] flex-1 animate-in flex-col items-center justify-center gap-10 rounded-2xl bg-[oklch(0.13_0_0)] px-6 text-[oklch(0.93_0_0)] fade-in duration-1000">
       <div
         aria-hidden="true"
         className="size-24 animate-tarot-breathe rounded-full bg-current motion-reduce:animate-none motion-reduce:opacity-60"
