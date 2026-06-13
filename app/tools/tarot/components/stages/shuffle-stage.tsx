@@ -6,20 +6,34 @@ import type { RitualRng } from "@/lib/tarot/ritual";
 import { TarotCard } from "../tarot-card";
 
 /**
- * S3 셔플 — 자동 애니메이션 금지. 사용자 드래그/스와이프만이 덱을 섞는다.
- * 1회 유효 제스처 = pointerdown→up 누적 이동 ≥ 24px → Fisher-Yates 1패스.
- * 포인터 좌표·타이밍은 rng.mix()로 엔트로피에 가미된다.
- * 진행 표시 없음 — 3회 이상이면 [이제 됐어요]가 나타날 뿐, 계속 섞을 수 있다.
+ * S3 셔플 — "손으로 휘젓기" 모델. 어떤 카드도 포인터에 붙지 않는다(포인터 = 젓는 손 위치).
+ * 휘저으면(원·지그재그·직선 무관) 누적 이동이 임계를 넘을 때마다 카드들이 자기들끼리
+ * 무대 위에서 자리를 바꾼다. 멈추면 멈추고, 다시 움직이면 재개. up 해도 현 위치 유지.
  *
- * 연출 (0.6.0 — 자리교환): 카드 4장이 서로의 자리로 점프하며 섞인다.
- * 유효 제스처마다 scatter(넓게 흩뿌림, 상하 크게) → gather(새 슬롯 순열로 모음).
- * 카드가 겹쳐 지나가며 순서 바뀜이 보이고, 잡힌 카드는 매번 교체된다(첫 장 고정 해소).
- * 연속 애니메이션 없음(RAF 폐기) — 입력이 끝나면 그 자리에서 완전히 멈춘다.
- * 전부 ref+transform 직접 조작(리렌더 0). prefers-reduced-motion이면 scatter 생략,
- * 즉시 새 슬롯으로 점프(자리교환은 유지).
+ * 1 reshuffle = onGesture() 1회(부모 Fisher-Yates 1패스) — 휘저은 STIR_STEP 충족 횟수가
+ * shuffleCount. 셔플 로직·엔트로피 mix는 무변경, 인터랙션 모델·연출·레이아웃만.
+ * 연속 애니메이션(RAF) 없음 → 입력이 끝나면 그 자리에서 완전히 멈춘다.
+ * prefers-reduced-motion이면 transition 없이 즉시 재배치(휘젓기 반응은 유지).
  */
-const GESTURE_MIN_DIST = 24;
 const LAYER_COUNT = 4;
+const CARD_W = 192; // lg = w-48
+const CARD_H = 329; // aspect-[7/12]
+
+// ── 휘젓기·산포 상수 (편집장 체감 후 조정) ──
+const STIR_STEP = 80; // 누적 이동 임계(px) — 1회 자리교환
+const STIR_MIN_MS = 130; // reshuffle 최소 간격 — 전이 thrash 방지
+const SCATTER_ROT = 8; // 산포 회전(±deg) — AABB 클램프에 반영
+const MARGIN = 12; // 무대 가장자리 여백(px)
+const TRANSITION_MS = 280;
+// 초기 loose pile (중심 근처) — 휘저으면 무대로 산포
+const INITIAL: Pose[] = [
+  { dx: -6, dy: 6, rot: -4 },
+  { dx: 6, dy: -4, rot: 3 },
+  { dx: -3, dy: -7, rot: -1 },
+  { dx: 2, dy: 3, rot: 2 },
+];
+
+type Pose = { dx: number; dy: number; rot: number };
 
 type ShuffleStageProps = {
   rng: RitualRng;
@@ -29,23 +43,6 @@ type ShuffleStageProps = {
   onEditQuestion: () => void;
 };
 
-type Pose = { dx: number; dy: number; rot: number };
-
-/** gather 슬롯 — loose pile(쌓인 덱처럼 보이게 작은 오프셋). 자리교환은 assign 순열로 드러난다. */
-const SLOTS: Pose[] = [
-  { dx: -6, dy: 4, rot: -4 },
-  { dx: 5, dy: -3, rot: 3 },
-  { dx: -2, dy: -5, rot: -1 },
-  { dx: 0, dy: 0, rot: 0 },
-];
-
-/** scatter 흩어짐 폭 (편집장 체감 후 조정). 세로 크게·가로 절제 — 390px 잘림 방지 산술 기준. */
-const SCATTER_DX = 45; // ±45 — 카드(192px) 중심 195±51 → rot15° bbox가 [0,390] 안
-const SCATTER_DY = 110; // ±110 — 세로는 overflow-x-clip이 안 자름(y visible)
-const SCATTER_ROT = 15;
-const SCATTER_MS = 260;
-const GATHER_MS = 380;
-
 export function ShuffleStage({
   rng,
   shuffleCount,
@@ -54,98 +51,56 @@ export function ShuffleStage({
   onEditQuestion,
 }: ShuffleStageProps) {
   const tt = useMessages().tarot;
-  const layerRefs = useRef<(HTMLDivElement | null)[]>(Array(LAYER_COUNT).fill(null));
-  const dragRef = useRef({ active: false, startX: 0, startY: 0, lastX: 0, lastY: 0, dist: 0, moves: 0 });
-  const stateRef = useRef({
-    assign: Array.from({ length: LAYER_COUNT }, (_, i) => i), // card → slot
-    grabbed: LAYER_COUNT - 1, // 포인터 추종 카드
-    timers: [] as number[],
+  const areaRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>(Array(LAYER_COUNT).fill(null));
+  const stir = useRef({
+    active: false,
+    lastX: 0,
+    lastY: 0,
+    accum: 0,
+    lastReshuffleAt: 0,
+    maxDx: 60,
+    maxDy: 120,
     reduced: false,
   });
 
   useEffect(() => {
-    const s = stateRef.current;
-    s.reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    return () => s.timers.forEach(clearTimeout);
+    stir.current.reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }, []);
 
-  const slotTransform = (slot: Pose) => `translate(${slot.dx}px, ${slot.dy}px) rotate(${slot.rot}deg)`;
+  const poseTransform = (p: Pose) => `translate(${p.dx}px, ${p.dy}px) rotate(${p.rot}deg)`;
 
-  /** 카드를 현재 assign 슬롯 위치로 (transition 없이 즉시). */
-  const restCard = (card: number) => {
-    const el = layerRefs.current[card];
-    if (el) el.style.transform = slotTransform(SLOTS[stateRef.current.assign[card]]);
+  /** 무대 실측 → 회전 AABB 고려한 산포 한계 계산 (가장자리 안 잘리는 최대). */
+  const measure = () => {
+    const s = stir.current;
+    const el = areaRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const rad = (SCATTER_ROT * Math.PI) / 180;
+    const halfW = (CARD_W * Math.cos(rad) + CARD_H * Math.sin(rad)) / 2;
+    const halfH = (CARD_H * Math.cos(rad) + CARD_W * Math.sin(rad)) / 2;
+    s.maxDx = Math.max(0, rect.width / 2 - halfW - MARGIN);
+    s.maxDy = Math.max(0, rect.height / 2 - halfH - MARGIN);
   };
 
-  const clearTimers = () => {
-    const s = stateRef.current;
-    s.timers.forEach(clearTimeout);
-    s.timers = [];
-  };
-
-  /** 유효 제스처 — scatter(흩뿌림) → gather(새 슬롯 순열로 모음). 자리교환이 시각적으로 드러난다. */
+  /** 카드들을 무대 안 새 무작위 위치로 재배치(z 무작위) — 휘저을 때마다. */
   const reshuffle = () => {
-    const s = stateRef.current;
-    clearTimers();
-
-    // 새 슬롯 순열 (직전 assign과 달라지게) + z 순열 — Fisher-Yates(연출 전용 난수, rng 재사용)
-    const perm = Array.from({ length: LAYER_COUNT }, (_, i) => i);
-    for (let i = perm.length - 1; i > 0; i--) {
-      const j = rng.nextBelow(i + 1);
-      [perm[i], perm[j]] = [perm[j], perm[i]];
-    }
-    if (perm.every((v, i) => v === s.assign[i])) perm.push(perm.shift() as number); // 항상 자리 바뀜 보장
-    s.assign = perm;
+    const s = stir.current;
     const z = Array.from({ length: LAYER_COUNT }, (_, i) => i);
     for (let i = z.length - 1; i > 0; i--) {
       const j = rng.nextBelow(i + 1);
       [z[i], z[j]] = [z[j], z[i]];
     }
-    // 잡힌 카드 교체 — 다음 드래그는 다른 카드
-    let next = rng.nextBelow(LAYER_COUNT);
-    if (next === s.grabbed) next = (next + 1) % LAYER_COUNT;
-    s.grabbed = next;
-
-    if (s.reduced) {
-      // 모션 감축 — scatter 없이 즉시 새 슬롯으로(자리교환은 유지)
-      for (let i = 0; i < LAYER_COUNT; i++) {
-        const el = layerRefs.current[i];
-        if (!el) continue;
-        el.style.transition = "none";
-        el.style.zIndex = String(z[i]);
-        restCard(i);
-      }
-      return;
-    }
-
-    // ⓐ scatter — 넓게 흩뿌림 (세로 크게)
     for (let i = 0; i < LAYER_COUNT; i++) {
-      const el = layerRefs.current[i];
+      const el = cardRefs.current[i];
       if (!el) continue;
-      el.style.transition = `transform ${SCATTER_MS}ms ease-out`;
+      const dx = s.maxDx > 0 ? rng.nextBelow(s.maxDx * 2 + 1) - s.maxDx : 0;
+      const dy = s.maxDy > 0 ? rng.nextBelow(s.maxDy * 2 + 1) - s.maxDy : 0;
+      const rot = rng.nextBelow(SCATTER_ROT * 2 + 1) - SCATTER_ROT;
+      el.style.transition = s.reduced ? "none" : `transform ${TRANSITION_MS}ms ease-out`;
       el.style.zIndex = String(z[i]);
-      const sx = rng.nextBelow(SCATTER_DX * 2 + 1) - SCATTER_DX;
-      const sy = rng.nextBelow(SCATTER_DY * 2 + 1) - SCATTER_DY;
-      const sr = rng.nextBelow(SCATTER_ROT * 2 + 1) - SCATTER_ROT;
-      el.style.transform = `translate(${sx}px, ${sy}px) rotate(${sr}deg)`;
+      el.style.transform = poseTransform({ dx, dy, rot });
     }
-    // ⓑ gather — 새 슬롯으로 모음
-    s.timers.push(
-      window.setTimeout(() => {
-        for (let i = 0; i < LAYER_COUNT; i++) {
-          const el = layerRefs.current[i];
-          if (!el) continue;
-          el.style.transition = `transform ${GATHER_MS}ms ease-in-out`;
-          restCard(i);
-        }
-      }, SCATTER_MS),
-    );
-    // transition 정리 — 이후 드래그 추종이 transition 없이 즉시 반응하도록
-    s.timers.push(
-      window.setTimeout(() => {
-        for (const el of layerRefs.current) if (el) el.style.transition = "none";
-      }, SCATTER_MS + GATHER_MS + 30),
-    );
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -153,119 +108,96 @@ export function ShuffleStage({
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
-      // capture 실패해도 드래그 추적 계속
+      // capture 실패해도 추적 계속
     }
-    clearTimers();
-    dragRef.current = {
-      active: true,
-      startX: e.clientX,
-      startY: e.clientY,
-      lastX: e.clientX,
-      lastY: e.clientY,
-      dist: 0,
-      moves: 0,
-    };
+    const s = stir.current;
+    s.active = true;
+    s.lastX = e.clientX;
+    s.lastY = e.clientY;
+    s.accum = 0;
+    measure();
     rng.mix(e.clientX | 0);
     rng.mix(e.clientY | 0);
     rng.mix((e.timeStamp * 1000) | 0);
-    const grabbedEl = layerRefs.current[stateRef.current.grabbed];
-    if (grabbedEl) {
-      grabbedEl.style.transition = "none";
-      grabbedEl.style.zIndex = String(LAYER_COUNT + 1); // 잡힌 카드 최상단
-    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const d = dragRef.current;
-    if (!d.active || !e.isPrimary) return;
-    d.dist += Math.hypot(e.clientX - d.lastX, e.clientY - d.lastY);
-    d.lastX = e.clientX;
-    d.lastY = e.clientY;
-    d.moves++;
-    if (d.moves % 3 === 0) {
-      rng.mix(e.clientX | 0);
-      rng.mix(e.clientY | 0);
-      rng.mix((e.timeStamp * 1000) | 0);
-    }
-    // 잡힌 카드가 손을 따라온다 — 슬롯 base + 포인터 delta (리렌더 없이 ref 직접)
-    const s = stateRef.current;
-    const grabbedEl = layerRefs.current[s.grabbed];
-    if (grabbedEl) {
-      const base = SLOTS[s.assign[s.grabbed]];
-      const dx = base.dx + (e.clientX - d.startX) * 0.5;
-      const dy = base.dy + (e.clientY - d.startY) * 0.5;
-      const rot = base.rot + Math.max(-12, Math.min(12, (e.clientX - d.startX) * 0.05));
-      grabbedEl.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+    const s = stir.current;
+    if (!s.active || !e.isPrimary) return;
+    s.accum += Math.hypot(e.clientX - s.lastX, e.clientY - s.lastY);
+    s.lastX = e.clientX;
+    s.lastY = e.clientY;
+    rng.mix(e.clientX | 0);
+    rng.mix(e.clientY | 0);
+    rng.mix((e.timeStamp * 1000) | 0);
+    // 누적 임계 + 최소 간격 충족 시 1회 자리교환 — 계속 휘저으면 계속 섞임
+    if (s.accum >= STIR_STEP && e.timeStamp - s.lastReshuffleAt >= STIR_MIN_MS) {
+      s.accum -= STIR_STEP;
+      s.lastReshuffleAt = e.timeStamp;
+      onGesture(); // 실제 셔플(shufflePass)은 부모 — 연출과 분리
+      reshuffle();
     }
   };
 
-  const endDrag = (counted: boolean) => {
-    const d = dragRef.current;
-    if (!d.active) return;
-    d.active = false;
-    const s = stateRef.current;
-    if (counted && d.dist >= GESTURE_MIN_DIST) {
-      onGesture(); // 실제 셔플(Fisher-Yates 1패스)은 부모 — 연출과 분리
-      reshuffle();
-      return;
-    }
-    // 무효 제스처 — 잡힌 카드만 슬롯 복귀, 자리교환 없음
-    const grabbedEl = layerRefs.current[s.grabbed];
-    if (grabbedEl) {
-      grabbedEl.style.transition = s.reduced ? "none" : "transform 300ms ease-out";
-      restCard(s.grabbed);
-    }
+  const endStir = () => {
+    // up/cancel — 현 위치 그대로 유지(복귀·던짐 없음). 추적만 종료.
+    stir.current.active = false;
   };
 
   return (
-    <div className="flex flex-1 animate-in flex-col items-center justify-center gap-10 fade-in duration-700">
-      <p className="text-center text-sm text-muted-foreground">{tt.shuffleInstruction}</p>
+    <div className="flex flex-1 animate-in flex-col fade-in duration-700">
+      <p className="mt-2 shrink-0 text-center text-sm text-muted-foreground">
+        {tt.shuffleInstruction}
+      </p>
 
+      {/* 무대 — 가용 폭 가득·세로 충분. 카드는 중심 기준 산포. */}
       <div
+        ref={areaRef}
         role="img"
         aria-label={tt.deckAria}
-        className="relative h-72 w-48 cursor-grab select-none active:cursor-grabbing [-webkit-touch-callout:none]"
+        className="relative w-full flex-1 cursor-grab touch-none select-none active:cursor-grabbing [-webkit-touch-callout:none]"
         style={{ touchAction: "none" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        onPointerUp={() => endDrag(true)}
-        onPointerCancel={() => endDrag(false)}
+        onPointerUp={endStir}
+        onPointerCancel={endStir}
         onContextMenu={(e) => e.preventDefault()}
       >
-        {SLOTS.map((slot, i) => (
+        {INITIAL.map((p, i) => (
           <div
             key={i}
             ref={(el) => {
-              layerRefs.current[i] = el;
+              cardRefs.current[i] = el;
             }}
             aria-hidden="true"
-            className="pointer-events-none absolute top-0 left-0"
-            style={{ transform: slotTransform(slot), zIndex: i }}
+            className="pointer-events-none absolute top-1/2 left-1/2 -ml-24 -mt-[164px]"
+            style={{ transform: poseTransform(p), zIndex: i }}
           >
             <TarotCard face="back" size="lg" />
           </div>
         ))}
       </div>
 
-      <div className="flex h-12 items-center">
-        {shuffleCount >= 3 && (
-          <button
-            type="button"
-            onClick={onDone}
-            className="animate-in rounded-lg bg-primary px-8 py-3 font-medium text-primary-foreground fade-in duration-500"
-          >
-            {tt.shuffleDone}
-          </button>
-        )}
+      <div className="flex shrink-0 flex-col items-center gap-4 pt-2 pb-2">
+        <div className="flex h-12 items-center">
+          {shuffleCount >= 3 && (
+            <button
+              type="button"
+              onClick={onDone}
+              className="animate-in rounded-lg bg-primary px-8 py-3 font-medium text-primary-foreground fade-in duration-500"
+            >
+              {tt.shuffleDone}
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onEditQuestion}
+          className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+        >
+          {tt.editQuestion}
+        </button>
       </div>
-
-      <button
-        type="button"
-        onClick={onEditQuestion}
-        className="text-xs text-muted-foreground underline-offset-2 hover:underline"
-      >
-        {tt.editQuestion}
-      </button>
     </div>
   );
 }
