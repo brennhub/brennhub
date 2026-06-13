@@ -156,9 +156,16 @@ function VerifySection({
   hash,
   pickedIndices,
   choice,
-}: Pick<ReadingProps, "order" | "bits" | "nonce" | "hash" | "pickedIndices" | "choice">) {
+  cards,
+  positions,
+}: Pick<ReadingProps, "order" | "bits" | "nonce" | "hash" | "pickedIndices" | "choice" | "cards"> & {
+  positions: readonly string[];
+}) {
   const tt = useMessages().tarot;
   const [open, setOpen] = useState(false);
+  const axisLabel = choice === "reversed" ? tt.flipVertical : tt.flipHorizontal;
+  const oriLabel = (o: "upright" | "reversed") =>
+    o === "reversed" ? tt.orientationReversed : tt.orientationUpright;
 
   return (
     <section className="rounded-lg bg-card p-4 ring-1 ring-foreground/10">
@@ -193,6 +200,23 @@ function VerifySection({
               {tt.verifyChoice}:{" "}
               {choice === "reversed" ? tt.orientationReversed : tt.orientationUpright}
             </p>
+          </div>
+          {/* 카드별 "놓인 방향 → 뒤집는 축 → 최종" — 선택 전에 이미 정해져 있었음을 보여준다. */}
+          <div>
+            <p className="text-[10px] tracking-wide text-muted-foreground uppercase">
+              {tt.verifyLayHeading}
+            </p>
+            <ul className="mt-1 flex flex-col gap-1">
+              {cards.map((c, i) => (
+                <li key={c.card.slug} className="text-xs text-muted-foreground break-keep">
+                  {tt.verifyLayLine
+                    .replace("{pos}", positions[i])
+                    .replace("{hidden}", oriLabel(c.hidden))
+                    .replace("{axis}", axisLabel)
+                    .replace("{final}", oriLabel(c.orientation))}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       )}
@@ -350,6 +374,8 @@ export function Reading({
         hash={hash}
         pickedIndices={pickedIndices}
         choice={choice}
+        cards={cards}
+        positions={positions}
       />
 
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
