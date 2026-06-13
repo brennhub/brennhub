@@ -711,6 +711,12 @@ export type Messages = {
     verifyChoice: string;
     entryLastReading: string;
     shareImage: string;
+    shareCopy: string;
+    shareToastShared: string;
+    shareToastSaved: string;
+    shareToastSaveFallback: string;
+    shareToastCopied: string;
+    shareToastCopyFail: string;
     newReading: string;
     soundMute: string;
     soundUnmute: string;
@@ -1661,6 +1667,12 @@ export const messages: Record<Locale, Messages> = {
       verifyChoice: "선택한 방향",
       entryLastReading: "지난 리딩 보기",
       shareImage: "이미지로 공유",
+      shareCopy: "이미지 복사",
+      shareToastShared: "공유했어요",
+      shareToastSaved: "이미지를 저장했어요",
+      shareToastSaveFallback: "공유를 사용할 수 없어 저장했어요",
+      shareToastCopied: "이미지가 복사되었어요",
+      shareToastCopyFail: "이미지를 복사하지 못했어요",
       newReading: "새 리딩",
       soundMute: "소리 끄기",
       soundUnmute: "소리 켜기",
@@ -2724,6 +2736,12 @@ export const messages: Record<Locale, Messages> = {
       verifyChoice: "Chosen orientation",
       entryLastReading: "View your last reading",
       shareImage: "Share as image",
+      shareCopy: "Copy image",
+      shareToastShared: "Shared",
+      shareToastSaved: "Image saved",
+      shareToastSaveFallback: "Sharing unavailable — image saved",
+      shareToastCopied: "Image copied",
+      shareToastCopyFail: "Couldn't copy the image",
       newReading: "New reading",
       soundMute: "Mute",
       soundUnmute: "Unmute",
