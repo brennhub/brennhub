@@ -250,7 +250,8 @@ export function TarotClientShell() {
   }
 
   return (
-    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-8 pb-16">
+    // overflow-x-clip: 셔플 궤도(반경 최대 96px)가 390px 뷰포트 밖으로 나가도 가로 스크롤 미발생
+    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-clip px-6 pt-8 pb-16">
       {/* 의식 화면 구석 음소거 토글 — S8 포함 (BGM 연속 재생, 2026-06-12 정정).
           '지난 리딩 보기'는 entry 분기 별도 main — BGM 세션 없음·토글 비노출. */}
       <SoundToggle muted={soundMuted} onToggle={handleToggleMute} />
