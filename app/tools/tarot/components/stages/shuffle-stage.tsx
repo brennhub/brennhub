@@ -22,8 +22,11 @@ const CARD_H = 329; // aspect-[7/12]
 // ── 휘젓기·궤도 상수 (편집장 체감 후 조정) ──
 const STIR_STEP = 80; // 누적 이동(px)마다 z 순열 + onGesture 1회
 const STIR_MIN_MS = 130; // 순열 최소 간격
-const ANGLE_PER_PX = 0.012; // 누적 px → 궤도각 전진(rad). 80px ≈ 0.96rad(~55°)
-const REVEAL_REVOLUTIONS = 5; // [이제 됐어요] 등장 = 누적 회전 5바퀴(≈10π). 편집장 체감 조정.
+// 시각 회전과 게이트 누적을 분리(편집장 체감): 카드는 절반 속도로 천천히 돌되,
+// [이제 됐어요]·선점 활성화에 필요한 휘젓기 '거리'는 이전과 동일하게 유지.
+const ORBIT_ANGLE_PER_PX = 0.006; // 시각 궤도 회전(rad/px) — 절반 감속(천천히 돈다)
+const GATE_ANGLE_PER_PX = 0.012; // 게이트 누적(rad/px) — 활성화 거리 불변(시각 속도와 무관)
+const REVEAL_REVOLUTIONS = 5; // [이제 됐어요] 등장 = 게이트 누적 5바퀴(≈10π). 편집장 체감 조정.
 const POP_AFTER_REVOLUTIONS = 1; // 선점 가능 시점 — 최소 1바퀴 휘저은 뒤
 const POP_CHANCE_DENOM = 50; // 유효 제스처당 선점 확률 1/50(~2%). 편집장 체감 조정.
 const ROT_WOBBLE = 4; // 카드 기울임 진폭(±deg) — AABB 클램프에 반영
@@ -142,10 +145,9 @@ export function ShuffleStage({
     const d = Math.hypot(e.clientX - c.lastX, e.clientY - c.lastY);
     c.lastX = e.clientX;
     c.lastY = e.clientY;
-    const dTheta = d * ANGLE_PER_PX;
     c.accum += d;
-    c.theta += dTheta; // 누적 이동 → 궤도각 전진
-    c.totalRot += Math.abs(dTheta); // 누적 회전량 — 5바퀴 게이트
+    c.theta += d * ORBIT_ANGLE_PER_PX; // 시각 회전(감속) — 천천히 돈다
+    c.totalRot += d * GATE_ANGLE_PER_PX; // 게이트 누적 — 5바퀴 활성화 거리 유지
     rng.mix(e.clientX | 0);
     rng.mix(e.clientY | 0);
     rng.mix((e.timeStamp * 1000) | 0);
