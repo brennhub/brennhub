@@ -664,6 +664,7 @@ export type Messages = {
     domain_relation: string;
     domain_self: string;
     groundingLine: string;
+    groundingReady: string;
     questionTitle: string;
     questionPlaceholder: string;
     questionShownNote: string;
@@ -1620,6 +1621,7 @@ export const messages: Record<Locale, Messages> = {
       domain_relation: "관계",
       domain_self: "자기",
       groundingLine: "마음속 질문을 하나로 좁혀보세요",
+      groundingReady: "준비됐어요",
       questionTitle: "질문을 적어주세요",
       questionPlaceholder: "지금 마음에 걸리는 것을 그대로 적어보세요",
       questionShownNote: "리딩 화면에 그대로 표시됩니다",
@@ -2687,6 +2689,7 @@ export const messages: Record<Locale, Messages> = {
       domain_relation: "Relationships",
       domain_self: "Self",
       groundingLine: "Let your mind settle on a single question",
+      groundingReady: "I'm ready",
       questionTitle: "Write your question",
       questionPlaceholder: "Put into words what weighs on you right now",
       questionShownNote: "It will appear on your reading, word for word",
