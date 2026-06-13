@@ -17,6 +17,8 @@ import { TarotCard } from "../tarot-card";
  */
 type DealStageProps = {
   pickedIndices: readonly number[];
+  /** 선점한 카드의 덱 위치(0~21) 또는 -1. 표식일 뿐 — 선택 강제 없음. */
+  markedIndex: number;
   onPick: (index: number) => void;
   onDone: () => void;
 };
@@ -30,7 +32,7 @@ const arcStyle = (col: number) => {
   };
 };
 
-export function DealStage({ pickedIndices, onPick, onDone }: DealStageProps) {
+export function DealStage({ pickedIndices, markedIndex, onPick, onDone }: DealStageProps) {
   const tt = useMessages().tarot;
   const positions = [tt.positionPast, tt.positionPresent, tt.positionFuture];
 
@@ -72,6 +74,7 @@ export function DealStage({ pickedIndices, onPick, onDone }: DealStageProps) {
               const index = row * ROW_SIZE + col;
               if (index >= DECK_SIZE) return null;
               const picked = pickedIndices.includes(index);
+              const marked = index === markedIndex;
               return (
                 <div
                   key={index}
@@ -89,10 +92,26 @@ export function DealStage({ pickedIndices, onPick, onDone }: DealStageProps) {
                       type="button"
                       disabled={pickedIndices.length >= 3}
                       onClick={() => onPick(index)}
-                      aria-label={tt.spreadCardAria.replace("{n}", String(index + 1))}
-                      className="block select-none origin-top-left scale-[0.667] cursor-pointer disabled:cursor-default"
+                      aria-label={(marked ? tt.spreadMarkedAria : tt.spreadCardAria).replace(
+                        "{n}",
+                        String(index + 1),
+                      )}
+                      className="relative block select-none origin-top-left scale-[0.667] cursor-pointer disabled:cursor-default"
                     >
-                      <TarotCard face="back" size="sm" />
+                      <TarotCard
+                        face="back"
+                        size="sm"
+                        className={marked ? "ring-2 ring-primary" : undefined}
+                      />
+                      {marked && (
+                        // 점지 표식 — 표시일 뿐, 선택 강제 없음(안 골라도 진행 정상).
+                        <span
+                          aria-hidden="true"
+                          className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-base leading-none text-primary drop-shadow"
+                        >
+                          ✦
+                        </span>
+                      )}
                     </button>
                   )}
                 </div>

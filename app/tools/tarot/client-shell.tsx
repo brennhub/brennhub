@@ -135,6 +135,7 @@ export function TarotClientShell() {
             card: TAROT_CARDS[seal.deck[deckPos]],
             hidden: (bit === 1 ? "reversed" : "upright") as "upright" | "reversed",
             orientation: finalOrientation(bit, choice),
+            marked: seal.deck[deckPos] === state.markedCardId,
           };
         })
       : [];
@@ -156,6 +157,7 @@ export function TarotClientShell() {
       nonce: seal.nonce,
       hash: seal.hash,
       pickedIndices: state.pickedIndices,
+      markedCardId: state.markedCardId,
     };
     saveLastReading(reading);
     setSavedReading(reading);
@@ -195,6 +197,7 @@ export function TarotClientShell() {
               card: TAROT_CARDS[savedReading.order[deckPos]],
               hidden: (bit === 1 ? "reversed" : "upright") as "upright" | "reversed",
               orientation: finalOrientation(bit, savedReading.choice),
+              marked: savedReading.order[deckPos] === savedReading.markedCardId,
             };
           })}
           order={savedReading.order}
@@ -203,6 +206,7 @@ export function TarotClientShell() {
           hash={savedReading.hash}
           pickedIndices={savedReading.pickedIndices}
           choice={savedReading.choice}
+          markedCardId={savedReading.markedCardId}
           onNewReading={handleReset}
         />
       </main>
@@ -289,8 +293,9 @@ export function TarotClientShell() {
       {state.stage === "shuffle" && rng && (
         <ShuffleStage
           rng={rng}
-          shuffleCount={state.shuffleCount}
+          markedCardId={state.markedCardId}
           onGesture={() => dispatch({ type: "SHUFFLE_APPLY", deck: shufflePass(state.deck, rng) })}
+          onMark={(cardId) => dispatch({ type: "MARK_CARD", cardId })}
           onDone={() => dispatch({ type: "SHUFFLE_DONE" })}
           onEditQuestion={() => dispatch({ type: "BACK_TO_QUESTION" })}
         />
@@ -311,6 +316,9 @@ export function TarotClientShell() {
       {state.stage === "deal" && (
         <DealStage
           pickedIndices={state.pickedIndices}
+          markedIndex={
+            state.markedCardId !== null && seal ? seal.deck.indexOf(state.markedCardId) : -1
+          }
           onPick={(index) => dispatch({ type: "DEAL_PICK", index })}
           onDone={() => dispatch({ type: "DEAL_DONE" })}
         />
@@ -341,6 +349,7 @@ export function TarotClientShell() {
           hash={state.seal.hash}
           pickedIndices={state.pickedIndices}
           choice={state.userChoice}
+          markedCardId={state.markedCardId}
           onNewReading={handleReset}
         />
       )}

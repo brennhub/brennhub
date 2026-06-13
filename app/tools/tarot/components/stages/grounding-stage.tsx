@@ -12,8 +12,9 @@ export function GroundingStage({ onReady }: { onReady: () => void }) {
   const tt = useMessages().tarot;
 
   return (
-    // -mx-6 + px-6: main의 px-6 패딩을 상쇄해 다크 패널을 가로로 가득 (배경 확대), 내용은 다시 들여씀
-    <div className="-mx-6 flex min-h-[70dvh] flex-1 animate-in flex-col items-center justify-center gap-10 rounded-2xl bg-[oklch(0.13_0_0)] px-6 text-[oklch(0.93_0_0)] fade-in duration-1000">
+    // full-bleed 100vw: 부모 max-w-md/px-6와 무관하게 뷰포트 좌우 끝까지(화면 가득).
+    // main의 overflow-x-clip이 가로 스크롤 차단. 내용(px-6)은 다시 들여씀.
+    <div className="relative left-1/2 flex min-h-[70dvh] w-screen flex-1 -translate-x-1/2 animate-in flex-col items-center justify-center gap-10 bg-[oklch(0.13_0_0)] px-6 text-[oklch(0.93_0_0)] fade-in duration-1000">
       <div
         aria-hidden="true"
         className="size-24 animate-tarot-breathe rounded-full bg-current motion-reduce:animate-none motion-reduce:opacity-60"

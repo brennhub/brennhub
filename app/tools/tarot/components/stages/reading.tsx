@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { toRoman } from "@/lib/tarot/glyphs";
 import { buildSealPayload } from "@/lib/tarot/ritual";
 import { renderShareImage } from "@/lib/tarot/share-image";
+import { TAROT_CARDS } from "@/lib/tarot/cards";
 import type { Domain, OrientationEntry, TarotCard as TarotCardData } from "@/lib/tarot/types";
 import { SealBadge } from "../seal-badge";
 
@@ -24,6 +25,8 @@ export type DrawnCard = {
   hidden: "upright" | "reversed";
   /** 최종 방향 = 숨은 비트 × 선택(2층 ②). */
   orientation: "upright" | "reversed";
+  /** 셔플 중 선점한 카드인지(card.id === markedCardId). 표시용 메타데이터. */
+  marked: boolean;
 };
 
 type ReadingProps = {
@@ -37,6 +40,8 @@ type ReadingProps = {
   hash: string;
   pickedIndices: readonly number[];
   choice: "upright" | "reversed";
+  /** 선점한 카드 id(0~21) 또는 null — 검증 투명성. payload 무관(봉인 불변) 명시. */
+  markedCardId: number | null;
   onNewReading: () => void;
 };
 
@@ -56,11 +61,13 @@ function CardSection({
   const [showAll, setShowAll] = useState(false);
   const [showWaite, setShowWaite] = useState(false);
 
-  const { card, orientation } = drawn;
+  const { card, orientation, marked } = drawn;
   const entry: OrientationEntry = card[orientation];
   const reversed = orientation === "reversed";
-  const matched = entry.keywords.filter((k) => k.domains.includes(domain));
-  const unmatched = entry.keywords.filter((k) => !k.domains.includes(domain));
+  // "그 외" = 특정 도메인 매칭 안 함 → 전체 키워드 동등 표시(강조/mute 없음).
+  const isOther = domain === "other";
+  const matched = isOther ? [] : entry.keywords.filter((k) => k.domains.includes(domain));
+  const unmatched = isOther ? [] : entry.keywords.filter((k) => !k.domains.includes(domain));
 
   return (
     <section className="rounded-lg bg-card p-4 ring-1 ring-foreground/10">
@@ -70,6 +77,12 @@ function CardSection({
         <span className="flex-1 font-medium break-keep">
           {locale === "en" ? card.name.en : card.name.ko}
         </span>
+        {marked && (
+          <span className="flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground">
+            <span aria-hidden="true">✦</span>
+            {tt.markedBadge}
+          </span>
+        )}
         <span
           className={cn(
             "rounded-full px-3 py-1 text-xs ring-1",
@@ -82,7 +95,21 @@ function CardSection({
 
       <p className="mt-3 text-sm leading-relaxed break-keep">{entry.essence.ko}</p>
 
-      {matched.length > 0 ? (
+      {isOther ? (
+        // 그 외 — 전체 키워드 동등 표시 (중립 스타일, mute·강조·토글 없음)
+        <ul className="mt-4 flex flex-col gap-3">
+          {entry.keywords.map((k) => (
+            <li key={k.word.ko}>
+              <span className="inline-block rounded-full px-3 py-1 text-xs font-medium ring-1 ring-foreground/20">
+                {k.word.ko}
+              </span>
+              <p className="mt-1.5 border-l-2 border-foreground/15 pl-3 text-sm leading-relaxed text-muted-foreground break-keep">
+                {k.gloss.ko}
+              </p>
+            </li>
+          ))}
+        </ul>
+      ) : matched.length > 0 ? (
         <ul className="mt-4 flex flex-col gap-3">
           {matched.map((k) => (
             <li key={k.word.ko}>
@@ -156,13 +183,24 @@ function VerifySection({
   hash,
   pickedIndices,
   choice,
+  markedCardId,
   cards,
   positions,
-}: Pick<ReadingProps, "order" | "bits" | "nonce" | "hash" | "pickedIndices" | "choice" | "cards"> & {
+}: Pick<
+  ReadingProps,
+  "order" | "bits" | "nonce" | "hash" | "pickedIndices" | "choice" | "markedCardId" | "cards"
+> & {
   positions: readonly string[];
 }) {
   const tt = useMessages().tarot;
+  const { locale } = useLocale();
   const [open, setOpen] = useState(false);
+  const markedCard = markedCardId !== null ? TAROT_CARDS[markedCardId] : null;
+  const markedName = markedCard
+    ? locale === "en"
+      ? markedCard.name.en
+      : markedCard.name.ko
+    : tt.verifyMarkedNone;
   const axisLabel = choice === "reversed" ? tt.flipVertical : tt.flipHorizontal;
   const oriLabel = (o: "upright" | "reversed") =>
     o === "reversed" ? tt.orientationReversed : tt.orientationUpright;
@@ -199,6 +237,10 @@ function VerifySection({
               {" / "}
               {tt.verifyChoice}:{" "}
               {choice === "reversed" ? tt.orientationReversed : tt.orientationUpright}
+            </p>
+            {/* 선점 공개 — 봉인 payload에 미포함(해시 불변)임을 명시한 투명성 한 줄. */}
+            <p className="mt-1 text-xs text-muted-foreground break-keep">
+              {tt.verifyMarked.replace("{name}", markedName)}
             </p>
           </div>
           {/* 카드별 "놓인 방향 → 뒤집는 축 → 최종" — 선택 전에 이미 정해져 있었음을 보여준다. */}
@@ -254,6 +296,7 @@ export function Reading({
   hash,
   pickedIndices,
   choice,
+  markedCardId,
   onNewReading,
 }: ReadingProps) {
   const tt = useMessages().tarot;
@@ -265,22 +308,19 @@ export function Reading({
   const [toast, setToast] = useState<{ msg: string; key: number } | null>(null);
   const showToast = (msg: string) => setToast({ msg, key: Date.now() });
 
-  // 이미지 클립보드 복사 지원 여부 — mount 후 판정 (SSR/hydration 안전)
-  const [canCopy, setCanCopy] = useState(false);
-  useEffect(() => {
-    setCanCopy(typeof ClipboardItem !== "undefined" && typeof navigator.clipboard?.write === "function");
-  }, []);
-
-  /** 공유 이미지 canvas — 질문 미전달(파라미터 부재 구조 유지). */
+  /** 공유 이미지 canvas — 질문 포함(상단). "other"는 매칭 없으니 전체 키워드를 pool로. */
   const buildCanvas = () =>
     renderShareImage({
+      question,
       cards: cards.map(({ card, orientation }, i) => {
         const entry = card[orientation];
-        const matched = entry.keywords.filter((k) => k.domains.includes(domain));
-        // mute(매칭 0)면 essence 첫 문장 — gloss·essence는 본문 ko 전용 합의 그대로
+        const pool =
+          domain === "other"
+            ? entry.keywords
+            : entry.keywords.filter((k) => k.domains.includes(domain));
         const body =
-          matched.length > 0
-            ? matched[0].gloss.ko
+          pool.length > 0
+            ? pool[0].gloss.ko
             : (entry.essence.ko.match(/^.*?다\./)?.[0] ?? entry.essence.ko);
         return {
           roman: toRoman(card.id),
@@ -290,7 +330,7 @@ export function Reading({
           orientationLabel:
             orientation === "reversed" ? tt.orientationReversed : tt.orientationUpright,
           reversed: orientation === "reversed",
-          chips: matched.map((k) => k.word.ko),
+          chips: pool.map((k) => k.word.ko),
           body,
         };
       }),
@@ -309,11 +349,20 @@ export function Reading({
     a.click();
   };
 
-  /** 공유 — navigator.share(파일) 가능 시 시트, 아니면 PNG 다운로드. 모든 경로 토스트 피드백. */
+  /**
+   * 공유 단일 경로 — 플랫폼별 적응: ① 네이티브 공유 시트(모바일) → ② 클립보드 복사(데스크톱
+   * Chromium/Edge) → ③ PNG 다운로드(폴백). 각 경로 토스트 피드백. 별도 복사 버튼 없이 일원화.
+   */
   const handleShare = async () => {
     const canvas = buildCanvas();
     const blob = await canvasToBlob(canvas);
-    if (blob && typeof navigator.share === "function") {
+    if (!blob) {
+      download(canvas);
+      showToast(tt.shareToastSaved);
+      return;
+    }
+    // ① 네이티브 공유 시트
+    if (typeof navigator.share === "function") {
       const file = new File([blob], "tarot.png", { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
         try {
@@ -321,29 +370,23 @@ export function Reading({
           showToast(tt.shareToastShared);
           return;
         } catch (err) {
-          // 사용자가 시트를 닫은 경우만 종료(무토스트) — 그 외 실패는 다운로드 폴백
-          if (err instanceof Error && err.name === "AbortError") return;
-          download(canvas);
-          showToast(tt.shareToastSaved);
-          return;
+          if (err instanceof Error && err.name === "AbortError") return; // 사용자 취소
+          // 그 외 실패 → 아래 폴백
         }
       }
     }
-    // share 미지원 → 저장
-    download(canvas);
-    showToast(tt.shareToastSaveFallback);
-  };
-
-  /** 복사 — canvas → 클립보드 이미지. Safari는 await 후 gesture 소실 가능(Edge/Chromium/Android 타깃). */
-  const handleCopy = async () => {
-    try {
-      const blob = await canvasToBlob(buildCanvas());
-      if (!blob) throw new Error("blob null");
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-      showToast(tt.shareToastCopied);
-    } catch {
-      showToast(tt.shareToastCopyFail);
+    // ② 클립보드 이미지 복사 (Safari는 await 후 gesture 소실 가능 — Edge/Chromium/Android 타깃)
+    if (typeof ClipboardItem !== "undefined" && typeof navigator.clipboard?.write === "function") {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        showToast(tt.shareToastCopied);
+        return;
+      } catch {
+        // ③ 폴백
+      }
     }
+    download(canvas);
+    showToast(tt.shareToastSaved);
   };
 
   return (
@@ -374,6 +417,7 @@ export function Reading({
         hash={hash}
         pickedIndices={pickedIndices}
         choice={choice}
+        markedCardId={markedCardId}
         cards={cards}
         positions={positions}
       />
@@ -386,15 +430,6 @@ export function Reading({
         >
           {tt.shareImage}
         </button>
-        {canCopy && (
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="w-full rounded-lg px-8 py-3 font-medium ring-1 ring-foreground/20 sm:w-auto"
-          >
-            {tt.shareCopy}
-          </button>
-        )}
         <button
           type="button"
           onClick={onNewReading}

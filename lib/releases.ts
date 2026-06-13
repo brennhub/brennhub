@@ -32,6 +32,34 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "tarot-marked-card",
+    date: "2026-06-13",
+    tool: "tarot",
+    kind: "new",
+    title: {
+      ko: "타로 테이블 — 점지: 섞는 도중 한 장을 미리 점찍기",
+      en: "Tarot Table — mark a card before you draw, mid-shuffle",
+    },
+    body: {
+      ko: "카드를 휘저어 섞다 보면, 아주 가끔 한 장이 덱에서 살짝 고개를 내밀며 먼저 묻습니다 — \"이 카드를 미리 점지하시겠어요?\" 수락하면 펼쳐진 스물두 장 가운데 그 카드에 ✦ 표식이 남아, 손이 어디로 향할지 미리 점찍어 둘 수 있어요. 꼭 그 카드를 골라야 하는 건 아닙니다 — 골라도, 지나쳐도 리딩은 평소 그대로 흘러가고, 점지한 카드를 정말 뽑으면 결과에 그 표시가 함께 남아요. 점지는 직감으로 한 장을 미리 점찍어 보는 우연한 재미일 뿐, 카드가 정해지는 방식에는 손대지 않습니다 — 덱은 점지와 상관없이 이미 정해져 있고, 고르기 전에 정해져 있었다는 것도 그대로 확인할 수 있어요. 자주 일어나는 일은 아니니, 찾아오면 반가운 마음으로 맞아 주세요.",
+      en: "As you stir the cards to shuffle, every so often one lifts its head from the deck and asks first — \"Mark this card before you draw?\" Accept, and a ✦ stays on that card among the twenty-two laid out, a quiet hunch of where your hand might go. You're never bound to it — choose it or pass it by, and the reading flows on as always; draw the marked card for real and your result carries that mark with it. Marking is simply a playful hunch, a chance to call a card early; it never touches how the cards are settled — the deck is already set regardless, and you can still confirm it was set before you chose. It only visits now and then, so when it does, simply let it in.",
+    },
+  },
+  {
+    id: "tarot-share-question-domains",
+    date: "2026-06-13",
+    tool: "tarot",
+    kind: "improved",
+    title: {
+      ko: "타로 테이블 — 공유 이미지에 내 질문 · 공유 버튼 하나로 · '그 외' 질문",
+      en: "Tarot Table — your question in the shared image, one share button, an \"Other\" topic",
+    },
+    body: {
+      ko: "리딩을 이미지로 공유하면 이제 카드 위에 내가 직접 적은 질문이 함께 담깁니다 — 카드와 풀이가 어떤 물음에서 나왔는지 한눈에 남아요. 공유 버튼은 하나로 모았어요. 누르면 휴대폰에서는 공유 창으로, 데스크톱에서는 이미지 복사나 저장으로, 지금 쓰는 화면에 맞춰 알아서 이어집니다. 질문의 자리에는 '그 외'가 새로 생겨, 연애·일·돈·관계·자기 어디에도 딱 맞지 않는 물음도 그대로 놓을 수 있고, 그땐 카드의 모든 의미를 한쪽으로 기울이지 않고 고르게 펼쳐 보여줘요. 질문은 열 자 이상 적어야 다음으로 넘어가도록 글자 수가 가만히 곁에서 알려주고, 시작 전 숨을 고르는 화면의 어둠은 이제 좌우 끝까지 가득 찹니다.",
+      en: "Sharing a reading as an image now places the question you wrote above the cards — so the cards and meanings always carry the words they answered. The share controls are now a single button: on a phone it opens the share sheet, on a desktop it copies or saves the image, choosing whatever fits where you are. The topic list gains an \"Other\" choice for a question that doesn't fit love, work, money, relationships, or self, and every meaning of the cards is then laid out evenly, given the same weight, with none favored over another. A question needs at least ten characters before you move on, with a quiet count beside you, and the dark backdrop of the breathing screen now stretches edge to edge.",
+    },
+  },
+  {
     id: "tarot-share-bgm-flip",
     date: "2026-06-12",
     tool: "tarot",

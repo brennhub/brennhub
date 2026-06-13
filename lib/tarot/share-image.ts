@@ -1,9 +1,9 @@
 /**
  * 공유 이미지 — canvas 직접 그리기 (html2canvas 금지: Tailwind v4 + Lightning CSS
  * 환경에서 빈 PNG, lineup-builder 선례. language-maker와 동일하게 canvas 네이티브).
- * 구성(0.5.0 — 결과 포함): 도메인 뱃지 → 카드별 블록[미니 카드 + 포지션·이름·방향 +
- * 매칭 키워드 칩 + 대표 gloss(최대 2줄)] ×3 → 도구명 + URL.
- * 질문은 파라미터 자체가 없다 — "질문 미포함"이 코드로 보장된다.
+ * 구성(0.7.1): 질문 원문(상단) + 도메인 뱃지 → 카드별 블록[미니 카드 + 포지션·이름·방향 +
+ * 키워드 칩 + 대표 gloss(최대 2줄)] ×3 → 도구명 + URL.
+ * 질문은 사용자 의도로 이미지에 포함된다(공유는 사용자가 직접 트리거 — 앱 백엔드 전송 아님).
  */
 
 export type ShareCard = {
@@ -28,8 +28,8 @@ const CARD_H = 274; // aspect 7/12
 const BLOCK_X = 80;
 const BLOCK_TEXT_X = 290;
 const BLOCK_TEXT_RIGHT = 1000;
-const BLOCK_Y0 = 170;
-const BLOCK_H = 330;
+const BLOCK_Y0 = 250; // 질문+도메인 상단 영역 아래로 시작
+const BLOCK_H = 320;
 
 const SANS = "system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif";
 const SERIF = "Georgia, 'Times New Roman', serif";
@@ -194,6 +194,8 @@ function drawBlock(ctx: CanvasRenderingContext2D, card: ShareCard, y: number) {
 }
 
 export function renderShareImage(opts: {
+  /** 질문 원문 — 이미지 상단에 따옴표로 포함(사용자 의도, 2026-06-13). */
+  question: string;
   cards: readonly ShareCard[];
   domainLabel: string;
   toolLine: string;
@@ -209,16 +211,28 @@ export function renderShareImage(opts: {
   ctx.fillStyle = "#161618";
   ctx.fillRect(0, 0, W, H);
 
-  // 도메인 뱃지 (중앙 필)
+  // 질문 원문 (상단, 따옴표, 최대 2줄 word-wrap)
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#fafafa";
+  ctx.font = `600 38px ${SANS}`;
+  const qLines = wrapText(ctx, `“${opts.question}”`, W - 160, 2);
+  let qy = 96;
+  for (const line of qLines) {
+    ctx.fillText(line, W / 2, qy);
+    qy += 50;
+  }
+
+  // 도메인 뱃지 (질문 아래 중앙 필)
+  const badgeY = qy + 8;
   ctx.font = `600 30px ${SANS}`;
   const badgeW = ctx.measureText(opts.domainLabel).width + 56;
   const badgeH = 58;
   ctx.fillStyle = "#e4e4e7";
-  roundRect(ctx, (W - badgeW) / 2, 66, badgeW, badgeH, badgeH / 2);
+  roundRect(ctx, (W - badgeW) / 2, badgeY, badgeW, badgeH, badgeH / 2);
   ctx.fill();
   ctx.fillStyle = "#161618";
   ctx.textAlign = "center";
-  ctx.fillText(opts.domainLabel, W / 2, 66 + 39);
+  ctx.fillText(opts.domainLabel, W / 2, badgeY + 39);
 
   opts.cards.slice(0, 3).forEach((card, i) => {
     drawBlock(ctx, card, BLOCK_Y0 + i * BLOCK_H);
