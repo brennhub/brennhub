@@ -68,6 +68,7 @@ export function ShuffleStage({
     phases: [0, 2.1, 4.2, 1.0],
     radiusScale: [1, 1, 1, 1],
     grabbed: LAYER_COUNT - 1, // 현재 "잡힌" 카드 — 포인터 추종
+    zOrder: Array.from({ length: LAYER_COUNT }, (_, i) => i),
     releasedIdx: -1, // 방금 놓인 카드 — 복귀 transition 동안 applyLayers가 건드리지 않음
     releasedAt: 0,
     centerX: 0,
@@ -157,6 +158,9 @@ export function ShuffleStage({
       const j = rng.nextBelow(i + 1);
       [z[i], z[j]] = [z[j], z[i]];
     }
+    // 직전과 동일 순열(1/24)이면 1칸 회전 — 매 제스처 "순서가 바뀌어 보임" 보장
+    if (z.every((v, i) => v === s.zOrder[i])) z.push(z.shift() as number);
+    s.zOrder = z;
     // 잡힌 카드 교체 — 다음 드래그는 다른 카드
     const prevGrabbed = s.grabbed;
     let next = rng.nextBelow(LAYER_COUNT);
