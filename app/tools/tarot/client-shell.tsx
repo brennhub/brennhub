@@ -320,9 +320,10 @@ export function TarotClientShell() {
         <ChoiceStage onConfirm={(choice) => dispatch({ type: "CHOICE_CONFIRM", choice })} />
       )}
 
-      {state.stage === "open" && (
+      {state.stage === "open" && state.userChoice && (
         <OpenStage
           cards={drawn}
+          choice={state.userChoice}
           flippedCount={state.flippedCount}
           onFlip={() => dispatch({ type: "FLIP_NEXT" })}
           onAllOpen={() => dispatch({ type: "OPEN_DONE" })}

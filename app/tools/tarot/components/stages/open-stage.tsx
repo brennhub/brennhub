@@ -11,12 +11,14 @@ import { FlipCard } from "./flip-card";
  */
 type OpenStageProps = {
   cards: readonly { card: TarotCardData; orientation: "upright" | "reversed" }[];
+  /** 사용자 선택 — FlipCard 회전축 결정(정=가로/역=세로). */
+  choice: "upright" | "reversed";
   flippedCount: 0 | 1 | 2 | 3;
   onFlip: () => void;
   onAllOpen: () => void;
 };
 
-export function OpenStage({ cards, flippedCount, onFlip, onAllOpen }: OpenStageProps) {
+export function OpenStage({ cards, choice, flippedCount, onFlip, onAllOpen }: OpenStageProps) {
   const tt = useMessages().tarot;
   const positions = [tt.positionPast, tt.positionPresent, tt.positionFuture];
 
@@ -40,6 +42,7 @@ export function OpenStage({ cards, flippedCount, onFlip, onAllOpen }: OpenStageP
             key={card.slug}
             card={card}
             orientation={orientation}
+            choice={choice}
             positionLabel={positions[i]}
             flipped={i < flippedCount}
             tappable={i === flippedCount}
