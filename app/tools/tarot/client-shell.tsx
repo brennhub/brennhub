@@ -313,6 +313,9 @@ export function TarotClientShell() {
       {state.stage === "deal" && (
         <DealStage
           pickedIndices={state.pickedIndices}
+          markedIndex={
+            state.markedCardId !== null && seal ? seal.deck.indexOf(state.markedCardId) : -1
+          }
           onPick={(index) => dispatch({ type: "DEAL_PICK", index })}
           onDone={() => dispatch({ type: "DEAL_DONE" })}
         />

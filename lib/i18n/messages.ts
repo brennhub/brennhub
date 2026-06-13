@@ -693,6 +693,7 @@ export type Messages = {
     deckAria: string;
     spreadInstruction: string;
     spreadCardAria: string;
+    spreadMarkedAria: string;
     positionPast: string;
     positionPresent: string;
     positionFuture: string;
@@ -1660,6 +1661,7 @@ export const messages: Record<Locale, Messages> = {
       deckAria: "카드 덱",
       spreadInstruction: "펼쳐진 카드 가운데 마음이 가는 세 장을 차례로 탭하세요",
       spreadCardAria: "뒷면 카드 {n}번",
+      spreadMarkedAria: "점지한 카드 — 뒷면 {n}번",
       positionPast: "과거",
       positionPresent: "현재",
       positionFuture: "미래",
@@ -2738,6 +2740,7 @@ export const messages: Record<Locale, Messages> = {
       deckAria: "Card deck",
       spreadInstruction: "Tap three cards that draw you in, one at a time",
       spreadCardAria: "Face-down card {n}",
+      spreadMarkedAria: "Marked card — face-down {n}",
       positionPast: "Past",
       positionPresent: "Present",
       positionFuture: "Future",
