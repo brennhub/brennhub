@@ -1,10 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
 import type { RitualRng } from "@/lib/tarot/ritual";
 import { DECK_SIZE } from "@/lib/tarot/ritual-state";
 import { TarotCard } from "../tarot-card";
+
+/** 모션 최소화 선호 여부(런타임). true면 튀어나오는 글라이드 생략, 즉시 분리 위치 표시. */
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
  * S3 셔플 — "손으로 휘젓기" 모델 (원형 궤도). 어떤 카드도 포인터에 붙지 않는다.
@@ -66,9 +72,34 @@ export function ShuffleStage({
   const cardRefs = useRef<(HTMLDivElement | null)[]>(Array(LAYER_COUNT).fill(null));
   // 누적 회전 5바퀴 넘으면 [이제 됐어요] 등장 (은밀 — 진행 표시 없음)
   const [ready, setReady] = useState(false);
-  // 선점 — 낮은 확률 이벤트, 세션 1회. popped 동안 휘젓기 일시정지.
-  const [popped, setPopped] = useState<number | null>(null);
+  // 선점 — 낮은 확률 이벤트, 세션 1회. pop 동안 휘젓기 일시정지.
+  // pop: 튀어나온 카드 id + 방향(-1 좌/+1 우). glide: 분리 위치로 이동. showPrompt: 글라이드 후 질문 노출.
+  const [pop, setPop] = useState<{ id: number; dir: -1 | 1 } | null>(null);
+  const [glide, setGlide] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
   const popFired = useRef(false);
+
+  // 등장 → 다음 프레임에 분리 위치로 글라이드(transition 발동), 글라이드 후 질문 노출.
+  // motion-reduce: transition 없음 + 0ms → 즉시 분리 위치 + 즉시 질문.
+  useEffect(() => {
+    if (pop === null) return;
+    const reduce = prefersReducedMotion();
+    const raf = requestAnimationFrame(() => setGlide(true));
+    const t = window.setTimeout(() => setShowPrompt(true), reduce ? 0 : 520);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(t);
+    };
+  }, [pop]);
+
+  // 수락/거절 — 질문 숨김 + 더미로 복귀 글라이드 후 제거. 수락은 markedCardId 기록(기존 로직).
+  const dismissPop = (accept: boolean) => {
+    if (pop === null) return;
+    if (accept) onMark(pop.id);
+    setShowPrompt(false);
+    setGlide(false); // 더미(중앙)로 복귀
+    window.setTimeout(() => setPop(null), prefersReducedMotion() ? 0 : 460);
+  };
   const s = useRef({
     active: false,
     lastX: 0,
@@ -141,7 +172,7 @@ export function ShuffleStage({
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const c = s.current;
-    if (!c.active || !e.isPrimary || popped !== null) return; // 선점 프롬프트 중 휘젓기 정지
+    if (!c.active || !e.isPrimary || pop !== null) return; // 선점 연출/프롬프트 중 휘젓기 정지
     const d = Math.hypot(e.clientX - c.lastX, e.clientY - c.lastY);
     c.lastX = e.clientX;
     c.lastY = e.clientY;
@@ -168,7 +199,8 @@ export function ShuffleStage({
           rng.nextBelow(POP_CHANCE_DENOM) === 0)
       ) {
         popFired.current = true; // 세션 1회(수락·거절 무관)
-        setPopped(rng.nextBelow(DECK_SIZE)); // 후보 카드 id(0~21)
+        // 후보 카드 id(0~21) + 좌/우 랜덤 방향
+        setPop({ id: rng.nextBelow(DECK_SIZE), dir: rng.nextBelow(2) === 0 ? -1 : 1 });
       }
     }
   };
@@ -211,36 +243,47 @@ export function ShuffleStage({
           </div>
         ))}
 
-        {/* 선점 — 카드 한 장이 튀어나와 강조 + 인라인 점지 프롬프트(낮은 확률·세션 1회). */}
-        {/* stopPropagation: 무대 onPointerDown(setPointerCapture)가 오버레이 버튼 클릭을 가로채지 않게. */}
-        {popped !== null && (
+        {/* 선점 — 카드가 더미에서 좌/우로 "탁" 튀어나와(글라이드) 그 자리에 머물고, 자리 잡으면 질문. */}
+        {/* 가벼운 dim(블러 없음)으로 더미가 보임 — 카드가 더미에서 나온 느낌. */}
+        {/* stopPropagation: 무대 onPointerDown(setPointerCapture)가 버튼 클릭을 가로채지 않게. */}
+        {pop !== null && (
           <div
             onPointerDown={(e) => e.stopPropagation()}
-            className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-background/70 backdrop-blur-sm"
+            className="absolute inset-0 z-50 bg-background/40"
           >
-            <div className="animate-in zoom-in-95 fade-in duration-300">
-              <TarotCard face="back" size="md" className="ring-2 ring-primary shadow-lg" />
+            {/* 튀어나온 카드 — 중앙(더미)에서 시작해 좌/우로 글라이드. 중앙 이동·중앙 확대 아님(분리 자리 유지). */}
+            <div
+              className="absolute top-1/2 left-1/2 transition-transform duration-500 ease-out motion-reduce:transition-none"
+              style={{
+                transform: glide
+                  ? `translate(calc(-50% + ${pop.dir * 96}px), calc(-50% - 10px)) rotate(${pop.dir * 6}deg) scale(1.06)`
+                  : "translate(-50%, -50%) rotate(0deg) scale(1)",
+              }}
+            >
+              <TarotCard face="back" size="md" className="shadow-xl ring-2 ring-primary" />
             </div>
-            <p className="px-8 text-center text-sm font-medium break-keep">{tt.popPrompt}</p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  onMark(popped);
-                  setPopped(null);
-                }}
-                className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground"
-              >
-                {tt.popAccept}
-              </button>
-              <button
-                type="button"
-                onClick={() => setPopped(null)}
-                className="rounded-lg px-6 py-2.5 text-sm font-medium ring-1 ring-foreground/20"
-              >
-                {tt.popReject}
-              </button>
-            </div>
+            {/* 점지 프롬프트 — 카드가 자리 잡은 뒤(글라이드 후) 하단-중앙에 등장. */}
+            {showPrompt && (
+              <div className="absolute inset-x-0 bottom-[13%] flex animate-in flex-col items-center gap-4 px-6 fade-in duration-300">
+                <p className="text-center text-sm font-medium break-keep">{tt.popPrompt}</p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => dismissPop(true)}
+                    className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground"
+                  >
+                    {tt.popAccept}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => dismissPop(false)}
+                    className="rounded-lg px-6 py-2.5 text-sm font-medium ring-1 ring-foreground/20"
+                  >
+                    {tt.popReject}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
