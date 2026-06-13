@@ -1,39 +1,36 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { useMessages } from "@/lib/i18n/provider";
 import type { RitualRng } from "@/lib/tarot/ritual";
 import { TarotCard } from "../tarot-card";
 
 /**
- * S3 셔플 — "손으로 휘젓기" 모델. 어떤 카드도 포인터에 붙지 않는다(포인터 = 젓는 손 위치).
- * 휘저으면(원·지그재그·직선 무관) 누적 이동이 임계를 넘을 때마다 카드들이 자기들끼리
- * 무대 위에서 자리를 바꾼다. 멈추면 멈추고, 다시 움직이면 재개. up 해도 현 위치 유지.
- *
- * 1 reshuffle = onGesture() 1회(부모 Fisher-Yates 1패스) — 휘저은 STIR_STEP 충족 횟수가
- * shuffleCount. 셔플 로직·엔트로피 mix는 무변경, 인터랙션 모델·연출·레이아웃만.
- * 연속 애니메이션(RAF) 없음 → 입력이 끝나면 그 자리에서 완전히 멈춘다.
- * prefers-reduced-motion이면 transition 없이 즉시 재배치(휘젓기 반응은 유지).
+ * S3 셔플 — "손으로 휘젓기" 모델 (원형 궤도). 어떤 카드도 포인터에 붙지 않는다.
+ * 휘저으면 누적 이동이 궤도각 theta를 전진시켜 카드 4장이 중심 둘레를 둥글게 돈다
+ * (무대 가로≥세로라 가로 우선 타원/원). 멈추면 멈추고, 다시 움직이면 재개, up 해도 유지.
+ * STIR_STEP마다 z-order 순열 + onGesture()(부모 Fisher-Yates 1패스) — 캐러셀 회전 자체가
+ * 연속 자리교환이고 z 순열이 겹침 순서를 바꾼다. 셔플 로직·엔트로피 mix는 무변경.
+ * 연속 애니메이션(RAF) 없음 → 입력이 끝나면 그 자리에서 멈춘다. transition 없음(움직임이 곧 연출).
  */
 const LAYER_COUNT = 4;
 const CARD_W = 192; // lg = w-48
 const CARD_H = 329; // aspect-[7/12]
 
-// ── 휘젓기·산포 상수 (편집장 체감 후 조정) ──
-const STIR_STEP = 80; // 누적 이동 임계(px) — 1회 자리교환
-const STIR_MIN_MS = 130; // reshuffle 최소 간격 — 전이 thrash 방지
-const SCATTER_ROT = 4; // 산포 회전(±deg) — 작게 둬 AABB 폭을 줄임 → 모바일서도 가로 더 넓게
+// ── 휘젓기·궤도 상수 (편집장 체감 후 조정) ──
+const STIR_STEP = 80; // 누적 이동(px)마다 z 순열 + onGesture 1회
+const STIR_MIN_MS = 130; // 순열 최소 간격
+const ANGLE_PER_PX = 0.012; // 누적 px → 궤도각 전진(rad). 80px ≈ 0.96rad(~55°)
+const ROT_WOBBLE = 4; // 카드 기울임 진폭(±deg) — AABB 클램프에 반영
 const MARGIN = 6; // 무대 가장자리 여백(px)
-const TRANSITION_MS = 280;
-// 초기 loose pile (중심 근처) — 휘저으면 무대로 산포
-const INITIAL: Pose[] = [
-  { dx: -6, dy: 6, rot: -4 },
+const PHASES = Array.from({ length: LAYER_COUNT }, (_, i) => (i * 2 * Math.PI) / LAYER_COUNT);
+// 초기 loose pile (중심 근처) — 첫 stir에서 궤도 진입
+const INITIAL = [
+  { dx: -6, dy: 6, rot: -3 },
   { dx: 6, dy: -4, rot: 3 },
   { dx: -3, dy: -7, rot: -1 },
   { dx: 2, dy: 3, rot: 2 },
 ];
-
-type Pose = { dx: number; dy: number; rot: number };
 
 type ShuffleStageProps = {
   rng: RitualRng;
@@ -53,39 +50,46 @@ export function ShuffleStage({
   const tt = useMessages().tarot;
   const areaRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>(Array(LAYER_COUNT).fill(null));
-  const stir = useRef({
+  const s = useRef({
     active: false,
     lastX: 0,
     lastY: 0,
     accum: 0,
+    theta: 0,
     lastReshuffleAt: 0,
-    maxDx: 60,
-    maxDy: 120,
-    reduced: false,
+    rx: 60,
+    ry: 60,
   });
 
-  useEffect(() => {
-    stir.current.reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  }, []);
-
-  const poseTransform = (p: Pose) => `translate(${p.dx}px, ${p.dy}px) rotate(${p.rot}deg)`;
-
-  /** 무대 실측 → 회전 AABB 고려한 산포 한계 계산 (가장자리 안 잘리는 최대). */
+  /** 무대 실측 → 회전 AABB 고려한 가로 반경, 세로 반경은 가로 이하로 캡(가로≥세로 타원). */
   const measure = () => {
-    const s = stir.current;
     const el = areaRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const rad = (SCATTER_ROT * Math.PI) / 180;
+    const rad = (ROT_WOBBLE * Math.PI) / 180;
     const halfW = (CARD_W * Math.cos(rad) + CARD_H * Math.sin(rad)) / 2;
     const halfH = (CARD_H * Math.cos(rad) + CARD_W * Math.sin(rad)) / 2;
-    s.maxDx = Math.max(0, rect.width / 2 - halfW - MARGIN);
-    s.maxDy = Math.max(0, rect.height / 2 - halfH - MARGIN);
+    const maxDx = Math.max(0, rect.width / 2 - halfW - MARGIN);
+    const maxDy = Math.max(0, rect.height / 2 - halfH - MARGIN);
+    s.current.rx = maxDx;
+    s.current.ry = Math.min(maxDy, maxDx); // 세로 ≤ 가로 → 가로 우선 타원/원
   };
 
-  /** 카드들을 무대 안 새 무작위 위치로 재배치(z 무작위) — 휘저을 때마다. */
-  const reshuffle = () => {
-    const s = stir.current;
+  /** theta 기준 전 카드를 궤도 위치로 직접 배치(transition 없음). */
+  const applyOrbit = () => {
+    const c = s.current;
+    for (let i = 0; i < LAYER_COUNT; i++) {
+      const el = cardRefs.current[i];
+      if (!el) continue;
+      const a = c.theta + PHASES[i];
+      const x = c.rx * Math.cos(a);
+      const y = c.ry * Math.sin(a);
+      const rot = ROT_WOBBLE * Math.sin(a);
+      el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
+    }
+  };
+
+  const reshuffleZ = () => {
     const z = Array.from({ length: LAYER_COUNT }, (_, i) => i);
     for (let i = z.length - 1; i > 0; i--) {
       const j = rng.nextBelow(i + 1);
@@ -93,13 +97,7 @@ export function ShuffleStage({
     }
     for (let i = 0; i < LAYER_COUNT; i++) {
       const el = cardRefs.current[i];
-      if (!el) continue;
-      const dx = s.maxDx > 0 ? rng.nextBelow(s.maxDx * 2 + 1) - s.maxDx : 0;
-      const dy = s.maxDy > 0 ? rng.nextBelow(s.maxDy * 2 + 1) - s.maxDy : 0;
-      const rot = rng.nextBelow(SCATTER_ROT * 2 + 1) - SCATTER_ROT;
-      el.style.transition = s.reduced ? "none" : `transform ${TRANSITION_MS}ms ease-out`;
-      el.style.zIndex = String(z[i]);
-      el.style.transform = poseTransform({ dx, dy, rot });
+      if (el) el.style.zIndex = String(z[i]);
     }
   };
 
@@ -110,11 +108,11 @@ export function ShuffleStage({
     } catch {
       // capture 실패해도 추적 계속
     }
-    const s = stir.current;
-    s.active = true;
-    s.lastX = e.clientX;
-    s.lastY = e.clientY;
-    s.accum = 0;
+    const c = s.current;
+    c.active = true;
+    c.lastX = e.clientX;
+    c.lastY = e.clientY;
+    c.accum = 0;
     measure();
     rng.mix(e.clientX | 0);
     rng.mix(e.clientY | 0);
@@ -122,26 +120,29 @@ export function ShuffleStage({
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const s = stir.current;
-    if (!s.active || !e.isPrimary) return;
-    s.accum += Math.hypot(e.clientX - s.lastX, e.clientY - s.lastY);
-    s.lastX = e.clientX;
-    s.lastY = e.clientY;
+    const c = s.current;
+    if (!c.active || !e.isPrimary) return;
+    const d = Math.hypot(e.clientX - c.lastX, e.clientY - c.lastY);
+    c.lastX = e.clientX;
+    c.lastY = e.clientY;
+    c.accum += d;
+    c.theta += d * ANGLE_PER_PX; // 누적 이동 → 궤도각 전진
     rng.mix(e.clientX | 0);
     rng.mix(e.clientY | 0);
     rng.mix((e.timeStamp * 1000) | 0);
-    // 누적 임계 + 최소 간격 충족 시 1회 자리교환 — 계속 휘저으면 계속 섞임
-    if (s.accum >= STIR_STEP && e.timeStamp - s.lastReshuffleAt >= STIR_MIN_MS) {
-      s.accum -= STIR_STEP;
-      s.lastReshuffleAt = e.timeStamp;
-      onGesture(); // 실제 셔플(shufflePass)은 부모 — 연출과 분리
-      reshuffle();
+    applyOrbit(); // 매 move마다 궤도 위치 갱신 (정지 시 자동 정지)
+    // STIR_STEP마다 z 순열 + 실제 셔플 1패스 — 계속 저으면 계속 섞임
+    if (c.accum >= STIR_STEP && e.timeStamp - c.lastReshuffleAt >= STIR_MIN_MS) {
+      c.accum -= STIR_STEP;
+      c.lastReshuffleAt = e.timeStamp;
+      onGesture();
+      reshuffleZ();
     }
   };
 
   const endStir = () => {
-    // up/cancel — 현 위치 그대로 유지(복귀·던짐 없음). 추적만 종료.
-    stir.current.active = false;
+    // up/cancel — theta·위치 그대로 유지(복귀·던짐 없음). 추적만 종료.
+    s.current.active = false;
   };
 
   return (
@@ -150,7 +151,7 @@ export function ShuffleStage({
         {tt.shuffleInstruction}
       </p>
 
-      {/* 무대 — 가용 폭 가득·세로 충분. 카드는 중심 기준 산포. */}
+      {/* 무대 — 가용 폭 가득·세로 충분. 카드는 중심 둘레 궤도. */}
       <div
         ref={areaRef}
         role="img"
@@ -171,7 +172,7 @@ export function ShuffleStage({
             }}
             aria-hidden="true"
             className="pointer-events-none absolute top-1/2 left-1/2 -ml-24 -mt-[164px]"
-            style={{ transform: poseTransform(p), zIndex: i }}
+            style={{ transform: `translate(${p.dx}px, ${p.dy}px) rotate(${p.rot}deg)`, zIndex: i }}
           >
             <TarotCard face="back" size="lg" />
           </div>
