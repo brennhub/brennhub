@@ -32,17 +32,17 @@ export type Release = {
 
 export const releases: Release[] = [
   {
-    id: "tarot-reverse-flip",
+    id: "tarot-share-bgm-flip",
     date: "2026-06-12",
     tool: "tarot",
-    kind: "fixed",
+    kind: "improved",
     title: {
-      ko: "타로 테이블 — 역방향 카드 플립 연출 수정",
-      en: "Tarot Table — reversed cards now flip the right way",
+      ko: "타로 테이블 — 공유 이미지에 결과 · 리딩 중 음악 · 역방향 세로 플립",
+      en: "Tarot Table — results in shared images, music through the reading, reversed cards flip vertically",
     },
     body: {
-      ko: "역방향으로 뒤집기를 골랐을 때 카드가 위아래로 넘어갑니다. 정방향은 좌우로 넘어가던 그대로예요 — 선택한 방향이 카드를 여는 손짓에도 드러납니다.",
-      en: "When you choose to flip reversed, the cards now turn top-to-bottom; upright still turns side-to-side — so the direction you chose shows in the way each card opens.",
+      ko: "리딩을 이미지로 공유하면 카드와 함께 핵심 키워드·풀이가 담깁니다. 배경 음악은 리딩 화면까지 끊기지 않고 이어지고, 역방향으로 뒤집기를 고르면 카드가 위아래로 넘어가요 — 정방향은 좌우로 넘어가던 그대로입니다.",
+      en: "Sharing a reading as an image now includes the key words and meanings alongside the cards. The background music plays on through the reading screen, and choosing a reversed flip turns the cards top-to-bottom — upright still turns side-to-side.",
     },
   },
   {
