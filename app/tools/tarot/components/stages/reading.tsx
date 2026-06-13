@@ -265,22 +265,19 @@ export function Reading({
   const [toast, setToast] = useState<{ msg: string; key: number } | null>(null);
   const showToast = (msg: string) => setToast({ msg, key: Date.now() });
 
-  // 이미지 클립보드 복사 지원 여부 — mount 후 판정 (SSR/hydration 안전)
-  const [canCopy, setCanCopy] = useState(false);
-  useEffect(() => {
-    setCanCopy(typeof ClipboardItem !== "undefined" && typeof navigator.clipboard?.write === "function");
-  }, []);
-
-  /** 공유 이미지 canvas — 질문 미전달(파라미터 부재 구조 유지). */
+  /** 공유 이미지 canvas — 질문 포함(상단). "other"는 매칭 없으니 전체 키워드를 pool로. */
   const buildCanvas = () =>
     renderShareImage({
+      question,
       cards: cards.map(({ card, orientation }, i) => {
         const entry = card[orientation];
-        const matched = entry.keywords.filter((k) => k.domains.includes(domain));
-        // mute(매칭 0)면 essence 첫 문장 — gloss·essence는 본문 ko 전용 합의 그대로
+        const pool =
+          (domain as string) === "other"
+            ? entry.keywords
+            : entry.keywords.filter((k) => k.domains.includes(domain));
         const body =
-          matched.length > 0
-            ? matched[0].gloss.ko
+          pool.length > 0
+            ? pool[0].gloss.ko
             : (entry.essence.ko.match(/^.*?다\./)?.[0] ?? entry.essence.ko);
         return {
           roman: toRoman(card.id),
@@ -290,7 +287,7 @@ export function Reading({
           orientationLabel:
             orientation === "reversed" ? tt.orientationReversed : tt.orientationUpright,
           reversed: orientation === "reversed",
-          chips: matched.map((k) => k.word.ko),
+          chips: pool.map((k) => k.word.ko),
           body,
         };
       }),
@@ -309,11 +306,20 @@ export function Reading({
     a.click();
   };
 
-  /** 공유 — navigator.share(파일) 가능 시 시트, 아니면 PNG 다운로드. 모든 경로 토스트 피드백. */
+  /**
+   * 공유 단일 경로 — 플랫폼별 적응: ① 네이티브 공유 시트(모바일) → ② 클립보드 복사(데스크톱
+   * Chromium/Edge) → ③ PNG 다운로드(폴백). 각 경로 토스트 피드백. 별도 복사 버튼 없이 일원화.
+   */
   const handleShare = async () => {
     const canvas = buildCanvas();
     const blob = await canvasToBlob(canvas);
-    if (blob && typeof navigator.share === "function") {
+    if (!blob) {
+      download(canvas);
+      showToast(tt.shareToastSaved);
+      return;
+    }
+    // ① 네이티브 공유 시트
+    if (typeof navigator.share === "function") {
       const file = new File([blob], "tarot.png", { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
         try {
@@ -321,29 +327,23 @@ export function Reading({
           showToast(tt.shareToastShared);
           return;
         } catch (err) {
-          // 사용자가 시트를 닫은 경우만 종료(무토스트) — 그 외 실패는 다운로드 폴백
-          if (err instanceof Error && err.name === "AbortError") return;
-          download(canvas);
-          showToast(tt.shareToastSaved);
-          return;
+          if (err instanceof Error && err.name === "AbortError") return; // 사용자 취소
+          // 그 외 실패 → 아래 폴백
         }
       }
     }
-    // share 미지원 → 저장
-    download(canvas);
-    showToast(tt.shareToastSaveFallback);
-  };
-
-  /** 복사 — canvas → 클립보드 이미지. Safari는 await 후 gesture 소실 가능(Edge/Chromium/Android 타깃). */
-  const handleCopy = async () => {
-    try {
-      const blob = await canvasToBlob(buildCanvas());
-      if (!blob) throw new Error("blob null");
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-      showToast(tt.shareToastCopied);
-    } catch {
-      showToast(tt.shareToastCopyFail);
+    // ② 클립보드 이미지 복사 (Safari는 await 후 gesture 소실 가능 — Edge/Chromium/Android 타깃)
+    if (typeof ClipboardItem !== "undefined" && typeof navigator.clipboard?.write === "function") {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        showToast(tt.shareToastCopied);
+        return;
+      } catch {
+        // ③ 폴백
+      }
     }
+    download(canvas);
+    showToast(tt.shareToastSaved);
   };
 
   return (
@@ -386,15 +386,6 @@ export function Reading({
         >
           {tt.shareImage}
         </button>
-        {canCopy && (
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="w-full rounded-lg px-8 py-3 font-medium ring-1 ring-foreground/20 sm:w-auto"
-          >
-            {tt.shareCopy}
-          </button>
-        )}
         <button
           type="button"
           onClick={onNewReading}
