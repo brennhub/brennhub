@@ -135,6 +135,7 @@ export function TarotClientShell() {
             card: TAROT_CARDS[seal.deck[deckPos]],
             hidden: (bit === 1 ? "reversed" : "upright") as "upright" | "reversed",
             orientation: finalOrientation(bit, choice),
+            marked: seal.deck[deckPos] === state.markedCardId,
           };
         })
       : [];
@@ -196,6 +197,7 @@ export function TarotClientShell() {
               card: TAROT_CARDS[savedReading.order[deckPos]],
               hidden: (bit === 1 ? "reversed" : "upright") as "upright" | "reversed",
               orientation: finalOrientation(bit, savedReading.choice),
+              marked: savedReading.order[deckPos] === savedReading.markedCardId,
             };
           })}
           order={savedReading.order}
@@ -204,6 +206,7 @@ export function TarotClientShell() {
           hash={savedReading.hash}
           pickedIndices={savedReading.pickedIndices}
           choice={savedReading.choice}
+          markedCardId={savedReading.markedCardId}
           onNewReading={handleReset}
         />
       </main>
@@ -346,6 +349,7 @@ export function TarotClientShell() {
           hash={state.seal.hash}
           pickedIndices={state.pickedIndices}
           choice={state.userChoice}
+          markedCardId={state.markedCardId}
           onNewReading={handleReset}
         />
       )}

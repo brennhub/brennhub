@@ -717,8 +717,11 @@ export type Messages = {
     verifyPicked: string;
     verifyPickedNth: string;
     verifyChoice: string;
+    verifyMarked: string;
+    verifyMarkedNone: string;
     verifyLayHeading: string;
     verifyLayLine: string;
+    markedBadge: string;
     flipHorizontal: string;
     flipVertical: string;
     entryLastReading: string;
@@ -1685,8 +1688,11 @@ export const messages: Record<Locale, Messages> = {
       verifyPicked: "뽑은 위치",
       verifyPickedNth: "{n}번째",
       verifyChoice: "선택한 방향",
+      verifyMarked: "미리 점지한 카드: {name} (봉인 해시에는 포함되지 않아요)",
+      verifyMarkedNone: "없음",
       verifyLayHeading: "왜 이 방향인가 — 놓인 방향 → 뒤집기 → 최종",
       verifyLayLine: "{pos}: {hidden}으로 놓여 있던 카드를 {axis} 뒤집어 → {final}",
+      markedBadge: "점지한 카드",
       flipHorizontal: "가로로",
       flipVertical: "세로로",
       entryLastReading: "지난 리딩 보기",
@@ -2766,8 +2772,11 @@ export const messages: Record<Locale, Messages> = {
       verifyPicked: "Picked positions",
       verifyPickedNth: "#{n}",
       verifyChoice: "Chosen orientation",
+      verifyMarked: "Card marked in advance: {name} (not part of the seal hash)",
+      verifyMarkedNone: "None",
       verifyLayHeading: "Why this orientation — lay → flip → final",
       verifyLayLine: "{pos}: lay {hidden}, flipped {axis} → {final}",
+      markedBadge: "Marked card",
       flipHorizontal: "horizontally",
       flipVertical: "vertically",
       entryLastReading: "View your last reading",

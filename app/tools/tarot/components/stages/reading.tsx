@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { toRoman } from "@/lib/tarot/glyphs";
 import { buildSealPayload } from "@/lib/tarot/ritual";
 import { renderShareImage } from "@/lib/tarot/share-image";
+import { TAROT_CARDS } from "@/lib/tarot/cards";
 import type { Domain, OrientationEntry, TarotCard as TarotCardData } from "@/lib/tarot/types";
 import { SealBadge } from "../seal-badge";
 
@@ -24,6 +25,8 @@ export type DrawnCard = {
   hidden: "upright" | "reversed";
   /** 최종 방향 = 숨은 비트 × 선택(2층 ②). */
   orientation: "upright" | "reversed";
+  /** 셔플 중 선점한 카드인지(card.id === markedCardId). 표시용 메타데이터. */
+  marked: boolean;
 };
 
 type ReadingProps = {
@@ -37,6 +40,8 @@ type ReadingProps = {
   hash: string;
   pickedIndices: readonly number[];
   choice: "upright" | "reversed";
+  /** 선점한 카드 id(0~21) 또는 null — 검증 투명성. payload 무관(봉인 불변) 명시. */
+  markedCardId: number | null;
   onNewReading: () => void;
 };
 
@@ -56,7 +61,7 @@ function CardSection({
   const [showAll, setShowAll] = useState(false);
   const [showWaite, setShowWaite] = useState(false);
 
-  const { card, orientation } = drawn;
+  const { card, orientation, marked } = drawn;
   const entry: OrientationEntry = card[orientation];
   const reversed = orientation === "reversed";
   // "그 외" = 특정 도메인 매칭 안 함 → 전체 키워드 동등 표시(강조/mute 없음).
@@ -72,6 +77,12 @@ function CardSection({
         <span className="flex-1 font-medium break-keep">
           {locale === "en" ? card.name.en : card.name.ko}
         </span>
+        {marked && (
+          <span className="flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground">
+            <span aria-hidden="true">✦</span>
+            {tt.markedBadge}
+          </span>
+        )}
         <span
           className={cn(
             "rounded-full px-3 py-1 text-xs ring-1",
@@ -172,13 +183,24 @@ function VerifySection({
   hash,
   pickedIndices,
   choice,
+  markedCardId,
   cards,
   positions,
-}: Pick<ReadingProps, "order" | "bits" | "nonce" | "hash" | "pickedIndices" | "choice" | "cards"> & {
+}: Pick<
+  ReadingProps,
+  "order" | "bits" | "nonce" | "hash" | "pickedIndices" | "choice" | "markedCardId" | "cards"
+> & {
   positions: readonly string[];
 }) {
   const tt = useMessages().tarot;
+  const { locale } = useLocale();
   const [open, setOpen] = useState(false);
+  const markedCard = markedCardId !== null ? TAROT_CARDS[markedCardId] : null;
+  const markedName = markedCard
+    ? locale === "en"
+      ? markedCard.name.en
+      : markedCard.name.ko
+    : tt.verifyMarkedNone;
   const axisLabel = choice === "reversed" ? tt.flipVertical : tt.flipHorizontal;
   const oriLabel = (o: "upright" | "reversed") =>
     o === "reversed" ? tt.orientationReversed : tt.orientationUpright;
@@ -215,6 +237,10 @@ function VerifySection({
               {" / "}
               {tt.verifyChoice}:{" "}
               {choice === "reversed" ? tt.orientationReversed : tt.orientationUpright}
+            </p>
+            {/* 선점 공개 — 봉인 payload에 미포함(해시 불변)임을 명시한 투명성 한 줄. */}
+            <p className="mt-1 text-xs text-muted-foreground break-keep">
+              {tt.verifyMarked.replace("{name}", markedName)}
             </p>
           </div>
           {/* 카드별 "놓인 방향 → 뒤집는 축 → 최종" — 선택 전에 이미 정해져 있었음을 보여준다. */}
@@ -270,6 +296,7 @@ export function Reading({
   hash,
   pickedIndices,
   choice,
+  markedCardId,
   onNewReading,
 }: ReadingProps) {
   const tt = useMessages().tarot;
@@ -390,6 +417,7 @@ export function Reading({
         hash={hash}
         pickedIndices={pickedIndices}
         choice={choice}
+        markedCardId={markedCardId}
         cards={cards}
         positions={positions}
       />
