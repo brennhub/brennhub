@@ -3,17 +3,19 @@
 import { useRef } from "react";
 import { useMessages } from "@/lib/i18n/provider";
 import type { RitualRng } from "@/lib/tarot/ritual";
+import { DECK_SIZE } from "@/lib/tarot/ritual-state";
 import { TarotCard } from "../tarot-card";
 
 /**
  * S3 셔플 — "손으로 휘젓기" 모델 (원형 궤도). 어떤 카드도 포인터에 붙지 않는다.
- * 휘저으면 누적 이동이 궤도각 theta를 전진시켜 카드 4장이 중심 둘레를 둥글게 돈다
- * (무대 가로≥세로라 가로 우선 타원/원). 멈추면 멈추고, 다시 움직이면 재개, up 해도 유지.
- * STIR_STEP마다 z-order 순열 + onGesture()(부모 Fisher-Yates 1패스) — 캐러셀 회전 자체가
- * 연속 자리교환이고 z 순열이 겹침 순서를 바꾼다. 셔플 로직·엔트로피 mix는 무변경.
- * 연속 애니메이션(RAF) 없음 → 입력이 끝나면 그 자리에서 멈춘다. transition 없음(움직임이 곧 연출).
+ * 봉인 덱 22장 전부를 화면에 렌더(축약 금지) — 해바라기(phyllotaxis) 분포로 무대 중심에
+ * 속이 찬 더미를 형성하고, 휘저으면 누적 이동이 궤도각 theta를 전진시켜 22장이 함께
+ * 중심 둘레를 둥글게 돈다(무대 가로≥세로라 가로 우선 타원). 멈추면 멈추고, 다시 움직이면
+ * 재개, up 해도 유지. STIR_STEP마다 z-order 순열 + onGesture()(부모 Fisher-Yates 1패스).
+ * 셔플 로직·엔트로피 mix는 무변경. 연속 애니메이션(RAF) 없음 → 입력이 끝나면 멈춘다.
+ * 전부 ref 직접 transform(리렌더 0). motion-reduce: 궤도는 입력 구동이라 유지.
  */
-const LAYER_COUNT = 4;
+const LAYER_COUNT = DECK_SIZE; // 22 — 덱 전체
 const CARD_W = 192; // lg = w-48
 const CARD_H = 329; // aspect-[7/12]
 
@@ -23,14 +25,18 @@ const STIR_MIN_MS = 130; // 순열 최소 간격
 const ANGLE_PER_PX = 0.012; // 누적 px → 궤도각 전진(rad). 80px ≈ 0.96rad(~55°)
 const ROT_WOBBLE = 4; // 카드 기울임 진폭(±deg) — AABB 클램프에 반영
 const MARGIN = 6; // 무대 가장자리 여백(px)
-const PHASES = Array.from({ length: LAYER_COUNT }, (_, i) => (i * 2 * Math.PI) / LAYER_COUNT);
-// 초기 loose pile (중심 근처) — 첫 stir에서 궤도 진입
-const INITIAL = [
-  { dx: -6, dy: 6, rot: -3 },
-  { dx: 6, dy: -4, rot: 3 },
-  { dx: -3, dy: -7, rot: -1 },
-  { dx: 2, dy: 3, rot: 2 },
-];
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5)); // ≈2.399rad — 해바라기 위상 분산
+// 카드별 위상 + 정규화 반경(0~1, sqrt로 디스크 균등 충전: 가장자리 링 아닌 속 찬 더미)
+const PHASES = Array.from({ length: LAYER_COUNT }, (_, i) => i * GOLDEN_ANGLE);
+const RADII = Array.from({ length: LAYER_COUNT }, (_, i) =>
+  LAYER_COUNT > 1 ? Math.sqrt(i / (LAYER_COUNT - 1)) : 0,
+);
+// 초기 loose pile (중심 근처 작은 오프셋) — 첫 stir에서 디스크 궤도 진입
+const INITIAL = Array.from({ length: LAYER_COUNT }, (_, i) => ({
+  dx: ((i * 7) % 13) - 6,
+  dy: ((i * 5) % 11) - 5,
+  rot: ((i * 3) % 9) - 4,
+}));
 
 type ShuffleStageProps = {
   rng: RitualRng;
@@ -75,15 +81,15 @@ export function ShuffleStage({
     s.current.ry = Math.min(maxDy, maxDx); // 세로 ≤ 가로 → 가로 우선 타원/원
   };
 
-  /** theta 기준 전 카드를 궤도 위치로 직접 배치(transition 없음). */
+  /** theta 기준 전 22장을 해바라기 디스크 궤도 위치로 직접 배치(transition 없음). */
   const applyOrbit = () => {
     const c = s.current;
     for (let i = 0; i < LAYER_COUNT; i++) {
       const el = cardRefs.current[i];
       if (!el) continue;
       const a = c.theta + PHASES[i];
-      const x = c.rx * Math.cos(a);
-      const y = c.ry * Math.sin(a);
+      const x = c.rx * RADII[i] * Math.cos(a);
+      const y = c.ry * RADII[i] * Math.sin(a);
       const rot = ROT_WOBBLE * Math.sin(a);
       el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
     }
