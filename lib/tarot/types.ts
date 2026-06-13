@@ -4,8 +4,9 @@
  * 사전 항목은 카드 × 방향 단위. 텍스트 필드는 { ko, en? } — en 본문은 백로그.
  */
 
-export const DOMAINS = ["love", "work", "money", "relation", "self"] as const;
-// 칩 라벨(연애 / 일·직업 / 돈 / 관계 / 자기)은 i18n `tarot.domain_*` — enum 값은 내부 고정.
+// "other"(그 외)는 선택 전용 도메인 — 카드 키워드는 5종만 태그하고 "other"는 절대 안 쓴다.
+// "other" 선택 시 리딩은 특정 매칭 없이 전체 키워드를 동등 표시(mute 없음). 칩 라벨은 i18n `tarot.domain_*`.
+export const DOMAINS = ["love", "work", "money", "relation", "self", "other"] as const;
 export type Domain = (typeof DOMAINS)[number];
 
 export interface OrientationEntry {

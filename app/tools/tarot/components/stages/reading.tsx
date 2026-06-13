@@ -59,8 +59,10 @@ function CardSection({
   const { card, orientation } = drawn;
   const entry: OrientationEntry = card[orientation];
   const reversed = orientation === "reversed";
-  const matched = entry.keywords.filter((k) => k.domains.includes(domain));
-  const unmatched = entry.keywords.filter((k) => !k.domains.includes(domain));
+  // "그 외" = 특정 도메인 매칭 안 함 → 전체 키워드 동등 표시(강조/mute 없음).
+  const isOther = domain === "other";
+  const matched = isOther ? [] : entry.keywords.filter((k) => k.domains.includes(domain));
+  const unmatched = isOther ? [] : entry.keywords.filter((k) => !k.domains.includes(domain));
 
   return (
     <section className="rounded-lg bg-card p-4 ring-1 ring-foreground/10">
@@ -82,7 +84,21 @@ function CardSection({
 
       <p className="mt-3 text-sm leading-relaxed break-keep">{entry.essence.ko}</p>
 
-      {matched.length > 0 ? (
+      {isOther ? (
+        // 그 외 — 전체 키워드 동등 표시 (중립 스타일, mute·강조·토글 없음)
+        <ul className="mt-4 flex flex-col gap-3">
+          {entry.keywords.map((k) => (
+            <li key={k.word.ko}>
+              <span className="inline-block rounded-full px-3 py-1 text-xs font-medium ring-1 ring-foreground/20">
+                {k.word.ko}
+              </span>
+              <p className="mt-1.5 border-l-2 border-foreground/15 pl-3 text-sm leading-relaxed text-muted-foreground break-keep">
+                {k.gloss.ko}
+              </p>
+            </li>
+          ))}
+        </ul>
+      ) : matched.length > 0 ? (
         <ul className="mt-4 flex flex-col gap-3">
           {matched.map((k) => (
             <li key={k.word.ko}>
@@ -272,7 +288,7 @@ export function Reading({
       cards: cards.map(({ card, orientation }, i) => {
         const entry = card[orientation];
         const pool =
-          (domain as string) === "other"
+          domain === "other"
             ? entry.keywords
             : entry.keywords.filter((k) => k.domains.includes(domain));
         const body =

@@ -663,6 +663,9 @@ export type Messages = {
     domain_money: string;
     domain_relation: string;
     domain_self: string;
+    domain_other: string;
+    questionMinNote: string;
+    questionCounter: string;
     groundingLine: string;
     groundingReady: string;
     questionTitle: string;
@@ -1624,6 +1627,9 @@ export const messages: Record<Locale, Messages> = {
       domain_money: "돈",
       domain_relation: "관계",
       domain_self: "자기",
+      domain_other: "그 외",
+      questionMinNote: "최소 10자 이상 적어주세요",
+      questionCounter: "{n}/{min}",
       groundingLine: "마음속 질문을 하나로 좁혀보세요",
       groundingReady: "준비됐어요",
       questionTitle: "질문을 적어주세요",
@@ -2696,6 +2702,9 @@ export const messages: Record<Locale, Messages> = {
       domain_money: "Money",
       domain_relation: "Relationships",
       domain_self: "Self",
+      domain_other: "Other",
+      questionMinNote: "Write at least 10 characters",
+      questionCounter: "{n}/{min}",
       groundingLine: "Let your mind settle on a single question",
       groundingReady: "I'm ready",
       questionTitle: "Write your question",
