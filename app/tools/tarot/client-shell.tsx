@@ -156,6 +156,7 @@ export function TarotClientShell() {
       nonce: seal.nonce,
       hash: seal.hash,
       pickedIndices: state.pickedIndices,
+      markedCardId: state.markedCardId,
     };
     saveLastReading(reading);
     setSavedReading(reading);
@@ -289,7 +290,9 @@ export function TarotClientShell() {
       {state.stage === "shuffle" && rng && (
         <ShuffleStage
           rng={rng}
+          markedCardId={state.markedCardId}
           onGesture={() => dispatch({ type: "SHUFFLE_APPLY", deck: shufflePass(state.deck, rng) })}
+          onMark={(cardId) => dispatch({ type: "MARK_CARD", cardId })}
           onDone={() => dispatch({ type: "SHUFFLE_DONE" })}
           onEditQuestion={() => dispatch({ type: "BACK_TO_QUESTION" })}
         />

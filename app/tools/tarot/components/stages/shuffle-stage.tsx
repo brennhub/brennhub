@@ -24,6 +24,8 @@ const STIR_STEP = 80; // 누적 이동(px)마다 z 순열 + onGesture 1회
 const STIR_MIN_MS = 130; // 순열 최소 간격
 const ANGLE_PER_PX = 0.012; // 누적 px → 궤도각 전진(rad). 80px ≈ 0.96rad(~55°)
 const REVEAL_REVOLUTIONS = 5; // [이제 됐어요] 등장 = 누적 회전 5바퀴(≈10π). 편집장 체감 조정.
+const POP_AFTER_REVOLUTIONS = 1; // 선점 가능 시점 — 최소 1바퀴 휘저은 뒤
+const POP_CHANCE_DENOM = 50; // 유효 제스처당 선점 확률 1/50(~2%). 편집장 체감 조정.
 const ROT_WOBBLE = 4; // 카드 기울임 진폭(±deg) — AABB 클램프에 반영
 const MARGIN = 6; // 무대 가장자리 여백(px)
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5)); // ≈2.399rad — 해바라기 위상 분산
@@ -41,17 +43,29 @@ const INITIAL = Array.from({ length: LAYER_COUNT }, (_, i) => ({
 
 type ShuffleStageProps = {
   rng: RitualRng;
+  markedCardId: number | null;
   onGesture: () => void;
+  onMark: (cardId: number) => void;
   onDone: () => void;
   onEditQuestion: () => void;
 };
 
-export function ShuffleStage({ rng, onGesture, onDone, onEditQuestion }: ShuffleStageProps) {
+export function ShuffleStage({
+  rng,
+  markedCardId,
+  onGesture,
+  onMark,
+  onDone,
+  onEditQuestion,
+}: ShuffleStageProps) {
   const tt = useMessages().tarot;
   const areaRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>(Array(LAYER_COUNT).fill(null));
   // 누적 회전 5바퀴 넘으면 [이제 됐어요] 등장 (은밀 — 진행 표시 없음)
   const [ready, setReady] = useState(false);
+  // 선점 — 낮은 확률 이벤트, 세션 1회. popped 동안 휘젓기 일시정지.
+  const [popped, setPopped] = useState<number | null>(null);
+  const popFired = useRef(false);
   const s = useRef({
     active: false,
     lastX: 0,
@@ -124,7 +138,7 @@ export function ShuffleStage({ rng, onGesture, onDone, onEditQuestion }: Shuffle
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const c = s.current;
-    if (!c.active || !e.isPrimary) return;
+    if (!c.active || !e.isPrimary || popped !== null) return; // 선점 프롬프트 중 휘젓기 정지
     const d = Math.hypot(e.clientX - c.lastX, e.clientY - c.lastY);
     c.lastX = e.clientX;
     c.lastY = e.clientY;
@@ -143,6 +157,17 @@ export function ShuffleStage({ rng, onGesture, onDone, onEditQuestion }: Shuffle
       c.lastReshuffleAt = e.timeStamp;
       onGesture();
       reshuffleZ();
+      // 선점 — 1바퀴 이상 휘젓고, 미발생·미선점일 때 낮은 확률(또는 테스트 강제)
+      if (
+        !popFired.current &&
+        markedCardId === null &&
+        c.totalRot >= POP_AFTER_REVOLUTIONS * 2 * Math.PI &&
+        ((window as Window & { __tarotForcePop?: boolean }).__tarotForcePop ||
+          rng.nextBelow(POP_CHANCE_DENOM) === 0)
+      ) {
+        popFired.current = true; // 세션 1회(수락·거절 무관)
+        setPopped(rng.nextBelow(DECK_SIZE)); // 후보 카드 id(0~21)
+      }
     }
   };
 
@@ -182,6 +207,35 @@ export function ShuffleStage({ rng, onGesture, onDone, onEditQuestion }: Shuffle
             <TarotCard face="back" size="lg" />
           </div>
         ))}
+
+        {/* 선점 — 카드 한 장이 튀어나와 강조 + 인라인 점지 프롬프트(낮은 확률·세션 1회). */}
+        {popped !== null && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-background/70 backdrop-blur-sm">
+            <div className="animate-in zoom-in-95 fade-in duration-300">
+              <TarotCard face="back" size="md" className="ring-2 ring-primary shadow-lg" />
+            </div>
+            <p className="px-8 text-center text-sm font-medium break-keep">{tt.popPrompt}</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  onMark(popped);
+                  setPopped(null);
+                }}
+                className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground"
+              >
+                {tt.popAccept}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPopped(null)}
+                className="rounded-lg px-6 py-2.5 text-sm font-medium ring-1 ring-foreground/20"
+              >
+                {tt.popReject}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex shrink-0 flex-col items-center gap-3">

@@ -47,6 +47,8 @@ export type RitualState = {
   /** S6 선택 = 세 장 전체 방향의 단일 소스 (2026-06-11 단층 정정). 해시 불포함 — 투명한 선택이라 증명 불필요. */
   userChoice: "upright" | "reversed" | null;
   flippedCount: 0 | 1 | 2 | 3;
+  /** 셔플 중 "선점"한 카드 id(0~21) 또는 null. 순수 메타데이터 — deck 순서·방향 비트·봉인 무관. */
+  markedCardId: number | null;
 };
 
 export type RitualAction =
@@ -57,6 +59,7 @@ export type RitualAction =
   | { type: "QUESTION_SUBMIT" }
   | { type: "BACK_TO_QUESTION" }
   | { type: "SHUFFLE_APPLY"; deck: number[] }
+  | { type: "MARK_CARD"; cardId: number }
   | { type: "SHUFFLE_DONE" }
   | { type: "CUT_SPLIT"; first: number; second: number }
   | { type: "CUT_RESET_SPLIT" }
@@ -84,6 +87,7 @@ export const initialRitualState: RitualState = {
   pickedIndices: [],
   userChoice: null,
   flippedCount: 0,
+  markedCardId: null,
 };
 
 const identityDeck = () => Array.from({ length: DECK_SIZE }, (_, i) => i);
@@ -116,6 +120,16 @@ export function ritualReducer(state: RitualState, action: RitualAction): RitualS
     case "SHUFFLE_APPLY":
       return state.stage === "shuffle"
         ? { ...state, deck: action.deck, shuffleCount: state.shuffleCount + 1 }
+        : state;
+
+    // 선점 — 순수 메타데이터. deck·bits·순서 무변경(셔플 중 1회). 봉인 무결성 유지.
+    case "MARK_CARD":
+      return state.stage === "shuffle" &&
+        state.markedCardId === null &&
+        Number.isInteger(action.cardId) &&
+        action.cardId >= 0 &&
+        action.cardId < DECK_SIZE
+        ? { ...state, markedCardId: action.cardId }
         : state;
 
     case "SHUFFLE_DONE":

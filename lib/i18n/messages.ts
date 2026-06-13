@@ -678,6 +678,9 @@ export type Messages = {
     restartConfirm: string;
     shuffleInstruction: string;
     shuffleDone: string;
+    popPrompt: string;
+    popAccept: string;
+    popReject: string;
     editQuestion: string;
     cutSplitInstruction: string;
     cutOrderInstruction: string;
@@ -1642,6 +1645,9 @@ export const messages: Record<Locale, Messages> = {
       restartConfirm: "정말 처음부터 다시 할까요?",
       shuffleInstruction: "카드를 쓸어 넘기며 직접 섞으세요",
       shuffleDone: "이제 됐어요",
+      popPrompt: "한 장이 손끝에 머뭅니다. 이 카드를 미리 점지하시겠어요?",
+      popAccept: "점지하기",
+      popReject: "아니요",
       editQuestion: "질문 수정",
       cutSplitInstruction: "덱에서 자를 두 지점을 탭하세요",
       cutOrderInstruction: "합칠 순서대로 더미를 탭하세요",
@@ -2717,6 +2723,9 @@ export const messages: Record<Locale, Messages> = {
       restartConfirm: "Really start over from the beginning?",
       shuffleInstruction: "Sweep the deck to shuffle it yourself",
       shuffleDone: "That feels right",
+      popPrompt: "One card lingers at your fingertips. Mark it in advance?",
+      popAccept: "Mark this card",
+      popReject: "No, thanks",
       editQuestion: "Edit question",
       cutSplitInstruction: "Tap two points to cut the deck",
       cutOrderInstruction: "Tap the piles in the order to restack them",
