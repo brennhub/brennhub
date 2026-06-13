@@ -1,5 +1,22 @@
 # 타로 테이블 (Tarot Table) CHANGELOG
 
+## 0.7.0 — 2층 정/역 메커니즘 복원 + 세로 플립 + 검증 공개 (2026-06-13)
+
+**What** — 단층(선택=결과)을 **2층 ★시그니처**로 재전환. ① 컷 시점 각 카드의 숨은 방향이 무작위 고정(봉인 포함) ② 정/역 선택은 "뒤집는 축"(정=가로 보존/역=세로 반전), 최종 방향 = 숨은 비트 × 선택 → **어느 쪽을 골라도 3장 혼재가 정상** ③ 플립 축이 선택 따라 가로/세로 ④ 검증 토글이 카드별 "놓인 방향 → 뒤집기 → 최종"을 공개해 "뒤집기 전에 이미 정해져 있었다" 확인 가능.
+
+**Why** — 편집장 재확정: 기획 시그니처(숨은 방향 × 선택)가 6/11 단층 정정으로 사라졌던 것을 복원하되, 이번엔 세로 플립 연출 + 검증 공개까지 완성해 "확인할 길 없다"는 빈틈을 닫음.
+
+**Where** — `ritual.ts`(drawOrientationBits·finalOrientation 복원, buildSealPayload v2) · `ritual-state.ts`(Seal.bits) · `reading-storage.ts`(bits, schemaVersion 2) · `client-shell.tsx`(봉인 bits·drawn 2층) · `flip-card.tsx`·`open-stage.tsx`(choice 기준 축) · `reading.tsx`(검증 카드별 공개) · `messages.ts`.
+
+**결정 기록**
+- 최종 방향 = `finalOrientation(bit, choice)` = bit XOR choice (acbd571 방식 회수). 단층 단순화 영구 금지 — 리뷰 최우선 주석.
+- 플립 축은 choice 기준(뒤집는 동작), 착지 orientation은 2층 최종값 — 둘 분리.
+- 봉인 payload v1→v2(bits 포함), 저장 schemaVersion 1→2(구버전 폐기, prod 미출시·dev 한정 무해).
+- 문서 동시 갱신(README 2층 재작성 + CONCEPT "현재 일치" 헤더) — 불일치 금지.
+- 셔플·BGM·레이아웃(Task 10) 무관·무변경.
+
+**Verify** — 커밋별 빌드 그린 · 브라우저: seal.bits 22개 · 같은 선택에서도 3장 혼재 관측(2층 증명) · finalOrientation 진리표 4 · 정방향=rotateY/역방향=rotateX 축 · 검증 토글 카드별 공개 + v2 payload sha256 재계산 일치 + 새로고침 복원.
+
 ## 0.6.3 — 셔플 22장 전체 렌더 + BGM 타이밍 복구 + 레이아웃 정상화 (2026-06-13)
 
 **What** — ① 셔플이 **22장 전부** 렌더(기존 4장 축약 폐기) — 봉인 덱 전체가 해바라기 디스크로 쌓여 휘젓기 시 함께 원형 회전. ② **BGM 타이밍 복구**: [리딩 시작] 시점 재생으로 되돌림(그라운딩 호흡이 mp3 로딩 버퍼). "준비됐어요"는 질문 전환만. ③ **레이아웃 정상화**: 셔플 안내문/버튼이 화면 극단(최상단·최하단)에 붙던 것을 중앙 클러스터로 복원, 그라운딩 간격 조정.
