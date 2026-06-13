@@ -1,5 +1,21 @@
 # 타로 테이블 (Tarot Table) CHANGELOG
 
+## 0.5.0 — 실사용 피드백 3건: BGM 연속·공유 결과 포함·셔플 연출 (2026-06-12)
+
+**What** — 편집장 prod 실사용 판정 3건. ① **BGM 연속 재생**: S8 침묵 설계 폐기 — 리딩 화면에서도 계속, 정지는 새 리딩(RESET)·페이지 이탈만. 토글 S8 노출, '지난 리딩 보기'는 무음 유지 ② **공유 이미지 결과 포함**: 도메인 뱃지 + 카드 블록 ×3(미니 카드·포지션·이름·방향·매칭 키워드 칩·대표 gloss 2줄) — measureText word-wrap, mute 카드는 essence 첫 문장 ③ **셔플 연출 강화**: 반경 48/72/96, 유효 제스처마다 z-순열 재배열 + 350ms 교차 transition + 위상/반경 점프 + 잡힌 카드 교체("흩어졌다 모이는").
+
+**Why** — ① 실청취: 리딩 중 끊기는 음악이 침묵의 무게보다 어색 ② 공유물에 결과가 없으면 받은 사람에게 무의미 ③ 기존 스월은 "순서가 안 바뀌어 보임".
+
+**Where** — `client-shell.tsx`(stop 이펙트 제거·토글 조건·overflow-x-clip) · `lib/tarot/share-image.ts`(레이아웃 재설계 + wrapText) · `reading.tsx`(매칭 칩/대표 gloss 전달 — 질문은 여전히 파라미터 부재) · `shuffle-stage.tsx`(4장 동일 레이어 + grabbedIndex + reshuffle).
+
+**결정 기록**
+- 셔플 로직 무변경 — shufflePass·엔트로피 mix·24px 제스처 카운트 그대로. 변경은 연출만.
+- 공유 대표 gloss = 첫 매칭 키워드 1건(공간 제약) — 나머지는 칩 +n 오버플로.
+- 유효 제스처 = 교차 재배치 / 무효 제스처 = 스월 감속 — 자동 루프 금지 원칙 유지.
+- motion-reduce: transition 없는 즉시 재배치(z 교체는 유지).
+
+**Verify** — 커밋별 빌드 그린 · 브라우저: S8 RMS 지속+토글 동작 / 새 리딩 정지→재시작 / 지난 리딩 ctx 0 / 공유 PNG 1080×1350 칩·gloss 영역 픽셀 렌더 + mute 케이스 / z-순열 변화 + 입력 정지 시 회전 정지 / scrollWidth ≤ 390.
+
 ## 0.4.2 — BGM 음원 재인코딩 7.7MB → 3.9MB (2026-06-12)
 
 **What** — `ambient.mp3` 320kbps CBR → VBR V5(~130kbps) 재인코딩(편집장 수행, 음량 무변경). 모바일 데이터 절반 이하.

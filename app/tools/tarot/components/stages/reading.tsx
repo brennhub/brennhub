@@ -211,15 +211,27 @@ export function Reading({
   /** 공유 — navigator.share(파일) 가능 시 네이티브 시트, 아니면 PNG 다운로드. 질문 미전달. */
   const handleShare = async () => {
     const canvas = renderShareImage({
-      cards: cards.map(({ card, orientation }, i) => ({
-        roman: toRoman(card.id),
-        name: locale === "en" ? card.name.en : card.name.ko,
-        sub: locale === "en" ? card.name.ko : card.name.en,
-        positionLabel: positions[i],
-        orientationLabel:
-          orientation === "reversed" ? tt.orientationReversed : tt.orientationUpright,
-        reversed: orientation === "reversed",
-      })),
+      cards: cards.map(({ card, orientation }, i) => {
+        const entry = card[orientation];
+        const matched = entry.keywords.filter((k) => k.domains.includes(domain));
+        // mute(매칭 0)면 essence 첫 문장 — gloss·essence는 본문 ko 전용 합의 그대로
+        const body =
+          matched.length > 0
+            ? matched[0].gloss.ko
+            : (entry.essence.ko.match(/^.*?다\./)?.[0] ?? entry.essence.ko);
+        return {
+          roman: toRoman(card.id),
+          name: locale === "en" ? card.name.en : card.name.ko,
+          sub: locale === "en" ? card.name.ko : card.name.en,
+          positionLabel: positions[i],
+          orientationLabel:
+            orientation === "reversed" ? tt.orientationReversed : tt.orientationUpright,
+          reversed: orientation === "reversed",
+          chips: matched.map((k) => k.word.ko),
+          body,
+        };
+      }),
+      domainLabel,
       toolLine: `${tt.title} — BrennHub`,
       urlLine: "brennhub.com/tools/tarot",
     });
