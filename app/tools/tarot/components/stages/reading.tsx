@@ -308,6 +308,14 @@ export function Reading({
   const [toast, setToast] = useState<{ msg: string; key: number } | null>(null);
   const showToast = (msg: string) => setToast({ msg, key: Date.now() });
 
+  // [이미지 복사] 노출 가드 — 클라이언트에서만 판정(SSR 안전). 미지원이면 버튼 미렌더.
+  const [canCopy, setCanCopy] = useState(false);
+  useEffect(() => {
+    setCanCopy(
+      typeof ClipboardItem !== "undefined" && typeof navigator.clipboard?.write === "function",
+    );
+  }, []);
+
   /** 공유 이미지 canvas — 질문 포함(상단). "other"는 매칭 없으니 전체 키워드를 pool로. */
   const buildCanvas = () =>
     renderShareImage({
@@ -389,6 +397,28 @@ export function Reading({
     showToast(tt.shareToastSaved);
   };
 
+  /**
+   * [이미지 복사] — 공유 시트를 거치지 않고 우리 클립보드에 직접 복사(붙여넣기 가능한 진짜 복사).
+   * navigator.share와 별개 경로. 미지원 환경은 버튼 자체가 안 보이므로(canCopy) 여기까진 안 옴.
+   */
+  const handleCopy = async () => {
+    const canvas = buildCanvas();
+    const blob = await canvasToBlob(canvas);
+    if (!blob) {
+      console.warn("[tarot] copy: canvas.toBlob returned null");
+      showToast(tt.shareToastCopyFail);
+      return;
+    }
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      showToast(tt.shareToastCopied);
+    } catch (err) {
+      // 권한 거부·gesture 소실 등 — 조용히 삼키지 않고 명시(로그 + 사용자 토스트).
+      console.warn("[tarot] clipboard copy failed:", err);
+      showToast(tt.shareToastCopyFail);
+    }
+  };
+
   return (
     <div className="flex flex-1 animate-in flex-col gap-8 pt-4 fade-in duration-700">
       <header className="text-center">
@@ -423,6 +453,15 @@ export function Reading({
       />
 
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+        {canCopy && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="w-full rounded-lg px-8 py-3 font-medium ring-1 ring-foreground/20 sm:w-auto"
+          >
+            {tt.shareCopy}
+          </button>
+        )}
         <button
           type="button"
           onClick={handleShare}
