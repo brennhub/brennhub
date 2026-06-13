@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "tarot-reverse-flip",
+    date: "2026-06-12",
+    tool: "tarot",
+    kind: "fixed",
+    title: {
+      ko: "타로 테이블 — 역방향 카드 플립 연출 수정",
+      en: "Tarot Table — reversed cards now flip the right way",
+    },
+    body: {
+      ko: "역방향으로 뒤집기를 골랐을 때 카드가 위아래로 넘어갑니다. 정방향은 좌우로 넘어가던 그대로예요 — 선택한 방향이 카드를 여는 손짓에도 드러납니다.",
+      en: "When you choose to flip reversed, the cards now turn top-to-bottom; upright still turns side-to-side — so the direction you chose shows in the way each card opens.",
+    },
+  },
+  {
     id: "tarot-ambient-bgm",
     date: "2026-06-12",
     tool: "tarot",
