@@ -209,8 +209,12 @@ export function ShuffleStage({
         ))}
 
         {/* 선점 — 카드 한 장이 튀어나와 강조 + 인라인 점지 프롬프트(낮은 확률·세션 1회). */}
+        {/* stopPropagation: 무대 onPointerDown(setPointerCapture)가 오버레이 버튼 클릭을 가로채지 않게. */}
         {popped !== null && (
-          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-background/70 backdrop-blur-sm">
+          <div
+            onPointerDown={(e) => e.stopPropagation()}
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-background/70 backdrop-blur-sm"
+          >
             <div className="animate-in zoom-in-95 fade-in duration-300">
               <TarotCard face="back" size="md" className="ring-2 ring-primary shadow-lg" />
             </div>
