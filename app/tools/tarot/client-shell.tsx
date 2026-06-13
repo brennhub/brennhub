@@ -269,8 +269,9 @@ export function TarotClientShell() {
   }
 
   return (
-    // overflow-x-clip: 셔플 궤도(반경 최대 96px)가 390px 뷰포트 밖으로 나가도 가로 스크롤 미발생
-    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-clip px-6 pt-8 pb-16">
+    // 가로 넘침 차단(셔플 궤도)은 셔플 무대 요소로 한정 이동 — main에 두면 max-w-md와 합쳐져
+    // 그라운딩 full-bleed 패널(w-screen)이 데스크톱(>448px)에서 컬럼 폭으로 잘렸다(Task 14).
+    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-8 pb-16">
       {/* 음소거 토글 — 그라운딩부터 음악 재생되므로 의식 전 단계 노출.
           '지난 리딩 보기'는 entry 분기 별도 main — BGM 세션 없음·토글 비노출. */}
       <SoundToggle muted={soundMuted} onToggle={handleToggleMute} />

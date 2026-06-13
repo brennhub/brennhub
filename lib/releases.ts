@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "tarot-copy-image-button",
+    date: "2026-06-13",
+    tool: "tarot",
+    kind: "improved",
+    title: {
+      ko: "타로 테이블 — 리딩 이미지 복사 버튼",
+      en: "Tarot Table — copy the reading image",
+    },
+    body: {
+      ko: "결과 화면에 [이미지 복사] 버튼이 공유·새 리딩 버튼과 나란히 생겼어요. 누르면 리딩 이미지가 곧바로 복사되어, 메신저 대화창이나 메모 어디든 그 자리에서 붙여넣을 수 있습니다. [이미지로 공유]는 그대로 따로 있으니, 보내고 싶을 땐 공유, 손에 쥐고 다른 곳에 옮기고 싶을 땐 복사로 골라 쓰세요. 시작 전 숨을 고르는 화면의 어둠도 큰 화면에서 좌우 끝까지 가득 차도록 다듬었습니다.",
+      en: "A [Copy image] button now sits beside the share and new-reading buttons on the result screen. Press it and the reading image is copied right away, ready to paste straight into a chat or a note. [Share image] stays where it was, on its own — share when you want to send it, copy when you want to carry it somewhere yourself. The dark of the breathing screen before you begin now stretches edge to edge on larger screens too.",
+    },
+  },
+  {
     id: "tarot-marked-card",
     date: "2026-06-13",
     tool: "tarot",
