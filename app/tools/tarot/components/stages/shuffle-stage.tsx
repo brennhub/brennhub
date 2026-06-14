@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
+import { cn } from "@/lib/utils";
 import type { RitualRng } from "@/lib/tarot/ritual";
 import { DECK_SIZE } from "@/lib/tarot/ritual-state";
 import { TarotCard } from "../tarot-card";
@@ -30,7 +31,7 @@ const STIR_STEP = 80; // 누적 이동(px)마다 z 순열 + onGesture 1회
 const STIR_MIN_MS = 130; // 순열 최소 간격
 // 시각 회전과 게이트 누적을 분리(편집장 체감): 카드는 절반 속도로 천천히 돌되,
 // [이제 됐어요]·선점 활성화에 필요한 휘젓기 '거리'는 이전과 동일하게 유지.
-const ORBIT_ANGLE_PER_PX = 0.006; // 시각 궤도 회전(rad/px) — 절반 감속(천천히 돈다)
+const ORBIT_ANGLE_PER_PX = 0.003; // 시각 궤도 회전(rad/px) — 0.003 시작. 답답하면 0.004~0.005로.
 const GATE_ANGLE_PER_PX = 0.012; // 게이트 누적(rad/px) — 활성화 거리 불변(시각 속도와 무관)
 const REVEAL_REVOLUTIONS = 5; // [이제 됐어요] 등장 = 게이트 누적 5바퀴(≈10π). 편집장 체감 조정.
 const POP_AFTER_REVOLUTIONS = 1; // 선점 가능 시점 — 최소 1바퀴 휘저은 뒤
@@ -73,32 +74,40 @@ export function ShuffleStage({
   // 누적 회전 5바퀴 넘으면 [이제 됐어요] 등장 (은밀 — 진행 표시 없음)
   const [ready, setReady] = useState(false);
   // 선점 — 낮은 확률 이벤트, 세션 1회. pop 동안 휘젓기 일시정지.
-  // pop: 튀어나온 카드 id + 방향(-1 좌/+1 우). glide: 분리 위치로 이동. showPrompt: 글라이드 후 질문 노출.
-  const [pop, setPop] = useState<{ id: number; dir: -1 | 1 } | null>(null);
-  const [glide, setGlide] = useState(false);
+  // pop: 튀어나온 카드 id·방향·비행/정착 거리(발생 시 무대 폭 실측). phase: 2단계 연출.
+  // ① fling(무대 밖까지 탁 튕겨 날아감) → ② settle(화면 안 가장자리로 복귀 정착) → 질문.
+  const [pop, setPop] = useState<{ id: number; dir: -1 | 1; flingX: number; settleX: number } | null>(
+    null,
+  );
+  const [phase, setPhase] = useState<"center" | "fling" | "settle" | "return">("center");
   const [showPrompt, setShowPrompt] = useState(false);
   const popFired = useRef(false);
 
-  // 등장 → 다음 프레임에 분리 위치로 글라이드(transition 발동), 글라이드 후 질문 노출.
-  // motion-reduce: transition 없음 + 0ms → 즉시 분리 위치 + 즉시 질문.
+  // 등장 → (모션 허용) 1단계 fling → 220ms 후 2단계 settle → 420ms 후 질문.
+  // motion-reduce: 곧바로 settle(정착 위치) + 즉시 질문(fling 생략).
   useEffect(() => {
     if (pop === null) return;
     const reduce = prefersReducedMotion();
-    const raf = requestAnimationFrame(() => setGlide(true));
-    const t = window.setTimeout(() => setShowPrompt(true), reduce ? 0 : 520);
+    const raf = requestAnimationFrame(() => setPhase(reduce ? "settle" : "fling"));
+    const timers = reduce
+      ? [window.setTimeout(() => setShowPrompt(true), 0)]
+      : [
+          window.setTimeout(() => setPhase("settle"), 220),
+          window.setTimeout(() => setShowPrompt(true), 420),
+        ];
     return () => {
       cancelAnimationFrame(raf);
-      window.clearTimeout(t);
+      timers.forEach((t) => window.clearTimeout(t));
     };
   }, [pop]);
 
-  // 수락/거절 — 질문 숨김 + 더미로 복귀 글라이드 후 제거. 수락은 markedCardId 기록(기존 로직).
+  // 수락/거절 — 질문 숨김 + 카드가 더미로 빠르게 역방향 복귀 후 제거. 수락은 markedCardId 기록(기존 로직).
   const dismissPop = (accept: boolean) => {
     if (pop === null) return;
     if (accept) onMark(pop.id);
     setShowPrompt(false);
-    setGlide(false); // 더미(중앙)로 복귀
-    window.setTimeout(() => setPop(null), prefersReducedMotion() ? 0 : 460);
+    setPhase("return"); // 더미(중앙)로 복귀
+    window.setTimeout(() => setPop(null), prefersReducedMotion() ? 0 : 220);
   };
   const s = useRef({
     active: false,
@@ -199,8 +208,15 @@ export function ShuffleStage({
           rng.nextBelow(POP_CHANCE_DENOM) === 0)
       ) {
         popFired.current = true; // 세션 1회(수락·거절 무관)
-        // 후보 카드 id(0~21) + 좌/우 랜덤 방향
-        setPop({ id: rng.nextBelow(DECK_SIZE), dir: rng.nextBelow(2) === 0 ? -1 : 1 });
+        // 무대 폭 실측 → fling(밖까지)·settle(화면 안 가장자리, 카드 안 잘림) 거리 계산
+        const areaW = areaRef.current?.getBoundingClientRect().width ?? 342;
+        // 정착 위치 — 회전·스케일 포함 카드 AABB 반폭(≈96)을 빼서 화면 안에서 안 잘리게 클램프
+        const settleX = Math.max(50, Math.min(areaW * 0.24, areaW / 2 - 96));
+        const flingX = areaW * 0.62; // 무대 가장자리 너머(클립으로 프레임 밖 처리)
+        const dir = rng.nextBelow(2) === 0 ? -1 : 1;
+        setPhase("center");
+        setShowPrompt(false);
+        setPop({ id: rng.nextBelow(DECK_SIZE), dir, flingX, settleX }); // 후보 카드 id(0~21)
       }
     }
   };
@@ -243,28 +259,43 @@ export function ShuffleStage({
           </div>
         ))}
 
-        {/* 선점 — 카드가 더미에서 좌/우로 "탁" 튀어나와(글라이드) 그 자리에 머물고, 자리 잡으면 질문. */}
-        {/* 가벼운 dim(블러 없음)으로 더미가 보임 — 카드가 더미에서 나온 느낌. */}
+        {/* 선점 — 2단계: ① 더미에서 좌/우로 무대 밖까지 "탁" 튕겨 날아감(클립으로 프레임 밖) →
+            ② 화면 안 가장자리로 복귀 정착(안 잘림) → 질문. 더미는 scrim dim+blur로 가라앉음. */}
         {/* stopPropagation: 무대 onPointerDown(setPointerCapture)가 버튼 클릭을 가로채지 않게. */}
         {pop !== null && (
           <div
             onPointerDown={(e) => e.stopPropagation()}
-            className="absolute inset-0 z-50 bg-background/40"
+            className={cn(
+              "absolute inset-0 z-50 transition-[background-color,backdrop-filter] duration-200 ease-out motion-reduce:transition-none",
+              phase === "fling" || phase === "settle"
+                ? "bg-background/75 backdrop-blur-sm"
+                : "bg-background/0",
+            )}
           >
-            {/* 튀어나온 카드 — 중앙(더미)에서 시작해 좌/우로 글라이드. 중앙 이동·중앙 확대 아님(분리 자리 유지). */}
+            {/* 튀어나온 카드 — fling(무대 밖) → settle(화면 안 가장자리, 위로 떠) → return(더미 복귀). */}
             <div
-              className="absolute top-1/2 left-1/2 transition-transform duration-500 ease-out motion-reduce:transition-none"
+              className={cn(
+                "absolute top-1/2 left-1/2 motion-reduce:transition-none",
+                phase === "fling" && "transition-transform duration-[220ms] ease-out",
+                phase === "settle" && "transition-transform duration-[180ms] ease-out",
+                phase === "return" && "transition-transform duration-[200ms] ease-in",
+              )}
               style={{
-                transform: glide
-                  ? `translate(calc(-50% + ${pop.dir * 96}px), calc(-50% - 10px)) rotate(${pop.dir * 6}deg) scale(1.06)`
-                  : "translate(-50%, -50%) rotate(0deg) scale(1)",
+                transform:
+                  phase === "fling"
+                    ? `translate(calc(-50% + ${pop.dir * pop.flingX}px), calc(-50% - 14px)) rotate(${pop.dir * 16}deg) scale(1.1)`
+                    : phase === "settle"
+                      ? `translate(calc(-50% + ${pop.dir * pop.settleX}px), calc(-50% - 70px)) rotate(${pop.dir * 3}deg) scale(1.04)`
+                      : phase === "return"
+                        ? "translate(-50%, -50%) rotate(0deg) scale(0.9)"
+                        : "translate(-50%, -50%) rotate(0deg) scale(0.92)",
               }}
             >
               <TarotCard face="back" size="md" className="shadow-xl ring-2 ring-primary" />
             </div>
-            {/* 점지 프롬프트 — 카드가 자리 잡은 뒤(글라이드 후) 하단-중앙에 등장. */}
+            {/* 점지 프롬프트 — 2단계 정착 후 하단 고정. 카드는 위로 떠 있어 세로 분리(비겹침). */}
             {showPrompt && (
-              <div className="absolute inset-x-0 bottom-[13%] flex animate-in flex-col items-center gap-4 px-6 fade-in duration-300">
+              <div className="absolute inset-x-0 bottom-[7%] flex animate-in flex-col items-center gap-4 px-6 fade-in duration-300">
                 <p className="text-center text-sm font-medium break-keep">{tt.popPrompt}</p>
                 <div className="flex gap-3">
                   <button
