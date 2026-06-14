@@ -678,6 +678,8 @@ export type Messages = {
     restartConfirm: string;
     shuffleInstruction: string;
     shuffleDone: string;
+    popOmen: string;
+    popTapHint: string;
     popPrompt: string;
     popAccept: string;
     popReject: string;
@@ -1649,7 +1651,9 @@ export const messages: Record<Locale, Messages> = {
       restartConfirm: "정말 처음부터 다시 할까요?",
       shuffleInstruction: "카드를 쓸어 넘기며 직접 섞으세요",
       shuffleDone: "이제 됐어요",
-      popPrompt: "한 장이 손끝에 머뭅니다. 이 카드를 미리 점지하시겠어요?",
+      popOmen: "셔플 도중 한 장이 튀어나왔습니다. 심상치 않은 징조입니다.",
+      popTapHint: "이 카드를 눌러보세요",
+      popPrompt: "이 카드가 무언가를 암시할지도 모릅니다. 미리 점지하시겠어요?",
       popAccept: "점지하기",
       popReject: "아니요",
       editQuestion: "질문 수정",
@@ -2731,7 +2735,9 @@ export const messages: Record<Locale, Messages> = {
       restartConfirm: "Really start over from the beginning?",
       shuffleInstruction: "Sweep the deck to shuffle it yourself",
       shuffleDone: "That feels right",
-      popPrompt: "One card lingers at your fingertips. Mark it in advance?",
+      popOmen: "A card leapt out mid-shuffle — an uncommon omen.",
+      popTapHint: "Tap this card",
+      popPrompt: "This card may be hinting at something. Mark it in advance?",
       popAccept: "Mark this card",
       popReject: "No, thanks",
       editQuestion: "Edit question",

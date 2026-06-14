@@ -80,20 +80,21 @@ export function ShuffleStage({
     null,
   );
   const [phase, setPhase] = useState<"center" | "fling" | "settle" | "return">("center");
-  const [showPrompt, setShowPrompt] = useState(false);
+  // popStep: 오버레이 내용 단계. anim(연출 중) → guide(징조+손가락, 카드 클릭 대기) → question(점지 질문).
+  const [popStep, setPopStep] = useState<"anim" | "guide" | "question">("anim");
   const popFired = useRef(false);
 
-  // 등장 → (모션 허용) 1단계 fling → 220ms 후 2단계 settle → 420ms 후 질문.
-  // motion-reduce: 곧바로 settle(정착 위치) + 즉시 질문(fling 생략).
+  // 등장 → (모션 허용) 1단계 fling → 220ms 후 2단계 settle → 420ms 후 guide(징조+손가락, 클릭 대기).
+  // motion-reduce: 곧바로 settle + 즉시 guide(fling 생략). 점지 질문은 카드 클릭이 게이트.
   useEffect(() => {
     if (pop === null) return;
     const reduce = prefersReducedMotion();
     const raf = requestAnimationFrame(() => setPhase(reduce ? "settle" : "fling"));
     const timers = reduce
-      ? [window.setTimeout(() => setShowPrompt(true), 0)]
+      ? [window.setTimeout(() => setPopStep("guide"), 0)]
       : [
           window.setTimeout(() => setPhase("settle"), 220),
-          window.setTimeout(() => setShowPrompt(true), 420),
+          window.setTimeout(() => setPopStep("guide"), 420),
         ];
     return () => {
       cancelAnimationFrame(raf);
@@ -101,11 +102,16 @@ export function ShuffleStage({
     };
   }, [pop]);
 
-  // 수락/거절 — 질문 숨김 + 카드가 더미로 빠르게 역방향 복귀 후 제거. 수락은 markedCardId 기록(기존 로직).
+  // 튀어나온 카드 클릭 = 점지 질문 게이트. guide 단계에서만 동작(클릭이 질문을 연다).
+  const handleCardClick = () => {
+    if (popStep === "guide") setPopStep("question");
+  };
+
+  // 수락/거절 — 오버레이 숨김 + 카드가 더미로 빠르게 역방향 복귀 후 제거. 수락은 markedCardId 기록(기존 로직).
   const dismissPop = (accept: boolean) => {
     if (pop === null) return;
     if (accept) onMark(pop.id);
-    setShowPrompt(false);
+    setPopStep("anim");
     setPhase("return"); // 더미(중앙)로 복귀
     window.setTimeout(() => setPop(null), prefersReducedMotion() ? 0 : 220);
   };
@@ -215,7 +221,7 @@ export function ShuffleStage({
         const flingX = areaW * 0.62; // 무대 가장자리 너머(클립으로 프레임 밖 처리)
         const dir = rng.nextBelow(2) === 0 ? -1 : 1;
         setPhase("center");
-        setShowPrompt(false);
+        setPopStep("anim");
         setPop({ id: rng.nextBelow(DECK_SIZE), dir, flingX, settleX }); // 후보 카드 id(0~21)
       }
     }
@@ -272,10 +278,22 @@ export function ShuffleStage({
                 : "bg-background/0",
             )}
           >
-            {/* 튀어나온 카드 — fling(무대 밖) → settle(화면 안 가장자리, 위로 떠) → return(더미 복귀). */}
+            {/* 튀어나온 카드 — fling(무대 밖) → settle(화면 안 가장자리, 위로 떠) → return(더미 복귀).
+                guide 단계에서 카드 자체가 클릭 타깃(클릭 = 점지 질문 게이트). */}
             <div
+              role="button"
+              tabIndex={popStep === "guide" ? 0 : -1}
+              aria-label={tt.popTapHint}
+              onClick={handleCardClick}
+              onKeyDown={(e) => {
+                if (popStep === "guide" && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  setPopStep("question");
+                }
+              }}
               className={cn(
-                "absolute top-1/2 left-1/2 motion-reduce:transition-none",
+                "absolute top-1/2 left-1/2 outline-none motion-reduce:transition-none",
+                popStep === "guide" && "cursor-pointer",
                 phase === "fling" && "transition-transform duration-[220ms] ease-out",
                 phase === "settle" && "transition-transform duration-[180ms] ease-out",
                 phase === "return" && "transition-transform duration-[200ms] ease-in",
@@ -291,10 +309,37 @@ export function ShuffleStage({
                         : "translate(-50%, -50%) rotate(0deg) scale(0.92)",
               }}
             >
-              <TarotCard face="back" size="md" className="shadow-xl ring-2 ring-primary" />
+              <TarotCard
+                face="back"
+                size="md"
+                className={cn(
+                  "shadow-xl ring-2 ring-primary",
+                  popStep === "guide" && "ring-4 ring-primary/80",
+                )}
+              />
             </div>
-            {/* 점지 프롬프트 — 2단계 정착 후 하단 고정. 카드는 위로 떠 있어 세로 분리(비겹침). */}
-            {showPrompt && (
+
+            {/* 2단계 guide — 징조 문구 + "이 카드를 눌러보세요". 손가락이 카드 아래에서 카드를 가리킴(통통). */}
+            {popStep === "guide" && (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1/2 left-1/2 animate-bounce text-3xl leading-none text-primary drop-shadow motion-reduce:animate-none"
+                  style={{
+                    transform: `translate(calc(-50% + ${pop.dir * pop.settleX}px), calc(-50% + 73px))`,
+                  }}
+                >
+                  ☝
+                </span>
+                <div className="absolute inset-x-0 bottom-[7%] flex animate-in flex-col items-center gap-2 px-6 text-center fade-in duration-300">
+                  <p className="text-sm font-medium break-keep">{tt.popOmen}</p>
+                  <p className="text-xs text-muted-foreground">{tt.popTapHint}</p>
+                </div>
+              </>
+            )}
+
+            {/* 3단계 question — 카드 클릭 후 점지 질문(손가락·징조 사라짐). 하단 고정(비겹침). */}
+            {popStep === "question" && (
               <div className="absolute inset-x-0 bottom-[7%] flex animate-in flex-col items-center gap-4 px-6 fade-in duration-300">
                 <p className="text-center text-sm font-medium break-keep">{tt.popPrompt}</p>
                 <div className="flex gap-3">
