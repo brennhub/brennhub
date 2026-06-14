@@ -30,7 +30,7 @@ const STIR_STEP = 80; // 누적 이동(px)마다 z 순열 + onGesture 1회
 const STIR_MIN_MS = 130; // 순열 최소 간격
 // 시각 회전과 게이트 누적을 분리(편집장 체감): 카드는 절반 속도로 천천히 돌되,
 // [이제 됐어요]·선점 활성화에 필요한 휘젓기 '거리'는 이전과 동일하게 유지.
-const ORBIT_ANGLE_PER_PX = 0.006; // 시각 궤도 회전(rad/px) — 절반 감속(천천히 돈다)
+const ORBIT_ANGLE_PER_PX = 0.003; // 시각 궤도 회전(rad/px) — 0.003 시작. 답답하면 0.004~0.005로.
 const GATE_ANGLE_PER_PX = 0.012; // 게이트 누적(rad/px) — 활성화 거리 불변(시각 속도와 무관)
 const REVEAL_REVOLUTIONS = 5; // [이제 됐어요] 등장 = 게이트 누적 5바퀴(≈10π). 편집장 체감 조정.
 const POP_AFTER_REVOLUTIONS = 1; // 선점 가능 시점 — 최소 1바퀴 휘저은 뒤
