@@ -84,7 +84,8 @@ export function ShuffleStage({
   const [popStep, setPopStep] = useState<"anim" | "guide" | "question">("anim");
   const popFired = useRef(false);
 
-  // 등장 → (모션 허용) 1단계 fling → 220ms 후 2단계 settle → 420ms 후 guide(징조+손가락, 클릭 대기).
+  // 등장 → (모션 허용) 1단계 fling → 320ms 후 2단계 settle → 520ms 후 guide(징조+손가락, 클릭 대기).
+  // fling 타이머는 fling CSS duration(320ms)과 맞물려야 전이가 자연스럽다(궤적 끝까지 보고 정착).
   // motion-reduce: 곧바로 settle + 즉시 guide(fling 생략). 점지 질문은 카드 클릭이 게이트.
   useEffect(() => {
     if (pop === null) return;
@@ -93,8 +94,8 @@ export function ShuffleStage({
     const timers = reduce
       ? [window.setTimeout(() => setPopStep("guide"), 0)]
       : [
-          window.setTimeout(() => setPhase("settle"), 220),
-          window.setTimeout(() => setPopStep("guide"), 420),
+          window.setTimeout(() => setPhase("settle"), 320),
+          window.setTimeout(() => setPopStep("guide"), 520),
         ];
     return () => {
       cancelAnimationFrame(raf);
@@ -216,8 +217,10 @@ export function ShuffleStage({
         popFired.current = true; // 세션 1회(수락·거절 무관)
         // 무대 폭 실측 → fling(밖까지)·settle(화면 안 가장자리, 카드 안 잘림) 거리 계산
         const areaW = areaRef.current?.getBoundingClientRect().width ?? 342;
-        // 정착 위치 — 회전·스케일 포함 카드 AABB 반폭(≈96)을 빼서 화면 안에서 안 잘리게 클램프
-        const settleX = Math.max(50, Math.min(areaW * 0.24, areaW / 2 - 96));
+        // 정착 위치 — settle은 rotate 0·scale 1이라 카드(md, 144px) AABB가 정폭(반폭 72 + ring ≈76).
+        // 가장자리 살짝 걸침(약 16px)까지 허용해 "튀어나간" 느낌을 주되 과반은 항상 보이게 클램프.
+        // 모바일(342)에서 ~115px → 무대 중앙에서 충분히 치우침(이전 75px은 중앙처럼 보였음).
+        const settleX = Math.max(60, Math.min(areaW * 0.34, areaW / 2 - 56));
         const flingX = areaW * 0.62; // 무대 가장자리 너머(클립으로 프레임 밖 처리)
         const dir = rng.nextBelow(2) === 0 ? -1 : 1;
         setPhase("center");
@@ -294,7 +297,7 @@ export function ShuffleStage({
               className={cn(
                 "absolute top-1/2 left-1/2 outline-none motion-reduce:transition-none",
                 popStep === "guide" && "cursor-pointer",
-                phase === "fling" && "transition-transform duration-[220ms] ease-out",
+                phase === "fling" && "transition-transform duration-[320ms] ease-out",
                 phase === "settle" && "transition-transform duration-[180ms] ease-out",
                 phase === "return" && "transition-transform duration-[200ms] ease-in",
               )}
@@ -303,7 +306,7 @@ export function ShuffleStage({
                   phase === "fling"
                     ? `translate(calc(-50% + ${pop.dir * pop.flingX}px), calc(-50% - 14px)) rotate(${pop.dir * 16}deg) scale(1.1)`
                     : phase === "settle"
-                      ? `translate(calc(-50% + ${pop.dir * pop.settleX}px), calc(-50% - 70px)) rotate(${pop.dir * 3}deg) scale(1.04)`
+                      ? `translate(calc(-50% + ${pop.dir * pop.settleX}px), calc(-50% - 70px)) rotate(0deg) scale(1)`
                       : phase === "return"
                         ? "translate(-50%, -50%) rotate(0deg) scale(0.9)"
                         : "translate(-50%, -50%) rotate(0deg) scale(0.92)",
@@ -322,14 +325,19 @@ export function ShuffleStage({
             {/* 2단계 guide — 징조 문구 + "이 카드를 눌러보세요". 손가락이 카드 아래에서 카드를 가리킴(통통). */}
             {popStep === "guide" && (
               <>
+                {/* 위치 transform은 wrapper에, animate-bounce는 안쪽 글리프에 분리 —
+                    같은 요소에 두면 bounce keyframe transform이 위치 transform을 덮어써
+                    손가락이 카드 위치(dir*settleX)를 안 따라간다. 분리하면 두 transform이 합성된다. */}
                 <span
                   aria-hidden="true"
-                  className="absolute top-1/2 left-1/2 animate-bounce text-3xl leading-none text-primary drop-shadow motion-reduce:animate-none"
+                  className="absolute top-1/2 left-1/2"
                   style={{
                     transform: `translate(calc(-50% + ${pop.dir * pop.settleX}px), calc(-50% + 73px))`,
                   }}
                 >
-                  ☝
+                  <span className="block animate-bounce text-3xl leading-none text-primary drop-shadow motion-reduce:animate-none">
+                    ☝
+                  </span>
                 </span>
                 <div className="absolute inset-x-0 bottom-[7%] flex animate-in flex-col items-center gap-2 px-6 text-center fade-in duration-300">
                   <p className="text-sm font-medium break-keep">{tt.popOmen}</p>
