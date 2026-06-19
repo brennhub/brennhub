@@ -66,6 +66,14 @@ export function recombine(
   return order.flatMap((i) => [...piles[i]]);
 }
 
+/**
+ * 카드별 숨은 방향 비트(0=정방향 놓임, 1=역방향 놓임). 컷 확정 시점에 무작위 고정.
+ * crypto 기반(nextUint32의 최하위 비트). 2층 메커니즘의 ①층 — 선택 전 이미 정해진 방향.
+ */
+export function drawOrientationBits(rng: RitualRng, n = 22): (0 | 1)[] {
+  return Array.from({ length: n }, () => (rng.nextUint32() & 1) as 0 | 1);
+}
+
 /** 16바이트 hex nonce. (lib/auth/random.ts randomHex와 동일 패턴 — auth 번들 미수입 위해 자체 구현) */
 export function randomNonceHex(bytes = 16): string {
   const buf = new Uint8Array(bytes);
@@ -76,14 +84,18 @@ export function randomNonceHex(bytes = 16): string {
 }
 
 /**
- * 봉인 payload 정본 — S8 '검증' 토글(Task 3)이 이 문자열을 재구성해 재해시한다.
+ * 봉인 payload 정본 — S8 '검증' 토글이 이 문자열을 재구성해 재해시한다.
  * 포맷 변경 = 검증 호환 깨짐. 변경 금지.
- *   tarot-seal-v1|order:<id,22개>|nonce:<32 hex>
- * 증명 대상 = "카드를 고르기 전에 덱 순서가 고정되어 있었다."
- * 방향은 S6에서 사용자가 투명하게 선택하므로 증명 대상이 아니다 (2026-06-11 단층 정정).
+ *   tarot-seal-v2|order:<id,22개>|bits:<0/1 22개>|nonce:<32 hex>
+ * 증명 대상 = "카드를 고르기 전에 덱 순서와 각 카드의 놓인 방향이 이미 정해져 있었다."
+ * (2026-06-12 단층→2층 재전환: 숨은 방향까지 봉인이 덮어 검증 공개 가능.)
  */
-export function buildSealPayload(deck: readonly number[], nonce: string): string {
-  return `tarot-seal-v1|order:${deck.join(",")}|nonce:${nonce}`;
+export function buildSealPayload(
+  deck: readonly number[],
+  bits: readonly (0 | 1)[],
+  nonce: string,
+): string {
+  return `tarot-seal-v2|order:${deck.join(",")}|bits:${bits.join("")}|nonce:${nonce}`;
 }
 
 export async function sha256Hex(text: string): Promise<string> {
@@ -91,4 +103,18 @@ export async function sha256Hex(text: string): Promise<string> {
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+/**
+ * ★ 2층 정/역 메커니즘 — 코드 리뷰 최우선. 최종 방향 = 숨은 비트 × 선택.
+ * 정방향 선택(가로 뒤집기) = 숨은 방향 보존(항등) / 역방향 선택(세로 뒤집기) = 반전(NOT).
+ * 어느 쪽을 골라도 카드마다 결과가 섞여 나오는 게 정상(혼재). 단층(orientation=choice)으로
+ * 단순화 금지 — 그러면 시그니처가 죽는다.
+ */
+export function finalOrientation(
+  bit: 0 | 1,
+  choice: "upright" | "reversed",
+): "upright" | "reversed" {
+  const reversed = (bit === 1) !== (choice === "reversed");
+  return reversed ? "reversed" : "upright";
 }

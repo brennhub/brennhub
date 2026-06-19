@@ -7,12 +7,16 @@ import { TarotCard } from "../tarot-card";
 
 /**
  * S7 플립 카드 — 3D 뒤집기. 뒤집힘 = 앞면 + 이름(컴포넌트 내장) + 방향 뱃지.
- * 회전축은 선택 방향에 따라: 정방향 = 가로(rotateY), 역방향 = 세로(rotateX).
+ * **회전축은 사용자 선택(choice) 기준** — 정방향 선택 = 가로(rotateY, 숨은 방향 보존),
+ * 역방향 선택 = 세로(rotateX, 숨은 방향 반전). 착지 방향(orientation)은 숨은 비트 × 선택의
+ * 최종값(2층). 축은 "뒤집는 동작", orientation은 "착지 결과" — 둘은 별개다(2층이라 혼재 가능).
  * 순서 강제는 부모(open-stage)가 tappable로 제어한다.
  */
 type FlipCardProps = {
   card: TarotCardData;
   orientation: "upright" | "reversed";
+  /** 사용자 선택 — 플립 축을 정한다(정=가로/역=세로). orientation과 별개. */
+  choice: "upright" | "reversed";
   positionLabel: string;
   flipped: boolean;
   tappable: boolean;
@@ -22,6 +26,7 @@ type FlipCardProps = {
 export function FlipCard({
   card,
   orientation,
+  choice,
   positionLabel,
   flipped,
   tappable,
@@ -29,10 +34,10 @@ export function FlipCard({
 }: FlipCardProps) {
   const tt = useMessages().tarot;
   const reversed = orientation === "reversed";
-  // 역방향 선택 = 세로 플립(rotateX), 정방향 = 가로 플립(rotateY). 회전축만 분기 —
-  // 3D 속성·앞면 reversed 렌더·결과 판정은 무변경. 두 면은 같은 축으로 쌓여야
+  // 축은 choice 기준(뒤집는 동작): 역방향 선택 = 세로(rotateX), 정방향 = 가로(rotateY).
+  // 앞면 reversed 렌더는 최종 orientation 기준. 두 면은 같은 축으로 쌓여야
   // backface-visibility가 성립한다(컨테이너 플립 + 앞면 사전회전 동일 축).
-  const axis = reversed ? "X" : "Y";
+  const axis = choice === "reversed" ? "X" : "Y";
 
   return (
     <div className="flex flex-col items-center gap-2">

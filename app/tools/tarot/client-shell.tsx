@@ -9,6 +9,8 @@ import { TAROT_CARDS } from "@/lib/tarot/cards";
 import {
   buildSealPayload,
   createRitualRng,
+  drawOrientationBits,
+  finalOrientation,
   randomNonceHex,
   recombine,
   sha256Hex,
@@ -120,16 +122,22 @@ export function TarotClientShell() {
     setSoundMuted(next);
   };
 
-  // 뽑힌 3장 — 카드 = 봉인 덱에서 사용자가 탭한 위치(S5), 방향 = S6 선택 단일 소스.
+  // 뽑힌 3장 — 카드 = 봉인 덱에서 탭한 위치(S5), hidden = 컷에서 고정된 숨은 방향(①층),
+  // orientation = 숨은 비트 × 선택(②층). 3장 각자 다른 결과 가능(혼재가 정상).
   // TAROT_CARDS는 id 순 정렬이 생성기 assert로 보장됨 — index 접근 안전.
   const seal = state.seal;
   const choice = state.userChoice;
   const drawn =
     seal && choice && state.pickedIndices.length === 3
-      ? state.pickedIndices.map((deckPos) => ({
-          card: TAROT_CARDS[seal.deck[deckPos]],
-          orientation: choice,
-        }))
+      ? state.pickedIndices.map((deckPos) => {
+          const bit = seal.bits[deckPos];
+          return {
+            card: TAROT_CARDS[seal.deck[deckPos]],
+            hidden: (bit === 1 ? "reversed" : "upright") as "upright" | "reversed",
+            orientation: finalOrientation(bit, choice),
+            marked: seal.deck[deckPos] === state.markedCardId,
+          };
+        })
       : [];
 
   // result 진입 시 마지막 리딩 저장 — 동일 데이터 덮어쓰기라 StrictMode 이중 실행 무해.
@@ -145,9 +153,11 @@ export function TarotClientShell() {
       cardIds: state.pickedIndices.map((p) => seal.deck[p]),
       choice,
       order: seal.deck,
+      bits: seal.bits,
       nonce: seal.nonce,
       hash: seal.hash,
       pickedIndices: state.pickedIndices,
+      markedCardId: state.markedCardId,
     };
     saveLastReading(reading);
     setSavedReading(reading);
@@ -160,16 +170,17 @@ export function TarotClientShell() {
 
   /** 3번째 더미 탭 = 비가역 확정: 순열·nonce 고정 + 봉인 해시 계산. */
   const handlePickPile = async (pile: number) => {
-    if (state.stage !== "cut" || state.piles === null || state.seal !== null) return;
+    if (state.stage !== "cut" || state.piles === null || state.seal !== null || !rng) return;
     if (state.picked.includes(pile) || state.picked.length >= 3) return;
     const nextPicked = [...state.picked, pile];
     dispatch({ type: "CUT_PICK_PILE", pile });
     if (nextPicked.length === 3 && !finalizingRef.current) {
       finalizingRef.current = true;
       const deck = recombine(state.piles, nextPicked);
+      const bits = drawOrientationBits(rng); // 카드별 숨은 방향 고정(2층 ①)
       const nonce = randomNonceHex(16);
-      const hash = await sha256Hex(buildSealPayload(deck, nonce));
-      dispatch({ type: "CUT_FINALIZE", seal: { deck, nonce, hash } });
+      const hash = await sha256Hex(buildSealPayload(deck, bits, nonce));
+      dispatch({ type: "CUT_FINALIZE", seal: { deck, bits, nonce, hash } });
     }
   };
 
@@ -180,15 +191,22 @@ export function TarotClientShell() {
         <Reading
           question={savedReading.question}
           domain={savedReading.domain}
-          cards={savedReading.cardIds.map((id) => ({
-            card: TAROT_CARDS[id],
-            orientation: savedReading.choice,
-          }))}
+          cards={savedReading.pickedIndices.map((deckPos) => {
+            const bit = savedReading.bits[deckPos];
+            return {
+              card: TAROT_CARDS[savedReading.order[deckPos]],
+              hidden: (bit === 1 ? "reversed" : "upright") as "upright" | "reversed",
+              orientation: finalOrientation(bit, savedReading.choice),
+              marked: savedReading.order[deckPos] === savedReading.markedCardId,
+            };
+          })}
           order={savedReading.order}
+          bits={savedReading.bits}
           nonce={savedReading.nonce}
           hash={savedReading.hash}
           pickedIndices={savedReading.pickedIndices}
           choice={savedReading.choice}
+          markedCardId={savedReading.markedCardId}
           onNewReading={handleReset}
         />
       </main>
@@ -220,7 +238,8 @@ export function TarotClientShell() {
           <button
             type="button"
             onClick={() => {
-              // gesture 콜스택 안에서 ctx 생성/resume — autoplay 정책 (iOS 핵심)
+              // 그라운딩 진입과 동시에 BGM 로딩+페이드인 시작 — 호흡 단계가 mp3 디코드 버퍼.
+              // [리딩 시작]이 user gesture라 autoplay 정책 충족(iOS resume).
               getAmbientController().start();
               dispatch({ type: "START" });
             }}
@@ -250,14 +269,16 @@ export function TarotClientShell() {
   }
 
   return (
-    // overflow-x-clip: 셔플 궤도(반경 최대 96px)가 390px 뷰포트 밖으로 나가도 가로 스크롤 미발생
-    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-clip px-6 pt-8 pb-16">
-      {/* 의식 화면 구석 음소거 토글 — S8 포함 (BGM 연속 재생, 2026-06-12 정정).
+    // 가로 넘침 차단(셔플 궤도)은 셔플 무대 요소로 한정 이동 — main에 두면 max-w-md와 합쳐져
+    // 그라운딩 full-bleed 패널(w-screen)이 데스크톱(>448px)에서 컬럼 폭으로 잘렸다(Task 14).
+    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-8 pb-16">
+      {/* 음소거 토글 — 그라운딩부터 음악 재생되므로 의식 전 단계 노출.
           '지난 리딩 보기'는 entry 분기 별도 main — BGM 세션 없음·토글 비노출. */}
       <SoundToggle muted={soundMuted} onToggle={handleToggleMute} />
 
       {state.stage === "grounding" && (
-        <GroundingStage onDone={() => dispatch({ type: "GROUNDING_DONE" })} />
+        // BGM은 [리딩 시작]에서 이미 시작 — "준비됐어요"는 질문 전환만(마음 정리됐으면 진행).
+        <GroundingStage onReady={() => dispatch({ type: "GROUNDING_DONE" })} />
       )}
 
       {state.stage === "question" && (
@@ -273,8 +294,9 @@ export function TarotClientShell() {
       {state.stage === "shuffle" && rng && (
         <ShuffleStage
           rng={rng}
-          shuffleCount={state.shuffleCount}
+          markedCardId={state.markedCardId}
           onGesture={() => dispatch({ type: "SHUFFLE_APPLY", deck: shufflePass(state.deck, rng) })}
+          onMark={(cardId) => dispatch({ type: "MARK_CARD", cardId })}
           onDone={() => dispatch({ type: "SHUFFLE_DONE" })}
           onEditQuestion={() => dispatch({ type: "BACK_TO_QUESTION" })}
         />
@@ -295,6 +317,9 @@ export function TarotClientShell() {
       {state.stage === "deal" && (
         <DealStage
           pickedIndices={state.pickedIndices}
+          markedIndex={
+            state.markedCardId !== null && seal ? seal.deck.indexOf(state.markedCardId) : -1
+          }
           onPick={(index) => dispatch({ type: "DEAL_PICK", index })}
           onDone={() => dispatch({ type: "DEAL_DONE" })}
         />
@@ -304,9 +329,10 @@ export function TarotClientShell() {
         <ChoiceStage onConfirm={(choice) => dispatch({ type: "CHOICE_CONFIRM", choice })} />
       )}
 
-      {state.stage === "open" && (
+      {state.stage === "open" && state.userChoice && (
         <OpenStage
           cards={drawn}
+          choice={state.userChoice}
           flippedCount={state.flippedCount}
           onFlip={() => dispatch({ type: "FLIP_NEXT" })}
           onAllOpen={() => dispatch({ type: "OPEN_DONE" })}
@@ -319,10 +345,12 @@ export function TarotClientShell() {
           domain={state.domain}
           cards={drawn}
           order={state.seal.deck}
+          bits={state.seal.bits}
           nonce={state.seal.nonce}
           hash={state.seal.hash}
           pickedIndices={state.pickedIndices}
           choice={state.userChoice}
+          markedCardId={state.markedCardId}
           onNewReading={handleReset}
         />
       )}

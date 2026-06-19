@@ -9,7 +9,7 @@ import { DOMAINS } from "./types";
 import { DECK_SIZE } from "./ritual-state";
 
 export const READING_STORAGE_KEY = "brennhub-tarot-last-reading";
-export const READING_SCHEMA_VERSION = 1;
+export const READING_SCHEMA_VERSION = 3; // v3: markedCardId(선점) 추가
 
 export type SavedReading = {
   schemaVersion: typeof READING_SCHEMA_VERSION;
@@ -21,9 +21,12 @@ export type SavedReading = {
   choice: "upright" | "reversed";
   /** 봉인 원본 — 검증 토글 재계산용. */
   order: readonly number[]; // 22
+  bits: readonly (0 | 1)[]; // 22 — 카드별 숨은 방향(2층)
   nonce: string;
   hash: string;
   pickedIndices: readonly number[]; // 3
+  /** 셔플 중 선점한 카드 id(0~21) 또는 null. 순수 메타데이터 — 봉인 무관. */
+  markedCardId: number | null;
 };
 
 /** 스키마·일관성 검사 — 손상/구버전/조작된 데이터는 null (조용히 폐기). */
@@ -38,11 +41,17 @@ function isValid(r: unknown): r is SavedReading {
   const order = v.order;
   const picked = v.pickedIndices;
   const cardIds = v.cardIds;
+  const bits = v.bits;
   if (!Array.isArray(order) || order.length !== DECK_SIZE) return false;
   if (new Set(order).size !== DECK_SIZE || !order.every((n) => Number.isInteger(n) && n >= 0 && n < DECK_SIZE)) return false;
+  if (!Array.isArray(bits) || bits.length !== DECK_SIZE || !bits.every((b) => b === 0 || b === 1)) return false;
   if (!Array.isArray(picked) || picked.length !== 3) return false;
   if (!picked.every((n) => Number.isInteger(n) && n >= 0 && n < DECK_SIZE)) return false;
   if (!Array.isArray(cardIds) || cardIds.length !== 3) return false;
+  // markedCardId는 null 또는 카드 id(0~21)
+  const mark = v.markedCardId;
+  if (mark !== null && !(Number.isInteger(mark) && (mark as number) >= 0 && (mark as number) < DECK_SIZE))
+    return false;
   // cardIds는 봉인 순서에서 유도된 값과 일치해야 한다 — 불일치 = 손상
   return picked.every((p, k) => order[p] === cardIds[k]);
 }

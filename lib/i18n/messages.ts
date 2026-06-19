@@ -663,7 +663,11 @@ export type Messages = {
     domain_money: string;
     domain_relation: string;
     domain_self: string;
+    domain_other: string;
+    questionMinNote: string;
+    questionCounter: string;
     groundingLine: string;
+    groundingReady: string;
     questionTitle: string;
     questionPlaceholder: string;
     questionShownNote: string;
@@ -674,6 +678,11 @@ export type Messages = {
     restartConfirm: string;
     shuffleInstruction: string;
     shuffleDone: string;
+    popOmen: string;
+    popTapHint: string;
+    popPrompt: string;
+    popAccept: string;
+    popReject: string;
     editQuestion: string;
     cutSplitInstruction: string;
     cutOrderInstruction: string;
@@ -686,6 +695,7 @@ export type Messages = {
     deckAria: string;
     spreadInstruction: string;
     spreadCardAria: string;
+    spreadMarkedAria: string;
     positionPast: string;
     positionPresent: string;
     positionFuture: string;
@@ -709,8 +719,21 @@ export type Messages = {
     verifyPicked: string;
     verifyPickedNth: string;
     verifyChoice: string;
+    verifyMarked: string;
+    verifyMarkedNone: string;
+    verifyLayHeading: string;
+    verifyLayLine: string;
+    markedBadge: string;
+    flipHorizontal: string;
+    flipVertical: string;
     entryLastReading: string;
     shareImage: string;
+    shareCopy: string;
+    shareToastShared: string;
+    shareToastSaved: string;
+    shareToastSaveFallback: string;
+    shareToastCopied: string;
+    shareToastCopyFail: string;
     newReading: string;
     soundMute: string;
     soundUnmute: string;
@@ -1613,17 +1636,26 @@ export const messages: Record<Locale, Messages> = {
       domain_money: "돈",
       domain_relation: "관계",
       domain_self: "자기",
+      domain_other: "그 외",
+      questionMinNote: "최소 10자 이상 적어주세요",
+      questionCounter: "{n}/{min}",
       groundingLine: "마음속 질문을 하나로 좁혀보세요",
+      groundingReady: "준비됐어요",
       questionTitle: "질문을 적어주세요",
       questionPlaceholder: "지금 마음에 걸리는 것을 그대로 적어보세요",
       questionShownNote: "리딩 화면에 그대로 표시됩니다",
-      questionPrivacyNote: "질문은 이 기기 밖으로 나가지 않습니다",
+      questionPrivacyNote: "질문은 서버로 보내지 않아요",
       domainLabel: "질문의 영역",
       toShuffle: "셔플로",
       restart: "처음부터 다시",
       restartConfirm: "정말 처음부터 다시 할까요?",
       shuffleInstruction: "카드를 쓸어 넘기며 직접 섞으세요",
       shuffleDone: "이제 됐어요",
+      popOmen: "셔플 도중 한 장이 튀어나왔습니다. 심상치 않은 징조입니다.",
+      popTapHint: "이 카드를 눌러보세요",
+      popPrompt: "이 카드가 무언가를 암시할지도 모릅니다. 미리 점지하시겠어요?",
+      popAccept: "점지하기",
+      popReject: "아니요",
       editQuestion: "질문 수정",
       cutSplitInstruction: "덱에서 자를 두 지점을 탭하세요",
       cutOrderInstruction: "합칠 순서대로 더미를 탭하세요",
@@ -1636,6 +1668,7 @@ export const messages: Record<Locale, Messages> = {
       deckAria: "카드 덱",
       spreadInstruction: "펼쳐진 카드 가운데 마음이 가는 세 장을 차례로 탭하세요",
       spreadCardAria: "뒷면 카드 {n}번",
+      spreadMarkedAria: "점지한 카드 — 뒷면 {n}번",
       positionPast: "과거",
       positionPresent: "현재",
       positionFuture: "미래",
@@ -1659,8 +1692,21 @@ export const messages: Record<Locale, Messages> = {
       verifyPicked: "뽑은 위치",
       verifyPickedNth: "{n}번째",
       verifyChoice: "선택한 방향",
+      verifyMarked: "미리 점지한 카드: {name} (봉인 해시에는 포함되지 않아요)",
+      verifyMarkedNone: "없음",
+      verifyLayHeading: "왜 이 방향인가 — 놓인 방향 → 뒤집기 → 최종",
+      verifyLayLine: "{pos}: {hidden}으로 놓여 있던 카드를 {axis} 뒤집어 → {final}",
+      markedBadge: "점지한 카드",
+      flipHorizontal: "가로로",
+      flipVertical: "세로로",
       entryLastReading: "지난 리딩 보기",
       shareImage: "이미지로 공유",
+      shareCopy: "이미지 복사",
+      shareToastShared: "공유했어요",
+      shareToastSaved: "이미지를 저장했어요",
+      shareToastSaveFallback: "공유를 사용할 수 없어 저장했어요",
+      shareToastCopied: "이미지가 복사되었어요",
+      shareToastCopyFail: "이미지를 복사하지 못했어요",
       newReading: "새 리딩",
       soundMute: "소리 끄기",
       soundUnmute: "소리 켜기",
@@ -2674,17 +2720,26 @@ export const messages: Record<Locale, Messages> = {
       domain_money: "Money",
       domain_relation: "Relationships",
       domain_self: "Self",
+      domain_other: "Other",
+      questionMinNote: "Write at least 10 characters",
+      questionCounter: "{n}/{min}",
       groundingLine: "Let your mind settle on a single question",
+      groundingReady: "I'm ready",
       questionTitle: "Write your question",
       questionPlaceholder: "Put into words what weighs on you right now",
       questionShownNote: "It will appear on your reading, word for word",
-      questionPrivacyNote: "Your question never leaves this device",
+      questionPrivacyNote: "Your question is never sent to a server",
       domainLabel: "Area of your question",
       toShuffle: "To the shuffle",
       restart: "Start over",
       restartConfirm: "Really start over from the beginning?",
       shuffleInstruction: "Sweep the deck to shuffle it yourself",
       shuffleDone: "That feels right",
+      popOmen: "A card leapt out mid-shuffle — an uncommon omen.",
+      popTapHint: "Tap this card",
+      popPrompt: "This card may be hinting at something. Mark it in advance?",
+      popAccept: "Mark this card",
+      popReject: "No, thanks",
       editQuestion: "Edit question",
       cutSplitInstruction: "Tap two points to cut the deck",
       cutOrderInstruction: "Tap the piles in the order to restack them",
@@ -2697,6 +2752,7 @@ export const messages: Record<Locale, Messages> = {
       deckAria: "Card deck",
       spreadInstruction: "Tap three cards that draw you in, one at a time",
       spreadCardAria: "Face-down card {n}",
+      spreadMarkedAria: "Marked card — face-down {n}",
       positionPast: "Past",
       positionPresent: "Present",
       positionFuture: "Future",
@@ -2722,8 +2778,21 @@ export const messages: Record<Locale, Messages> = {
       verifyPicked: "Picked positions",
       verifyPickedNth: "#{n}",
       verifyChoice: "Chosen orientation",
+      verifyMarked: "Card marked in advance: {name} (not part of the seal hash)",
+      verifyMarkedNone: "None",
+      verifyLayHeading: "Why this orientation — lay → flip → final",
+      verifyLayLine: "{pos}: lay {hidden}, flipped {axis} → {final}",
+      markedBadge: "Marked card",
+      flipHorizontal: "horizontally",
+      flipVertical: "vertically",
       entryLastReading: "View your last reading",
       shareImage: "Share as image",
+      shareCopy: "Copy image",
+      shareToastShared: "Shared",
+      shareToastSaved: "Image saved",
+      shareToastSaveFallback: "Sharing unavailable — image saved",
+      shareToastCopied: "Image copied",
+      shareToastCopyFail: "Couldn't copy the image",
       newReading: "New reading",
       soundMute: "Mute",
       soundUnmute: "Unmute",

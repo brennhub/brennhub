@@ -6,8 +6,9 @@ import { DOMAINS, type Domain } from "@/lib/tarot/types";
 
 /**
  * S2 질문 — 대가 의식의 번안: 질문 직접 적기.
- * 질문 텍스트는 리듀서 state에만 존재하며 어떤 네트워크 요청에도 포함되지 않는다.
+ * 질문 텍스트는 리듀서 state에만 존재하며 앱이 서버로 전송하지 않는다(공유 이미지는 사용자 직접 트리거).
  */
+const QUESTION_MIN = 10; // 진행 가능 최소 글자 수(trim 기준)
 type QuestionStageProps = {
   question: string;
   domain: Domain | null;
@@ -24,7 +25,8 @@ export function QuestionStage({
   onSubmit,
 }: QuestionStageProps) {
   const tt = useMessages().tarot;
-  const valid = question.trim() !== "" && domain !== null;
+  const trimmed = question.trim().length;
+  const valid = trimmed >= QUESTION_MIN && domain !== null;
 
   return (
     <div className="flex flex-1 animate-in flex-col justify-center gap-8 fade-in duration-700">
@@ -37,7 +39,19 @@ export function QuestionStage({
           rows={4}
           className="mt-4 w-full resize-none rounded-lg bg-card p-4 text-sm ring-1 ring-foreground/15 outline-none placeholder:text-muted-foreground/60 focus:ring-foreground/35"
         />
-        <p className="mt-2 text-xs text-muted-foreground">{tt.questionShownNote}</p>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            {trimmed < QUESTION_MIN ? tt.questionMinNote : tt.questionShownNote}
+          </p>
+          <span
+            className={cn(
+              "shrink-0 text-xs tabular-nums",
+              trimmed < QUESTION_MIN ? "text-muted-foreground/60" : "text-muted-foreground",
+            )}
+          >
+            {tt.questionCounter.replace("{n}", String(trimmed)).replace("{min}", String(QUESTION_MIN))}
+          </span>
+        </div>
       </div>
 
       <div>
