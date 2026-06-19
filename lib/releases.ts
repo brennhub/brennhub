@@ -33,7 +33,7 @@ export type Release = {
 export const releases: Release[] = [
   {
     id: "tarot-copy-image-button",
-    date: "2026-06-13",
+    date: "2026-06-19",
     tool: "tarot",
     kind: "improved",
     title: {
@@ -47,7 +47,7 @@ export const releases: Release[] = [
   },
   {
     id: "tarot-marked-card",
-    date: "2026-06-13",
+    date: "2026-06-19",
     tool: "tarot",
     kind: "new",
     title: {
@@ -61,7 +61,7 @@ export const releases: Release[] = [
   },
   {
     id: "tarot-share-question-domains",
-    date: "2026-06-13",
+    date: "2026-06-19",
     tool: "tarot",
     kind: "improved",
     title: {
