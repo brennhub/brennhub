@@ -70,7 +70,7 @@ export function ArcadeClientShell() {
   }, [activeId, fitCanvas]);
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-6 pb-20">
+    <main className="mx-auto w-full max-w-4xl px-4 py-6 pb-20">
       <header className="mb-4">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           {meta.name}
@@ -101,7 +101,7 @@ export function ArcadeClientShell() {
           </div>
         )}
 
-        <div className="mx-auto w-full max-w-[420px] rounded-md border border-zinc-800 bg-black p-1">
+        <div className="mx-auto w-full max-w-[860px] rounded-md border border-zinc-800 bg-black p-1">
           <GameCanvas ref={canvasRef} aspect={aspect} />
         </div>
       </div>

@@ -66,6 +66,24 @@ const MODES: Record<Mode, { HW: number; dps: number; rng: number }> = {
   spread: { HW: 0.52, dps: 2.3, rng: 0.92 },
 };
 const MIRMAX = 5;
+
+/**
+ * 난이도 노브 — 이 블록만 만지면 밸런스가 바뀐다 (6종 공통 패턴).
+ * 로직/구조는 불변, 값만 여기서 경유. (괄호는 이번 완화 전 값.)
+ */
+const TUNE = {
+  coreHP: 120, // 코어 체력 (기존 100)
+  waveInterval: 12, // 웨이브 간격 s (기존 10)
+  spawnGapStart: 1.05, // 초기 스폰 간격 s (기존 0.9)
+  spawnGapFloor: 0.42, // 스폰 간격 하한 (기존 0.34)
+  spawnGapDecay: 0.038, // 웨이브당 간격 감소 (기존 0.045)
+  doubleSpawnFromWave: 4, // 더블 스폰 시작 웨이브 (기존 3)
+  enemySpeedBase: 20, // 비피격 이동 (기존 24)
+  enemySpeedLit: 14, // 피격 중 이동 (기존 16)
+  enemySpeedWaveRamp: 1.6, // 웨이브당 속도 가산 (기존 2)
+  contactDamage: 5, // 코어 접촉 피해 (기존 6)
+};
+
 const S = {} as BeaconState;
 
 function newMirror(W: number, H: number): Mirror {
@@ -91,7 +109,7 @@ function reset(W: number, H: number): void {
   S.W = W;
   S.H = H;
   S.phase = "ready";
-  S.core = { x: W / 2, y: H / 2, r: 15, hp: 100 };
+  S.core = { x: W / 2, y: H / 2, r: 15, hp: TUNE.coreHP };
   S.aim = -Math.PI / 2;
   S.mode = "focus";
   S.en = [];
@@ -106,7 +124,7 @@ function reset(W: number, H: number): void {
   S.wave = 1;
   S.waveT = 0;
   S.spawnT = 0;
-  S.spawnGap = 0.9;
+  S.spawnGap = TUNE.spawnGapStart;
   S.best = S.best || 0;
   layoutBtns();
 }
@@ -247,17 +265,17 @@ function update(dt: number): void {
   const M = MODES[S.mode];
   const rng = rngNow();
   S.waveT += dt;
-  if (S.waveT > 10) {
+  if (S.waveT > TUNE.waveInterval) {
     S.waveT = 0;
     S.wave++;
-    S.spawnGap = Math.max(0.34, 0.9 - S.wave * 0.045);
+    S.spawnGap = Math.max(TUNE.spawnGapFloor, TUNE.spawnGapStart - S.wave * TUNE.spawnGapDecay);
     blip(560, 0.14, "sine", 0.045);
   }
   S.spawnT += dt;
   if (S.spawnT >= S.spawnGap) {
     S.spawnT = 0;
     spawnEnemy();
-    if (S.wave > 2) spawnEnemy();
+    if (S.wave >= TUNE.doubleSpawnFromWave) spawnEnemy();
   }
   for (const m of S.mirrors) {
     m.refAng += m.rot * dt;
@@ -321,12 +339,12 @@ function update(dt: number): void {
     const nl = Math.hypot(ddx, ddy) || 1;
     ddx /= nl;
     ddy /= nl;
-    const sp = (L ? 16 : 24) + S.wave * 2;
+    const sp = (L ? TUNE.enemySpeedLit : TUNE.enemySpeedBase) + S.wave * TUNE.enemySpeedWaveRamp;
     e.x += ddx * sp * dt;
     e.y += ddy * sp * dt;
     if (dist(e.x, e.y, S.core.x, S.core.y) < S.core.r + e.r) {
       e.hp = 0;
-      S.core.hp -= 6;
+      S.core.hp -= TUNE.contactDamage;
       burst(e.x, e.y, "#fff", 6);
       blip(90, 0.12, "sawtooth", 0.045);
     }
@@ -498,7 +516,7 @@ function render(ctx: CanvasRenderingContext2D): void {
   rrect(ctx, 12, H - 52, W - 24, 5, 2);
   ctx.fillStyle = "rgba(255,255,255,.1)";
   ctx.fill();
-  rrect(ctx, 12, H - 52, (W - 24) * clamp(S.core.hp / 100, 0, 1), 5, 2);
+  rrect(ctx, 12, H - 52, (W - 24) * clamp(S.core.hp / TUNE.coreHP, 0, 1), 5, 2);
   ctx.fillStyle = S.core.hp > 30 ? AC : "#ff5e7e";
   ctx.fill();
   if (S.phase === "ready") {
