@@ -98,7 +98,7 @@ export type GameApi = {
   reset(W: number, H: number): void;
   update(dt: number, W: number, H: number): void;
   render(ctx: CanvasRenderingContext2D, W: number, H: number): void;
-  onDown?(x: number, y: number): void;
+  onDown?(x: number, y: number, button?: number): void;
   onMove?(x: number, y: number): void;
   onUp?(x: number, y: number): void;
   onKey?(key: string, ev?: KeyboardEvent): boolean | void;
@@ -139,6 +139,7 @@ class ArcadeEngine {
     this.ctx = canvas.getContext("2d");
     canvas.addEventListener("pointerdown", this.onPointerDown, { passive: false });
     canvas.addEventListener("pointermove", this.onPointerMove, { passive: false });
+    canvas.addEventListener("contextmenu", this.onContextMenu);
     window.addEventListener("pointerup", this.onPointerUp);
     window.addEventListener("keydown", this.onKeyDown);
   }
@@ -188,6 +189,7 @@ class ArcadeEngine {
     if (cv) {
       cv.removeEventListener("pointerdown", this.onPointerDown);
       cv.removeEventListener("pointermove", this.onPointerMove);
+      cv.removeEventListener("contextmenu", this.onContextMenu);
     }
     window.removeEventListener("pointerup", this.onPointerUp);
     window.removeEventListener("keydown", this.onKeyDown);
@@ -228,7 +230,7 @@ class ArcadeEngine {
     if (!g) return;
     this.down = true;
     const p = this.getPtr(ev);
-    g.api.onDown?.(p.x, p.y);
+    g.api.onDown?.(p.x, p.y, ev.button);
   };
 
   private onPointerMove = (ev: PointerEvent): void => {
@@ -253,6 +255,11 @@ class ArcadeEngine {
     const g = this.activeGame();
     if (!g || !g.api.onKey) return;
     if (g.api.onKey(ev.key, ev)) ev.preventDefault();
+  };
+
+  // 우클릭 컨텍스트 메뉴 억제(캔버스 한정) — 미러 우클릭 제거 UX. 다른 게임엔 영향 없음.
+  private onContextMenu = (ev: Event): void => {
+    ev.preventDefault();
   };
 }
 

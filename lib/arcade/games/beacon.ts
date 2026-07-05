@@ -19,7 +19,16 @@ import {
 } from "../engine";
 
 type Core = { x: number; y: number; r: number; hp: number };
-type Enemy = { x: number; y: number; r: number; hp: number; mhp: number; um: boolean; lit: number };
+type Enemy = {
+  x: number;
+  y: number;
+  r: number;
+  hp: number;
+  mhp: number;
+  um: boolean;
+  raider: boolean;
+  lit: number;
+};
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; col: string };
 type Obstacle = { x: number; y: number; r: number };
 type Mirror = {
@@ -30,6 +39,8 @@ type Mirror = {
   refHW: number;
   rot: number;
   isLit: boolean;
+  hp: number;
+  mhp: number;
 };
 type Button = { x: number; y: number; w: number; h: number };
 type Phase = "ready" | "play" | "over";
@@ -67,31 +78,40 @@ const MODES: Record<Mode, { HW: number; dps: number; rng: number }> = {
   focus: { HW: 0.22, dps: 4.4, rng: 1.25 },
   spread: { HW: 0.52, dps: 2.3, rng: 0.92 },
 };
-const MIRMAX = 5;
+const MIRMAX = 6; // 배치+대기 미러 상한 (기존 5)
 
 /**
  * 난이도 노브 — 이 블록만 만지면 밸런스가 바뀐다 (6종 공통 패턴).
  * 로직/구조는 불변, 값만 여기서 경유. (괄호는 이번 완화 전 값.)
  */
 const TUNE = {
-  coreHP: 150, // 코어 체력 (기존 120)
-  waveInterval: 14, // 웨이브 간격 s (기존 12)
-  spawnGapStart: 1.2, // 초기 스폰 간격 s (기존 1.05)
-  spawnGapFloor: 0.5, // 스폰 간격 하한 (기존 0.42)
-  spawnGapDecay: 0.032, // 웨이브당 간격 감소 (기존 0.038)
-  doubleSpawnFromWave: 5, // 더블 스폰 시작 웨이브 (기존 4)
-  enemySpeedBase: 18, // 비피격 이동 (기존 20)
-  enemySpeedLit: 12, // 피격 중 이동 (기존 14)
-  enemySpeedWaveRamp: 1.3, // 웨이브당 속도 가산 (기존 1.6)
-  contactDamage: 4, // 코어 접촉 피해 (기존 5)
+  coreHP: 130, // 코어 체력 (기존 150)
+  waveInterval: 12, // 웨이브 간격 s (기존 14)
+  spawnGapStart: 1.05, // 초기 스폰 간격 s (기존 1.2)
+  spawnGapFloor: 0.42, // 스폰 간격 하한 (기존 0.5)
+  spawnGapDecay: 0.032, // 웨이브당 간격 감소
+  doubleSpawnFromWave: 4, // 더블 스폰 시작 웨이브 (기존 5)
+  enemySpeedBase: 20, // 비피격 이동 (기존 18)
+  enemySpeedLit: 12, // 피격 중 이동
+  enemySpeedWaveRamp: 1.5, // 웨이브당 속도 가산 (기존 1.3)
+  contactDamage: 5, // 코어 접촉 피해 (기존 4)
   startMirrors: 2, // 시작 시 직접 배치할 미러 수
   obstacleCoreGap: 70, // 장애물↔코어 최소 여유거리 px
-  obstacleGap: 40, // 장애물↔장애물 최소 여유거리 px
-  umHP: 3, // 장갑형(um) 체력 (기존 5)
-  umBeamMult: 0.6, // 장갑형 빔 데미지 배율 (기존 0.32 — 클수록 잘 녹음)
-  umFlashDmg: 7, // 장갑형 섬광 데미지 (기존 7 유지)
-  umSpawnBase: 0.12, // 장갑형 스폰 기본 확률 (기존 0.18)
-  umSpawnRamp: 0.015, // 웨이브당 장갑형 확률 증가 (기존 0.02)
+  obstacleGap: 40, // 장애물↔장애물·미러 최소 여유거리 px
+  obstacleWaveInterval: 10, // 이 웨이브마다 장애물 +1
+  obstacleMax: 8, // 장애물 최대 수
+  umHP: 4, // 장갑형(um) 체력 (기존 3)
+  umBeamMult: 0.6, // 장갑형 빔 데미지 배율 (클수록 잘 녹음)
+  umFlashDmg: 7, // 장갑형 섬광 데미지
+  umSpawnBase: 0.12, // 장갑형 스폰 기본 확률
+  umSpawnRamp: 0.015, // 웨이브당 장갑형 확률 증가
+  flashChargeRate: 0.3, // FLASH 충전 속도/s (기존 0.5)
+  mirrorRangeBase: 0.35, // 미러 반사 사거리 기저 배율 (기존 0.5, +RANGE로 성장)
+  mirrorHP: 6, // 미러 체력 (raider가 깎음)
+  raiderSpawnBase: 0.15, // raider 스폰 기본 확률
+  raiderSpawnRamp: 0.01, // 웨이브당 raider 확률 증가
+  raiderHP: 4, // raider 체력
+  raiderMirrorDps: 2, // raider가 미러에 주는 초당 피해
   mirrorChainMaxHops: MIRMAX, // 미러→미러 연쇄 전파 최대 hop (0=연쇄 끄기=기존 동작)
 };
 
@@ -106,25 +126,31 @@ function newMirror(x: number, y: number): Mirror {
     refHW: 0.32,
     rot: rand(0.35, 0.75) * (Math.random() < 0.5 ? 1 : -1),
     isLit: false,
+    hp: TUNE.mirrorHP,
+    mhp: TUNE.mirrorHP,
   };
 }
-function setupField(W: number, H: number): void {
-  S.obs = [];
-  // 장애물 2개: 코어와 최소거리 + 서로 최소간격 만족까지 재추첨(상한 30회, 실패 시 마지막 값).
-  for (let i = 0; i < 2; i++) {
-    const r = rand(15, 20);
-    let x = 0,
-      y = 0,
-      ok = false;
-    for (let tries = 0; tries < 30 && !ok; tries++) {
-      x = rand(W * 0.2, W * 0.8);
-      y = rand(H * 0.24, H * 0.76);
-      ok = dist(x, y, S.core.x, S.core.y) > S.core.r + r + TUNE.obstacleCoreGap;
-      for (const o of S.obs) if (dist(x, y, o.x, o.y) <= o.r + r + TUNE.obstacleGap) ok = false;
-    }
-    S.obs.push({ x, y, r });
+/** 장애물 1개 추가 — 코어 최소거리 + 기존 장애물·미러와 최소간격 만족까지 재추첨(상한 30회, 실패 시 마지막 값). */
+function addObstacle(): void {
+  const W = S.W,
+    H = S.H;
+  const r = rand(15, 20);
+  let x = 0,
+    y = 0,
+    ok = false;
+  for (let tries = 0; tries < 30 && !ok; tries++) {
+    x = rand(W * 0.2, W * 0.8);
+    y = rand(H * 0.24, H * 0.76);
+    ok = dist(x, y, S.core.x, S.core.y) > S.core.r + r + TUNE.obstacleCoreGap;
+    for (const o of S.obs) if (dist(x, y, o.x, o.y) <= o.r + r + TUNE.obstacleGap) ok = false;
+    for (const m of S.mirrors) if (dist(x, y, m.x, m.y) <= m.r + r + TUNE.obstacleGap) ok = false;
   }
-  S.mirrors = []; // 랜덤 생성 대신 플레이어가 직접 배치
+  S.obs.push({ x, y, r });
+}
+function setupField(): void {
+  S.obs = [];
+  S.mirrors = []; // addObstacle이 미러와의 간격도 검사 → 반드시 장애물 배치 전 초기화
+  for (let i = 0; i < 2; i++) addObstacle();
   S.pendingMirrors = TUNE.startMirrors;
 }
 function reset(W: number, H: number): void {
@@ -138,7 +164,7 @@ function reset(W: number, H: number): void {
   S.parts = [];
   S.charge = 0;
   S.flashT = 0;
-  setupField(W, H);
+  setupField();
   S.pts = 0;
   S.powLv = 0;
   S.rngLv = 0;
@@ -224,6 +250,11 @@ function canPlaceMirror(x: number, y: number): boolean {
   for (const m of S.mirrors) if (dist(x, y, m.x, m.y) < m.r + r + 6) return false;
   return true;
 }
+/** 좌표 위의 배치된 미러(반지름 hit-test) 반환, 없으면 null. */
+function mirrorAt(x: number, y: number): Mirror | null {
+  for (const m of S.mirrors) if (dist(x, y, m.x, m.y) <= m.r) return m;
+  return null;
+}
 function dpsNow(): number {
   return MODES[S.mode].dps * (1 + S.powLv * 0.35);
 }
@@ -231,19 +262,22 @@ function rngNow(): number {
   return Math.max(S.W, S.H) * 1.2 * MODES[S.mode].rng * (1 + S.rngLv * 0.15);
 }
 function mirRange(): number {
-  return Math.max(S.W, S.H) * 0.5 * (1 + S.rngLv * 0.15);
+  return Math.max(S.W, S.H) * TUNE.mirrorRangeBase * (1 + S.rngLv * 0.15);
 }
 function spawnEnemy(): void {
   const a = rand(0, TAU);
   const R = Math.max(S.W, S.H) * 0.62;
-  const um = Math.random() < TUNE.umSpawnBase + S.wave * TUNE.umSpawnRamp;
+  const raider = Math.random() < TUNE.raiderSpawnBase + S.wave * TUNE.raiderSpawnRamp;
+  const um = !raider && Math.random() < TUNE.umSpawnBase + S.wave * TUNE.umSpawnRamp;
+  const hp = raider ? TUNE.raiderHP : um ? TUNE.umHP : 3;
   S.en.push({
     x: S.core.x + Math.cos(a) * R,
     y: S.core.y + Math.sin(a) * R,
     r: 10,
-    hp: um ? TUNE.umHP : 3,
-    mhp: um ? TUNE.umHP : 3,
+    hp,
+    mhp: hp,
     um,
+    raider,
     lit: 0,
   });
 }
@@ -302,6 +336,7 @@ function update(dt: number): void {
     S.waveT = 0;
     S.wave++;
     S.spawnGap = Math.max(TUNE.spawnGapFloor, TUNE.spawnGapStart - S.wave * TUNE.spawnGapDecay);
+    if (S.wave % TUNE.obstacleWaveInterval === 0 && S.obs.length < TUNE.obstacleMax) addObstacle();
     blip(560, 0.14, "sine", 0.045);
   }
   S.spawnT += dt;
@@ -376,13 +411,27 @@ function update(dt: number): void {
         continue;
       }
     }
-    // move with obstacle avoidance
-    let ddx = S.core.x - e.x,
-      ddy = S.core.y - e.y;
+    // 타겟: raider는 가장 가까운 배치 미러(없으면 코어), 그 외엔 코어.
+    let tgtMirror: Mirror | null = null;
+    if (e.raider && S.mirrors.length > 0) {
+      let best = Infinity;
+      for (const m of S.mirrors) {
+        const dd = dist(e.x, e.y, m.x, m.y);
+        if (dd < best) {
+          best = dd;
+          tgtMirror = m;
+        }
+      }
+    }
+    const tx = tgtMirror ? tgtMirror.x : S.core.x;
+    const ty = tgtMirror ? tgtMirror.y : S.core.y;
+    // move toward target with obstacle avoidance (타겟 미러는 회피 대상에서 제외).
+    let ddx = tx - e.x,
+      ddy = ty - e.y;
     const dl = Math.hypot(ddx, ddy) || 1;
     ddx /= dl;
     ddy /= dl;
-    for (const o of blockers(null)) {
+    for (const o of blockers(tgtMirror)) {
       const ox = o.x - e.x,
         oy = o.y - e.y;
       const od = Math.hypot(ox, oy) || 1;
@@ -400,15 +449,27 @@ function update(dt: number): void {
     const sp = (L ? TUNE.enemySpeedLit : TUNE.enemySpeedBase) + S.wave * TUNE.enemySpeedWaveRamp;
     e.x += ddx * sp * dt;
     e.y += ddy * sp * dt;
-    if (dist(e.x, e.y, S.core.x, S.core.y) < S.core.r + e.r) {
+    if (tgtMirror) {
+      // raider가 타겟 미러에 닿으면 지속 데미지(즉사 아님) — 미러 파괴는 루프 후 일괄 처리.
+      if (dist(e.x, e.y, tgtMirror.x, tgtMirror.y) < tgtMirror.r + e.r)
+        tgtMirror.hp -= TUNE.raiderMirrorDps * dt;
+    } else if (dist(e.x, e.y, S.core.x, S.core.y) < S.core.r + e.r) {
       e.hp = 0;
       S.core.hp -= TUNE.contactDamage;
       burst(e.x, e.y, "#fff", 6);
       blip(90, 0.12, "sawtooth", 0.045);
     }
   }
-  if (anyLit) S.charge = Math.min(1, S.charge + dt * 0.5);
+  if (anyLit) S.charge = Math.min(1, S.charge + dt * TUNE.flashChargeRate);
   S.en = S.en.filter((e) => e.hp > 0);
+  // 미러 파괴: hp 소진 미러 제거(슬롯 반환 → 배치+대기 상한 자동 회복). 우클릭 환급과 달리 pending 미증가.
+  for (const m of S.mirrors) {
+    if (m.hp <= 0) {
+      burst(m.x, m.y, "#7dd3fc", 8);
+      blip(200, 0.15, "sawtooth", 0.05);
+    }
+  }
+  S.mirrors = S.mirrors.filter((m) => m.hp > 0);
   for (const p of S.parts) {
     p.x += p.vx * dt;
     p.y += p.vy * dt;
@@ -489,7 +550,11 @@ function render(ctx: CanvasRenderingContext2D): void {
   }
   for (const e of S.en) {
     const L = e.lit > 0.1;
-    ctx.fillStyle = e.um ? (L ? "#c4b5fd" : "#3a3358") : L ? "#fff7cc" : "#3a4456";
+    let col: string;
+    if (e.raider) col = L ? "#fdba74" : "#fb923c";
+    else if (e.um) col = L ? "#c4b5fd" : "#3a3358";
+    else col = L ? "#fff7cc" : "#3a4456";
+    ctx.fillStyle = col;
     ctx.beginPath();
     ctx.arc(e.x, e.y, e.r, 0, TAU);
     ctx.fill();
@@ -523,6 +588,12 @@ function render(ctx: CanvasRenderingContext2D): void {
     ctx.moveTo(m.x, m.y);
     ctx.lineTo(m.x + Math.cos(m.refAng) * m.r, m.y + Math.sin(m.refAng) * m.r);
     ctx.stroke();
+    if (m.hp < m.mhp) {
+      ctx.fillStyle = "rgba(0,0,0,.4)";
+      ctx.fillRect(m.x - m.r, m.y - m.r - 6, m.r * 2, 3);
+      ctx.fillStyle = "#7dd3fc";
+      ctx.fillRect(m.x - m.r, m.y - m.r - 6, m.r * 2 * clamp(m.hp / m.mhp, 0, 1), 3);
+    }
   }
   ctx.save();
   ctx.shadowColor = AC;
@@ -622,12 +693,23 @@ function render(ctx: CanvasRenderingContext2D): void {
     ctext(ctx, "Tap to restart", W / 2, H / 2 + 36, 13, "#aeb6cc", 600);
   }
 }
-function onDown(x: number, y: number): void {
+function onDown(x: number, y: number, button?: number): void {
   if (S.phase !== "play") {
     if (S.phase !== "ready") reset(S.W, S.H);
     S.phase = "play";
     return;
   }
+  // 우클릭: 미러 위면 제거+환급(pending++, 재배치용), 아니면 무시.
+  if (button === 2) {
+    const m = mirrorAt(x, y);
+    if (m) {
+      S.mirrors = S.mirrors.filter((mm) => mm !== m);
+      S.pendingMirrors++;
+      blip(300, 0.08, "square", 0.04);
+    }
+    return;
+  }
+  // 좌클릭 우선순위: ① 하단 버튼 → ② 배치(대기 있으면) → ③ 미러 회전반전 → ④ 빔 조준.
   for (let i = 0; i < S.btns.length; i++) {
     if (inRect(x, y, S.btns[i])) {
       if (i === 0) {
@@ -641,7 +723,6 @@ function onDown(x: number, y: number): void {
       return;
     }
   }
-  // 버튼이 아닌 필드 탭: 배치 대기가 있으면 배치 시도(우선), 없으면 빔 조준.
   if (S.pendingMirrors > 0) {
     if (canPlaceMirror(x, y)) {
       S.mirrors.push(newMirror(x, y));
@@ -649,6 +730,12 @@ function onDown(x: number, y: number): void {
       blip(620, 0.1, "triangle", 0.04);
     }
     return; // 배치 모드에선 무효 자리여도 조준하지 않음
+  }
+  const m = mirrorAt(x, y);
+  if (m) {
+    m.rot *= -1; // 좌클릭으로 미러 회전 방향 반전
+    blip(440, 0.06, "square", 0.03);
+    return;
   }
   S.aim = Math.atan2(y - S.core.y, x - S.core.x);
 }
