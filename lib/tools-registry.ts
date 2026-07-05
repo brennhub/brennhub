@@ -96,6 +96,15 @@ export const tools: Tool[] = [
     hasPage: true,
   },
   {
+    id: "arcade",
+    slug: "arcade",
+    status: "live",
+    category: "entertainment",
+    createdAt: "2026-07-04",
+    // 단일 canvas + 공용 Engine(활성 게임 1개만 tick). 전용 page.tsx — hasPage로 [slug] fallback 충돌 방지.
+    hasPage: true,
+  },
+  {
     id: "tag-it",
     slug: "tag-it",
     status: "live",

@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "arcade-launch",
+    date: "2026-07-04",
+    tool: "arcade",
+    kind: "new",
+    title: {
+      ko: "아케이드 — 코어 디펜스 출시",
+      en: "Arcade — Core Defense launched",
+    },
+    body: {
+      ko: "도형으로 그린 코어 디펜스 미니게임 모음입니다. 첫 게임은 빛으로 적을 태우는 등대(Beacon) — 드래그로 조준하고 거울을 늘려 사각을 지우세요.",
+      en: "A collection of core-defense minigames drawn from pure shapes. First up is Beacon — aim a beam of light by dragging, and add mirrors to sweep the blind spots.",
+    },
+  },
+  {
     id: "tarot-copy-image-button",
     date: "2026-06-19",
     tool: "tarot",

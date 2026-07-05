@@ -5,6 +5,7 @@ import {
   Clock,
   Gamepad2,
   Grid3x3,
+  Joystick,
   Mail,
   MessageSquare,
   MoonStar,
@@ -37,6 +38,7 @@ const ICON_BY_SLUG: Record<string, LucideIcon> = {
   "language-maker": Type,
   maze: Grid3x3,
   shooter: Gamepad2,
+  arcade: Joystick,
   tarot: MoonStar,
 };
 
