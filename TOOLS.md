@@ -25,6 +25,7 @@
 ### 엔터테인먼트 (entertainment)
 - **언어 창조기** `/tools/language-maker` — 픽셀 글리프를 그리고 입력값에 1:1 매핑해 실시간 변환·이미지 공유. [상세](app/tools/language-maker/README.md)
 - **픽셀 미로 만들기** `/tools/maze` — 픽셀 격자로 미로를 설계하고 시야 제한 플레이·숏링크 공유. [상세](app/tools/maze/README.md)
+- **아케이드 — 코어 디펜스** `/tools/arcade` — 도형만으로 그린 코어 디펜스 미니게임 모음(첫 게임: 등대). 단일 캔버스 + 공용 Engine. 전부 브라우저 안. [상세](app/tools/arcade/README.md)
 
 ## 유니버설
 

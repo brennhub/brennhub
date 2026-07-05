@@ -753,6 +753,7 @@ export type Messages = {
     toolLanguageMaker: string;
     toolMaze: string;
     toolShooter: string;
+    toolArcade: string;
     toolTagIt: string;
     toolTarot: string;
     categoryLabel: string;
@@ -1726,6 +1727,7 @@ export const messages: Record<Locale, Messages> = {
       toolLanguageMaker: "언어 창조기",
       toolMaze: "픽셀 미로 만들기",
       toolShooter: "아케이드 슈터",
+      toolArcade: "아케이드 — 코어 디펜스",
       toolTagIt: "태그잇",
       toolTarot: "타로 테이블",
       categoryLabel: "종류",
@@ -1991,6 +1993,11 @@ export const messages: Record<Locale, Messages> = {
       shooter: {
         name: "아케이드 슈터",
         description: "우주 함대를 격추하는 세로 스크롤 슈팅 게임",
+      },
+      arcade: {
+        name: "아케이드 — 코어 디펜스",
+        description:
+          "도형으로 그린 코어 디펜스 미니게임 모음 — 첫 게임은 빛으로 적을 태우는 등대, 전부 브라우저 안에서",
       },
       "tag-it": {
         name: "태그잇",
@@ -2812,6 +2819,7 @@ export const messages: Record<Locale, Messages> = {
       toolLanguageMaker: "Language Maker",
       toolMaze: "Pixel Maze Maker",
       toolShooter: "Arcade Shooter",
+      toolArcade: "Arcade — Core Defense",
       toolTagIt: "Tag-it",
       toolTarot: "Tarot Table",
       categoryLabel: "Category",
@@ -3080,6 +3088,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Arcade Shooter",
         description:
           "Top-down arcade shoot-'em-up — blast the alien fleet for high scores",
+      },
+      arcade: {
+        name: "Arcade — Core Defense",
+        description:
+          "A collection of core-defense minigames drawn from pure shapes — first up is Beacon, burn enemies with light, all in your browser",
       },
       "tag-it": {
         name: "Tag-it",
