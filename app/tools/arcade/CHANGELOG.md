@@ -1,5 +1,10 @@
 # Changelog — arcade
 
+## 0.2.0 — 게임 5종 추가: FLAIL · CIRCUIT · REPEL · LURE · SINGULARITY (2026-07-04)
+- beacon과 동일 패턴으로 5종 이식(각 `lib/arcade/games/<id>.ts` + 상단 TUNE 블록, 로직·수치·색 원본 유지, 캔버스 텍스트 영어). `index.ts`에 6종 등록·탭 라벨.
+- 상단 탭 6개로 전환(활성 게임 1개만 tick). 게임별 aspect(0.64~0.7)라 전환 시 컨테이너 비율·fitCanvas 자동 갱신.
+- 소스 GDD(`_import/batch11.html`)는 `.gitignore` 처리(버전관리 제외).
+
 ## 0.1.2 — beacon 미러 등대 간 연쇄 반사 (2026-07-04)
 - 켜진 미러의 반사 콘이 다른 미러도 켠다(mirror→mirror 연쇄). 연쇄로 켜진 미러도 적을 태우고 또 다른 미러를 켜, 회전에 따라 커버리지가 동적으로 넓어짐. `TUNE.mirrorChainMaxHops`(기본 5, 0=끄기)로 조절.
 

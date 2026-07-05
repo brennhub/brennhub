@@ -32,6 +32,20 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    id: "arcade-more-games",
+    date: "2026-07-04",
+    tool: "arcade",
+    kind: "new",
+    title: {
+      ko: "아케이드 — 게임 5종 추가",
+      en: "Arcade — 5 more games",
+    },
+    body: {
+      ko: "아케이드에 게임 다섯이 더 들어왔어요: FLAIL(사슬추)·CIRCUIT(회로)·REPEL(격퇴)·LURE(유인)·SINGULARITY(특이점). 상단 탭에서 골라 즐기세요.",
+      en: "Five more games join the arcade: Flail, Circuit, Repel, Lure, and Singularity. Pick one from the tabs at the top.",
+    },
+  },
+  {
     id: "arcade-launch",
     date: "2026-07-04",
     tool: "arcade",
