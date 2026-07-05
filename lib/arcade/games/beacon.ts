@@ -18,7 +18,7 @@ import {
   type GameApi,
 } from "../engine";
 
-type Core = { x: number; y: number; r: number; hp: number };
+type Core = { x: number; y: number; r: number; hp: number; hitT: number };
 type Enemy = {
   x: number;
   y: number;
@@ -28,6 +28,9 @@ type Enemy = {
   um: boolean;
   raider: boolean;
   lit: number;
+  contact: boolean; // raider가 미러 가장자리 접촉 중(부딪힘 연출용)
+  bx: number; // 접촉 시 미러 방향 단위벡터 (부딪힘 오프셋용)
+  by: number;
 };
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; col: string };
 type Obstacle = { x: number; y: number; r: number };
@@ -41,6 +44,7 @@ type Mirror = {
   isLit: boolean;
   hp: number;
   mhp: number;
+  hitT: number; // 피격 플래시 타이머
 };
 type Button = { x: number; y: number; w: number; h: number };
 type Phase = "ready" | "play" | "over";
@@ -71,6 +75,8 @@ type BeaconState = {
   btns: Button[];
   pendingMirrors: number; // 직접 배치 대기 중인 미러 수
   ptr: { x: number; y: number } | null; // 고스트 미리보기용 포인터 좌표
+  shakeT: number; // 코어 피격 화면 흔들 타이머
+  time: number; // 연출 위상용 시간 누적
 };
 
 const AC = "#fde047";
@@ -112,6 +118,11 @@ const TUNE = {
   raiderSpawnRamp: 0.01, // 웨이브당 raider 확률 증가
   raiderHP: 4, // raider 체력
   raiderMirrorDps: 2, // raider가 미러에 주는 초당 피해
+  mainRangeBase: 0.45, // 메인 빔 사거리 기저 (기존 1.2 — 스폰반경 0.62보다 짧게 = 화면 밖 적 못 맞춤)
+  hitFlashDur: 0.18, // 코어/미러 피격 플래시 지속 s
+  shakeDur: 0.12, // 코어 피격 화면 흔들 지속 s
+  shakeMag: 4, // 화면 흔들 최대 px
+  raiderBumpAmp: 2, // raider 부딪힘 왕복 진폭 px
   mirrorChainMaxHops: MIRMAX, // 미러→미러 연쇄 전파 최대 hop (0=연쇄 끄기=기존 동작)
 };
 
@@ -126,6 +137,7 @@ function newMirror(x: number, y: number): Mirror {
     refHW: 0.32,
     rot: rand(0.35, 0.75) * (Math.random() < 0.5 ? 1 : -1),
     isLit: false,
+    hitT: 0,
     hp: TUNE.mirrorHP,
     mhp: TUNE.mirrorHP,
   };
@@ -157,7 +169,7 @@ function reset(W: number, H: number): void {
   S.W = W;
   S.H = H;
   S.phase = "ready";
-  S.core = { x: W / 2, y: H / 2, r: 15, hp: TUNE.coreHP };
+  S.core = { x: W / 2, y: H / 2, r: 15, hp: TUNE.coreHP, hitT: 0 };
   S.aim = -Math.PI / 2;
   S.mode = "focus";
   S.en = [];
@@ -175,6 +187,8 @@ function reset(W: number, H: number): void {
   S.spawnGap = TUNE.spawnGapStart;
   S.best = S.best || 0;
   S.ptr = null;
+  S.shakeT = 0;
+  S.time = 0;
   layoutBtns();
 }
 function layoutBtns(): void {
@@ -259,7 +273,7 @@ function dpsNow(): number {
   return MODES[S.mode].dps * (1 + S.powLv * 0.35);
 }
 function rngNow(): number {
-  return Math.max(S.W, S.H) * 1.2 * MODES[S.mode].rng * (1 + S.rngLv * 0.15);
+  return Math.max(S.W, S.H) * TUNE.mainRangeBase * MODES[S.mode].rng * (1 + S.rngLv * 0.15);
 }
 function mirRange(): number {
   return Math.max(S.W, S.H) * TUNE.mirrorRangeBase * (1 + S.rngLv * 0.15);
@@ -279,6 +293,9 @@ function spawnEnemy(): void {
     um,
     raider,
     lit: 0,
+    contact: false,
+    bx: 0,
+    by: 0,
   });
 }
 function flash(): void {
@@ -327,8 +344,12 @@ function buy(i: number): void {
   }
 }
 function update(dt: number): void {
+  // 피격 연출 타이머(화면 흔들·코어 플래시)는 phase 무관 감소 — over 화면에서 얼어붙어 계속 흔들리지 않도록.
+  S.shakeT = Math.max(0, S.shakeT - dt);
+  S.core.hitT = Math.max(0, S.core.hitT - dt);
   if (S.phase !== "play") return;
   S.flashT = Math.max(0, S.flashT - dt);
+  S.time += dt;
   const M = MODES[S.mode];
   const rng = rngNow();
   S.waveT += dt;
@@ -348,6 +369,7 @@ function update(dt: number): void {
   // (1) 직접 점등: 회전 유지 + 코어 빔 부채꼴 안이면 켜짐 (기존 동작).
   for (const m of S.mirrors) {
     m.refAng += m.rot * dt;
+    m.hitT = Math.max(0, m.hitT - dt);
     const ang = Math.atan2(m.y - S.core.y, m.x - S.core.x);
     m.isLit = Math.abs(angDiff(ang, S.aim)) < M.HW && !occ(S.core.x, S.core.y, m.x, m.y, m);
   }
@@ -380,6 +402,7 @@ function update(dt: number): void {
   const dps = dpsNow();
   for (const e of S.en) {
     if (e.hp <= 0) continue;
+    e.contact = false; // 매 프레임 초기화 — 이번 프레임 미러 접촉 시에만 true
     let L = 0;
     const ang = Math.atan2(e.y - S.core.y, e.x - S.core.x);
     const d = dist(e.x, e.y, S.core.x, S.core.y);
@@ -450,12 +473,31 @@ function update(dt: number): void {
     e.x += ddx * sp * dt;
     e.y += ddy * sp * dt;
     if (tgtMirror) {
-      // raider가 타겟 미러에 닿으면 지속 데미지(즉사 아님) — 미러 파괴는 루프 후 일괄 처리.
-      if (dist(e.x, e.y, tgtMirror.x, tgtMirror.y) < tgtMirror.r + e.r)
-        tgtMirror.hp -= TUNE.raiderMirrorDps * dt;
+      // 미러 가장자리에서 부딪힘(파고듦 방지): standoff 밖으로 클램프, 접촉 중에만 데미지.
+      const standoff = tgtMirror.r + e.r;
+      let nx = e.x - tgtMirror.x,
+        ny = e.y - tgtMirror.y;
+      let nd = Math.hypot(nx, ny);
+      if (nd < standoff) {
+        if (nd < 0.001) {
+          // 중심 겹침 fallback: 진입 반대 방향으로 밀어냄
+          nx = -ddx;
+          ny = -ddy;
+          nd = Math.hypot(nx, ny) || 1;
+        }
+        e.x = tgtMirror.x + (nx / nd) * standoff;
+        e.y = tgtMirror.y + (ny / nd) * standoff;
+        tgtMirror.hp -= TUNE.raiderMirrorDps * dt; // 미러 파괴는 루프 후 일괄 처리
+        tgtMirror.hitT = TUNE.hitFlashDur;
+        e.contact = true;
+        e.bx = -(nx / nd); // 미러 방향 단위벡터(부딪힘 연출용)
+        e.by = -(ny / nd);
+      }
     } else if (dist(e.x, e.y, S.core.x, S.core.y) < S.core.r + e.r) {
       e.hp = 0;
       S.core.hp -= TUNE.contactDamage;
+      S.core.hitT = TUNE.hitFlashDur;
+      S.shakeT = TUNE.shakeDur;
       burst(e.x, e.y, "#fff", 6);
       blip(90, 0.12, "sawtooth", 0.045);
     }
@@ -503,6 +545,13 @@ function render(ctx: CanvasRenderingContext2D): void {
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = "#05060c";
   ctx.fillRect(0, 0, W, H);
+  // 화면 흔들(코어 피격) — 배경 채운 뒤부터 감싸 가장자리 아티팩트 방지.
+  const shaking = S.shakeT > 0;
+  if (shaking) {
+    const s = TUNE.shakeMag * (S.shakeT / TUNE.shakeDur);
+    ctx.save();
+    ctx.translate((Math.random() - 0.5) * 2 * s, (Math.random() - 0.5) * 2 * s);
+  }
   const cx = S.core.x,
     cy = S.core.y;
   const M = MODES[S.mode];
@@ -548,21 +597,24 @@ function render(ctx: CanvasRenderingContext2D): void {
       ctx.fill();
     }
   }
+  const bump = Math.sin(S.time * 18) * TUNE.raiderBumpAmp; // 접촉 raider 부딪힘 위상
   for (const e of S.en) {
     const L = e.lit > 0.1;
     let col: string;
     if (e.raider) col = L ? "#fdba74" : "#fb923c";
     else if (e.um) col = L ? "#c4b5fd" : "#3a3358";
     else col = L ? "#fff7cc" : "#3a4456";
+    const ex = e.contact ? e.x + e.bx * bump : e.x;
+    const ey = e.contact ? e.y + e.by * bump : e.y;
     ctx.fillStyle = col;
     ctx.beginPath();
-    ctx.arc(e.x, e.y, e.r, 0, TAU);
+    ctx.arc(ex, ey, e.r, 0, TAU);
     ctx.fill();
     if (L) {
       ctx.fillStyle = "rgba(0,0,0,.3)";
-      ctx.fillRect(e.x - e.r, e.y - e.r - 5, e.r * 2, 3);
+      ctx.fillRect(ex - e.r, ey - e.r - 5, e.r * 2, 3);
       ctx.fillStyle = e.um ? "#a78bfa" : "#fde047";
-      ctx.fillRect(e.x - e.r, e.y - e.r - 5, e.r * 2 * clamp(e.hp / e.mhp, 0, 1), 3);
+      ctx.fillRect(ex - e.r, ey - e.r - 5, e.r * 2 * clamp(e.hp / e.mhp, 0, 1), 3);
     }
   }
   for (const o of S.obs) {
@@ -575,9 +627,12 @@ function render(ctx: CanvasRenderingContext2D): void {
     ctx.stroke();
   }
   for (const m of S.mirrors) {
+    const mhj = m.hitT > 0 ? m.hitT / TUNE.hitFlashDur : 0;
+    const mx = m.x + (mhj ? (Math.random() - 0.5) * 4 * mhj : 0);
+    const my = m.y + (mhj ? (Math.random() - 0.5) * 4 * mhj : 0);
     ctx.fillStyle = "#1e3a5f";
     ctx.beginPath();
-    ctx.arc(m.x, m.y, m.r, 0, TAU);
+    ctx.arc(mx, my, m.r, 0, TAU);
     ctx.fill();
     ctx.strokeStyle = "#7dd3fc";
     ctx.lineWidth = 2;
@@ -585,24 +640,41 @@ function render(ctx: CanvasRenderingContext2D): void {
     ctx.strokeStyle = "#bae6fd";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(m.x, m.y);
-    ctx.lineTo(m.x + Math.cos(m.refAng) * m.r, m.y + Math.sin(m.refAng) * m.r);
+    ctx.moveTo(mx, my);
+    ctx.lineTo(mx + Math.cos(m.refAng) * m.r, my + Math.sin(m.refAng) * m.r);
     ctx.stroke();
+    if (mhj) {
+      ctx.strokeStyle = "rgba(255,90,110," + mhj + ")"; // 피격 빨간 링(저체력 상시색과 구분되는 순간 플래시)
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(mx, my, m.r + 3, 0, TAU);
+      ctx.stroke();
+    }
     if (m.hp < m.mhp) {
       ctx.fillStyle = "rgba(0,0,0,.4)";
-      ctx.fillRect(m.x - m.r, m.y - m.r - 6, m.r * 2, 3);
+      ctx.fillRect(mx - m.r, my - m.r - 6, m.r * 2, 3);
       ctx.fillStyle = "#7dd3fc";
-      ctx.fillRect(m.x - m.r, m.y - m.r - 6, m.r * 2 * clamp(m.hp / m.mhp, 0, 1), 3);
+      ctx.fillRect(mx - m.r, my - m.r - 6, m.r * 2 * clamp(m.hp / m.mhp, 0, 1), 3);
     }
   }
+  const chj = S.core.hitT > 0 ? S.core.hitT / TUNE.hitFlashDur : 0;
+  const ccx = cx + (chj ? (Math.random() - 0.5) * 4 * chj : 0);
+  const ccy = cy + (chj ? (Math.random() - 0.5) * 4 * chj : 0);
   ctx.save();
   ctx.shadowColor = AC;
   ctx.shadowBlur = 18;
   ctx.fillStyle = S.core.hp > 30 ? AC : "#ff5e7e";
   ctx.beginPath();
-  ctx.arc(cx, cy, S.core.r, 0, TAU);
+  ctx.arc(ccx, ccy, S.core.r, 0, TAU);
   ctx.fill();
   ctx.restore();
+  if (chj) {
+    ctx.strokeStyle = "rgba(255,90,110," + chj + ")"; // 피격 순간 밝은 빨간 링(저체력 상시빨강과 구분)
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(ccx, ccy, S.core.r + 4, 0, TAU);
+    ctx.stroke();
+  }
   if (S.flashT > 0) {
     ctx.fillStyle = "rgba(255,255,240," + (S.flashT / 0.42) * 0.5 + ")";
     ctx.fillRect(0, 0, W, H);
@@ -692,6 +764,7 @@ function render(ctx: CanvasRenderingContext2D): void {
     ctext(ctx, "KILLS " + S.kills + " · WAVE " + S.wave, W / 2, H / 2 + 10, 14, "#fff", 700);
     ctext(ctx, "Tap to restart", W / 2, H / 2 + 36, 13, "#aeb6cc", 600);
   }
+  if (shaking) ctx.restore();
 }
 function onDown(x: number, y: number, button?: number): void {
   if (S.phase !== "play") {
