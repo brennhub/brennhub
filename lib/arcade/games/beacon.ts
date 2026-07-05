@@ -58,6 +58,8 @@ type BeaconState = {
   spawnGap: number;
   best: number;
   btns: Button[];
+  pendingMirrors: number; // 직접 배치 대기 중인 미러 수
+  ptr: { x: number; y: number } | null; // 고스트 미리보기용 포인터 좌표
 };
 
 const AC = "#fde047";
@@ -72,27 +74,26 @@ const MIRMAX = 5;
  * 로직/구조는 불변, 값만 여기서 경유. (괄호는 이번 완화 전 값.)
  */
 const TUNE = {
-  coreHP: 120, // 코어 체력 (기존 100)
-  waveInterval: 12, // 웨이브 간격 s (기존 10)
-  spawnGapStart: 1.05, // 초기 스폰 간격 s (기존 0.9)
-  spawnGapFloor: 0.42, // 스폰 간격 하한 (기존 0.34)
-  spawnGapDecay: 0.038, // 웨이브당 간격 감소 (기존 0.045)
-  doubleSpawnFromWave: 4, // 더블 스폰 시작 웨이브 (기존 3)
-  enemySpeedBase: 20, // 비피격 이동 (기존 24)
-  enemySpeedLit: 14, // 피격 중 이동 (기존 16)
-  enemySpeedWaveRamp: 1.6, // 웨이브당 속도 가산 (기존 2)
-  contactDamage: 5, // 코어 접촉 피해 (기존 6)
+  coreHP: 150, // 코어 체력 (기존 120)
+  waveInterval: 14, // 웨이브 간격 s (기존 12)
+  spawnGapStart: 1.2, // 초기 스폰 간격 s (기존 1.05)
+  spawnGapFloor: 0.5, // 스폰 간격 하한 (기존 0.42)
+  spawnGapDecay: 0.032, // 웨이브당 간격 감소 (기존 0.038)
+  doubleSpawnFromWave: 5, // 더블 스폰 시작 웨이브 (기존 4)
+  enemySpeedBase: 18, // 비피격 이동 (기존 20)
+  enemySpeedLit: 12, // 피격 중 이동 (기존 14)
+  enemySpeedWaveRamp: 1.3, // 웨이브당 속도 가산 (기존 1.6)
+  contactDamage: 4, // 코어 접촉 피해 (기존 5)
+  startMirrors: 2, // 시작 시 직접 배치할 미러 수
   mirrorChainMaxHops: MIRMAX, // 미러→미러 연쇄 전파 최대 hop (0=연쇄 끄기=기존 동작)
 };
 
 const S = {} as BeaconState;
 
-function newMirror(W: number, H: number): Mirror {
-  const mx = rand(W * 0.18, W * 0.82),
-    my = rand(H * 0.2, H * 0.8);
+function newMirror(x: number, y: number): Mirror {
   return {
-    x: mx,
-    y: my,
+    x,
+    y,
     r: 15,
     refAng: rand(0, TAU),
     refHW: 0.32,
@@ -104,7 +105,8 @@ function setupField(W: number, H: number): void {
   S.obs = [];
   for (let i = 0; i < 2; i++)
     S.obs.push({ x: rand(W * 0.2, W * 0.8), y: rand(H * 0.24, H * 0.76), r: rand(15, 20) });
-  S.mirrors = [newMirror(W, H), newMirror(W, H)];
+  S.mirrors = []; // 랜덤 생성 대신 플레이어가 직접 배치
+  S.pendingMirrors = TUNE.startMirrors;
 }
 function reset(W: number, H: number): void {
   S.W = W;
@@ -127,6 +129,7 @@ function reset(W: number, H: number): void {
   S.spawnT = 0;
   S.spawnGap = TUNE.spawnGapStart;
   S.best = S.best || 0;
+  S.ptr = null;
   layoutBtns();
 }
 function layoutBtns(): void {
@@ -193,6 +196,15 @@ function occ(sx: number, sy: number, ex: number, ey: number, skip: Mirror | null
 function inRect(x: number, y: number, r: Button): boolean {
   return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 }
+/** 미러 직접 배치 가능 위치 — 필드 안·하단 UI 밴드 제외·코어/장애물/기존 미러와 겹침 방지. */
+function canPlaceMirror(x: number, y: number): boolean {
+  const r = 15; // mirror.r
+  if (x < r || x > S.W - r || y < r || y > S.H - 60) return false;
+  if (dist(x, y, S.core.x, S.core.y) < S.core.r + r + 12) return false;
+  for (const o of S.obs) if (dist(x, y, o.x, o.y) < o.r + r + 6) return false;
+  for (const m of S.mirrors) if (dist(x, y, m.x, m.y) < m.r + r + 6) return false;
+  return true;
+}
 function dpsNow(): number {
   return MODES[S.mode].dps * (1 + S.powLv * 0.35);
 }
@@ -231,7 +243,7 @@ function flash(): void {
   blip(700, 0.2, "sine", 0.05);
 }
 function mirCost(): number {
-  return 12 + S.mirrors.length * 8;
+  return 12 + (S.mirrors.length + S.pendingMirrors) * 8; // 배치+대기 합산 기준(원래 비용 진행 보존)
 }
 function powCost(): number {
   return 10 + S.powLv * 8;
@@ -241,9 +253,10 @@ function rngCost(): number {
 }
 function buy(i: number): void {
   if (i === 2) {
-    if (S.mirrors.length < MIRMAX && S.pts >= mirCost()) {
+    // +MIRROR: 즉시 배치가 아니라 "배치 대기"로. 상한은 배치+대기 합산.
+    if (S.mirrors.length + S.pendingMirrors < MIRMAX && S.pts >= mirCost()) {
       S.pts -= mirCost();
-      S.mirrors.push(newMirror(S.W, S.H));
+      S.pendingMirrors++;
       blip(620, 0.1, "triangle", 0.04);
     }
   } else if (i === 3) {
@@ -510,6 +523,22 @@ function render(ctx: CanvasRenderingContext2D): void {
     ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
   }
   ctx.globalAlpha = 1;
+  // 배치 대기 중이면: 안내 문구 + 커서 위치 고스트 미러(유효=파랑, 무효=빨강).
+  if (S.phase === "play" && S.pendingMirrors > 0) {
+    ctext(ctx, "Tap to place mirror (" + S.pendingMirrors + " left)", W / 2, 40, 12, "#7dd3fc", 700);
+    if (S.ptr) {
+      const okPlace = canPlaceMirror(S.ptr.x, S.ptr.y);
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = okPlace ? "#1e3a5f" : "#5f1e2a";
+      ctx.beginPath();
+      ctx.arc(S.ptr.x, S.ptr.y, 15, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = okPlace ? "#7dd3fc" : "#ff5e7e";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
   const b = S.btns;
   btn(ctx, b[0], S.mode === "focus" ? "FOCUS" : "SPREAD", true, "#fde047");
   btn(
@@ -522,8 +551,8 @@ function render(ctx: CanvasRenderingContext2D): void {
   btn(
     ctx,
     b[2],
-    S.mirrors.length >= MIRMAX ? "MIRROR MAX" : "+MIRROR " + mirCost(),
-    S.pts >= mirCost() && S.mirrors.length < MIRMAX,
+    S.mirrors.length + S.pendingMirrors >= MIRMAX ? "MIRROR MAX" : "+MIRROR " + mirCost(),
+    S.pts >= mirCost() && S.mirrors.length + S.pendingMirrors < MIRMAX,
     "#7dd3fc",
   );
   btn(ctx, b[3], "+POWER " + powCost(), S.pts >= powCost(), "#fda4af");
@@ -593,10 +622,22 @@ function onDown(x: number, y: number): void {
       return;
     }
   }
+  // 버튼이 아닌 필드 탭: 배치 대기가 있으면 배치 시도(우선), 없으면 빔 조준.
+  if (S.pendingMirrors > 0) {
+    if (canPlaceMirror(x, y)) {
+      S.mirrors.push(newMirror(x, y));
+      S.pendingMirrors--;
+      blip(620, 0.1, "triangle", 0.04);
+    }
+    return; // 배치 모드에선 무효 자리여도 조준하지 않음
+  }
   S.aim = Math.atan2(y - S.core.y, x - S.core.x);
 }
 function onMove(x: number, y: number): void {
-  if (S.phase === "play") S.aim = Math.atan2(y - S.core.y, x - S.core.x);
+  if (S.phase !== "play") return;
+  S.ptr = { x, y }; // 고스트 미리보기 좌표 (wantsMove:true라 버튼 없이도 들어옴)
+  if (S.pendingMirrors > 0) return; // 배치 모드: 빔 조준 잠금
+  S.aim = Math.atan2(y - S.core.y, x - S.core.x);
 }
 function onUp(): void {}
 function onKey(k: string): boolean {
