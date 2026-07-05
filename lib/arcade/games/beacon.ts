@@ -82,6 +82,7 @@ const TUNE = {
   enemySpeedLit: 14, // 피격 중 이동 (기존 16)
   enemySpeedWaveRamp: 1.6, // 웨이브당 속도 가산 (기존 2)
   contactDamage: 5, // 코어 접촉 피해 (기존 6)
+  mirrorChainMaxHops: MIRMAX, // 미러→미러 연쇄 전파 최대 hop (0=연쇄 끄기=기존 동작)
 };
 
 const S = {} as BeaconState;
@@ -277,10 +278,35 @@ function update(dt: number): void {
     spawnEnemy();
     if (S.wave >= TUNE.doubleSpawnFromWave) spawnEnemy();
   }
+  // (1) 직접 점등: 회전 유지 + 코어 빔 부채꼴 안이면 켜짐 (기존 동작).
   for (const m of S.mirrors) {
     m.refAng += m.rot * dt;
     const ang = Math.atan2(m.y - S.core.y, m.x - S.core.x);
     m.isLit = Math.abs(angDiff(ang, S.aim)) < M.HW && !occ(S.core.x, S.core.y, m.x, m.y, m);
+  }
+  // (2) 연쇄 전파: 켜진 미러 src의 반사 콘이 아직 안 켜진 미러 dst를 켠다. 그렇게 켜진 미러도
+  //     적을 태우고 또 다른 미러를 켠다 (렌더·적 반사 루프가 isLit 미러 전부를 순회 → 자동 반영).
+  //     isLit은 여기서 true로만 설정(단조) → 새로 켜지는 미러 없으면 종료, 무한루프 불가.
+  //     occ 스킵은 src(자기 차단 방지); dst는 광선 끝점이라 occ의 t<len-2로 자연 제외.
+  const mrChain = mirRange();
+  for (let hop = 0; hop < TUNE.mirrorChainMaxHops; hop++) {
+    let changed = false;
+    for (const src of S.mirrors) {
+      if (!src.isLit) continue;
+      for (const dst of S.mirrors) {
+        if (dst.isLit || dst === src) continue;
+        const a = Math.atan2(dst.y - src.y, dst.x - src.x);
+        if (
+          Math.abs(angDiff(a, src.refAng)) < src.refHW &&
+          dist(src.x, src.y, dst.x, dst.y) < mrChain &&
+          !occ(src.x, src.y, dst.x, dst.y, src)
+        ) {
+          dst.isLit = true;
+          changed = true;
+        }
+      }
+    }
+    if (!changed) break;
   }
   let anyLit = false;
   const mr = mirRange();
