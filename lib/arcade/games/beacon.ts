@@ -85,6 +85,13 @@ const TUNE = {
   enemySpeedWaveRamp: 1.3, // 웨이브당 속도 가산 (기존 1.6)
   contactDamage: 4, // 코어 접촉 피해 (기존 5)
   startMirrors: 2, // 시작 시 직접 배치할 미러 수
+  obstacleCoreGap: 70, // 장애물↔코어 최소 여유거리 px
+  obstacleGap: 40, // 장애물↔장애물 최소 여유거리 px
+  umHP: 3, // 장갑형(um) 체력 (기존 5)
+  umBeamMult: 0.6, // 장갑형 빔 데미지 배율 (기존 0.32 — 클수록 잘 녹음)
+  umFlashDmg: 7, // 장갑형 섬광 데미지 (기존 7 유지)
+  umSpawnBase: 0.12, // 장갑형 스폰 기본 확률 (기존 0.18)
+  umSpawnRamp: 0.015, // 웨이브당 장갑형 확률 증가 (기존 0.02)
   mirrorChainMaxHops: MIRMAX, // 미러→미러 연쇄 전파 최대 hop (0=연쇄 끄기=기존 동작)
 };
 
@@ -103,8 +110,20 @@ function newMirror(x: number, y: number): Mirror {
 }
 function setupField(W: number, H: number): void {
   S.obs = [];
-  for (let i = 0; i < 2; i++)
-    S.obs.push({ x: rand(W * 0.2, W * 0.8), y: rand(H * 0.24, H * 0.76), r: rand(15, 20) });
+  // 장애물 2개: 코어와 최소거리 + 서로 최소간격 만족까지 재추첨(상한 30회, 실패 시 마지막 값).
+  for (let i = 0; i < 2; i++) {
+    const r = rand(15, 20);
+    let x = 0,
+      y = 0,
+      ok = false;
+    for (let tries = 0; tries < 30 && !ok; tries++) {
+      x = rand(W * 0.2, W * 0.8);
+      y = rand(H * 0.24, H * 0.76);
+      ok = dist(x, y, S.core.x, S.core.y) > S.core.r + r + TUNE.obstacleCoreGap;
+      for (const o of S.obs) if (dist(x, y, o.x, o.y) <= o.r + r + TUNE.obstacleGap) ok = false;
+    }
+    S.obs.push({ x, y, r });
+  }
   S.mirrors = []; // 랜덤 생성 대신 플레이어가 직접 배치
   S.pendingMirrors = TUNE.startMirrors;
 }
@@ -217,13 +236,13 @@ function mirRange(): number {
 function spawnEnemy(): void {
   const a = rand(0, TAU);
   const R = Math.max(S.W, S.H) * 0.62;
-  const um = Math.random() < 0.18 + S.wave * 0.02;
+  const um = Math.random() < TUNE.umSpawnBase + S.wave * TUNE.umSpawnRamp;
   S.en.push({
     x: S.core.x + Math.cos(a) * R,
     y: S.core.y + Math.sin(a) * R,
     r: 10,
-    hp: um ? 5 : 3,
-    mhp: um ? 5 : 3,
+    hp: um ? TUNE.umHP : 3,
+    mhp: um ? TUNE.umHP : 3,
     um,
     lit: 0,
   });
@@ -233,7 +252,7 @@ function flash(): void {
   S.charge = 0;
   S.flashT = 0.42;
   for (const e of S.en) {
-    e.hp -= e.um ? 7 : 3.6;
+    e.hp -= e.um ? TUNE.umFlashDmg : 3.6;
     burst(e.x, e.y, "#fff", 5);
     if (e.hp <= 0) {
       S.kills++;
@@ -349,7 +368,7 @@ function update(dt: number): void {
     e.lit = L ? 1 : Math.max(0, e.lit - dt * 3);
     if (L) {
       anyLit = true;
-      e.hp -= dps * (e.um ? 0.32 : 1) * dt;
+      e.hp -= dps * (e.um ? TUNE.umBeamMult : 1) * dt;
       if (e.hp <= 0) {
         S.kills++;
         S.pts++;
