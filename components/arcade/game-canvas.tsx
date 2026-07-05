@@ -23,14 +23,14 @@ export const GameCanvas = forwardRef<HTMLCanvasElement, Props>(function GameCanv
 ) {
   return (
     <div
-      className={"relative mx-auto w-full max-w-[420px] select-none " + (className ?? "")}
+      className={"relative mx-auto w-full max-w-[860px] select-none " + (className ?? "")}
       style={{ aspectRatio: `1 / ${aspect}` }}
     >
       <canvas
         ref={ref}
         tabIndex={0}
         aria-label="Arcade game canvas"
-        className="absolute inset-0 h-full w-full touch-none rounded-md outline-none ring-0 focus-visible:ring-2 focus-visible:ring-amber-400 [image-rendering:pixelated]"
+        className="absolute inset-0 h-full w-full touch-none rounded-md outline-none ring-0 focus-visible:ring-2 focus-visible:ring-amber-400"
       />
       {children}
     </div>
