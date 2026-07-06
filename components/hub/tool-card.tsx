@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import {
+  Atom,
+  CircuitBoard,
   Clock,
   Gamepad2,
   Grid3x3,
+  Magnet,
   Mail,
+  Orbit,
+  Radar,
   MessageSquare,
   MoonStar,
   Pill,
@@ -14,6 +19,7 @@ import {
   TrendingUp,
   Type,
   Users,
+  Wind,
   type LucideIcon,
 } from "lucide-react";
 import type { Tool } from "@/lib/tools-registry";
@@ -37,6 +43,12 @@ const ICON_BY_SLUG: Record<string, LucideIcon> = {
   "language-maker": Type,
   maze: Grid3x3,
   shooter: Gamepad2,
+  beacon: Radar,
+  flail: Orbit,
+  circuit: CircuitBoard,
+  repel: Wind,
+  lure: Magnet,
+  singularity: Atom,
   tarot: MoonStar,
 };
 

@@ -25,6 +25,12 @@
 ### 엔터테인먼트 (entertainment)
 - **언어 창조기** `/tools/language-maker` — 픽셀 글리프를 그리고 입력값에 1:1 매핑해 실시간 변환·이미지 공유. [상세](app/tools/language-maker/README.md)
 - **픽셀 미로 만들기** `/tools/maze` — 픽셀 격자로 미로를 설계하고 시야 제한 플레이·숏링크 공유. [상세](app/tools/maze/README.md)
+- **등대** `/tools/beacon` — 빛 빔·회전 거울로 적을 태우는 코어 디펜스. [상세](app/tools/beacon/README.md)
+- **사슬추** `/tools/flail` — 홀드 가속·드래그 발사 물리 코어 디펜스. [상세](app/tools/flail/README.md)
+- **회로** `/tools/circuit` — 노드 연결로 방어망을 짜는 코어 디펜스. [상세](app/tools/circuit/README.md)
+- **격퇴** `/tools/repel` — 스와이프 넉백 코어 디펜스. [상세](app/tools/repel/README.md)
+- **유인** `/tools/lure` — 미끼·지뢰 코어 디펜스. [상세](app/tools/lure/README.md)
+- **특이점** `/tools/singularity` — 블랙홀 슬링샷 중력 코어 디펜스. [상세](app/tools/singularity/README.md)
 
 ## 유니버설
 
