@@ -32,31 +32,17 @@ export type Release = {
 
 export const releases: Release[] = [
   {
-    id: "arcade-more-games",
-    date: "2026-07-04",
-    tool: "arcade",
+    id: "arcade-games-launch",
+    date: "2026-07-05",
+    tool: "site",
     kind: "new",
     title: {
-      ko: "아케이드 — 게임 5종 추가",
-      en: "Arcade — 5 more games",
+      ko: "새 게임 6종: 등대 · 사슬추 · 회로 · 격퇴 · 유인 · 특이점",
+      en: "6 new games: Beacon, Flail, Circuit, Repel, Lure, Singularity",
     },
     body: {
-      ko: "아케이드에 게임 다섯이 더 들어왔어요: FLAIL(사슬추)·CIRCUIT(회로)·REPEL(격퇴)·LURE(유인)·SINGULARITY(특이점). 상단 탭에서 골라 즐기세요.",
-      en: "Five more games join the arcade: Flail, Circuit, Repel, Lure, and Singularity. Pick one from the tabs at the top.",
-    },
-  },
-  {
-    id: "arcade-launch",
-    date: "2026-07-04",
-    tool: "arcade",
-    kind: "new",
-    title: {
-      ko: "아케이드 — 코어 디펜스 출시",
-      en: "Arcade — Core Defense launched",
-    },
-    body: {
-      ko: "도형으로 그린 코어 디펜스 미니게임 모음입니다. 첫 게임은 빛으로 적을 태우는 등대(Beacon) — 드래그로 조준하고 거울을 늘려 사각을 지우세요.",
-      en: "A collection of core-defense minigames drawn from pure shapes. First up is Beacon — aim a beam of light by dragging, and add mirrors to sweep the blind spots.",
+      ko: "도형만으로 그린 코어 디펜스 게임 6종이 각각 독립 도구로 열렸어요. 빛으로 태우는 등대, 후려치는 사슬추, 방어망을 짜는 회로, 밀어내는 격퇴, 미끼·지뢰의 유인, 블랙홀의 특이점 — 전부 브라우저 안에서.",
+      en: "Six shape-only core-defense games are each live as their own tool: Beacon (burn with light), Flail, a Circuit defense grid, Repel knockback, Lure with bait and mines, and Singularity black holes — all in your browser.",
     },
   },
   {

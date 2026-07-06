@@ -13,6 +13,12 @@ const TOOLS = [
   "language-maker",
   "maze",
   "shooter",
+  "beacon",
+  "flail",
+  "circuit",
+  "repel",
+  "lure",
+  "singularity",
   "tag-it",
   "tarot",
 ] as const;
