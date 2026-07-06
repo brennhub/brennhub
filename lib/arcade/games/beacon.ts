@@ -80,9 +80,9 @@ type BeaconState = {
 };
 
 const AC = "#fde047";
-const MODES: Record<Mode, { HW: number; dps: number; rng: number }> = {
-  focus: { HW: 0.22, dps: 4.4, rng: 1.25 },
-  spread: { HW: 0.52, dps: 2.3, rng: 0.92 },
+const MODES: Record<Mode, { HW: number; dps: number }> = {
+  focus: { HW: 0.22, dps: 4.4 }, // 좁은 폭·높은 dps
+  spread: { HW: 0.52, dps: 2.3 }, // 넓은 폭·낮은 dps (사거리는 mode 무관 동일)
 };
 const MIRMAX = 6; // 배치+대기 미러 상한 (기존 5)
 
@@ -111,14 +111,13 @@ const TUNE = {
   umFlashDmg: 7, // 장갑형 섬광 데미지
   umSpawnBase: 0.12, // 장갑형 스폰 기본 확률
   umSpawnRamp: 0.015, // 웨이브당 장갑형 확률 증가
-  flashChargeRate: 0.3, // FLASH 충전 속도/s (기존 0.5)
-  mirrorRangeBase: 0.35, // 미러 반사 사거리 기저 배율 (기존 0.5, +RANGE로 성장)
+  flashChargePerDmg: 0.015, // 적에게 준 데미지당 FLASH 충전량 (스핀 악용 방지: 실제 데미지에만 연동)
+  rangeBase: 0.35, // 빔·미러 공용 사거리 기저 배율 (단일 소스, +RANGE로 성장)
   mirrorHP: 6, // 미러 체력 (raider가 깎음)
   raiderSpawnBase: 0.15, // raider 스폰 기본 확률
   raiderSpawnRamp: 0.01, // 웨이브당 raider 확률 증가
   raiderHP: 4, // raider 체력
   raiderMirrorDps: 2, // raider가 미러에 주는 초당 피해
-  mainRangeBase: 0.45, // 메인 빔 사거리 기저 (기존 1.2 — 스폰반경 0.62보다 짧게 = 화면 밖 적 못 맞춤)
   hitFlashDur: 0.18, // 코어/미러 피격 플래시 지속 s
   shakeDur: 0.12, // 코어 피격 화면 흔들 지속 s
   shakeMag: 4, // 화면 흔들 최대 px
@@ -273,10 +272,10 @@ function dpsNow(): number {
   return MODES[S.mode].dps * (1 + S.powLv * 0.35);
 }
 function rngNow(): number {
-  return Math.max(S.W, S.H) * TUNE.mainRangeBase * MODES[S.mode].rng * (1 + S.rngLv * 0.15);
+  return mirRange(); // 메인 빔 사거리 = 미러 사거리(단일 소스). mode는 폭(HW)만 조절, 사거리 동일.
 }
 function mirRange(): number {
-  return Math.max(S.W, S.H) * TUNE.mirrorRangeBase * (1 + S.rngLv * 0.15);
+  return Math.max(S.W, S.H) * TUNE.rangeBase * (1 + S.rngLv * 0.15);
 }
 function spawnEnemy(): void {
   const a = rand(0, TAU);
@@ -397,7 +396,7 @@ function update(dt: number): void {
     }
     if (!changed) break;
   }
-  let anyLit = false;
+  let dmgThisFrame = 0; // 이번 프레임 빔+반사가 "적"에게 실제로 준 데미지 총합 (FLASH 충전용)
   const mr = mirRange();
   const dps = dpsNow();
   for (const e of S.en) {
@@ -425,8 +424,9 @@ function update(dt: number): void {
     }
     e.lit = L ? 1 : Math.max(0, e.lit - dt * 3);
     if (L) {
-      anyLit = true;
-      e.hp -= dps * (e.um ? TUNE.umBeamMult : 1) * dt;
+      const dmg = dps * (e.um ? TUNE.umBeamMult : 1) * dt;
+      dmgThisFrame += Math.min(dmg, e.hp); // 실제로 깎인 만큼만 (오버킬 제외)
+      e.hp -= dmg;
       if (e.hp <= 0) {
         S.kills++;
         S.pts++;
@@ -502,7 +502,8 @@ function update(dt: number): void {
       blip(90, 0.12, "sawtooth", 0.045);
     }
   }
-  if (anyLit) S.charge = Math.min(1, S.charge + dt * TUNE.flashChargeRate);
+  // FLASH 충전: 적에게 실제로 준 데미지에만 연동(허공/미러만 훑으면 0 → 스핀 악용 차단).
+  S.charge = Math.min(1, S.charge + dmgThisFrame * TUNE.flashChargePerDmg);
   S.en = S.en.filter((e) => e.hp > 0);
   // 미러 파괴: hp 소진 미러 제거(슬롯 반환 → 배치+대기 상한 자동 회복). 우클릭 환급과 달리 pending 미증가.
   for (const m of S.mirrors) {
