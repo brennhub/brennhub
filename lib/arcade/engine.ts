@@ -24,18 +24,27 @@ export const FONT =
   'system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Apple SD Gothic Neo",sans-serif';
 
 let _ac: AudioContext | null = null;
+let _master: GainNode | null = null; // 모든 SFX 공용 출력(마스터 게인 → 컴프레서 → destination)
 export function audioInit(): void {
   if (_ac) return;
   try {
     const w = window as typeof window & { webkitAudioContext?: typeof AudioContext };
     const C = window.AudioContext || w.webkitAudioContext;
     _ac = C ? new C() : null;
+    if (_ac) {
+      _master = _ac.createGain();
+      _master.gain.value = 0.34; // 마스터 낮게 (동시다발 대비)
+      const comp = _ac.createDynamicsCompressor(); // 겹칠 때 클리핑·과대음량 방지
+      _master.connect(comp);
+      comp.connect(_ac.destination);
+    }
   } catch {
     _ac = null;
+    _master = null;
   }
 }
 export function blip(freq: number, dur?: number, type?: OscillatorType, vol?: number): void {
-  if (!_ac) return;
+  if (!_ac || !_master) return;
   try {
     const t = _ac.currentTime,
       o = _ac.createOscillator(),
@@ -43,7 +52,7 @@ export function blip(freq: number, dur?: number, type?: OscillatorType, vol?: nu
     o.type = type || "square";
     o.frequency.value = freq;
     o.connect(g);
-    g.connect(_ac.destination);
+    g.connect(_master);
     g.gain.setValueAtTime(0.0001, t);
     g.gain.linearRampToValueAtTime(vol || 0.05, t + 0.006);
     g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.12));
@@ -51,6 +60,88 @@ export function blip(freq: number, dur?: number, type?: OscillatorType, vol?: nu
     o.stop(t + (dur || 0.12) + 0.03);
   } catch {
     // ignore — 오디오 실패는 게임 진행에 영향 없음
+  }
+}
+
+/** 절차적 톤 원샷 — freq 스위프 + 게인 엔벨로프. asset 0(웹오디오 합성). 게임 공용. */
+export function tone(
+  freq: number,
+  opts: {
+    freq2?: number;
+    dur?: number;
+    vol?: number;
+    type?: OscillatorType;
+    attack?: number;
+    sweep?: "lin" | "exp";
+    delay?: number;
+  } = {},
+): void {
+  if (!_ac || !_master) return;
+  try {
+    const t0 = _ac.currentTime + (opts.delay || 0);
+    const dur = opts.dur ?? 0.12;
+    const vol = opts.vol ?? 0.3;
+    const attack = opts.attack ?? 0.006;
+    const o = _ac.createOscillator();
+    const g = _ac.createGain();
+    o.type = opts.type || "sine";
+    o.frequency.setValueAtTime(freq, t0);
+    if (opts.freq2 != null) {
+      if (opts.sweep === "exp")
+        o.frequency.exponentialRampToValueAtTime(Math.max(1, opts.freq2), t0 + dur);
+      else o.frequency.linearRampToValueAtTime(opts.freq2, t0 + dur);
+    }
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(vol, t0 + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g);
+    g.connect(_master);
+    o.start(t0);
+    o.stop(t0 + dur + 0.03);
+  } catch {
+    // ignore
+  }
+}
+
+/** 절차적 노이즈 원샷 — 필터 + 게인 엔벨로프 (crunch/whoosh/thud 등). 게임 공용. */
+export function noiseBurst(
+  opts: {
+    dur?: number;
+    vol?: number;
+    filter?: BiquadFilterType;
+    freq?: number;
+    freq2?: number;
+  } = {},
+): void {
+  if (!_ac || !_master) return;
+  try {
+    const t0 = _ac.currentTime;
+    const dur = opts.dur ?? 0.15;
+    const vol = opts.vol ?? 0.25;
+    const len = Math.max(1, Math.floor(_ac.sampleRate * dur));
+    const buf = _ac.createBuffer(1, len, _ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    const src = _ac.createBufferSource();
+    src.buffer = buf;
+    const g = _ac.createGain();
+    g.gain.setValueAtTime(vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    if (opts.filter) {
+      const f = _ac.createBiquadFilter();
+      f.type = opts.filter;
+      f.frequency.setValueAtTime(opts.freq ?? 800, t0);
+      if (opts.freq2 != null) f.frequency.linearRampToValueAtTime(opts.freq2, t0 + dur);
+      src.connect(f);
+      f.connect(g);
+    } else {
+      src.connect(g);
+    }
+    g.connect(_master);
+    src.start(t0);
+    src.stop(t0 + dur + 0.02);
+  } catch {
+    // ignore
   }
 }
 

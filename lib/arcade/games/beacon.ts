@@ -11,7 +11,8 @@ import {
   clamp,
   rand,
   dist,
-  blip,
+  tone,
+  noiseBurst,
   ctext,
   rrect,
   overlay,
@@ -126,6 +127,45 @@ const TUNE = {
 };
 
 const S = {} as BeaconState;
+
+/**
+ * 절차적 SFX 팔레트 — engine tone/noiseBurst 합성(asset 0). 볼륨 절제(마스터 게인+컴프레서 위).
+ * 이벤트별 구분되는 소리. 연속 빔 데미지엔 소리 없음(kill 시에만) → 스팸 방지.
+ */
+const SND = {
+  start: () => tone(400, { freq2: 720, dur: 0.22, vol: 0.16, type: "sine", sweep: "exp" }),
+  kill: () => tone(680, { freq2: 1150, dur: 0.06, vol: 0.13, type: "square", sweep: "exp" }),
+  coreHit: () => {
+    tone(95, { freq2: 55, dur: 0.18, vol: 0.28, type: "sine", sweep: "exp" });
+    noiseBurst({ dur: 0.1, vol: 0.1, filter: "lowpass", freq: 320 });
+  },
+  place: () => tone(540, { freq2: 820, dur: 0.09, vol: 0.2, type: "triangle", sweep: "exp" }),
+  mirrorBreak: () => noiseBurst({ dur: 0.22, vol: 0.26, filter: "bandpass", freq: 950, freq2: 180 }),
+  rotate: () => noiseBurst({ dur: 0.06, vol: 0.09, filter: "highpass", freq: 1300 }),
+  remove: () => tone(460, { freq2: 220, dur: 0.1, vol: 0.14, type: "sine", sweep: "exp" }),
+  raiderTick: () => noiseBurst({ dur: 0.03, vol: 0.05, filter: "bandpass", freq: 520 }),
+  buyMirror: () => tone(600, { freq2: 900, dur: 0.1, vol: 0.15, type: "triangle", sweep: "exp" }),
+  buyPower: () => tone(520, { freq2: 800, dur: 0.09, vol: 0.15, type: "triangle", sweep: "exp" }),
+  buyRange: () => tone(470, { freq2: 720, dur: 0.09, vol: 0.15, type: "triangle", sweep: "exp" }),
+  modeToggle: () => tone(360, { dur: 0.05, vol: 0.1, type: "square" }),
+  flashReady: () => {
+    tone(720, { dur: 0.1, vol: 0.14, type: "sine" });
+    tone(1080, { dur: 0.14, vol: 0.14, type: "sine", delay: 0.09 });
+  },
+  flashFire: () => {
+    tone(180, { freq2: 880, dur: 0.34, vol: 0.28, type: "sawtooth", sweep: "exp" });
+    noiseBurst({ dur: 0.3, vol: 0.18, filter: "lowpass", freq: 1400, freq2: 200 });
+  },
+  wave: () =>
+    tone(280 + Math.min(S.wave, 14) * 10, {
+      freq2: 520,
+      dur: 0.16,
+      vol: 0.12,
+      type: "sine",
+      sweep: "exp",
+    }),
+  gameOver: () => tone(420, { freq2: 70, dur: 0.7, vol: 0.28, type: "sawtooth", sweep: "exp" }),
+};
 
 function newMirror(x: number, y: number): Mirror {
   return {
@@ -309,7 +349,7 @@ function flash(): void {
       S.pts++;
     }
   }
-  blip(700, 0.2, "sine", 0.05);
+  SND.flashFire();
 }
 function mirCost(): number {
   return 12 + (S.mirrors.length + S.pendingMirrors) * 8; // 배치+대기 합산 기준(원래 비용 진행 보존)
@@ -326,19 +366,19 @@ function buy(i: number): void {
     if (S.mirrors.length + S.pendingMirrors < MIRMAX && S.pts >= mirCost()) {
       S.pts -= mirCost();
       S.pendingMirrors++;
-      blip(620, 0.1, "triangle", 0.04);
+      SND.buyMirror();
     }
   } else if (i === 3) {
     if (S.pts >= powCost()) {
       S.pts -= powCost();
       S.powLv++;
-      blip(560, 0.09, "triangle", 0.04);
+      SND.buyPower();
     }
   } else if (i === 4) {
     if (S.pts >= rngCost()) {
       S.pts -= rngCost();
       S.rngLv++;
-      blip(520, 0.09, "triangle", 0.04);
+      SND.buyRange();
     }
   }
 }
@@ -357,7 +397,7 @@ function update(dt: number): void {
     S.wave++;
     S.spawnGap = Math.max(TUNE.spawnGapFloor, TUNE.spawnGapStart - S.wave * TUNE.spawnGapDecay);
     if (S.wave % TUNE.obstacleWaveInterval === 0 && S.obs.length < TUNE.obstacleMax) addObstacle();
-    blip(560, 0.14, "sine", 0.045);
+    SND.wave();
   }
   S.spawnT += dt;
   if (S.spawnT >= S.spawnGap) {
@@ -431,6 +471,7 @@ function update(dt: number): void {
         S.kills++;
         S.pts++;
         burst(e.x, e.y, AC, 7);
+        SND.kill();
         continue;
       }
     }
@@ -489,6 +530,7 @@ function update(dt: number): void {
         e.y = tgtMirror.y + (ny / nd) * standoff;
         tgtMirror.hp -= TUNE.raiderMirrorDps * dt; // 미러 파괴는 루프 후 일괄 처리
         tgtMirror.hitT = TUNE.hitFlashDur;
+        if (Math.random() < 0.04) SND.raiderTick(); // 스팸 방지: 접촉 중 아주 드물게만
         e.contact = true;
         e.bx = -(nx / nd); // 미러 방향 단위벡터(부딪힘 연출용)
         e.by = -(ny / nd);
@@ -499,17 +541,19 @@ function update(dt: number): void {
       S.core.hitT = TUNE.hitFlashDur;
       S.shakeT = TUNE.shakeDur;
       burst(e.x, e.y, "#fff", 6);
-      blip(90, 0.12, "sawtooth", 0.045);
+      SND.coreHit();
     }
   }
   // FLASH 충전: 적에게 실제로 준 데미지에만 연동(허공/미러만 훑으면 0 → 스핀 악용 차단).
+  const wasFull = S.charge >= 1;
   S.charge = Math.min(1, S.charge + dmgThisFrame * TUNE.flashChargePerDmg);
+  if (!wasFull && S.charge >= 1) SND.flashReady(); // 풀차지 도달 순간 1회
   S.en = S.en.filter((e) => e.hp > 0);
   // 미러 파괴: hp 소진 미러 제거(슬롯 반환 → 배치+대기 상한 자동 회복). 우클릭 환급과 달리 pending 미증가.
   for (const m of S.mirrors) {
     if (m.hp <= 0) {
       burst(m.x, m.y, "#7dd3fc", 8);
-      blip(200, 0.15, "sawtooth", 0.05);
+      SND.mirrorBreak();
     }
   }
   S.mirrors = S.mirrors.filter((m) => m.hp > 0);
@@ -523,6 +567,7 @@ function update(dt: number): void {
     S.core.hp = 0;
     S.best = Math.max(S.best, S.kills);
     S.phase = "over";
+    SND.gameOver();
   }
 }
 function btn(
@@ -771,6 +816,7 @@ function onDown(x: number, y: number, button?: number): void {
   if (S.phase !== "play") {
     if (S.phase !== "ready") reset(S.W, S.H);
     S.phase = "play";
+    SND.start();
     return;
   }
   // 우클릭: 미러 위면 제거+환급(pending++, 재배치용), 아니면 무시.
@@ -779,7 +825,7 @@ function onDown(x: number, y: number, button?: number): void {
     if (m) {
       S.mirrors = S.mirrors.filter((mm) => mm !== m);
       S.pendingMirrors++;
-      blip(300, 0.08, "square", 0.04);
+      SND.remove();
     }
     return;
   }
@@ -788,7 +834,7 @@ function onDown(x: number, y: number, button?: number): void {
     if (inRect(x, y, S.btns[i])) {
       if (i === 0) {
         S.mode = S.mode === "focus" ? "spread" : "focus";
-        blip(360, 0.05, "square", 0.03);
+        SND.modeToggle();
       } else if (i === 1) {
         flash();
       } else {
@@ -801,14 +847,14 @@ function onDown(x: number, y: number, button?: number): void {
     if (canPlaceMirror(x, y)) {
       S.mirrors.push(newMirror(x, y));
       S.pendingMirrors--;
-      blip(620, 0.1, "triangle", 0.04);
+      SND.place();
     }
     return; // 배치 모드에선 무효 자리여도 조준하지 않음
   }
   const m = mirrorAt(x, y);
   if (m) {
     m.rot *= -1; // 좌클릭으로 미러 회전 방향 반전
-    blip(440, 0.06, "square", 0.03);
+    SND.rotate();
     return;
   }
   S.aim = Math.atan2(y - S.core.y, x - S.core.x);
@@ -824,6 +870,7 @@ function onKey(k: string): boolean {
   if (S.phase !== "play") return false;
   if (k === "f" || k === "F") {
     S.mode = S.mode === "focus" ? "spread" : "focus";
+    SND.modeToggle();
     return true;
   }
   if (k === " " || k === "Spacebar" || k === "Enter") {
