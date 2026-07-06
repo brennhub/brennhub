@@ -534,6 +534,7 @@ const api: GameApi = {
   onUp,
   onKey,
   onResize,
+  getResult: () => ({ over: S.phase === "over", score: S.kills }),
   wantsMove: false,
 };
 Engine.defineGame("flail", api, 0.64);
