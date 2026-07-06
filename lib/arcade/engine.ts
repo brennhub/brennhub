@@ -195,6 +195,8 @@ export type GameApi = {
   onKey?(key: string, ev?: KeyboardEvent): boolean | void;
   onResize?(W: number, H: number): void;
   wantsMove?: boolean;
+  /** 게임오버/점수 조회 (leaderboard용, 옵셔널 — 없으면 무시). primitive만 반환(게임 state는 private 유지). */
+  getResult?(): { over: boolean; score: number };
 };
 
 type Registered = { id: string; api: GameApi; aspect: number; started: boolean };
@@ -210,6 +212,8 @@ class ArcadeEngine {
   private raf: number | null = null;
   private last = 0;
   private down = false;
+  private gameOverCb: ((score: number) => void) | null = null;
+  private wasOver = false; // 게임오버 rising-edge 감지용 (직전 프레임 over 여부)
 
   /** 게임 등록. 같은 id면 덮어쓰기(멱등). 게임 2~6은 이것만 호출. */
   defineGame(id: string, api: GameApi, aspect: number): void {
@@ -246,6 +250,7 @@ class ArcadeEngine {
   /** 활성 게임 지정. 최초 활성화 시 api.reset(W,H) 1회. */
   setActive(id: string): void {
     this.active = id;
+    this.wasOver = false; // 새 활성 게임 — 게임오버 엣지 초기화
     const g = this.reg[id];
     if (!g) return;
     if (!g.started) {
@@ -260,6 +265,11 @@ class ArcadeEngine {
     this.raf = requestAnimationFrame(this.tick);
   }
 
+  /** 게임오버 콜백 등록 — tick에서 활성 게임 getResult().over rising-edge 시 1회 호출. null로 해제. */
+  onGameOver(cb: ((score: number) => void) | null): void {
+    this.gameOverCb = cb;
+  }
+
   /** 언마운트 cleanup에서 호출 — RAF·리스너 회수 + started 리셋(재진입 시 fresh). */
   destroy(): void {
     if (this.raf != null) {
@@ -269,6 +279,8 @@ class ArcadeEngine {
     this.detach();
     for (const id in this.reg) this.reg[id].started = false;
     this.active = null;
+    this.gameOverCb = null;
+    this.wasOver = false;
   }
 
   private activeGame(): Registered | null {
@@ -307,6 +319,18 @@ class ArcadeEngine {
       try {
         g.api.update(dt, this.W, this.H);
         g.api.render(this.ctx, this.W, this.H);
+        // 게임오버 rising-edge(false→true) 1회 디스패치. reset/setActive 시 wasOver 초기화.
+        const res = g.api.getResult?.();
+        if (res) {
+          if (res.over) {
+            if (!this.wasOver) {
+              this.wasOver = true;
+              this.gameOverCb?.(res.score);
+            }
+          } else {
+            this.wasOver = false;
+          }
+        }
       } catch (err) {
         console.error("[arcade]", g.id, err);
       }

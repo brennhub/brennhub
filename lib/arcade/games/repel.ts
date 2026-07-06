@@ -480,6 +480,7 @@ const api: GameApi = {
   onUp,
   onKey,
   onResize,
+  getResult: () => ({ over: S.phase === "over", score: S.kills }),
   wantsMove: false,
 };
 Engine.defineGame("repel", api, 0.7);

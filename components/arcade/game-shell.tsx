@@ -1,16 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
 import { GameCanvas } from "@/components/arcade/game-canvas";
+import { LeaderboardOverlay } from "@/components/arcade/leaderboard-overlay";
 import { Engine, clamp } from "@/lib/arcade/engine";
 import "@/lib/arcade/games"; // side-effect: 6종 게임을 Engine에 등록
 
 /**
  * 아케이드 단일-게임 공용 셸 — 한 tool = 한 게임(탭 선택기 없음).
  * shooter 셸 골격: fitCanvas · ResizeObserver · cleanup destroy.
- * 게임 로직(engine·games)은 무수정 — 이 셸은 넘겨받은 gameId를 setActive 할 뿐.
- * 헤더는 tool i18n(tools[slug])에서, aspect·좌표는 Engine에서.
+ * 게임 로직(engine·games)은 무수정 — 이 셸은 gameId를 setActive + 게임오버 시 랭킹 오버레이만 붙임.
+ * 게임오버는 Engine.onGameOver(엔진 tick의 getResult rising-edge)로 통지받는다.
  */
 export function GameShell({ gameId, slug }: { gameId: string; slug: string }) {
   const messages = useMessages();
@@ -18,6 +19,7 @@ export function GameShell({ gameId, slug }: { gameId: string; slug: string }) {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const aspect = Engine.getAspect(gameId);
+  const [over, setOver] = useState<{ score: number } | null>(null);
 
   /** DPR-aware backing 설정 → 논리 W/H 반환. 논리×DPR(정수배) 후 setTransform. */
   const fitCanvas = useCallback((canvas: HTMLCanvasElement, asp: number) => {
@@ -36,10 +38,12 @@ export function GameShell({ gameId, slug }: { gameId: string; slug: string }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    setOver(null);
     Engine.attach(canvas);
     const { W, H } = fitCanvas(canvas, Engine.getAspect(gameId));
     Engine.resize(W, H);
     Engine.setActive(gameId);
+    Engine.onGameOver((score) => setOver({ score }));
     Engine.start();
 
     let pendingFit = false;
@@ -57,10 +61,27 @@ export function GameShell({ gameId, slug }: { gameId: string; slug: string }) {
     ro.observe(canvas);
 
     return () => {
+      Engine.onGameOver(null);
       Engine.destroy();
       ro.disconnect();
     };
   }, [gameId, fitCanvas]);
+
+  /** 오버레이 숨김 + 게임 재시작 — 게임은 over 상태에서 pointerdown 하나면 재시작하므로 canvas에 합성 이벤트 디스패치. */
+  const handlePlayAgain = useCallback(() => {
+    setOver(null);
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const r = cv.getBoundingClientRect();
+    cv.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        clientX: r.left + r.width / 2,
+        clientY: r.top + r.height / 2,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+  }, []);
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-6 pb-20">
@@ -71,7 +92,11 @@ export function GameShell({ gameId, slug }: { gameId: string; slug: string }) {
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{meta.description}</p>
       </header>
       <div className="mx-auto w-full max-w-[860px] rounded-md border border-zinc-800 bg-black p-1">
-        <GameCanvas ref={canvasRef} aspect={aspect} />
+        <GameCanvas ref={canvasRef} aspect={aspect}>
+          {over && (
+            <LeaderboardOverlay slug={slug} score={over.score} onPlayAgain={handlePlayAgain} />
+          )}
+        </GameCanvas>
       </div>
     </main>
   );

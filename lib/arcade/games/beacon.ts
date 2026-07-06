@@ -889,6 +889,7 @@ const api: GameApi = {
   onUp,
   onKey,
   onResize,
+  getResult: () => ({ over: S.phase === "over", score: S.kills }),
   wantsMove: true,
 };
 Engine.defineGame("beacon", api, 0.66);
