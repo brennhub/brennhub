@@ -24,6 +24,11 @@ export type Tool = {
    * status가 아직 "coming-soon"이어도 전용 페이지를 먼저 둘 때 사용.
    */
   hasPage?: boolean;
+  /**
+   * true면 prod(brennhub.com)에서 숨김 — 홈 그리드 미표시 + 개별 page 404 + sitemap 제외.
+   * dev(dev.brennhub.com)·local에서는 정상 노출. 단계적 출시용 (env 판정: lib/env.ts).
+   */
+  devOnly?: boolean;
 };
 
 export const tools: Tool[] = [
@@ -93,6 +98,60 @@ export const tools: Tool[] = [
     category: "entertainment",
     createdAt: "2026-05-24",
     // 전용 page.tsx 존재 — [slug] fallback이 정적 경로를 emit하지 않도록 hasPage:true.
+    hasPage: true,
+  },
+  {
+    id: "beacon",
+    slug: "beacon",
+    status: "live",
+    category: "entertainment",
+    createdAt: "2026-07-05",
+    // 아케이드 게임(단일 canvas + 공용 Engine). 전용 page.tsx — hasPage로 [slug] fallback 충돌 방지.
+    hasPage: true,
+  },
+  {
+    id: "flail",
+    slug: "flail",
+    status: "live",
+    category: "entertainment",
+    createdAt: "2026-07-05",
+    devOnly: true, // prod 미노출 — dev 전용. 아케이드 6종 중 beacon만 먼저 prod 출시.
+    hasPage: true,
+  },
+  {
+    id: "circuit",
+    slug: "circuit",
+    status: "live",
+    category: "entertainment",
+    createdAt: "2026-07-05",
+    devOnly: true,
+    hasPage: true,
+  },
+  {
+    id: "repel",
+    slug: "repel",
+    status: "live",
+    category: "entertainment",
+    createdAt: "2026-07-05",
+    devOnly: true,
+    hasPage: true,
+  },
+  {
+    id: "lure",
+    slug: "lure",
+    status: "live",
+    category: "entertainment",
+    createdAt: "2026-07-05",
+    devOnly: true,
+    hasPage: true,
+  },
+  {
+    id: "singularity",
+    slug: "singularity",
+    status: "live",
+    category: "entertainment",
+    createdAt: "2026-07-05",
+    devOnly: true,
     hasPage: true,
   },
   {

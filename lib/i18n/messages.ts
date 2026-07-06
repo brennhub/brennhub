@@ -753,6 +753,12 @@ export type Messages = {
     toolLanguageMaker: string;
     toolMaze: string;
     toolShooter: string;
+    toolBeacon: string;
+    toolFlail: string;
+    toolCircuit: string;
+    toolRepel: string;
+    toolLure: string;
+    toolSingularity: string;
     toolTagIt: string;
     toolTarot: string;
     categoryLabel: string;
@@ -934,7 +940,7 @@ export const messages: Record<Locale, Messages> = {
         finance: "파이낸스",
         health: "건강",
         lifestyle: "라이프",
-        entertainment: "엔터테인먼트",
+        entertainment: "엔터테인먼트/게임",
       },
       newBadge: "NEW",
       searchPlaceholder: "도구 검색…",
@@ -1726,6 +1732,12 @@ export const messages: Record<Locale, Messages> = {
       toolLanguageMaker: "언어 창조기",
       toolMaze: "픽셀 미로 만들기",
       toolShooter: "아케이드 슈터",
+      toolBeacon: "등대",
+      toolFlail: "사슬추",
+      toolCircuit: "회로",
+      toolRepel: "격퇴",
+      toolLure: "유인",
+      toolSingularity: "특이점",
       toolTagIt: "태그잇",
       toolTarot: "타로 테이블",
       categoryLabel: "종류",
@@ -1992,6 +2004,30 @@ export const messages: Record<Locale, Messages> = {
         name: "아케이드 슈터",
         description: "우주 함대를 격추하는 세로 스크롤 슈팅 게임",
       },
+      beacon: {
+        name: "등대",
+        description: "빛 빔을 조준하고 회전 거울 등대를 배치해 몰려오는 적을 태우는 도형 코어 디펜스",
+      },
+      flail: {
+        name: "사슬추",
+        description: "홀드로 사슬추를 가속하고 드래그로 던져 적을 후려치는 물리 코어 디펜스",
+      },
+      circuit: {
+        name: "회로",
+        description: "노드를 연결해 감전링크·벽·감속·자동포·EMP 방어망을 짜는 코어 디펜스",
+      },
+      repel: {
+        name: "격퇴",
+        description: "스와이프로 적을 가시벽·장외로 밀어내는 넉백 코어 디펜스",
+      },
+      lure: {
+        name: "유인",
+        description: "미끼로 적을 모으고 지뢰로 쓸어내는 코어 디펜스 — 돌격 적 주의",
+      },
+      singularity: {
+        name: "특이점",
+        description: "블랙홀을 놓고 키우고 슬링샷으로 던지는 중력 코어 디펜스",
+      },
       "tag-it": {
         name: "태그잇",
         description:
@@ -2015,7 +2051,7 @@ export const messages: Record<Locale, Messages> = {
         finance: "Finance",
         health: "Health",
         lifestyle: "Lifestyle",
-        entertainment: "Entertainment",
+        entertainment: "Entertainment/Game",
       },
       newBadge: "NEW",
       searchPlaceholder: "Search tools…",
@@ -2812,6 +2848,12 @@ export const messages: Record<Locale, Messages> = {
       toolLanguageMaker: "Language Maker",
       toolMaze: "Pixel Maze Maker",
       toolShooter: "Arcade Shooter",
+      toolBeacon: "Beacon",
+      toolFlail: "Flail",
+      toolCircuit: "Circuit",
+      toolRepel: "Repel",
+      toolLure: "Lure",
+      toolSingularity: "Singularity",
       toolTagIt: "Tag-it",
       toolTarot: "Tarot Table",
       categoryLabel: "Category",
@@ -3080,6 +3122,32 @@ export const messages: Record<Locale, Messages> = {
         name: "Arcade Shooter",
         description:
           "Top-down arcade shoot-'em-up — blast the alien fleet for high scores",
+      },
+      beacon: {
+        name: "Beacon",
+        description:
+          "Aim a light beam and place rotating mirror-beacons to burn incoming enemies — a shape-only core defense",
+      },
+      flail: {
+        name: "Flail",
+        description: "Hold to spin up a chained flail and drag to fling it — a physics core defense",
+      },
+      circuit: {
+        name: "Circuit",
+        description: "Wire nodes into a defense grid — shock links, walls, slows, turrets, EMP",
+      },
+      repel: {
+        name: "Repel",
+        description: "Swipe to shove enemies into spikes and off the edge — a knockback core defense",
+      },
+      lure: {
+        name: "Lure",
+        description: "Drop bait to gather enemies and mines to wipe them — watch for chargers",
+      },
+      singularity: {
+        name: "Singularity",
+        description:
+          "Place a black hole, grow it, and slingshot it through enemies — a gravity core defense",
       },
       "tag-it": {
         name: "Tag-it",

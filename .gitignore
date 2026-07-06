@@ -54,3 +54,6 @@ next-env.d.ts
 
 # local-only assets (screenshots dropped during dev)
 /screenshots/
+
+# arcade game import source (GDD html — reference only, not for repo)
+/_import/

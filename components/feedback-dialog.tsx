@@ -19,6 +19,12 @@ export type FeedbackTool =
   | "language-maker"
   | "maze"
   | "shooter"
+  | "beacon"
+  | "flail"
+  | "circuit"
+  | "repel"
+  | "lure"
+  | "singularity"
   | "tag-it"
   | "tarot";
 
@@ -139,6 +145,12 @@ export function FeedbackDialog({ open, onOpenChange, defaultTool }: Props) {
     { value: "language-maker", label: t.toolLanguageMaker },
     { value: "maze", label: t.toolMaze },
     { value: "shooter", label: t.toolShooter },
+    { value: "beacon", label: t.toolBeacon },
+    { value: "flail", label: t.toolFlail },
+    { value: "circuit", label: t.toolCircuit },
+    { value: "repel", label: t.toolRepel },
+    { value: "lure", label: t.toolLure },
+    { value: "singularity", label: t.toolSingularity },
     { value: "tag-it", label: t.toolTagIt },
     { value: "tarot", label: t.toolTarot },
   ];
