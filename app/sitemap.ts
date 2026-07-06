@@ -26,6 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
   for (const t of tools) {
     if (t.status !== "live") continue;
+    if (t.devOnly) continue; // sitemap은 prod 기준(SITE_URL) — dev 전용 도구 제외.
     items.push({
       url: `${SITE_URL}/tools/${t.slug}`,
       lastModified: now,

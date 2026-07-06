@@ -33,16 +33,16 @@ export type Release = {
 export const releases: Release[] = [
   {
     id: "arcade-games-launch",
-    date: "2026-07-05",
-    tool: "site",
+    date: "2026-07-06",
+    tool: "beacon",
     kind: "new",
     title: {
-      ko: "새 게임 6종: 등대 · 사슬추 · 회로 · 격퇴 · 유인 · 특이점",
-      en: "6 new games: Beacon, Flail, Circuit, Repel, Lure, Singularity",
+      ko: "새 게임: 등대 — 빛으로 태우는 코어 디펜스",
+      en: "New game: Beacon — a burn-with-light core defense",
     },
     body: {
-      ko: "도형만으로 그린 코어 디펜스 게임 6종이 각각 독립 도구로 열렸어요. 빛으로 태우는 등대, 후려치는 사슬추, 방어망을 짜는 회로, 밀어내는 격퇴, 미끼·지뢰의 유인, 블랙홀의 특이점 — 전부 브라우저 안에서.",
-      en: "Six shape-only core-defense games are each live as their own tool: Beacon (burn with light), Flail, a Circuit defense grid, Repel knockback, Lure with bait and mines, and Singularity black holes — all in your browser.",
+      ko: "도형만으로 그린 코어 디펜스 게임 '등대'가 열렸어요. 중심을 노리는 적을 빛줄기로 태우고, 거울 등대로 빛을 꺾어 사각을 메우세요. 판이 끝나면 점수를 남겨 순위표에 이름을 올릴 수 있고, 로그인하면 이름이 자동으로 채워집니다.",
+      en: "Beacon, a shape-only core-defense game, is live. Burn the enemies closing on your core with a beam of light, and bend it around with mirror beacons to cover your blind spots. When a run ends you can leave your score on the leaderboard — sign in and your name fills in for you.",
     },
   },
   {

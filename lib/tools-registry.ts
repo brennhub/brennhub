@@ -24,6 +24,11 @@ export type Tool = {
    * status가 아직 "coming-soon"이어도 전용 페이지를 먼저 둘 때 사용.
    */
   hasPage?: boolean;
+  /**
+   * true면 prod(brennhub.com)에서 숨김 — 홈 그리드 미표시 + 개별 page 404 + sitemap 제외.
+   * dev(dev.brennhub.com)·local에서는 정상 노출. 단계적 출시용 (env 판정: lib/env.ts).
+   */
+  devOnly?: boolean;
 };
 
 export const tools: Tool[] = [
@@ -110,6 +115,7 @@ export const tools: Tool[] = [
     status: "live",
     category: "entertainment",
     createdAt: "2026-07-05",
+    devOnly: true, // prod 미노출 — dev 전용. 아케이드 6종 중 beacon만 먼저 prod 출시.
     hasPage: true,
   },
   {
@@ -118,6 +124,7 @@ export const tools: Tool[] = [
     status: "live",
     category: "entertainment",
     createdAt: "2026-07-05",
+    devOnly: true,
     hasPage: true,
   },
   {
@@ -126,6 +133,7 @@ export const tools: Tool[] = [
     status: "live",
     category: "entertainment",
     createdAt: "2026-07-05",
+    devOnly: true,
     hasPage: true,
   },
   {
@@ -134,6 +142,7 @@ export const tools: Tool[] = [
     status: "live",
     category: "entertainment",
     createdAt: "2026-07-05",
+    devOnly: true,
     hasPage: true,
   },
   {
@@ -142,6 +151,7 @@ export const tools: Tool[] = [
     status: "live",
     category: "entertainment",
     createdAt: "2026-07-05",
+    devOnly: true,
     hasPage: true,
   },
   {

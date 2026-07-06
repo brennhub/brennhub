@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Star } from "lucide-react";
 import { tools, type Tool } from "@/lib/tools-registry";
+import { visibleTools } from "@/lib/env";
 import { CATEGORY_ORDER, groupByCategory } from "@/lib/hub/categories";
 import {
   emptyFavorites,
@@ -22,6 +23,7 @@ import {
 } from "@/lib/hub/displays";
 import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/components/auth/user-provider";
+import { useIsProd } from "@/components/env-provider";
 import {
   FeedbackDialog,
   type FeedbackTool,
@@ -35,6 +37,7 @@ export default function Home() {
   const { locale } = useLocale();
   const user = useCurrentUser();
   const isLoggedIn = !!user;
+  const isProd = useIsProd(); // prod에서는 devOnly 도구 숨김 (dev/local은 전체).
 
   const [feedbackTool, setFeedbackTool] = useState<FeedbackTool | undefined>(
     undefined,
@@ -121,7 +124,7 @@ export default function Home() {
     return hay.includes(q);
   };
 
-  const filteredTools = tools.filter(matchesQuery);
+  const filteredTools = visibleTools(tools, isProd).filter(matchesQuery);
   const filteredGroups = groupByCategory(filteredTools);
   const sections = CATEGORY_ORDER.filter(
     (cat) => (filteredGroups.get(cat) ?? []).length > 0,

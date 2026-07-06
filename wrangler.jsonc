@@ -24,6 +24,7 @@
 		"binding": "AI"
 	},
 	"vars": {
+		"APP_ENV": "prod",
 		"AI_PROVIDER": "workers-ai",
 		"GOOGLE_OAUTH_CLIENT_ID": "814605358293-0tvp8f2gppdetbb6ugg994l1uavor6r4.apps.googleusercontent.com"
 	},
@@ -91,6 +92,7 @@
 				"binding": "AI"
 			},
 			"vars": {
+				"APP_ENV": "preview",
 				"AI_PROVIDER": "workers-ai",
 				"GOOGLE_OAUTH_CLIENT_ID": "814605358293-0tvp8f2gppdetbb6ugg994l1uavor6r4.apps.googleusercontent.com"
 			},

@@ -15,6 +15,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LoginButtonClient } from "@/components/auth/login-button-client";
 import { AuthErrorToast } from "@/components/auth/auth-error-toast";
 import { UserProvider } from "@/components/auth/user-provider";
+import { EnvProvider } from "@/components/env-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { ToolFavoriteButton } from "@/components/hub/tool-favorite-button";
 import { ToolLikeButton } from "@/components/hub/tool-like-button";
@@ -22,6 +23,7 @@ import { VisitTracker } from "@/components/hub/visit-tracker";
 import { DEFAULT_LOCALE } from "@/lib/i18n/types";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { getUserFromHeaders } from "@/lib/auth/session";
+import { isProdEnv } from "@/lib/env.server";
 
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('brennhub-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
 
@@ -79,6 +81,7 @@ export default async function RootLayout({
   // 세션 1회 조회 → UserProvider Context + LoginButton에 공유.
   // AUTH_DB 미바인딩/DB 오류 → user=null (로그아웃 상태로 graceful).
   let user = null;
+  const isProd = await isProdEnv(); // var(APP_ENV) 우선 + prod host 폴백 (fail-safe).
   try {
     const { env } = await getCloudflareContext({ async: true });
     const db = (env as unknown as AuthEnv).AUTH_DB;
@@ -126,7 +129,7 @@ export default async function RootLayout({
                   <Suspense fallback={null}>
                     <AuthErrorToast />
                   </Suspense>
-                  {children}
+                  <EnvProvider isProd={isProd}>{children}</EnvProvider>
                   <VisitTracker />
                   <ToolLikeButton />
                   <ToolFavoriteButton />
