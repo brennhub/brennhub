@@ -20,6 +20,8 @@ import {
   stepIngredientIndexes,
 } from "@/lib/recipe-note/parse";
 import { formatQty, scaleIngredientText } from "@/lib/recipe-note/scale";
+import { validateRecipeInput } from "@/lib/recipe-note/record";
+import type { Ingredient } from "@/lib/recipe-note/types";
 
 let passed = 0;
 const failures: string[] = [];
@@ -203,6 +205,135 @@ check(
   ).amount,
   "1000 그램",
 );
+
+console.log("\n소수 수량 — 회귀 고정");
+/**
+ * 소수는 후보 탐지 → 수동 지정 → 구조 검증 → 환산 어디서도 떨어지면 안 된다.
+ * 떨어지면 배율만 조용히 안 먹고 에러가 없어 사용자가 알아챌 방법이 없다.
+ *
+ * 특히 구조 검증에서 `Number.isInteger`는 **오프셋(start/end)에만** 걸린다.
+ * 이걸 qty로 옮기는 순간 0.5가 전부 죽는다 — 아래 라운드트립이 그 파수꾼이다.
+ */
+check("후보: 설탕 0.5컵", cands("설탕 0.5컵"), [
+  ["0.5컵", 3, 7, 0.5, null, "컵"],
+]);
+check("후보: 고기 1.5kg", cands("고기 1.5kg"), [
+  ["1.5kg", 3, 8, 1.5, null, "kg"],
+]);
+check("후보: 올리브유 0.25컵", cands("올리브유 0.25컵"), [
+  ["0.25컵", 5, 10, 0.25, null, "컵"],
+]);
+check("후보: 설탕 0.5 컵 (띄어쓰기)", cands("설탕 0.5 컵"), [
+  ["0.5 컵", 3, 8, 0.5, null, "컵"],
+]);
+check("후보: 물 0.5~1컵 (범위 소수)", cands("물 0.5~1컵"), [
+  ["0.5~1컵", 2, 8, null, "0.5~1", "컵"],
+]);
+check("수동 지정: 0.5컵", parseManualSpan("설탕 0.5컵", 3, 7), {
+  start: 3,
+  end: 7,
+  qty: 0.5,
+  qtyText: null,
+  unit: "컵",
+});
+check("수동 지정: 소수 + 사전 밖 단위", parseManualSpan("물 0.5 그램", 2, 8), {
+  start: 2,
+  end: 8,
+  qty: 0.5,
+  qtyText: null,
+  unit: "그램",
+});
+
+/** 저장 → JSON 직렬화 → 재로드 → 구조 검증. 살아 돌아온 sel만 돌려준다. */
+function roundTrip(ing: Ingredient): Ingredient | string {
+  const body: unknown = JSON.parse(
+    JSON.stringify({
+      title: "t",
+      ingredients: [ing],
+      steps: [{ text: "s", timerSec: null }],
+    }),
+  );
+  const result = validateRecipeInput(body);
+  return result.ok ? result.value.ingredients[0] : `REJECTED(${result.error.code})`;
+}
+
+{
+  const saved = roundTrip(makeIngredient("설탕 0.5컵")!) as Ingredient;
+  check("라운드트립: 소수 qty가 살아남는다", saved.sel?.qty, 0.5);
+  check("라운드트립: 원문 보존", saved.text, "설탕 0.5컵");
+  check("라운드트립 후 ×2 환산", scaleIngredientText(saved, 2).amount, "1컵");
+}
+{
+  const saved = roundTrip(makeIngredient("물 0.5~1컵")!) as Ingredient;
+  check("라운드트립: 소수 범위 qtyText", saved.sel?.qtyText, "0.5~1");
+  check("라운드트립 후 ×2 환산 (범위)", scaleIngredientText(saved, 2).amount, "1~2컵");
+}
+{
+  // 수동 지정 경로 — 사전 밖 단위 + 소수. 여기가 가장 깨지기 쉽다.
+  const manual: Ingredient = {
+    text: "물 0.5 그램",
+    sel: parseManualSpan("물 0.5 그램", 2, 8),
+  };
+  const saved = roundTrip(manual) as Ingredient;
+  check("라운드트립: 수동 소수 qty", saved.sel?.qty, 0.5);
+  check("라운드트립: 수동 사전 밖 단위", saved.sel?.unit, "그램");
+  check(
+    "라운드트립 후 ×2 환산 (수동)",
+    scaleIngredientText(saved, 2).amount,
+    "1 그램",
+  );
+}
+
+/** 구조 검증 경계 — 오프셋은 정수, 수량은 소수 허용. 둘의 요구가 다르다. */
+function selAfterValidate(sel: unknown): unknown {
+  const out = roundTrip({ text: "설탕 0.5컵", sel } as Ingredient);
+  return typeof out === "string" ? out : out.sel;
+}
+check(
+  "검증: qty 0.5 통과",
+  selAfterValidate({ start: 3, end: 7, qty: 0.5, qtyText: null, unit: "컵" }),
+  { start: 3, end: 7, qty: 0.5, qtyText: null, unit: "컵" },
+);
+check(
+  "검증: 오프셋이 소수면 거부",
+  selAfterValidate({ start: 3.5, end: 7, qty: 0.5, qtyText: null, unit: "컵" }),
+  null,
+);
+check(
+  "검증: qty 음수 거부",
+  selAfterValidate({ start: 3, end: 7, qty: -0.5, qtyText: null, unit: "컵" }),
+  null,
+);
+check(
+  "검증: qty NaN 거부",
+  selAfterValidate({ start: 3, end: 7, qty: NaN, qtyText: null, unit: "컵" }),
+  null,
+);
+check(
+  "검증: 범위 밖 end 거부",
+  selAfterValidate({ start: 3, end: 999, qty: 0.5, qtyText: null, unit: "컵" }),
+  null,
+);
+check(
+  "검증: unit 불일치 거부",
+  selAfterValidate({ start: 3, end: 7, qty: 0.5, qtyText: null, unit: "g" }),
+  null,
+);
+
+check("소수 ×1.5", scaleIngredientText(makeIngredient("설탕 0.5컵")!, 1.5).amount, "3/4컵");
+check("소수 ×3", scaleIngredientText(makeIngredient("설탕 0.5컵")!, 3).amount, "1 1/2컵");
+check("소수 ×2", scaleIngredientText(makeIngredient("고기 1.5kg")!, 2).amount, "3kg");
+check(
+  "범위 소수 ×1.5",
+  scaleIngredientText(makeIngredient("물 0.5~1컵")!, 1.5).amount,
+  "3/4~1 1/2컵",
+);
+check("대분수 ×2", scaleIngredientText(makeIngredient("밀가루 1 1/2컵")!, 2).amount, "3컵");
+
+// 앞자리 0을 생략한 ".5컵"은 의도적으로 미지원 — 숫자 앞 `.` 차단이
+// "물 1,000ml" → "000ml"(qty 0) 오탐을 막는 바로 그 가드다 (BACKLOG).
+check("미지원 고정: .5작은술은 후보 0개", cands("소금 .5작은술"), []);
+check("미지원 고정: .5는 수동 지정도 불가", parseManualSpan("소금 .5작은술", 3, 8), null);
 
 console.log("\n환산 표기 — 근사 분수");
 check("정수", formatQty(300), "300");
