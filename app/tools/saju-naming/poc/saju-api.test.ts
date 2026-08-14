@@ -15,7 +15,7 @@ type ApiResponse = {
     year: { label: string };
     month: { label: string };
     day: { label: string };
-    hour: { label: string };
+    hour: { label: string } | null; // 시간 미지 시 null (진태양시 격상)
     lunarDate: {
       year: number;
       month: number;
@@ -74,9 +74,11 @@ async function run() {
 
   // 4기둥
   check("saju.year.label === 기미", r.saju?.year?.label === "기미", r.saju?.year?.label);
-  check("saju.month.label === 경오", r.saju?.month?.label === "경오", r.saju?.month?.label);
+  // 입춘+12절기 격상 후: OLD(라이브러리 음력) '경오' → NEW(입하 1979-05-06 11:47 이후 巳월) '기사'.
+  check("saju.month.label === 기사 (절기 기준)", r.saju?.month?.label === "기사", r.saju?.month?.label);
   check("saju.day.label === 병신", r.saju?.day?.label === "병신", r.saju?.day?.label);
-  check("saju.hour.label === 신묘", r.saju?.hour?.label === "신묘", r.saju?.hour?.label);
+  // 진태양시 격상 후: OLD '신묘' → NEW '경인' (보정 ~-29분 → 04:31 진태양시 → 寅時·경).
+  check("saju.hour.label === 경인 (진태양시)", r.saju?.hour?.label === "경인", r.saju?.hour?.label);
 
   // lunarDate
   assert.deepStrictEqual(r.saju.lunarDate, {
@@ -91,19 +93,20 @@ async function run() {
   check("saju.deficient 미존재", r.saju.deficient === undefined);
   check("saju.excessive 미존재", r.saju.excessive === undefined);
 
-  // ohaeng 객체 검증 (외숙모 사주: 목1 화2 토2 금3 수0)
-  assert.deepStrictEqual(r.ohaeng.balance, {
-    목: 1,
-    화: 2,
-    토: 2,
-    금: 3,
-    수: 0,
-  });
+  // B-1 격상 (지장간 일수 비례): 8점 시스템 유지, fraction 점수.
+  // 외숙모 (기미·기사·병신·경인): 목≈0.633 / 화≈2.066 / 토≈3.299 / 금≈1.766 / 수≈0.233.
+  const tol = 0.01;
+  check(`balance 목≈0.633 (${r.ohaeng.balance.목})`, Math.abs(r.ohaeng.balance.목 - 0.633) < tol);
+  check(`balance 화≈2.066 (${r.ohaeng.balance.화})`, Math.abs(r.ohaeng.balance.화 - 2.066) < tol);
+  check(`balance 토≈3.299 (${r.ohaeng.balance.토})`, Math.abs(r.ohaeng.balance.토 - 3.299) < tol);
+  check(`balance 금≈1.766 (${r.ohaeng.balance.금})`, Math.abs(r.ohaeng.balance.금 - 1.766) < tol);
+  check(`balance 수≈0.233 (${r.ohaeng.balance.수})`, Math.abs(r.ohaeng.balance.수 - 0.233) < tol);
+  // 임계 4-α (≤0.5 / ≥2.5): deficient [수] / excessive [토] — 보존.
   assert.deepStrictEqual(r.ohaeng.deficient, ["수"]);
-  assert.deepStrictEqual(r.ohaeng.excessive, ["금"]);
+  assert.deepStrictEqual(r.ohaeng.excessive, ["토"]);
   check("yongsin 수 포함", r.ohaeng.yongsin.includes("수"));
-  check("yongsin 금 미포함 (기신 우선)", !r.ohaeng.yongsin.includes("금"));
-  check("gisin 금 포함", r.ohaeng.gisin.includes("금"));
+  check("yongsin 토 미포함 (기신 우선)", !r.ohaeng.yongsin.includes("토"));
+  check("gisin 토 포함", r.ohaeng.gisin.includes("토"));
   check("nameDirection 문자열", typeof r.ohaeng.nameDirection === "string");
 
   // ─── 케이스 2: 잘못된 JSON ───
@@ -149,7 +152,7 @@ async function run() {
     console.log("");
     console.log("케이스 1 응답 요약:");
     console.log(
-      `  ${r.saju.year.label}년 ${r.saju.month.label}월 ${r.saju.day.label}일 ${r.saju.hour.label}시`,
+      `  ${r.saju.year.label}년 ${r.saju.month.label}월 ${r.saju.day.label}일 ${r.saju.hour?.label ?? "(시주 미지)"}시`,
     );
     console.log(
       `  음력: ${r.saju.lunarDate.year}-${r.saju.lunarDate.month}-${r.saju.lunarDate.day}`,

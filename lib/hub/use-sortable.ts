@@ -149,6 +149,7 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
         }, TOUCH_LONG_PRESS_MS);
       }
 
+
       pendingRef.current = pending;
     },
     [itemCount, activate, clearPending],

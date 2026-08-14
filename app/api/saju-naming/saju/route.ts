@@ -1,14 +1,27 @@
 /**
  * POST /api/saju-naming/saju
  *
- * 입력: { year, month, day, hour, isLunar }
- * 출력: { saju: { 4기둥 + lunarDate }, ohaeng: OhaengAnalysis }
+ * 입력: { year, month, day, hour, isLunar, minute?, longitude?, dst? }
+ *   - hour: 0-23 또는 null (시간 미지 — 시주 미지 처리)
+ *   - minute / longitude / dst: optional, 진태양시 보정 옵션 (default = 한국 표준 자동)
+ * 출력: { saju: { 4기둥 + lunarDate + 진태양시 메타 }, ohaeng: OhaengAnalysis }
+ *
+ * 진태양시 default 적용 (DST·경도·균시차). 자세한 룰: lib/saju.ts.
+ * 시간 미지(hour=null) 시 응답의 hour 필드는 null, trueSolar 필드는 omit.
  *
  * D1 의존 없음. 사주 4기둥 + 오행 분석 (용신/기신 포함)만 반환.
- * 한자 추천(/recommend)과 한자 조회(/hanja)는 한자 DB 적재 후 별도 endpoint.
+ * 한자 추천(/recommend)과 한자 조회(/hanja-search)는 별도 endpoint.
  */
 
-import { calculateSaju, type SajuResult } from "@/app/tools/saju-naming/lib/saju";
+import {
+  calculateSaju,
+  type Pillar,
+  type SajuGangyak,
+  type SajuRelations,
+  type SajuResult,
+  type SajuSipsin,
+  type TrueSolarMeta,
+} from "@/app/tools/saju-naming/lib/saju";
 import { analyzeOhaeng } from "@/app/tools/saju-naming/lib/ohaeng";
 
 // runtime 명시 없음 — OpenNext + Cloudflare adapter는 edge runtime 미지원
@@ -20,14 +33,22 @@ interface SajuInput {
   year: number;
   month: number;
   day: number;
-  hour: number;
+  hour: number | null;
   isLunar: boolean;
+  minute?: number;
+  longitude?: number;
+  dst?: boolean | "auto";
 }
 
-type ValidationError = { field: keyof SajuInput; code: string };
+type ValidationField = keyof SajuInput;
+type ValidationError = { field: ValidationField; code: string };
 
 function isInt(v: unknown): v is number {
   return typeof v === "number" && Number.isFinite(v) && Number.isInteger(v);
+}
+
+function isFiniteNumber(v: unknown): v is number {
+  return typeof v === "number" && Number.isFinite(v);
 }
 
 function inRange(n: number, lo: number, hi: number): boolean {
@@ -49,31 +70,95 @@ function validate(body: unknown): SajuInput | ValidationError {
   if (!isInt(b.day)) return { field: "day", code: "INVALID_INPUT" };
   if (!inRange(b.day, 1, 31)) return { field: "day", code: "OUT_OF_RANGE" };
 
-  if (!isInt(b.hour)) return { field: "hour", code: "INVALID_INPUT" };
-  if (!inRange(b.hour, 0, 23)) return { field: "hour", code: "OUT_OF_RANGE" };
+  // hour: integer 0-23 또는 null (시간 미지)
+  let hour: number | null;
+  if (b.hour === null) {
+    hour = null;
+  } else if (isInt(b.hour) && inRange(b.hour, 0, 23)) {
+    hour = b.hour;
+  } else if (isInt(b.hour)) {
+    return { field: "hour", code: "OUT_OF_RANGE" };
+  } else {
+    return { field: "hour", code: "INVALID_INPUT" };
+  }
 
   if (typeof b.isLunar !== "boolean") {
     return { field: "isLunar", code: "INVALID_INPUT" };
+  }
+
+  // optional: minute 0-59
+  let minute: number | undefined;
+  if (b.minute !== undefined) {
+    if (!isInt(b.minute)) return { field: "minute", code: "INVALID_INPUT" };
+    if (!inRange(b.minute, 0, 59)) return { field: "minute", code: "OUT_OF_RANGE" };
+    minute = b.minute;
+  }
+
+  // optional: longitude (동경 도, 실측 가능 범위 0~180; 실용 60~180)
+  let longitude: number | undefined;
+  if (b.longitude !== undefined) {
+    if (!isFiniteNumber(b.longitude)) {
+      return { field: "longitude", code: "INVALID_INPUT" };
+    }
+    if (!inRange(b.longitude, 0, 180)) {
+      return { field: "longitude", code: "OUT_OF_RANGE" };
+    }
+    longitude = b.longitude;
+  }
+
+  // optional: dst — boolean 또는 "auto"
+  let dst: boolean | "auto" | undefined;
+  if (b.dst !== undefined) {
+    if (b.dst === "auto" || typeof b.dst === "boolean") {
+      dst = b.dst as boolean | "auto";
+    } else {
+      return { field: "dst", code: "INVALID_INPUT" };
+    }
   }
 
   return {
     year: b.year,
     month: b.month,
     day: b.day,
-    hour: b.hour,
+    hour,
     isLunar: b.isLunar,
+    minute,
+    longitude,
+    dst,
   };
 }
 
 // ───────────────────────── API 응답 매퍼 ─────────────────────────
 
-function toApiSaju(r: SajuResult) {
+interface ApiSaju {
+  year: Pillar;
+  month: Pillar;
+  day: Pillar;
+  /** 시간 미지(hour 입력 null) 시 null. */
+  hour: Pillar | null;
+  lunarDate: SajuResult["lunarDate"];
+  /** 진태양시 보정 메타. 시간 미지 시 omit. */
+  trueSolar?: TrueSolarMeta;
+  /** 합충형파해 감지 결과 (B-2 P1, 표시만). */
+  relations?: SajuRelations;
+  /** 십신 (B-3-a, 표시만). */
+  sipsin?: SajuSipsin;
+  /** 강약 (B-3-b, 표시만). */
+  gangyak?: SajuGangyak;
+}
+
+function toApiSaju(r: SajuResult): ApiSaju {
+  const hour: Pillar | null = "unknown" in r.hour ? null : r.hour;
   return {
     year: r.year,
     month: r.month,
     day: r.day,
-    hour: r.hour,
+    hour,
     lunarDate: r.lunarDate,
+    ...(r.trueSolar ? { trueSolar: r.trueSolar } : {}),
+    ...(r.relations ? { relations: r.relations } : {}),
+    ...(r.sipsin ? { sipsin: r.sipsin } : {}),
+    ...(r.gangyak ? { gangyak: r.gangyak } : {}),
   };
 }
 
@@ -109,8 +194,24 @@ export async function POST(req: Request): Promise<Response> {
       validated.day,
       validated.hour,
       validated.isLunar,
+      {
+        minute: validated.minute,
+        longitude: validated.longitude,
+        dst: validated.dst,
+      },
     );
-    const ohaeng = analyzeOhaeng(saju.ohaeng);
+    // B-3-c 격상: analyzeOhaeng 시그니처 확장 — 강약/일간/월지/십신 추가.
+    // gangyak·sipsin은 calculateSaju에서 항상 생성됨 (B-3-a/b 통합 후).
+    if (!saju.gangyak || !saju.sipsin) {
+      throw new Error("gangyak/sipsin 누락 — B-3-a/b 통합 후 항상 존재 가정");
+    }
+    const ohaeng = analyzeOhaeng(
+      saju.ohaeng,
+      saju.day.gan,
+      saju.gangyak,
+      saju.month.ji,
+      saju.sipsin,
+    );
     return Response.json({
       saju: toApiSaju(saju),
       ohaeng,
