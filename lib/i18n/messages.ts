@@ -743,34 +743,28 @@ export type Messages = {
     description: string;
     titleLabel: string;
     titlePlaceholder: string;
-    videoUrlLabel: string;
-    videoUrlPlaceholder: string;
-    channelLabel: string;
-    channelPlaceholder: string;
-    optional: string;
     ingredientsLabel: string;
     ingredientPlaceholder: string;
     ingredientAdd: string;
     ingredientRemove: string;
     ingredientsEmpty: string;
-    hintQuantified: string;
-    hintSensory: string;
-    hintNameOnly: string;
+    qtyLabel: string;
+    qtyNone: string;
+    qtyManual: string;
+    qtyManualHelp: string;
+    qtyManualInvalid: string;
+    qtyManualConfirm: string;
+    qtyManualCancel: string;
     stepsLabel: string;
     stepsPlaceholder: string;
     stepsHint: string;
     save: string;
     saving: string;
-    savedTitle: string;
-    savedNote: string;
     copyLink: string;
     copied: string;
     openRecipe: string;
-    newRecipe: string;
     myRecipes: string;
-    myRecipesEmpty: string;
     myRecipesNote: string;
-    openAction: string;
     editAction: string;
     removeAction: string;
     errorTitleRequired: string;
@@ -781,7 +775,6 @@ export type Messages = {
     errorTextTooLong: string;
     errorRateLimit: string;
     errorGeneric: string;
-    watchVideo: string;
     scaleLabel: string;
     scaleNote: string;
     ingredientsHeading: string;
@@ -1791,36 +1784,30 @@ export const messages: Record<Locale, Messages> = {
         "요리 영상을 보며 받아쓰고, 주방에서는 폰으로 따라 하세요. 저장하면 링크가 하나 생겨요.",
       titleLabel: "제목",
       titlePlaceholder: "예: 돼지고기 김치찜",
-      videoUrlLabel: "영상 주소",
-      videoUrlPlaceholder: "https://…",
-      channelLabel: "채널",
-      channelPlaceholder: "예: 백종원의 요리비책",
-      optional: "선택",
       ingredientsLabel: "재료",
       ingredientPlaceholder: "예: 돼지고기 목살 300g",
       ingredientAdd: "추가",
       ingredientRemove: "재료 지우기",
       ingredientsEmpty: "재료를 한 줄씩 적어보세요.",
-      hintQuantified: "{name} · {amount} — 양 조절 대상",
-      hintSensory: "{name} · “{raw}” — 적은 그대로 저장",
-      hintNameOnly: "{name} — 양 없이 저장",
+      qtyLabel: "양",
+      qtyNone: "양 없음",
+      qtyManual: "직접 고르기…",
+      qtyManualHelp: "양에 해당하는 부분을 눌러 주세요. 두 곳을 누르면 그 사이가 선택돼요.",
+      qtyManualInvalid: "고른 부분이 수량으로 읽히지 않아요.",
+      qtyManualConfirm: "확인",
+      qtyManualCancel: "취소",
       stepsLabel: "순서",
       stepsPlaceholder:
         "한 줄에 한 단계씩 적어보세요.\n예: 중불에서 10분 볶는다",
       stepsHint: "줄을 바꾸면 단계가 나뉘어요. 시간이 적혀 있으면 타이머가 붙어요.",
-      save: "저장하고 링크 받기",
+      save: "저장",
       saving: "저장하는 중…",
-      savedTitle: "링크가 만들어졌어요",
-      savedNote: "이 링크를 폰으로 열면 주방에서 그대로 따라 할 수 있어요.",
       copyLink: "링크 복사",
       copied: "복사했어요",
       openRecipe: "레시피 열기",
-      newRecipe: "새 레시피 쓰기",
       myRecipes: "내 레시피",
-      myRecipesEmpty: "저장한 레시피가 여기 쌓여요.",
       myRecipesNote:
         "수정은 이 기기에서만 할 수 있어요. 브라우저 기록을 지우면 목록도 함께 사라져요.",
-      openAction: "열기",
       editAction: "고치기",
       removeAction: "목록에서 지우기",
       errorTitleRequired: "제목을 적어주세요.",
@@ -1831,7 +1818,6 @@ export const messages: Record<Locale, Messages> = {
       errorTextTooLong: "너무 긴 줄이 있어요. {max}자 안으로 줄여주세요.",
       errorRateLimit: "조금 뒤에 다시 저장해 주세요.",
       errorGeneric: "저장하지 못했어요. 잠시 뒤에 다시 시도해 주세요.",
-      watchVideo: "영상 보기",
       scaleLabel: "양 조절",
       scaleNote: "색이 다른 숫자는 조절된 양이에요 · “약간” 같은 표현은 그대로 둡니다",
       ingredientsHeading: "재료",
@@ -2983,37 +2969,32 @@ export const messages: Record<Locale, Messages> = {
         "Jot a recipe down while you watch, then follow it on your phone in the kitchen. Saving gives you a link.",
       titleLabel: "Title",
       titlePlaceholder: "e.g. Braised pork and kimchi",
-      videoUrlLabel: "Video link",
-      videoUrlPlaceholder: "https://…",
-      channelLabel: "Channel",
-      channelPlaceholder: "e.g. Maangchi",
-      optional: "optional",
       ingredientsLabel: "Ingredients",
       ingredientPlaceholder: "e.g. pork shoulder 300g",
       ingredientAdd: "Add",
       ingredientRemove: "Remove ingredient",
       ingredientsEmpty: "Add your ingredients one line at a time.",
-      hintQuantified: "{name} · {amount} — scales with the batch",
-      hintSensory: "{name} · “{raw}” — kept exactly as written",
-      hintNameOnly: "{name} — saved without an amount",
+      qtyLabel: "Amount",
+      qtyNone: "No amount",
+      qtyManual: "Pick it myself…",
+      qtyManualHelp:
+        "Tap the part that is the amount. Tap two words to select everything between them.",
+      qtyManualInvalid: "That selection doesn't read as an amount.",
+      qtyManualConfirm: "OK",
+      qtyManualCancel: "Cancel",
       stepsLabel: "Steps",
       stepsPlaceholder:
         "One step per line.\ne.g. Fry over medium heat for 10 minutes",
       stepsHint:
         "A new line starts a new step. Write a time and a timer comes with it.",
-      save: "Save and get a link",
+      save: "Save",
       saving: "Saving…",
-      savedTitle: "Your link is ready",
-      savedNote: "Open this link on your phone and cook straight from it.",
       copyLink: "Copy link",
       copied: "Copied",
       openRecipe: "Open recipe",
-      newRecipe: "Write another",
       myRecipes: "My recipes",
-      myRecipesEmpty: "Recipes you save will collect here.",
       myRecipesNote:
         "You can only edit from this device. Clearing your browser data clears this list too.",
-      openAction: "Open",
       editAction: "Edit",
       removeAction: "Remove from list",
       errorTitleRequired: "Please add a title.",
@@ -3024,7 +3005,6 @@ export const messages: Record<Locale, Messages> = {
       errorTextTooLong: "One of the lines is too long — keep it under {max} characters.",
       errorRateLimit: "Please wait a moment and save again.",
       errorGeneric: "Couldn't save. Please try again in a moment.",
-      watchVideo: "Watch video",
       scaleLabel: "Batch size",
       scaleNote:
         "Highlighted numbers have been adjusted · wording like “a pinch” stays as written",

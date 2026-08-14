@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Pause, Play, X } from "lucide-react";
 import { useMessages } from "@/lib/i18n/provider";
 import { stepIngredientIndexes } from "@/lib/recipe-note/parse";
-import { scaledAmount } from "@/lib/recipe-note/scale";
+import { scaleIngredientText } from "@/lib/recipe-note/scale";
 import type { Ingredient, Step } from "@/lib/recipe-note/types";
 
 /**
@@ -115,14 +115,22 @@ export function CookMode({ steps, ingredients, multiplier, onExit }: Props) {
     setDeadline(Date.now() + base * 1000);
   }
 
+  // 재료 이름 토큰 계산은 재료 수에 비례한다 — 단계를 넘길 때만 다시 돌게 묶는다.
+  const stepIngredients = useMemo(
+    () =>
+      step
+        ? stepIngredientIndexes(step.text, ingredients).map(
+            (i) => ingredients[i],
+          )
+        : [],
+    [step, ingredients],
+  );
+
   if (!step) return null;
 
   const total = steps.length;
   const isLast = index === total - 1;
   const finished = remaining !== null && remaining <= 0;
-  const stepIngredients = stepIngredientIndexes(step.text, ingredients).map(
-    (i) => ingredients[i],
-  );
 
   return (
     <div className="mx-auto w-full max-w-2xl px-6 pt-6 pb-24">
@@ -179,8 +187,8 @@ export function CookMode({ steps, ingredients, multiplier, onExit }: Props) {
           ·{" "}
           {stepIngredients
             .map((ing) => {
-              const amount = scaledAmount(ing, multiplier).text;
-              return amount ? `${ing.name} ${amount}` : ing.name;
+              const line = scaleIngredientText(ing, multiplier);
+              return `${line.before}${line.amount}${line.after}`;
             })
             .join(" · ")}
         </p>

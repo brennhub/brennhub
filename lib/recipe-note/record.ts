@@ -1,4 +1,10 @@
-import type { Ingredient, Recipe, RecipeInput, Step } from "./types";
+import type {
+  Ingredient,
+  QtySelection,
+  Recipe,
+  RecipeInput,
+  Step,
+} from "./types";
 import { LIMITS } from "./types";
 import { MAX_TIMER_SEC } from "./parse";
 
@@ -50,12 +56,33 @@ function normalizeOptionalText(value: unknown, max: number): string | null {
 /** qtyText는 "범위 원문"만 담는 자리다 — 임의 문자열이 들어오면 버린다. */
 const RANGE_TEXT = /^\d+(?:\.\d+)?\s*[~～\-–—]\s*\d+(?:\.\d+)?$/;
 
-function normalizeIngredient(value: unknown): Ingredient | null {
+/**
+ * `sel` 검증. start/end는 조작 가능한 정수이고 렌더 시 그대로 slice에 들어가므로
+ * 범위와 단위 정합성을 여기서 못 박는다. 어긋나면 레코드를 버리는 대신
+ * `sel = null`로 떨어뜨린다 — 원문(`text`)은 언제나 살아남아야 한다.
+ *
+ * 저장된 sel을 `findQtyCandidates`로 재검증하지는 **않는다**. 수동 지정은
+ * 정의상 후보 목록 밖이고, 재검증을 걸면 나중에 검출 규칙에 한 줄 추가하는
+ * 순간 이미 저장된 레시피가 조용히 깨진다.
+ */
+function normalizeSelection(
+  value: unknown,
+  text: string,
+): QtySelection | null {
   if (!value || typeof value !== "object") return null;
   const v = value as Record<string, unknown>;
 
-  const name = asTrimmedString(v.name);
-  if (!name || name.length > LIMITS.textMax) return null;
+  const { start, end } = v;
+  if (!Number.isInteger(start) || !Number.isInteger(end)) return null;
+  const s = start as number;
+  const e = end as number;
+  if (s < 0 || e > text.length || s >= e) return null;
+
+  const unit = typeof v.unit === "string" ? v.unit : null;
+  if (unit === null) return null;
+  // 단위는 반드시 선택 구간의 꼬리여야 한다 — scale.ts의 구분자 복원이
+  // `span.endsWith(unit)`에 기대고, 이게 깨지면 표시가 어긋난다.
+  if (!text.slice(s, e).endsWith(unit)) return null;
 
   const qty =
     typeof v.qty === "number" && Number.isFinite(v.qty) && v.qty >= 0
@@ -69,17 +96,40 @@ function normalizeIngredient(value: unknown): Ingredient | null {
       ? qtyTextRaw.replace(/\s+/g, "")
       : null;
 
-  // raw는 "수량으로 파싱 못 한 원문" 자리다. 확정 수량이 있으면 공존할 수 없다 —
-  // 조작된 요청이 모델 불변식을 깨고 들어오는 것을 여기서 끊는다.
-  const hasQuantity = qty !== null || qtyText !== null;
+  // 수량이 하나도 없는 선택은 의미가 없다.
+  if (qty === null && qtyText === null) return null;
 
-  return {
-    name,
-    qty,
-    qtyText,
-    unit: normalizeOptionalText(v.unit, LIMITS.textMax),
-    raw: hasQuantity ? null : normalizeOptionalText(v.raw, LIMITS.textMax),
-  };
+  return { start: s, end: e, qty, qtyText, unit };
+}
+
+function normalizeIngredient(value: unknown): Ingredient | null {
+  if (!value || typeof value !== "object") return null;
+  const v = value as Record<string, unknown>;
+
+  // 공백 정규화는 클라이언트가 오프셋 계산 전에 이미 했다.
+  // 여기서 다시 하면 오프셋이 밀린다 — trim만 한다.
+  const text = asTrimmedString(v.text) ?? legacyText(v);
+  if (!text || text.length > LIMITS.textMax) return null;
+
+  return { text, sel: normalizeSelection(v.sel, text) };
+}
+
+/**
+ * 구형식(`{name, qty, qtyText, unit, raw}`) 레코드 방어.
+ *
+ * 이 앱이 모델을 바꾸기 전에 저장된 행이 D1에 남아 있다. 되살릴 수 있는 건
+ * 표시용 문자열뿐이므로 한 줄로 합쳐 `text`에 넣고 `sel`은 포기한다 —
+ * 배율은 못 먹지만 사용자가 적은 글자는 화면에 그대로 나온다.
+ */
+function legacyText(v: Record<string, unknown>): string | null {
+  const name = asTrimmedString(v.name);
+  if (!name) return null;
+  const amount =
+    asTrimmedString(v.qtyText) ??
+    (typeof v.qty === "number" ? String(v.qty) : null) ??
+    asTrimmedString(v.raw);
+  const unit = asTrimmedString(v.unit);
+  return [name, amount, unit].filter(Boolean).join(" ").slice(0, LIMITS.textMax);
 }
 
 function normalizeStep(value: unknown): Step | null {

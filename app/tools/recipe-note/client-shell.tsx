@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, Copy, Pencil, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Pencil, Trash2 } from "lucide-react";
 import { useMessages } from "@/lib/i18n/provider";
 import { errorMessageFor, localValidationCode } from "@/lib/recipe-note/errors";
 import { LIMITS, type RecipeInput } from "@/lib/recipe-note/types";
@@ -15,25 +16,21 @@ import {
 import { EMPTY_FORM, RecipeForm } from "./components/recipe-form";
 
 /**
- * 입력 화면 (기획서 §2-1).
+ * 입력 화면.
  *
- * 저장 성공 시 숏링크를 화면에 남긴 뒤 열람으로 넘어간다 — 링크를 보여주지도
- * 않고 바로 이동하면 "폰으로 보낼 주소"를 다시 찾아야 한다.
+ * 저장에 성공하면 곧바로 열람 화면으로 넘어간다 — 링크는 거기서 복사한다.
+ * 저장 직후에만 보이는 링크 패널을 따로 두면 "그 화면을 닫으면 주소를 잃는다"는
+ * 불안이 생긴다. 열람 화면은 언제든 다시 열 수 있는 자리다.
  */
 
 type SaveState =
   | { kind: "idle" }
   | { kind: "saving" }
-  | { kind: "saved"; key: string; url: string }
   | { kind: "error"; message: string };
-
-function recipeUrl(key: string): string {
-  const origin = typeof window === "undefined" ? "" : window.location.origin;
-  return `${origin}/tools/recipe-note/r/${key}`;
-}
 
 export function RecipeNoteClientShell() {
   const t = useMessages().recipeNote;
+  const router = useRouter();
   const [state, setState] = useState<SaveState>({ kind: "idle" });
   const [mine, setMine] = useState<MyRecipe[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -69,15 +66,14 @@ export function RecipeNoteClientShell() {
         return;
       }
 
-      setMine(
-        rememberMyRecipe({
-          key: data.key,
-          title: input.title.slice(0, LIMITS.titleMax),
-          editToken: data.editToken,
-          savedAt: Date.now(),
-        }),
-      );
-      setState({ kind: "saved", key: data.key, url: recipeUrl(data.key) });
+      rememberMyRecipe({
+        key: data.key,
+        title: input.title.slice(0, LIMITS.titleMax),
+        editToken: data.editToken,
+        savedAt: Date.now(),
+      });
+      // saving 상태를 유지한 채 넘어간다 — 버튼이 잠겨 있어야 중복 저장이 없다.
+      router.push(`/tools/recipe-note/r/${data.key}`);
     } catch {
       setState({ kind: "error", message: t.errorGeneric });
     }
@@ -92,24 +88,16 @@ export function RecipeNoteClientShell() {
         <p className="mt-3 text-muted-foreground">{t.description}</p>
       </header>
 
-      {state.kind === "saved" ? (
-        <SavedPanel
-          url={state.url}
-          recipeKey={state.key}
-          onReset={() => setState({ kind: "idle" })}
+      <div className="mt-8">
+        <RecipeForm
+          initial={EMPTY_FORM}
+          submitLabel={t.save}
+          submittingLabel={t.saving}
+          submitting={state.kind === "saving"}
+          errorMessage={state.kind === "error" ? state.message : null}
+          onSubmit={handleSubmit}
         />
-      ) : (
-        <div className="mt-8">
-          <RecipeForm
-            initial={EMPTY_FORM}
-            submitLabel={t.save}
-            submittingLabel={t.saving}
-            submitting={state.kind === "saving"}
-            errorMessage={state.kind === "error" ? state.message : null}
-            onSubmit={handleSubmit}
-          />
-        </div>
-      )}
+      </div>
 
       {hydrated && mine.length > 0 && (
         <MyRecipeList
@@ -118,73 +106,6 @@ export function RecipeNoteClientShell() {
         />
       )}
     </main>
-  );
-}
-
-function SavedPanel({
-  url,
-  recipeKey,
-  onReset,
-}: {
-  url: string;
-  recipeKey: string;
-  onReset: () => void;
-}) {
-  const t = useMessages().recipeNote;
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // 클립보드 권한 거부 — 아래 입력창에서 직접 복사할 수 있다.
-    }
-  }
-
-  return (
-    <section className="mt-8 rounded-lg border border-border bg-card p-6">
-      <h2 className="text-base font-semibold tracking-tight text-foreground">
-        {t.savedTitle}
-      </h2>
-      <p className="mt-1 text-sm text-muted-foreground">{t.savedNote}</p>
-
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <input
-          readOnly
-          value={url}
-          onFocus={(e) => e.currentTarget.select()}
-          aria-label={t.copyLink}
-          className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground outline-none dark:bg-input/30"
-        />
-        <button
-          type="button"
-          onClick={copy}
-          className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-          {copied ? t.copied : t.copyLink}
-        </button>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-3">
-        <Link
-          href={`/tools/recipe-note/r/${recipeKey}`}
-          className="inline-flex rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          {t.openRecipe}
-        </Link>
-        {/* 저장 후 빈 폼으로 돌아갈 길이 없으면 새로고침 말고는 방법이 없다. */}
-        <button
-          type="button"
-          onClick={onReset}
-          className="inline-flex rounded-lg border border-border px-6 py-3 font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          {t.newRecipe}
-        </button>
-      </div>
-    </section>
   );
 }
 

@@ -1,35 +1,32 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { X } from "lucide-react";
 import { useMessages } from "@/lib/i18n/provider";
+import { makeIngredient, parseSteps } from "@/lib/recipe-note/parse";
 import {
-  ingredientKind,
-  parseIngredientLine,
-  parseSteps,
-} from "@/lib/recipe-note/parse";
-import { scaledAmount } from "@/lib/recipe-note/scale";
-import { LIMITS, type Ingredient, type RecipeInput } from "@/lib/recipe-note/types";
+  LIMITS,
+  type Ingredient,
+  type QtySelection,
+  type RecipeInput,
+} from "@/lib/recipe-note/types";
+import { QtyPicker } from "./qty-picker";
 
 /**
- * 입력·수정 공용 폼 (기획서 §2-1, §2-4).
+ * 입력·수정 공용 폼.
  *
- * 정량과 감각량을 **같은 스타일**로 그린다 — 배지도 경고도 없다.
- * "약간"은 덜 좋은 입력이 아니라 다른 종류의 입력이다.
+ * 재료 줄은 **원문 그대로** 왼쪽에 남고, 어디까지가 양인지는 오른쪽 드롭다운으로
+ * 사용자가 정한다. 파서가 틀려도 글자는 안 바뀐다.
  */
 
 export type RecipeFormValue = {
   title: string;
-  videoUrl: string;
-  channel: string;
   ingredients: Ingredient[];
   stepsText: string;
 };
 
 export const EMPTY_FORM: RecipeFormValue = {
   title: "",
-  videoUrl: "",
-  channel: "",
   ingredients: [],
   stepsText: "",
 };
@@ -46,7 +43,8 @@ type Props = {
 const INPUT_CLASS =
   "w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-input/30";
 
-const LABEL_CLASS = "block text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+const LABEL_CLASS =
+  "block text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 
 export function RecipeForm({
   initial,
@@ -59,34 +57,17 @@ export function RecipeForm({
   const t = useMessages().recipeNote;
 
   const [title, setTitle] = useState(initial.title);
-  const [videoUrl, setVideoUrl] = useState(initial.videoUrl);
-  const [channel, setChannel] = useState(initial.channel);
-  const [ingredients, setIngredients] = useState<Ingredient[]>(initial.ingredients);
+  const [ingredients, setIngredients] = useState<Ingredient[]>(
+    initial.ingredients,
+  );
   const [draft, setDraft] = useState("");
   const [stepsText, setStepsText] = useState(initial.stepsText);
 
-  /** 라이브 힌트 — 입력 중인 한 줄이 어떻게 저장될지 미리 보여준다. */
-  const hint = useMemo(() => {
-    const parsed = parseIngredientLine(draft);
-    if (!parsed) return null;
-    const kind = ingredientKind(parsed);
-    if (kind === "quantified") {
-      return t.hintQuantified
-        .replace("{name}", parsed.name)
-        .replace("{amount}", scaledAmount(parsed, 1).text);
-    }
-    if (kind === "sensory") {
-      return t.hintSensory
-        .replace("{name}", parsed.name)
-        .replace("{raw}", parsed.raw ?? "");
-    }
-    return t.hintNameOnly.replace("{name}", parsed.name);
-  }, [draft, t]);
-
   const atIngredientLimit = ingredients.length >= LIMITS.ingredientsMax;
+  const canAdd = draft.trim().length > 0 && !atIngredientLimit;
 
   function addIngredient() {
-    const parsed = parseIngredientLine(draft);
+    const parsed = makeIngredient(draft);
     if (!parsed || atIngredientLimit) return;
     setIngredients((prev) => [...prev, parsed]);
     setDraft("");
@@ -96,18 +77,22 @@ export function RecipeForm({
     setIngredients((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function setSelection(index: number, sel: QtySelection | null) {
+    setIngredients((prev) =>
+      prev.map((ing, i) => (i === index ? { ...ing, sel } : ing)),
+    );
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (submitting) return;
     // 입력창에 남아 있는 한 줄도 저장에 포함한다 — "추가를 안 눌러서 날아갔다"를 막는다.
-    const pending = parseIngredientLine(draft);
+    const pending = makeIngredient(draft);
     const finalIngredients =
       pending && !atIngredientLimit ? [...ingredients, pending] : ingredients;
 
     onSubmit({
       title: title.trim(),
-      videoUrl: videoUrl.trim() || null,
-      channel: channel.trim() || null,
       ingredients: finalIngredients,
       steps: parseSteps(stepsText),
     });
@@ -115,53 +100,18 @@ export function RecipeForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="rn-title" className={LABEL_CLASS}>
-            {t.titleLabel}
-          </label>
-          <input
-            id="rn-title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder={t.titlePlaceholder}
-            maxLength={LIMITS.titleMax}
-            className={`${INPUT_CLASS} mt-1.5`}
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="rn-video" className={LABEL_CLASS}>
-              {t.videoUrlLabel}{" "}
-              <span className="font-normal normal-case">({t.optional})</span>
-            </label>
-            <input
-              id="rn-video"
-              type="url"
-              inputMode="url"
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              placeholder={t.videoUrlPlaceholder}
-              maxLength={LIMITS.videoUrlMax}
-              className={`${INPUT_CLASS} mt-1.5`}
-            />
-          </div>
-          <div>
-            <label htmlFor="rn-channel" className={LABEL_CLASS}>
-              {t.channelLabel}{" "}
-              <span className="font-normal normal-case">({t.optional})</span>
-            </label>
-            <input
-              id="rn-channel"
-              value={channel}
-              onChange={(e) => setChannel(e.target.value)}
-              placeholder={t.channelPlaceholder}
-              maxLength={LIMITS.channelMax}
-              className={`${INPUT_CLASS} mt-1.5`}
-            />
-          </div>
-        </div>
+      <div>
+        <label htmlFor="rn-title" className={LABEL_CLASS}>
+          {t.titleLabel}
+        </label>
+        <input
+          id="rn-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={t.titlePlaceholder}
+          maxLength={LIMITS.titleMax}
+          className={`${INPUT_CLASS} mt-1.5`}
+        />
       </div>
 
       <section className="space-y-3">
@@ -187,15 +137,12 @@ export function RecipeForm({
           <button
             type="button"
             onClick={addIngredient}
-            disabled={!hint || atIngredientLimit}
+            disabled={!canAdd}
             className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {t.ingredientAdd}
           </button>
         </div>
-
-        {/* 힌트 자리를 항상 차지해 입력 중 레이아웃이 튀지 않게 한다. */}
-        <p className="min-h-5 text-xs text-muted-foreground">{hint}</p>
 
         {ingredients.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-8 text-center text-sm text-muted-foreground">
@@ -205,20 +152,21 @@ export function RecipeForm({
           <ul className="divide-y divide-border rounded-lg border border-border bg-card">
             {ingredients.map((ing, index) => (
               <li
-                key={`${ing.name}-${index}`}
-                className="flex items-center gap-3 px-4 py-2.5"
+                key={`${ing.text}-${index}`}
+                className="flex items-start gap-3 px-4 py-2.5"
               >
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                  {ing.name}
+                <span className="min-w-0 flex-1 pt-1 text-sm break-words text-foreground">
+                  {ing.text}
                 </span>
-                <span className="tnum shrink-0 text-sm text-muted-foreground">
-                  {scaledAmount(ing, 1).text}
-                </span>
+                <QtyPicker
+                  ingredient={ing}
+                  onChange={(sel) => setSelection(index, sel)}
+                />
                 <button
                   type="button"
                   onClick={() => removeIngredient(index)}
                   aria-label={t.ingredientRemove}
-                  className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="mt-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <X className="size-4" />
                 </button>

@@ -2,10 +2,10 @@ import type { Ingredient } from "./types";
 import { formatNumber, splitRange } from "./parse";
 
 /**
- * 배율 환산 + 표기 (기획서 §4-2, §2-2).
+ * 배율 환산 + 표기.
  *
- * 환산 대상은 **확정된 수량뿐**이다. 감각량("약간")과 이름만 있는 항목은
- * 배율이 몇이든 원문 그대로 나간다 — 0.5배를 곱해 "약간의 절반"을 만들어내는
+ * 환산 대상은 **사용자가 확정한 수량 구간뿐**이다. `sel`이 없는 줄은 배율이
+ * 몇이든 원문 그대로 나간다 — "약간"에 0.5를 곱해 "약간의 절반"을 만들어내는
  * 순간 시스템이 모르는 것을 아는 척하게 된다.
  */
 
@@ -72,47 +72,63 @@ export function scaleRangeText(qtyText: string, multiplier: number): string {
   )}`;
 }
 
-export type ScaledAmount = {
-  /** 화면에 찍을 문자열. 빈 문자열이면 양 표기 없음. */
-  text: string;
+/**
+ * 재료 한 줄을 세 토막으로 — 화면은 `{before}<accent>{amount}</accent>{after}`로 그린다.
+ * `amount`가 빈 문자열이면 `before`가 줄 전체다.
+ */
+export type ScaledLine = {
+  before: string;
+  amount: string;
+  after: string;
   /** 배율이 실제로 적용됐는지 — accent 색 판단용. */
   scaled: boolean;
 };
 
+function plain(text: string): ScaledLine {
+  return { before: text, amount: "", after: "", scaled: false };
+}
+
 /**
- * 재료 1건의 표시용 수량. 배율 ≠ 1이고 확정 수량이 있을 때만 `scaled: true`.
- * 감각량·이름만 항목은 배율과 무관하게 원문을 그대로 돌려준다.
+ * 확정 구간만 제자리 치환. 나머지 글자는 한 자도 건드리지 않는다.
+ *
+ * 배율 1이면 **재구성 없이 원문 그대로** 돌려준다 — 그래야 "2 ~ 3개"가
+ * "2~3개"로, "200ML"이 "200ml"로 슬쩍 바뀌어 보이는 일이 없다.
+ * 재구성 문자열은 사용자가 배율을 실제로 건드렸을 때만 등장한다.
  */
-export function scaledAmount(
+export function scaleIngredientText(
   ing: Ingredient,
   multiplier: number,
-): ScaledAmount {
-  const withUnit = (amount: string) =>
-    amount && ing.unit ? `${amount} ${ing.unit}` : amount;
+): ScaledLine {
+  const { text, sel } = ing;
+  if (!sel || multiplier === 1) return plain(text);
 
-  if (ing.qtyText !== null) {
-    return {
-      text: withUnit(scaleRangeText(ing.qtyText, multiplier)),
-      scaled: multiplier !== 1,
-    };
-  }
+  const span = text.slice(sel.start, sel.end);
 
-  if (ing.qty !== null) {
-    return {
-      text: withUnit(formatQty(ing.qty * multiplier)),
-      scaled: multiplier !== 1,
-    };
-  }
+  // 구분자 복원은 **길이 기준**으로만 — 꼬리에서 단위 길이만큼 떼면 남는 게
+  // `수량 + 구분자`다. "span 끝에서 마지막 공백 찾기"로 하면 "2 ~ 3개"에서
+  // 구분자를 " "로 잘못 뽑는다.
+  const head = span.slice(0, span.length - sel.unit.length);
+  const separator = /\s*$/.exec(head)?.[0] ?? "";
 
-  // 감각량 원문 — 배율 무시 (기획서 §2-2, §3).
-  if (ing.raw !== null) return { text: withUnit(ing.raw), scaled: false };
+  const value =
+    sel.qtyText !== null
+      ? scaleRangeText(sel.qtyText, multiplier)
+      : sel.qty !== null
+        ? formatQty(sel.qty * multiplier)
+        : null;
+  if (value === null) return plain(text);
 
-  return { text: "", scaled: false };
+  return {
+    before: text.slice(0, sel.start),
+    amount: `${value}${separator}${sel.unit}`,
+    after: text.slice(sel.end),
+    scaled: true,
+  };
 }
 
 /** 배율이 실제로 무언가를 바꾸는 항목이 하나라도 있는지 — 안내 문구 노출 판단. */
 export function hasScalableIngredient(ingredients: Ingredient[]): boolean {
-  return ingredients.some((i) => i.qty !== null || i.qtyText !== null);
+  return ingredients.some((i) => i.sel !== null);
 }
 
 /** 배율 세그먼트 라벨 — "×0.5" · "×1" · "×1.5". */

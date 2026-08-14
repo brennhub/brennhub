@@ -131,8 +131,6 @@ export function RecipeEditShell({ recipe }: { recipe: Recipe }) {
         <RecipeForm
           initial={{
             title: recipe.title,
-            videoUrl: recipe.videoUrl ?? "",
-            channel: recipe.channel ?? "",
             ingredients: recipe.ingredients,
             stepsText: stepsToText(recipe.steps),
           }}
