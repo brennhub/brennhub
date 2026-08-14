@@ -738,6 +738,73 @@ export type Messages = {
     soundMute: string;
     soundUnmute: string;
   };
+  recipeNote: {
+    title: string;
+    description: string;
+    titleLabel: string;
+    titlePlaceholder: string;
+    videoUrlLabel: string;
+    videoUrlPlaceholder: string;
+    channelLabel: string;
+    channelPlaceholder: string;
+    optional: string;
+    ingredientsLabel: string;
+    ingredientPlaceholder: string;
+    ingredientAdd: string;
+    ingredientRemove: string;
+    ingredientsEmpty: string;
+    hintQuantified: string;
+    hintSensory: string;
+    hintNameOnly: string;
+    stepsLabel: string;
+    stepsPlaceholder: string;
+    stepsHint: string;
+    save: string;
+    saving: string;
+    savedTitle: string;
+    savedNote: string;
+    copyLink: string;
+    copied: string;
+    openRecipe: string;
+    newRecipe: string;
+    myRecipes: string;
+    myRecipesEmpty: string;
+    myRecipesNote: string;
+    openAction: string;
+    editAction: string;
+    removeAction: string;
+    errorTitleRequired: string;
+    errorIngredientsRequired: string;
+    errorStepsRequired: string;
+    errorTooManyIngredients: string;
+    errorTooManySteps: string;
+    errorTextTooLong: string;
+    errorRateLimit: string;
+    errorGeneric: string;
+    watchVideo: string;
+    scaleLabel: string;
+    scaleNote: string;
+    ingredientsHeading: string;
+    stepsHeading: string;
+    startCooking: string;
+    notFoundTitle: string;
+    notFoundBody: string;
+    notFoundBack: string;
+    cookStepIngredients: string;
+    cookPrev: string;
+    cookNext: string;
+    cookDone: string;
+    cookExit: string;
+    timerStart: string;
+    timerPause: string;
+    timerDone: string;
+    editHeading: string;
+    update: string;
+    updating: string;
+    updated: string;
+    forbiddenTitle: string;
+    forbiddenBody: string;
+  };
   feedback: {
     button: string;
     dialogTitle: string;
@@ -761,6 +828,7 @@ export type Messages = {
     toolSingularity: string;
     toolTagIt: string;
     toolTarot: string;
+    toolRecipeNote: string;
     categoryLabel: string;
     categoryFeature: string;
     categoryImprovement: string;
@@ -1717,6 +1785,76 @@ export const messages: Record<Locale, Messages> = {
       soundMute: "소리 끄기",
       soundUnmute: "소리 켜기",
     },
+    recipeNote: {
+      title: "레시피 받아쓰기",
+      description:
+        "요리 영상을 보며 받아쓰고, 주방에서는 폰으로 따라 하세요. 저장하면 링크가 하나 생겨요.",
+      titleLabel: "제목",
+      titlePlaceholder: "예: 돼지고기 김치찜",
+      videoUrlLabel: "영상 주소",
+      videoUrlPlaceholder: "https://…",
+      channelLabel: "채널",
+      channelPlaceholder: "예: 백종원의 요리비책",
+      optional: "선택",
+      ingredientsLabel: "재료",
+      ingredientPlaceholder: "예: 돼지고기 목살 300g",
+      ingredientAdd: "추가",
+      ingredientRemove: "재료 지우기",
+      ingredientsEmpty: "재료를 한 줄씩 적어보세요.",
+      hintQuantified: "{name} · {amount} — 양 조절 대상",
+      hintSensory: "{name} · “{raw}” — 적은 그대로 저장",
+      hintNameOnly: "{name} — 양 없이 저장",
+      stepsLabel: "순서",
+      stepsPlaceholder:
+        "한 줄에 한 단계씩 적어보세요.\n예: 중불에서 10분 볶는다",
+      stepsHint: "줄을 바꾸면 단계가 나뉘어요. 시간이 적혀 있으면 타이머가 붙어요.",
+      save: "저장하고 링크 받기",
+      saving: "저장하는 중…",
+      savedTitle: "링크가 만들어졌어요",
+      savedNote: "이 링크를 폰으로 열면 주방에서 그대로 따라 할 수 있어요.",
+      copyLink: "링크 복사",
+      copied: "복사했어요",
+      openRecipe: "레시피 열기",
+      newRecipe: "새 레시피 쓰기",
+      myRecipes: "내 레시피",
+      myRecipesEmpty: "저장한 레시피가 여기 쌓여요.",
+      myRecipesNote:
+        "수정은 이 기기에서만 할 수 있어요. 브라우저 기록을 지우면 목록도 함께 사라져요.",
+      openAction: "열기",
+      editAction: "고치기",
+      removeAction: "목록에서 지우기",
+      errorTitleRequired: "제목을 적어주세요.",
+      errorIngredientsRequired: "재료를 하나 이상 적어주세요.",
+      errorStepsRequired: "순서를 하나 이상 적어주세요.",
+      errorTooManyIngredients: "재료는 {max}개까지 담을 수 있어요.",
+      errorTooManySteps: "순서는 {max}단계까지 담을 수 있어요.",
+      errorTextTooLong: "너무 긴 줄이 있어요. {max}자 안으로 줄여주세요.",
+      errorRateLimit: "조금 뒤에 다시 저장해 주세요.",
+      errorGeneric: "저장하지 못했어요. 잠시 뒤에 다시 시도해 주세요.",
+      watchVideo: "영상 보기",
+      scaleLabel: "양 조절",
+      scaleNote: "색이 다른 숫자는 조절된 양이에요 · “약간” 같은 표현은 그대로 둡니다",
+      ingredientsHeading: "재료",
+      stepsHeading: "순서",
+      startCooking: "조리 시작",
+      notFoundTitle: "레시피를 찾을 수 없어요",
+      notFoundBody: "링크가 잘못되었거나 지워진 레시피예요.",
+      notFoundBack: "레시피 받아쓰기로 가기",
+      cookStepIngredients: "이 단계 재료",
+      cookPrev: "이전",
+      cookNext: "다음",
+      cookDone: "다 했어요",
+      cookExit: "레시피로 돌아가기",
+      timerStart: "타이머 시작",
+      timerPause: "잠깐 멈춤",
+      timerDone: "시간 다 됐어요",
+      editHeading: "레시피 고치기",
+      update: "고친 내용 저장",
+      updating: "저장하는 중…",
+      updated: "저장했어요",
+      forbiddenTitle: "고칠 수 없는 레시피예요",
+      forbiddenBody: "레시피를 만든 기기에서만 고칠 수 있어요.",
+    },
     feedback: {
       button: "피드백",
       dialogTitle: "피드백 보내기",
@@ -1740,6 +1878,7 @@ export const messages: Record<Locale, Messages> = {
       toolSingularity: "특이점",
       toolTagIt: "태그잇",
       toolTarot: "타로 테이블",
+      toolRecipeNote: "레시피 받아쓰기",
       categoryLabel: "종류",
       categoryFeature: "기능 추가",
       categoryImprovement: "기능 개선",
@@ -2037,6 +2176,11 @@ export const messages: Record<Locale, Messages> = {
         name: "타로 테이블",
         description:
           "변하지 않는 공개 카드 사전으로 읽는 3장 타로 — 메이저 아르카나 22장, 질문은 기기 밖으로 나가지 않습니다",
+      },
+      "recipe-note": {
+        name: "레시피 받아쓰기",
+        description:
+          "요리 영상을 보며 받아쓰고, 주방에서는 폰으로 따라 하기 — 인분 수에 맞춰 양도 같이 조절",
       },
     },
   },
@@ -2833,6 +2977,78 @@ export const messages: Record<Locale, Messages> = {
       soundMute: "Mute",
       soundUnmute: "Unmute",
     },
+    recipeNote: {
+      title: "Recipe Note",
+      description:
+        "Jot a recipe down while you watch, then follow it on your phone in the kitchen. Saving gives you a link.",
+      titleLabel: "Title",
+      titlePlaceholder: "e.g. Braised pork and kimchi",
+      videoUrlLabel: "Video link",
+      videoUrlPlaceholder: "https://…",
+      channelLabel: "Channel",
+      channelPlaceholder: "e.g. Maangchi",
+      optional: "optional",
+      ingredientsLabel: "Ingredients",
+      ingredientPlaceholder: "e.g. pork shoulder 300g",
+      ingredientAdd: "Add",
+      ingredientRemove: "Remove ingredient",
+      ingredientsEmpty: "Add your ingredients one line at a time.",
+      hintQuantified: "{name} · {amount} — scales with the batch",
+      hintSensory: "{name} · “{raw}” — kept exactly as written",
+      hintNameOnly: "{name} — saved without an amount",
+      stepsLabel: "Steps",
+      stepsPlaceholder:
+        "One step per line.\ne.g. Fry over medium heat for 10 minutes",
+      stepsHint:
+        "A new line starts a new step. Write a time and a timer comes with it.",
+      save: "Save and get a link",
+      saving: "Saving…",
+      savedTitle: "Your link is ready",
+      savedNote: "Open this link on your phone and cook straight from it.",
+      copyLink: "Copy link",
+      copied: "Copied",
+      openRecipe: "Open recipe",
+      newRecipe: "Write another",
+      myRecipes: "My recipes",
+      myRecipesEmpty: "Recipes you save will collect here.",
+      myRecipesNote:
+        "You can only edit from this device. Clearing your browser data clears this list too.",
+      openAction: "Open",
+      editAction: "Edit",
+      removeAction: "Remove from list",
+      errorTitleRequired: "Please add a title.",
+      errorIngredientsRequired: "Please add at least one ingredient.",
+      errorStepsRequired: "Please add at least one step.",
+      errorTooManyIngredients: "You can keep up to {max} ingredients.",
+      errorTooManySteps: "You can keep up to {max} steps.",
+      errorTextTooLong: "One of the lines is too long — keep it under {max} characters.",
+      errorRateLimit: "Please wait a moment and save again.",
+      errorGeneric: "Couldn't save. Please try again in a moment.",
+      watchVideo: "Watch video",
+      scaleLabel: "Batch size",
+      scaleNote:
+        "Highlighted numbers have been adjusted · wording like “a pinch” stays as written",
+      ingredientsHeading: "Ingredients",
+      stepsHeading: "Steps",
+      startCooking: "Start cooking",
+      notFoundTitle: "We couldn't find that recipe",
+      notFoundBody: "The link is wrong, or the recipe is gone.",
+      notFoundBack: "Go to Recipe Note",
+      cookStepIngredients: "For this step",
+      cookPrev: "Back",
+      cookNext: "Next",
+      cookDone: "All done",
+      cookExit: "Back to the recipe",
+      timerStart: "Start timer",
+      timerPause: "Pause",
+      timerDone: "Time's up",
+      editHeading: "Edit recipe",
+      update: "Save changes",
+      updating: "Saving…",
+      updated: "Saved",
+      forbiddenTitle: "This recipe can't be edited here",
+      forbiddenBody: "Only the device that created it can make changes.",
+    },
     feedback: {
       button: "Feedback",
       dialogTitle: "Send Feedback",
@@ -2856,6 +3072,7 @@ export const messages: Record<Locale, Messages> = {
       toolSingularity: "Singularity",
       toolTagIt: "Tag-it",
       toolTarot: "Tarot Table",
+      toolRecipeNote: "Recipe Note",
       categoryLabel: "Category",
       categoryFeature: "Feature Request",
       categoryImprovement: "Improvement",
@@ -3158,6 +3375,11 @@ export const messages: Record<Locale, Messages> = {
         name: "Tarot Table",
         description:
           "A three-card tarot read from an unchanging public card dictionary — 22 major arcana, your question never leaves your device",
+      },
+      "recipe-note": {
+        name: "Recipe Note",
+        description:
+          "Jot a cooking video down as you watch, then follow it on your phone — with amounts that scale to your batch",
       },
     },
   },

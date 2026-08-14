@@ -32,6 +32,21 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    // date는 prod(main 머지) 반영일 기준 — dev 확인 후 main 머지가 미뤄지면 갱신.
+    id: "recipe-note-launch",
+    date: "2026-08-14",
+    tool: "recipe-note",
+    kind: "new",
+    title: {
+      ko: "새 도구: 레시피 받아쓰기 — 보면서 적고, 주방에선 폰으로",
+      en: "New tool: Recipe Note — jot it down, then cook from your phone",
+    },
+    body: {
+      ko: "요리 영상을 보면서 재료와 순서를 그대로 받아 적는 도구가 열렸어요. 저장하면 링크가 하나 생기고, 그 링크를 폰으로 열면 주방에서 그대로 따라 할 수 있습니다. 인분을 늘리거나 줄이면 300g 같은 숫자는 알아서 함께 바뀌고, '약간'이나 '한 움큼'처럼 숫자로 말할 수 없는 양은 적은 그대로 남습니다 — 없는 숫자를 지어내지 않아요. [조리 시작]을 누르면 한 단계씩 큰 글씨로 보여주고, '10분 볶는다'처럼 시간이 적힌 단계에는 타이머가 함께 붙습니다. 요리하는 동안 화면도 꺼지지 않아요.",
+      en: "A tool for writing a cooking video down as you watch — ingredients and steps, in your own words. Saving gives you a link; open it on your phone and cook straight from it. Change the batch size and numbers like 300g scale with it, while amounts you can't put a number on — “a pinch”, “a handful” — stay exactly as you wrote them. We don't invent numbers that were never there. Press [Start cooking] and each step comes up one at a time in large type, with a timer attached to any step that mentions one (“fry for 10 minutes”). Your screen stays awake while you cook.",
+    },
+  },
+  {
     id: "arcade-games-launch",
     date: "2026-07-06",
     tool: "beacon",

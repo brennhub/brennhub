@@ -10,6 +10,7 @@
 - [stock-sim](app/tools/stock-sim/BACKLOG.md)
 - [supp-plan](app/tools/supp-plan/BACKLOG.md)
 - [tag-it](app/tools/tag-it/BACKLOG.md)
+- [recipe-note](app/tools/recipe-note/BACKLOG.md)
 
 ## 전역 (도구 무관 / 인프라)
 

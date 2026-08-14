@@ -172,4 +172,13 @@ export const tools: Tool[] = [
     // 클라이언트 전용 결정론 타로 (D1·서버 없음). hasPage: [slug] fallback 충돌 방지.
     hasPage: true,
   },
+  {
+    id: "recipe-note",
+    slug: "recipe-note",
+    status: "live",
+    category: "lifestyle",
+    createdAt: "2026-08-14",
+    // D1 숏링크 레시피 (AUTH_DB). hasPage: [slug] fallback 충돌 방지.
+    hasPage: true,
+  },
 ];

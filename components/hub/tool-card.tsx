@@ -13,6 +13,7 @@ import {
   Radar,
   MessageSquare,
   MoonStar,
+  NotebookPen,
   Pill,
   Sparkles,
   Tag,
@@ -50,6 +51,7 @@ const ICON_BY_SLUG: Record<string, LucideIcon> = {
   lure: Magnet,
   singularity: Atom,
   tarot: MoonStar,
+  "recipe-note": NotebookPen,
 };
 
 type DragHandle = {
