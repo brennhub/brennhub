@@ -111,7 +111,25 @@ function normalizeIngredient(value: unknown): Ingredient | null {
   const text = asTrimmedString(v.text) ?? legacyText(v);
   if (!text || text.length > LIMITS.textMax) return null;
 
-  return { text, sel: normalizeSelection(v.sel, text) };
+  const out: Ingredient = { text, sel: normalizeSelection(v.sel, text) };
+
+  // optional/brand/store는 **필드 단위로만** 버린다. 하나가 이상해도 줄 전체를
+  // 날리지 않는다 — 원문(text)은 언제나 살아남아야 한다는 불변식이 우선이다.
+  // 값이 비면 키 자체를 넣지 않는다 (저장 JSON을 불리지 않으려고).
+  if (v.optional === true) out.optional = true;
+  const brand = optionalMeta(v.brand);
+  if (brand) out.brand = brand;
+  const store = optionalMeta(v.store);
+  if (store) out.store = store;
+
+  return out;
+}
+
+/** 브랜드·구입처 — 문자열 + 길이 상한만 본다. 어기면 그 필드만 버린다. */
+function optionalMeta(value: unknown): string | null {
+  const raw = asTrimmedString(value);
+  if (!raw || raw.length > LIMITS.metaMax) return null;
+  return raw;
 }
 
 /**

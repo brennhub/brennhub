@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMessages } from "@/lib/i18n/provider";
 import { stepsToText } from "@/lib/recipe-note/parse";
 import { findEditToken, rememberMyRecipe } from "@/lib/recipe-note/storage";
@@ -19,11 +20,11 @@ import { RecipeForm } from "../../components/recipe-form";
 type SaveState =
   | { kind: "idle" }
   | { kind: "saving" }
-  | { kind: "saved" }
   | { kind: "error"; message: string };
 
 export function RecipeEditShell({ recipe }: { recipe: Recipe }) {
   const t = useMessages().recipeNote;
+  const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [state, setState] = useState<SaveState>({ kind: "idle" });
@@ -76,7 +77,8 @@ export function RecipeEditShell({ recipe }: { recipe: Recipe }) {
         editToken: token,
         savedAt: Date.now(),
       });
-      setState({ kind: "saved" });
+      // saving 상태를 유지한 채 넘어간다 — 버튼이 잠겨 있어야 중복 저장이 없다.
+      router.push(`/tools/recipe-note/r/${recipe.key}`);
     } catch {
       setState({ kind: "error", message: t.errorGeneric });
     }
@@ -117,15 +119,6 @@ export function RecipeEditShell({ recipe }: { recipe: Recipe }) {
           {t.openRecipe}
         </Link>
       </header>
-
-      {state.kind === "saved" && (
-        <p
-          role="status"
-          className="mt-6 rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground"
-        >
-          {t.updated}
-        </p>
-      )}
 
       <div className="mt-8">
         <RecipeForm

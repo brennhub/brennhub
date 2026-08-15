@@ -755,6 +755,18 @@ export type Messages = {
     qtyManualInvalid: string;
     qtyManualConfirm: string;
     qtyManualCancel: string;
+    qtyTyped: string;
+    qtyTypedPlaceholder: string;
+    qtyTypedNotFound: string;
+    optionalBadge: string;
+    optionalView: string;
+    optionalToggle: string;
+    detailsToggle: string;
+    brandLabel: string;
+    brandPlaceholder: string;
+    storeLabel: string;
+    storePlaceholder: string;
+    dragHint: string;
     stepsLabel: string;
     stepsPlaceholder: string;
     stepsHint: string;
@@ -794,7 +806,6 @@ export type Messages = {
     editHeading: string;
     update: string;
     updating: string;
-    updated: string;
     forbiddenTitle: string;
     forbiddenBody: string;
   };
@@ -1796,6 +1807,18 @@ export const messages: Record<Locale, Messages> = {
       qtyManualInvalid: "고른 부분이 수량으로 읽히지 않아요.",
       qtyManualConfirm: "확인",
       qtyManualCancel: "취소",
+      qtyTyped: "직접 입력",
+      qtyTypedPlaceholder: "예: 0.5컵",
+      qtyTypedNotFound: "재료 줄에 없는 양은 지정할 수 없어요.",
+      optionalBadge: "선택",
+      optionalView: "(선택)",
+      optionalToggle: "선택 재료로 표시",
+      detailsToggle: "브랜드·구입처",
+      brandLabel: "브랜드/제품",
+      brandPlaceholder: "예: 청정원",
+      storeLabel: "구입처",
+      storePlaceholder: "예: 한남체인",
+      dragHint: "끌어서 순서를 바꿀 수 있어요.",
       stepsLabel: "순서",
       stepsPlaceholder:
         "한 줄에 한 단계씩 적어보세요.\n예: 중불에서 10분 볶는다",
@@ -1837,7 +1860,6 @@ export const messages: Record<Locale, Messages> = {
       editHeading: "레시피 고치기",
       update: "고친 내용 저장",
       updating: "저장하는 중…",
-      updated: "저장했어요",
       forbiddenTitle: "고칠 수 없는 레시피예요",
       forbiddenBody: "레시피를 만든 기기에서만 고칠 수 있어요.",
     },
@@ -2982,6 +3004,18 @@ export const messages: Record<Locale, Messages> = {
       qtyManualInvalid: "That selection doesn't read as an amount.",
       qtyManualConfirm: "OK",
       qtyManualCancel: "Cancel",
+      qtyTyped: "Type it in",
+      qtyTypedPlaceholder: "e.g. 1/2 cup",
+      qtyTypedNotFound: "That amount isn't in the ingredient line.",
+      optionalBadge: "optional",
+      optionalView: "(optional)",
+      optionalToggle: "Mark as optional",
+      detailsToggle: "Brand & store",
+      brandLabel: "Brand / product",
+      brandPlaceholder: "e.g. Kikkoman",
+      storeLabel: "Where to buy",
+      storePlaceholder: "e.g. H Mart",
+      dragHint: "Drag to reorder.",
       stepsLabel: "Steps",
       stepsPlaceholder:
         "One step per line.\ne.g. Fry over medium heat for 10 minutes",
@@ -3025,7 +3059,6 @@ export const messages: Record<Locale, Messages> = {
       editHeading: "Edit recipe",
       update: "Save changes",
       updating: "Saving…",
-      updated: "Saved",
       forbiddenTitle: "This recipe can't be edited here",
       forbiddenBody: "Only the device that created it can make changes.",
     },

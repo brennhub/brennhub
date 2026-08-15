@@ -335,6 +335,72 @@ check("대분수 ×2", scaleIngredientText(makeIngredient("밀가루 1 1/2컵")!
 check("미지원 고정: .5작은술은 후보 0개", cands("소금 .5작은술"), []);
 check("미지원 고정: .5는 수동 지정도 불가", parseManualSpan("소금 .5작은술", 3, 8), null);
 
+console.log("\n선택 재료 · 브랜드 · 구입처 — 라운드트립과 필드 단위 검증");
+/**
+ * 셋 다 optional이라 **없어도 정상**이어야 하고, 하나가 이상해도 그 필드만
+ * 버리고 원문(text)·sel은 살아야 한다. 줄 전체를 날리면 사용자가 적은 글자가
+ * 사라진다 — 이 도구가 하지 않기로 한 바로 그 일이다.
+ */
+{
+  const full: Ingredient = {
+    text: "설탕 0.5컵",
+    sel: parseManualSpan("설탕 0.5컵", 3, 7),
+    optional: true,
+    brand: "백설",
+    store: "한남체인",
+  };
+  const saved = roundTrip(full) as Ingredient;
+  check("optional 보존", saved.optional, true);
+  check("brand 보존", saved.brand, "백설");
+  check("store 보존", saved.store, "한남체인");
+  check("원문·sel 동시 보존", [saved.text, saved.sel?.qty], ["설탕 0.5컵", 0.5]);
+}
+{
+  // 세 필드가 아예 없는 구형 레코드 — 지금 저장된 dev 데이터가 이 모양이다.
+  const legacy = roundTrip(makeIngredient("대파 한 줌")!) as Ingredient;
+  check("구형: optional 없음", legacy.optional, undefined);
+  check("구형: brand 없음", legacy.brand, undefined);
+  check("구형: store 없음", legacy.store, undefined);
+  check("구형: 원문 정상", legacy.text, "대파 한 줌");
+  check("구형: sel 정상", legacy.sel?.unit, "줌");
+}
+{
+  // 필드 단위 폐기 — 조작된 값이 와도 나머지는 살아남는다.
+  const hostile = roundTrip({
+    text: "설탕 0.5컵",
+    sel: parseManualSpan("설탕 0.5컵", 3, 7),
+    optional: "yes",
+    brand: "x".repeat(101),
+    store: "한남체인",
+  } as unknown as Ingredient) as Ingredient;
+  check("문자열 optional은 버린다", hostile.optional, undefined);
+  check("101자 brand는 버린다", hostile.brand, undefined);
+  check("정상 store는 살린다", hostile.store, "한남체인");
+  check("원문은 언제나 생존", hostile.text, "설탕 0.5컵");
+  check("sel도 생존", hostile.sel?.qty, 0.5);
+}
+{
+  // optional: false는 키를 남기지 않는다 (저장 JSON을 불리지 않는다).
+  const off = roundTrip({
+    text: "대파",
+    sel: null,
+    optional: false,
+  } as Ingredient) as Ingredient;
+  check("optional:false는 키 없음", off.optional, undefined);
+}
+
+console.log("\n직접 입력 — 원문에 없는 양은 지정할 수 없다");
+/** qty-picker의 확정 경로와 같은 계산: indexOf → parseManualSpan. */
+function typedSel(text: string, needle: string) {
+  const at = text.indexOf(needle);
+  return at === -1 ? null : parseManualSpan(text, at, at + needle.length);
+}
+check("원문에 있는 양", typedSel("설탕 0.5컵", "0.5컵")?.qty, 0.5);
+check("원문에 있는 양 — 사전 밖 단위", typedSel("물 500 그램", "500 그램")?.unit, "그램");
+check("원문에 없는 문자열 → sel 없음", typedSel("뜨거운 물", "1컵"), null);
+check("띄어쓰기가 다르면 못 찾는다", typedSel("설탕 0.5컵", "0.5 컵"), null);
+check("수량이 아닌 구간 → sel 없음", typedSel("뜨거운 물", "뜨거운"), null);
+
 console.log("\n환산 표기 — 근사 분수");
 check("정수", formatQty(300), "300");
 check("1/2", formatQty(0.5), "1/2");

@@ -73,8 +73,17 @@ API route(Workers)·server component·`npx tsx` 테스트가 같은 코드를 �
 
 ```ts
 { text: "만능 큐브삼겹살 (1kg)",            // 원문 — 절대 안 바뀐다
-  sel:  { start: 10, end: 13, qty: 1, qtyText: null, unit: "kg" } }
+  sel:  { start: 10, end: 13, qty: 1, qtyText: null, unit: "kg" },
+  optional?: boolean,                      // 선택 재료
+  brand?: string,                          // 브랜드·제품명
+  store?: string }                         // 구입처
 ```
+
+뒤 셋은 전부 optional이다 — 이 필드들이 생기기 전 레코드가 그대로 로드돼야 한다.
+값이 비면 키를 아예 넣지 않아 저장 JSON이 불필요하게 커지지 않는다. 서버 검증은
+**필드 단위로만** 버린다: `optional`이 문자열로 오거나 `brand`가 100자를 넘으면
+그 필드만 떨어뜨리고 `text`·`sel`은 살린다. 줄 전체를 날리면 사용자가 적은 글자가
+사라지는데, 그건 이 도구가 하지 않기로 한 바로 그 일이다.
 
 파서는 `text` 안에서 수량으로 보이는 구간을 **제안**만 하고, 확정은 사용자가 드롭다운으로 한다. 파서가 틀려도 최악이 "배율이 안 먹는다"(복구 가능)이지 "글자가 바뀐다"(복구 불가)가 아니다.
 
@@ -109,6 +118,33 @@ API route(Workers)·server component·`npx tsx` 테스트가 같은 코드를 �
 `unit`은 원문 그대로 저장한다(정규화 X). 덕분에 `200ML` ×2가 `400ML`이 되고, 구분자 복원이 기대는 "unit 길이 == 원문 길이"가 가정이 아니라 정의가 된다.
 
 **열람 화면은 저장된 `sel`만 렌더하고 후보를 다시 검출하지 않는다** — 검출 규칙을 고칠 때마다 과거 레시피가 조용히 달라지면 안 된다.
+
+## 재료 줄 인터랙션 — 세 제스처가 겹치는 자리
+
+한 줄에서 **본문 탭 = 선택 재료 토글**, **누르고 이동 = 순서 드래그**, **컨트롤 조작**이 동시에 성립해야 한다. 겹침은 로직이 아니라 **배치**로 풀었다:
+
+```
+<li data-sort-index={i} {...sortable.itemProps(i)}>   ← 드래그 표면
+  <div role="button">원문 + "선택" 배지 + brand·store 요약</div>   ← 본문(토글)
+  <QtyPicker/> <chevron> <삭제>                        ← 형제 — 클릭이 본문에 안 닿음
+</li>
+```
+
+- **본문은 `<button>`이면 안 된다.** `useSortable`의 `interactiveSelector`(여기선 `button, input, select, textarea, label`)에 걸려 본문에서 드래그가 시작되지 않는다. `role="button"` + `tabIndex` + Enter/Space 핸들러로 접근성만 맞춘다.
+- 컨트롤이 본문의 **형제**라 `stopPropagation`을 흩뿌릴 필요가 없다.
+- 드래그 직후의 click은 `useSortable`이 `onClickCapture`로 이미 막는다 → 드롭 후 토글이 튀지 않는다.
+- 행마다 **`uid`**(저장 안 되는 클라이언트 값)를 붙여 key로 쓴다. index를 key로 쓰면 순서가 바뀔 때 React가 행을 잘못 재사용해 `QtyPicker` 내부 상태와 입력 포커스가 다른 재료로 옮겨 붙는다.
+
+드래그는 `lib/ui/use-sortable.ts` 공유 hook을 쓴다. 폼에 맞춰 켠 옵션(기본값은 허브 즐겨찾기 동작):
+
+| 옵션 | 값 | 이유 |
+|---|---|---|
+| `interactiveSelector` | `button, input, select, textarea, label` | select/input의 포커스·캐럿·네이티브 드롭다운 보존 |
+| `longPressMs` | 400 | 모바일에서 탭 토글과 구분 |
+| `cancelTouchOnMovePx` | 10 | long-press 전 이동 = 스크롤 의도 → 드래그 포기 |
+| `abortOnPointerCancel` | true | 시스템 제스처에 순서가 커밋되지 않게 |
+
+세로 리스트라 포털 고스트는 만들지 않는다 — `isDragging`(opacity)·`isOver`(배경) 클래스로 충분하다.
 
 ### 그 밖의 판단
 

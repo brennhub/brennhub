@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
+import { useSortable } from "@/lib/ui/use-sortable";
 import { makeIngredient, parseSteps } from "@/lib/recipe-note/parse";
 import {
   LIMITS,
@@ -10,7 +10,7 @@ import {
   type QtySelection,
   type RecipeInput,
 } from "@/lib/recipe-note/types";
-import { QtyPicker } from "./qty-picker";
+import { IngredientRow } from "./ingredient-row";
 
 /**
  * 입력·수정 공용 폼.
@@ -24,6 +24,9 @@ export type RecipeFormValue = {
   ingredients: Ingredient[];
   stepsText: string;
 };
+
+/** 폼 안에서만 쓰는 행 — `uid`는 저장되지 않는다 (드래그/펼침 상태 식별용). */
+type Row = { uid: string; ing: Ingredient };
 
 export const EMPTY_FORM: RecipeFormValue = {
   title: "",
@@ -57,29 +60,90 @@ export function RecipeForm({
   const t = useMessages().recipeNote;
 
   const [title, setTitle] = useState(initial.title);
-  const [ingredients, setIngredients] = useState<Ingredient[]>(
-    initial.ingredients,
+  /**
+   * 행마다 `uid`를 붙여 들고 있는다 — **저장되지 않는 클라이언트 전용 값**이다.
+   * 드래그로 순서가 바뀔 때 index를 key로 쓰면 React가 행을 잘못 재사용해
+   * QtyPicker의 내부 상태와 입력 포커스가 다른 재료로 옮겨 붙는다.
+   */
+  const [rows, setRows] = useState<Row[]>(() =>
+    initial.ingredients.map((ing, i) => ({ uid: `r${i}`, ing })),
   );
+  // 초기 행들이 r0..r(n-1)을 썼으므로 다음 발급은 n부터. 증가는 이벤트 핸들러에서만.
+  const uidRef = useRef(initial.ingredients.length);
+  const nextUid = useCallback(() => `r${(uidRef.current += 1)}`, []);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [draft, setDraft] = useState("");
   const [stepsText, setStepsText] = useState(initial.stepsText);
 
-  const atIngredientLimit = ingredients.length >= LIMITS.ingredientsMax;
+  const atIngredientLimit = rows.length >= LIMITS.ingredientsMax;
   const canAdd = draft.trim().length > 0 && !atIngredientLimit;
+
+  const reorder = useCallback((from: number, to: number) => {
+    setRows((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  }, []);
+
+  const sortable = useSortable({
+    itemCount: rows.length,
+    onReorder: reorder,
+    // 폼 컨트롤 위에서는 드래그를 시작하지 않는다 — 그래야 select/input의
+    // 포커스·캐럿·네이티브 드롭다운이 살아난다.
+    interactiveSelector: "button, input, select, textarea, label",
+    longPressMs: 400,
+    // long-press 전에 움직였으면 스크롤 의도 — 드래그를 포기한다.
+    cancelTouchOnMovePx: 10,
+    abortOnPointerCancel: true,
+  });
 
   function addIngredient() {
     const parsed = makeIngredient(draft);
     if (!parsed || atIngredientLimit) return;
-    setIngredients((prev) => [...prev, parsed]);
+    setRows((prev) => [...prev, { uid: nextUid(), ing: parsed }]);
     setDraft("");
   }
 
-  function removeIngredient(index: number) {
-    setIngredients((prev) => prev.filter((_, i) => i !== index));
+  function removeRow(uid: string) {
+    setRows((prev) => prev.filter((r) => r.uid !== uid));
   }
 
-  function setSelection(index: number, sel: QtySelection | null) {
-    setIngredients((prev) =>
-      prev.map((ing, i) => (i === index ? { ...ing, sel } : ing)),
+  function patchRow(uid: string, patch: Partial<Ingredient>) {
+    setRows((prev) =>
+      prev.map((r) => {
+        if (r.uid !== uid) return r;
+        const ing = { ...r.ing, ...patch };
+        // false는 키를 지운다 — "선택 아님"이 기본값이라 저장할 게 없다.
+        if (!ing.optional) delete ing.optional;
+        return { uid, ing };
+      }),
+    );
+  }
+
+  function toggleExpanded(uid: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      return next;
+    });
+  }
+
+  /** 빈 문자열은 키를 지운다 — 저장 JSON에 빈 값을 남기지 않는다. */
+  function setMeta(uid: string, patch: { brand?: string; store?: string }) {
+    setRows((prev) =>
+      prev.map((r) => {
+        if (r.uid !== uid) return r;
+        const ing = { ...r.ing };
+        for (const [key, value] of Object.entries(patch)) {
+          const field = key as "brand" | "store";
+          if (value && value.trim()) ing[field] = value;
+          else delete ing[field];
+        }
+        return { uid, ing };
+      }),
     );
   }
 
@@ -88,6 +152,7 @@ export function RecipeForm({
     if (submitting) return;
     // 입력창에 남아 있는 한 줄도 저장에 포함한다 — "추가를 안 눌러서 날아갔다"를 막는다.
     const pending = makeIngredient(draft);
+    const ingredients = rows.map((r) => r.ing);
     const finalIngredients =
       pending && !atIngredientLimit ? [...ingredients, pending] : ingredients;
 
@@ -144,35 +209,46 @@ export function RecipeForm({
           </button>
         </div>
 
-        {ingredients.length === 0 ? (
+        {rows.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-8 text-center text-sm text-muted-foreground">
             {t.ingredientsEmpty}
           </p>
         ) : (
-          <ul className="divide-y divide-border rounded-lg border border-border bg-card">
-            {ingredients.map((ing, index) => (
-              <li
-                key={`${ing.text}-${index}`}
-                className="flex items-start gap-3 px-4 py-2.5"
-              >
-                <span className="min-w-0 flex-1 pt-1 text-sm break-words text-foreground">
-                  {ing.text}
-                </span>
-                <QtyPicker
-                  ingredient={ing}
-                  onChange={(sel) => setSelection(index, sel)}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeIngredient(index)}
-                  aria-label={t.ingredientRemove}
-                  className="mt-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          <>
+            <ul className="divide-y divide-border rounded-lg border border-border bg-card">
+              {rows.map((row, index) => (
+                <li
+                  key={row.uid}
+                  data-sort-index={index}
+                  {...sortable.itemProps(index)}
+                  className={
+                    sortable.isDragging(index)
+                      ? "opacity-40"
+                      : sortable.isOver(index)
+                        ? "bg-muted/60"
+                        : ""
+                  }
                 >
-                  <X className="size-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
+                  <IngredientRow
+                    ingredient={row.ing}
+                    expanded={expanded.has(row.uid)}
+                    onToggleExpanded={() => toggleExpanded(row.uid)}
+                    onToggleOptional={() =>
+                      patchRow(row.uid, { optional: !row.ing.optional })
+                    }
+                    onChangeSelection={(sel: QtySelection | null) =>
+                      patchRow(row.uid, { sel })
+                    }
+                    onChangeMeta={(patch) => setMeta(row.uid, patch)}
+                    onRemove={() => removeRow(row.uid)}
+                  />
+                </li>
+              ))}
+            </ul>
+            {rows.length > 1 && (
+              <p className="text-xs text-muted-foreground">{t.dragHint}</p>
+            )}
+          </>
         )}
       </section>
 

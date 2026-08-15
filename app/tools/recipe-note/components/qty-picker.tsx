@@ -3,7 +3,11 @@
 import { useMemo, useState } from "react";
 import { useMessages } from "@/lib/i18n/provider";
 import { findQtyCandidates, parseManualSpan } from "@/lib/recipe-note/parse";
-import type { Ingredient, QtySelection } from "@/lib/recipe-note/types";
+import {
+  LIMITS,
+  type Ingredient,
+  type QtySelection,
+} from "@/lib/recipe-note/types";
 
 /**
  * 재료 한 줄의 수량 확정 UI.
@@ -21,6 +25,8 @@ const NONE_VALUE = "none";
 const MANUAL_CURRENT = "manual-current";
 /** 어절 고르기 패널을 여는 옵션 — 수동 지정 중에도 다시 고를 수 있어야 한다. */
 const MANUAL_OPEN = "manual-open";
+/** 타이핑으로 구간을 지정하는 옵션. */
+const TYPED_OPEN = "typed-open";
 
 type Word = { text: string; start: number; end: number };
 
@@ -51,6 +57,9 @@ export function QtyPicker({
   const [manualOpen, setManualOpen] = useState(false);
   const [anchor, setAnchor] = useState<number | null>(null);
   const [focus, setFocus] = useState<number | null>(null);
+  const [typedOpen, setTypedOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [typedError, setTypedError] = useState(false);
 
   const matchedIndex = candidates.findIndex((c) => SAME(c, sel));
   // 후보에 없는데 sel이 있으면 수동 지정된 줄이다.
@@ -68,13 +77,43 @@ export function QtyPicker({
   function selectValue(value: string) {
     if (value === MANUAL_OPEN) {
       setManualOpen(true);
+      setTypedOpen(false);
       setAnchor(null);
       setFocus(null);
       return;
     }
+    if (value === TYPED_OPEN) {
+      setTypedOpen(true);
+      setManualOpen(false);
+      setTyped("");
+      setTypedError(false);
+      return;
+    }
     if (value === MANUAL_CURRENT) return;
     setManualOpen(false);
+    setTypedOpen(false);
     onChange(value === NONE_VALUE ? null : (candidates[Number(value)] ?? null));
+  }
+
+  /**
+   * 타이핑한 양을 원문에서 찾아 구간으로 바꾼다.
+   *
+   * 원문에 없는 문자열은 **거부한다** — sel은 text의 오프셋이라 없는 구간을
+   * 가리킬 수 없고, 그렇다고 원문에 끼워 넣는 건 이 도구가 하지 않기로 한 일이다.
+   */
+  function confirmTyped() {
+    const needle = typed.trim();
+    if (!needle) return;
+    const at = text.indexOf(needle);
+    const parsed =
+      at === -1 ? null : parseManualSpan(text, at, at + needle.length);
+    if (!parsed) {
+      setTypedError(true);
+      return;
+    }
+    onChange(parsed);
+    setTypedOpen(false);
+    setTypedError(false);
   }
 
   function tapWord(index: number) {
@@ -96,7 +135,9 @@ export function QtyPicker({
   return (
     <div className="shrink-0">
       <select
-        value={manualOpen ? MANUAL_OPEN : selectValueNow}
+        value={
+          manualOpen ? MANUAL_OPEN : typedOpen ? TYPED_OPEN : selectValueNow
+        }
         onChange={(e) => selectValue(e.target.value)}
         aria-label={t.qtyLabel}
         className="max-w-[10rem] rounded-md border border-input bg-transparent px-2 py-1 text-xs text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
@@ -111,7 +152,55 @@ export function QtyPicker({
           <option value={MANUAL_CURRENT}>{text.slice(sel.start, sel.end)}</option>
         )}
         <option value={MANUAL_OPEN}>{t.qtyManual}</option>
+        <option value={TYPED_OPEN}>{t.qtyTyped}</option>
       </select>
+
+      {typedOpen && (
+        <div className="mt-2 rounded-md border border-border bg-card p-2">
+          <input
+            value={typed}
+            onChange={(e) => {
+              setTyped(e.target.value);
+              setTypedError(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              confirmTyped();
+            }}
+            placeholder={t.qtyTypedPlaceholder}
+            maxLength={LIMITS.textMax}
+            className="w-full rounded-md border border-input bg-transparent px-2 py-1 text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
+          />
+
+          {typedError && (
+            <p className="mt-2 text-xs text-red-700 dark:text-red-300">
+              {t.qtyTypedNotFound}
+            </p>
+          )}
+
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              disabled={!typed.trim()}
+              onClick={confirmTyped}
+              className="rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {t.qtyManualConfirm}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTypedOpen(false);
+                setTypedError(false);
+              }}
+              className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              {t.qtyManualCancel}
+            </button>
+          </div>
+        </div>
+      )}
 
       {manualOpen && (
         <div className="mt-2 rounded-md border border-border bg-card p-2">

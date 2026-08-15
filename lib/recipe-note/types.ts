@@ -34,6 +34,17 @@ export type Ingredient = {
   text: string;
   /** 사용자가 확정한 수량 토큰. 없으면 null — 배율과 무관하게 원문 유지. */
   sel: QtySelection | null;
+  /**
+   * 아래 셋은 전부 optional — 이 필드들이 생기기 전에 저장된 레코드가 그대로
+   * 로드돼야 한다. `undefined`는 각각 false·빈 문자열로 취급한다.
+   * 값이 비면 키를 아예 넣지 않아 JSON이 불필요하게 커지지 않게 한다.
+   */
+  /** 선택 재료 — 없어도 되는 것. */
+  optional?: boolean;
+  /** 브랜드·제품명. */
+  brand?: string;
+  /** 구입처. */
+  store?: string;
 };
 
 export type Step = {
@@ -70,6 +81,8 @@ export const LIMITS = {
   ingredientsMax: 60,
   stepsMax: 40,
   textMax: 500,
+  /** 브랜드·구입처 각각의 상한. */
+  metaMax: 100,
 } as const;
 
 /** 배율 세그먼트 — 열람 화면 */

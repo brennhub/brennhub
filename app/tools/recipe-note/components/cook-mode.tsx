@@ -188,7 +188,8 @@ export function CookMode({ steps, ingredients, multiplier, onExit }: Props) {
           {stepIngredients
             .map((ing) => {
               const line = scaleIngredientText(ing, multiplier);
-              return `${line.before}${line.amount}${line.after}`;
+              const text = `${line.before}${line.amount}${line.after}`;
+              return ing.optional ? `${text} ${t.optionalView}` : text;
             })
             .join(" · ")}
         </p>

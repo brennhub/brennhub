@@ -24,6 +24,15 @@
 - [ ] **단계 재배열 UI** — 지금은 textarea 줄 편집으로만.
 - [ ] **조리 모드 타이머 다중** — 한 단계에 타이머 하나만(첫 매칭). "10분 볶고 20분 끓인다"는 앞의 10분만 잡는다.
 
+## 공유 드래그 hook (`lib/ui/use-sortable.ts`) — 허브와 공용
+
+0.3.0에서 재료 정렬에 쓰려고 `lib/hub/`에서 옮겨 왔다. 정찰에서 확인된 결함 2건은 **허브 기본값을 바꾸지 않으려고** recipe-note만 옵션으로 옵트인한 상태다. 허브도 고치려면 별건으로:
+
+- [ ] **터치 long-press가 이동으로 취소되지 않음** — 허브 홈에서 즐겨찾기 위를 스크롤하면 300ms 뒤 카드가 들린다. recipe-note는 `cancelTouchOnMovePx: 10`으로 회피 중. 허브 기본값을 바꾸려면 실기기 확인 필요(테스트 없음).
+- [ ] **`pointercancel`이 순서를 커밋함** — 시스템 제스처·스크롤 탈취로 취소돼도 마지막 `overIndex`로 정렬이 반영된다. recipe-note는 `abortOnPointerCancel: true`로 회피 중.
+- [ ] **활성 후에야 `touch-action: none`** — 브라우저는 touch-start에 값을 확정하므로 드래그 중 페이지가 같이 스크롤될 수 있다. `components/language-maker/character-grid.tsx`의 non-passive `touchmove` 방식이 repo 내 해법.
+- [ ] **키보드 정렬 없음** — 포인터 전용. 폼 필드 목록에서는 더 아쉽다.
+
 ## 관측 대기 (지표 없으면 판단 불가)
 
 - [ ] 라이브 힌트가 실제로 읽히는가 — 감각량 입력 비율이 낮으면 힌트가 "정량이 정답"으로 읽히고 있다는 신호.

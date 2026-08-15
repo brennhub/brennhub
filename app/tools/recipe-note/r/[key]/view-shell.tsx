@@ -11,6 +11,7 @@ import {
 } from "@/lib/recipe-note/scale";
 import { SCALE_STEPS, type Recipe } from "@/lib/recipe-note/types";
 import { CookMode } from "../../components/cook-mode";
+import { metaSummary } from "../../components/ingredient-row";
 
 /**
  * 열람 화면.
@@ -143,26 +144,38 @@ export function RecipeViewShell({ recipe }: { recipe: Recipe }) {
                     tabIndex={-1}
                     className="pointer-events-none mt-0.5 size-4 shrink-0 accent-primary"
                   />
-                  <span
-                    className={`min-w-0 flex-1 text-sm break-words ${
-                      isChecked
-                        ? "text-muted-foreground line-through"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {line.before}
-                    {line.amount && (
-                      <span
-                        className={`tnum ${
-                          isChecked
-                            ? ""
-                            : "font-medium text-sky-700 dark:text-sky-300"
-                        }`}
-                      >
-                        {line.amount}
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={`text-sm break-words ${
+                        isChecked || ing.optional
+                          ? "text-muted-foreground"
+                          : "text-foreground"
+                      } ${isChecked ? "line-through" : ""}`}
+                    >
+                      {line.before}
+                      {line.amount && (
+                        <span
+                          className={`tnum ${
+                            isChecked
+                              ? ""
+                              : "font-medium text-sky-700 dark:text-sky-300"
+                          }`}
+                        >
+                          {line.amount}
+                        </span>
+                      )}
+                      {line.after}
+                      {ing.optional && (
+                        <span className="ml-1 text-muted-foreground">
+                          {t.optionalView}
+                        </span>
+                      )}
+                    </span>
+                    {metaSummary(ing) && (
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {metaSummary(ing)}
                       </span>
                     )}
-                    {line.after}
                   </span>
                 </button>
               </li>
