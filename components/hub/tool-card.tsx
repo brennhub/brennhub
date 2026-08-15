@@ -30,7 +30,7 @@ import type { FeedbackTool } from "@/components/feedback-dialog";
 import { CardFavoriteButton } from "@/components/hub/card-favorite-button";
 import { LikeButton } from "@/components/hub/like-button";
 import { VisitCounter } from "@/components/hub/visit-counter";
-import type { SortableHandle } from "@/lib/hub/use-sortable";
+import type { SortableHandle } from "@/lib/ui/use-sortable";
 
 // shooter는 main에는 없지만 dev 머지 시 자동 흡수 — 아이콘 매핑은 미리 등록.
 const ICON_BY_SLUG: Record<string, LucideIcon> = {

@@ -17,7 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { Tool } from "@/lib/tools-registry";
-import { useSortable } from "@/lib/hub/use-sortable";
+import { useSortable } from "@/lib/ui/use-sortable";
 import { useMessages } from "@/lib/i18n/provider";
 import type { FeedbackTool } from "@/components/feedback-dialog";
 import { ToolCard } from "@/components/hub/tool-card";

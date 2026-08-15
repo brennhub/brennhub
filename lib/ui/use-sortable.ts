@@ -1,9 +1,9 @@
 /**
- * Pointer events 기반 드래그 정렬 hook — 의존성 0. 카드 전체가 드래그 영역.
+ * Pointer events 기반 드래그 정렬 hook — 의존성 0. 요소 전체가 드래그 영역.
  *
  * 활성 조건 (클릭/스크롤과 충돌 차단):
  *   - mouse: pointerdown 후 dx 또는 dy >= MOUSE_THRESHOLD_PX (5px)
- *   - touch: pointerdown 후 TOUCH_LONG_PRESS_MS (300ms) 경과 (move 무관) — 이후 자유 이동
+ *   - touch: pointerdown 후 longPressMs 경과 — 이후 자유 이동
  *
  * 활성 전엔 navigation 정상(Link 클릭 OK), touch-action: auto (수직 스크롤 정상).
  * 활성 후엔 navigation 차단 + touch-action: none.
@@ -12,16 +12,42 @@
  *   const sort = useSortable({ itemCount, onReorder });
  *   <li data-sort-index={i}><Link {...sort.itemProps(i)}>...</Link></li>
  *   {sort.draggingIndex !== null && <Preview pos={sort.previewPos} ... />}
+ *
+ * **선택 인자의 기본값은 전부 "허브 즐겨찾기가 쓰던 동작" 그대로다.** 인자를
+ * 넘기지 않으면 이 hook은 lib/hub/use-sortable.ts 시절과 완전히 동일하게 동작한다.
+ * 폼처럼 조건이 다른 화면만 필요한 항목을 켠다 (recipe-note 재료 목록).
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const MOUSE_THRESHOLD_PX = 5;
-const TOUCH_LONG_PRESS_MS = 300;
+const DEFAULT_LONG_PRESS_MS = 300;
+/** 기본은 `<button>`만 — 카드 UI에는 이걸로 충분했다. */
+const DEFAULT_INTERACTIVE_SELECTOR = "button";
 
 type Options = {
   itemCount: number;
   onReorder: (fromIndex: number, toIndex: number) => void;
+  /**
+   * 이 selector에 걸리는 요소 위에서 시작한 pointerdown은 드래그를 시작하지 않고
+   * 즉시 반환한다 (preventDefault도 하지 않음). 폼 컨트롤이 들어 있는 행은
+   * `"button, input, select, textarea, label"`처럼 넓혀야 포커스·캐럿·네이티브
+   * 드롭다운이 살아난다.
+   */
+  interactiveSelector?: string;
+  /** 터치 long-press 임계 시간(ms). */
+  longPressMs?: number;
+  /**
+   * 지정하면 long-press가 걸리기 **전에** 이 거리(px) 이상 움직였을 때 드래그를
+   * 취소한다 = 스크롤 의도로 본다. 미지정이면 이동과 무관하게 시간만으로 활성
+   * (기존 동작).
+   */
+  cancelTouchOnMovePx?: number;
+  /**
+   * true면 `pointercancel`(시스템 제스처·스크롤 탈취 등)에서 순서를 커밋하지 않고
+   * 버린다. 기본값 false는 기존 동작 — 마지막 overIndex로 커밋한다.
+   */
+  abortOnPointerCancel?: boolean;
 };
 
 type ItemProps = {
@@ -54,7 +80,14 @@ type PendingState = {
   target: HTMLElement;
 };
 
-export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
+export function useSortable({
+  itemCount,
+  onReorder,
+  interactiveSelector = DEFAULT_INTERACTIVE_SELECTOR,
+  longPressMs = DEFAULT_LONG_PRESS_MS,
+  cancelTouchOnMovePx,
+  abortOnPointerCancel = false,
+}: Options): SortableHandle {
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [previewPos, setPreviewPos] = useState<PreviewPos>(null);
@@ -100,7 +133,7 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
       //   브라우저 동작 때문에, button 클릭이 카드 navigation으로 잡혀버림.
       //   여기서 일찍 return하면 button onClick이 정상 발화 + navigation X.
       const eventTarget = e.target as HTMLElement | null;
-      if (eventTarget?.closest("button")) {
+      if (eventTarget?.closest(interactiveSelector)) {
         return;
       }
 
@@ -139,20 +172,21 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
         target,
       };
 
-      // 터치 — long-press 타이머. 이동 무관, 시간 경과 시 활성.
+      // 터치 — long-press 타이머. 시간 경과 시 활성
+      // (cancelTouchOnMovePx를 켜면 그 전에 움직인 만큼 취소된다 — handleMove).
       if (pointerType === "touch") {
         pending.longPressTimer = window.setTimeout(() => {
           // 시작 좌표에서 활성 (그 사이 move가 없었으면)
           if (pendingRef.current === pending && draggingRef.current === null) {
             activate(pending.startX, pending.startY);
           }
-        }, TOUCH_LONG_PRESS_MS);
+        }, longPressMs);
       }
 
 
       pendingRef.current = pending;
     },
-    [itemCount, activate, clearPending],
+    [itemCount, activate, clearPending, interactiveSelector, longPressMs],
   );
 
   const handleMove = useCallback(
@@ -180,18 +214,28 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
 
       // 활성 전 — mouse만 threshold 검사. touch는 long-press가 결정.
       if (!p) return;
-      if (p.pointerType !== "mouse") return;
+      if (p.pointerType !== "mouse") {
+        // 옵트인 시에만: long-press 전 이동 = 스크롤 의도 → 드래그 포기.
+        // 미지정이면 기존대로 이동을 무시한다.
+        if (cancelTouchOnMovePx !== undefined) {
+          const tdx = e.clientX - p.startX;
+          const tdy = e.clientY - p.startY;
+          if (Math.hypot(tdx, tdy) > cancelTouchOnMovePx) clearPending();
+        }
+        return;
+      }
       const dx = e.clientX - p.startX;
       const dy = e.clientY - p.startY;
       if (Math.abs(dx) >= MOUSE_THRESHOLD_PX || Math.abs(dy) >= MOUSE_THRESHOLD_PX) {
         activate(e.clientX, e.clientY);
       }
     },
-    [itemCount, activate],
+    [itemCount, activate, cancelTouchOnMovePx, clearPending],
   );
 
-  const handleUp = useCallback(
-    (e: React.PointerEvent<HTMLElement>) => {
+  /** `commit: false`면 정리만 하고 순서를 반영하지 않는다 (pointercancel 경로). */
+  const finish = useCallback(
+    (e: React.PointerEvent<HTMLElement>, commit: boolean) => {
       const p = pendingRef.current;
       if (draggingRef.current !== null) {
         // 드래그 활성 상태 — reorder (ref로 동기 체크).
@@ -213,7 +257,7 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
         window.setTimeout(() => {
           justDraggedRef.current = false;
         }, 0);
-        if (to !== null && to !== from) {
+        if (commit && to !== null && to !== from) {
           onReorder(from, to);
         }
         return;
@@ -222,6 +266,17 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
       if (p) clearPending();
     },
     [onReorder, clearPending],
+  );
+
+  const handleUp = useCallback(
+    (e: React.PointerEvent<HTMLElement>) => finish(e, true),
+    [finish],
+  );
+
+  // pointercancel — 기본은 기존 동작(커밋). 옵트인하면 버린다.
+  const handleCancel = useCallback(
+    (e: React.PointerEvent<HTMLElement>) => finish(e, !abortOnPointerCancel),
+    [finish, abortOnPointerCancel],
   );
 
   // 페이지 떠나면 정리.
@@ -244,7 +299,7 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
       onPointerDown: handleDown(index),
       onPointerMove: handleMove,
       onPointerUp: handleUp,
-      onPointerCancel: handleUp,
+      onPointerCancel: handleCancel,
       onClickCapture: handleClickCapture,
       style: {
         // 활성 후엔 touch-action: none으로 스크롤 차단. 활성 전엔 정상.
@@ -252,7 +307,14 @@ export function useSortable({ itemCount, onReorder }: Options): SortableHandle {
         userSelect: draggingIndex !== null ? "none" : undefined,
       },
     }),
-    [handleDown, handleMove, handleUp, handleClickCapture, draggingIndex],
+    [
+      handleDown,
+      handleMove,
+      handleUp,
+      handleCancel,
+      handleClickCapture,
+      draggingIndex,
+    ],
   );
 
   const isDragging = useCallback(
