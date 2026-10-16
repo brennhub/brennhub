@@ -181,4 +181,14 @@ export const tools: Tool[] = [
     // D1 숏링크 레시피 (AUTH_DB). hasPage: [slug] fallback 충돌 방지.
     hasPage: true,
   },
+  {
+    id: "bank-bonus",
+    slug: "bank-bonus",
+    status: "live",
+    category: "finance",
+    createdAt: "2026-10-16",
+    // admin 전용 (page.tsx에서 is_admin 검사) + prod 미노출. bb_* 테이블 (AUTH_DB).
+    devOnly: true,
+    hasPage: true,
+  },
 ];

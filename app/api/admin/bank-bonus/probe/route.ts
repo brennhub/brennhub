@@ -6,13 +6,9 @@
  */
 
 import { isProdEnv } from "@/lib/env.server";
+import { blockMarkersIn, fetchFresh } from "@/lib/bank-bonus/http";
 
 export const dynamic = "force-dynamic";
-
-const UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36";
-
-const BLOCK_MARKERS = ["captcha", "Just a moment", "Access Denied", "cf-chl"];
 
 type Extract = (body: string, contentType: string) => Record<string, unknown>;
 
@@ -90,37 +86,26 @@ const TARGETS: { url: string; extract: Extract }[] = [
 async function probe({ url, extract }: (typeof TARGETS)[number]) {
   const started = Date.now();
   try {
-    const res = await fetch(url, {
-      redirect: "follow",
-      cache: "no-store",
-      headers: {
-        "User-Agent": UA,
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Cache-Control": "no-cache",
-        Pragma: "no-cache",
-      },
-    });
-    const body = await res.text();
-    const contentType = res.headers.get("content-type") ?? "";
+    const res = await fetchFresh(url);
     let extracted: Record<string, unknown>;
     try {
-      extracted = extract(body, contentType);
+      extracted = extract(res.body, res.contentType);
     } catch (e) {
       extracted = { error: String(e) };
     }
+    const markers = blockMarkersIn(res.body);
     return {
       url,
       status: res.status,
-      finalUrl: res.url,
-      contentType,
-      bodyLength: body.length,
-      elapsedMs: Date.now() - started,
-      blockMarkers: BLOCK_MARKERS.filter((m) => body.includes(m)),
-      looksBlocked: BLOCK_MARKERS.some((m) => body.includes(m)),
-      cfCacheStatus: res.headers.get("cf-cache-status"),
-      age: res.headers.get("age"),
-      lastModified: res.headers.get("last-modified"),
+      finalUrl: res.finalUrl,
+      contentType: res.contentType,
+      bodyLength: res.body.length,
+      elapsedMs: res.elapsedMs,
+      blockMarkers: markers,
+      looksBlocked: markers.length > 0,
+      cfCacheStatus: res.cfCacheStatus,
+      age: res.age,
+      lastModified: res.lastModified,
       extracted,
     };
   } catch (e) {

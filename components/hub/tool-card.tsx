@@ -7,6 +7,7 @@ import {
   Clock,
   Gamepad2,
   Grid3x3,
+  Landmark,
   Magnet,
   Mail,
   Orbit,
@@ -52,6 +53,7 @@ const ICON_BY_SLUG: Record<string, LucideIcon> = {
   singularity: Atom,
   tarot: MoonStar,
   "recipe-note": NotebookPen,
+  "bank-bonus": Landmark,
 };
 
 type DragHandle = {
