@@ -27,6 +27,15 @@ function pick<K extends keyof StoredOffer>(rows: StoredOffer[], k: K): StoredOff
   return null;
 }
 
+/**
+ * 신규 기준선 — 가장 먼저 본 행이 그 소스의 첫 성공 run 이후에 처음 보였을 때만.
+ * 첫 run에서 한꺼번에 들어온 항목(=초기 적재)은 신규가 아니다.
+ */
+function afterBaseline(g: StoredOffer[]): boolean {
+  const first = [...g].sort((a, b) => (a.first_seen_at < b.first_seen_at ? -1 : 1))[0];
+  return !!first.source_first_ok_at && first.first_seen_at > first.source_first_ok_at;
+}
+
 export function mergeOffers(rows: StoredOffer[]): MergedOffer[] {
   const groups = new Map<string, StoredOffer[]>();
   for (const r of rows) {
@@ -48,6 +57,7 @@ export function mergeOffers(rows: StoredOffer[]): MergedOffer[] {
       bonusMin: pick(csvFirst, "bonus_min"),
       bonusMax: pick(csvFirst, "bonus_max"),
       bonusText: pick(csvFirst, "bonus_text"),
+      bonusNote: pick(masterFirst, "bonus_note"),
       stateText: pick(masterFirst, "state_text"),
       nationwide: pick(csvFirst, "nationwide"),
       caEligible: pick(csvFirst, "ca_eligible"),
@@ -72,6 +82,7 @@ export function mergeOffers(rows: StoredOffer[]): MergedOffer[] {
       sources: [...new Set(g.map((r) => r.source_name))],
       firstSeenAt: g.map((r) => r.first_seen_at).sort()[0],
       lastSeenAt: g.map((r) => r.last_seen_at).sort().at(-1) ?? g[0].last_seen_at,
+      seenAfterBaseline: afterBaseline(g),
     };
   });
 }

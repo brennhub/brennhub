@@ -64,6 +64,7 @@ export function parseRss(xml: string, now = Date.now()): ParseResult {
       bonusMin: bonus.min,
       bonusMax: bonus.max,
       bonusText: bonus.text,
+      bonusNote: bonus.note,
       stateText,
       nationwide,
       ddText: null,

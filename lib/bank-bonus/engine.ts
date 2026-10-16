@@ -3,7 +3,10 @@
  * 파서는 source.key로 고른다. AI 호출 없음 (코드 파싱만).
  */
 
-import { recordRun, upsertOffers } from "./db";
+import { DETAIL_FETCH } from "./config";
+import { listDetails, listEnabledSources, listFlags, listStoredOffers, recordRun, upsertDetail, upsertOffers } from "./db";
+import { extractDetail } from "./detail";
+import { byBonus, evaluateAll } from "./offers";
 import { blockMarkersIn, fetchFresh, type FetchResult } from "./http";
 import { parseMaster } from "./parse-master";
 import { parseRss } from "./parse-rss";
@@ -88,4 +91,75 @@ export async function fetchSource(
     summary.error = `${error ? `${error}; ` : ""}run log failed: ${e instanceof Error ? e.message : String(e)}`;
   }
   return summary;
+}
+
+export type DetailSummary = {
+  candidates: number;
+  fetched: number;
+  skippedRecent: number;
+  failed: number;
+  errors: string[];
+};
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * 상세 글 수집 — 지금 할 만한 오퍼 + 관심(⭐) 오퍼 중 detail_url 있는 것.
+ * 7일 안에 받은 것은 건너뛰고, 보너스 큰 순으로 최대 40건, 300ms 간격.
+ */
+export async function fetchDetails(db: D1Database): Promise<DetailSummary> {
+  const [rows, flags, details] = await Promise.all([listStoredOffers(db), listFlags(db), listDetails(db)]);
+  const { all } = evaluateAll(rows, flags, details);
+  const now = Date.now();
+  const wanted = all.filter((o) => o.detailUrl && (o.doable || o.flags.star)).sort(byBonus);
+  const fresh = (key: string) => {
+    const at = details.get(key)?.fetched_at;
+    return !!at && now - Date.parse(at) < DETAIL_FETCH.refetchAfterDays * 86_400_000;
+  };
+  const todo = wanted.filter((o) => !fresh(o.key)).slice(0, DETAIL_FETCH.maxPerRefresh);
+
+  const summary: DetailSummary = {
+    candidates: wanted.length,
+    fetched: 0,
+    skippedRecent: wanted.length - wanted.filter((o) => !fresh(o.key)).length,
+    failed: 0,
+    errors: [],
+  };
+
+  for (let i = 0; i < todo.length; i++) {
+    const o = todo[i];
+    if (i > 0) await sleep(DETAIL_FETCH.gapMs);
+    let status: number | null = null;
+    try {
+      const res = await fetchFresh(o.detailUrl!);
+      status = res.status;
+      const ok = res.status >= 200 && res.status < 300;
+      await upsertDetail(db, o.key, o.detailUrl!, status, ok ? extractDetail(res.body) : null, new Date().toISOString());
+      if (ok) summary.fetched++;
+      else {
+        summary.failed++;
+        summary.errors.push(`${o.bank ?? o.key}: HTTP ${status}`);
+      }
+    } catch (e) {
+      summary.failed++;
+      summary.errors.push(`${o.bank ?? o.key}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+  return summary;
+}
+
+/** refresh 1회 — 활성 소스 전부 → 상세 글. */
+export async function refreshAll(
+  db: D1Database,
+  trigger: "manual" | "cron",
+): Promise<{ sources: FetchSummary[]; details: DetailSummary | { error: string } }> {
+  const sources: FetchSummary[] = [];
+  for (const s of await listEnabledSources(db)) sources.push(await fetchSource(db, s, trigger));
+  let details: DetailSummary | { error: string };
+  try {
+    details = await fetchDetails(db);
+  } catch (e) {
+    details = { error: e instanceof Error ? e.message : String(e) };
+  }
+  return { sources, details };
 }

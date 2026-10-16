@@ -154,6 +154,7 @@ export function parseMaster(html: string): ParseResult {
       bonusMin: bonus.min,
       bonusMax: bonus.max,
       bonusText: bonus.text,
+      bonusNote: bonus.note,
       stateText,
       nationwide,
       ddText,
