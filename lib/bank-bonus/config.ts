@@ -16,15 +16,10 @@ export const SCORE = {
   topN: 5,
 } as const;
 
-/** 근거 있는 AI 추출 — refresh 1회당 상한, 시작 시간 예산, 재시도 주기. */
-export const AI_EXTRACT = {
-  maxPerRefresh: 40,
-  /** refresh가 이만큼 넘게 돌았으면 이번 AI 단계는 건너뜀. */
-  startBudgetMs: 20_000,
-  /** AI 단계 도중 이 시각을 넘기면 남은 글은 다음 refresh로. */
-  hardStopMs: 90_000,
-  retryAfterDays: 7,
-  concurrency: 4,
+/** Cowork 파이프라인 — export 응답 상한. */
+export const COWORK = {
+  exportMaxItems: 60,
+  exportTextMax: 6000,
 } as const;
 
 /** 상세 글 수집 — refresh 1회당 상한·간격·재수집 주기. */

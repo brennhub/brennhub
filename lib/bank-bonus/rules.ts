@@ -6,7 +6,7 @@
  * 겹친 오퍼(예: 입출금 $300 + 저축 예치 시 총 $900)는 기본 부분에 예치가 없으면 할 만한 오퍼로 남는다 — 예치는 겹친 부분 몫.
  * 정렬 금액 = 기본 금액(bonus_base), 모르면 bonus_max.
  *
- * 재신청 가능 표시 우선순위: manual > official > doc_post > doc_churn > ai.
+ * 재신청 가능 표시 우선순위: manual > official > doc_post > doc_churn > cowork.
  * 태그는 코드 + 숫자만 — 문구는 화면(messages.ts)이 만든다.
  */
 
@@ -39,7 +39,7 @@ export function daysUntil(isoDate: string, now: number): number {
   return (Date.parse(`${isoDate}T23:59:59Z`) - now) / DAY;
 }
 
-const RULE_ORDER: RuleSource[] = ["manual", "official", "doc_post", "doc_churn", "ai"];
+const RULE_ORDER: RuleSource[] = ["manual", "official", "doc_post", "doc_churn", "cowork"];
 
 /** 재신청 — 층별 후보 중 우선순위가 가장 높은 값. */
 function resolveReapply(
@@ -55,11 +55,13 @@ function resolveReapply(
     if (r.churn_months == null || !bankMatches(o.bank, r.bank)) continue;
     // doc_post 은행 규칙은 다른 글(같은 은행 다른 상품)에서 왔을 수 있다 — 이 오퍼의 글이 우선이라 여기선 건너뜀.
     if (r.source === "doc_post") continue;
+    // DoC 처닝 목록은 개인 계좌 기준 — 사업자 오퍼에는 붙이지 않는다.
+    if (r.source === "doc_churn" && o.accountType === "business") continue;
     candidates.push({ source: r.source, months: r.churn_months, text: r.churn_text, quote: r.evidence ?? r.churn_text, url: r.source_url });
   }
   if (d?.churn_months != null) {
     candidates.push({
-      source: postMethod === "ai" ? "ai" : "doc_post",
+      source: postMethod === "cowork" ? "cowork" : "doc_post",
       months: d.churn_months,
       text: d.churn_text,
       quote: d.evidence?.churn_months?.quote ?? d.churn_text,
@@ -81,7 +83,7 @@ function resolveReapply(
 
 function detailEvidence(d: OfferDetail | undefined, key: string): Evidence | undefined {
   const e = d?.evidence?.[key];
-  return e ? { quote: e.quote, source: e.method === "ai" ? "ai" : "doc_post", url: d?.detail_url ?? null } : undefined;
+  return e ? { quote: e.quote, source: e.method === "cowork" ? "cowork" : "doc_post", url: d?.detail_url ?? null } : undefined;
 }
 
 export function evaluateOffer(

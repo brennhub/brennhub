@@ -194,8 +194,14 @@ export function churnWindow(s: string): number | null | undefined {
   return undefined; // 창 없음
 }
 
-export function findChurn(text: string): { months: number | null; text: string | null } {
-  const all = sentences(text).filter((s) => ELIGIBILITY.test(s) || /per (?:calendar )?year/i.test(s));
+/**
+ * 재신청 기간. personal=true(개인 계좌 오퍼·개인 기준 목록)면 "business"가 든 문장은 근거로 쓰지 않는다
+ * — 사업자 계좌 규칙(예: Capital One Business 180일)이 개인 오퍼에 붙지 않게.
+ */
+export function findChurn(text: string, opts: { personal?: boolean } = {}): { months: number | null; text: string | null } {
+  const all = sentences(text)
+    .filter((s) => ELIGIBILITY.test(s) || /per (?:calendar )?year/i.test(s))
+    .filter((s) => !opts.personal || !/\bbusiness\b/i.test(s));
   const withWindow = all.filter((s) => churnWindow(s) !== undefined);
   // 보너스·오퍼 자격 문장 우선 ("received a bonus ... within the past 12 months", "not eligible for this offer if ...").
   const s =
@@ -307,7 +313,7 @@ function sentenceWith(text: string, re: RegExp): string | null {
   return sentences(text).find((s) => re.test(s))?.slice(0, 500) ?? null;
 }
 
-export function extractDetail(html: string): DetailExtract {
+export function extractDetail(html: string, opts: { personal?: boolean } = {}): DetailExtract {
   const art = articleHtml(html);
   const articleText = htmlToText(art);
   const g = glance(art);
@@ -335,7 +341,7 @@ export function extractDetail(html: string): DetailExtract {
   if (/\btargeted\b|\bmailer\b/i.test(termsText)) methods.push("invite");
 
   const dd = findDd(searchText, getGlance(g, /^direct deposit/));
-  const churn = findChurn(searchText);
+  const churn = findChurn(searchText, { personal: opts.personal });
   const expires = findExpires(art, articleText, getGlance(g, /^expiration/), searchText);
   const glanceText = g.size ? [...g.entries()].map(([k, v]) => `${k}: ${v}`).join("\n") : null;
   const evidence: DetailExtract["evidence"] = {};

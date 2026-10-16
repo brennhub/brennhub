@@ -2,7 +2,8 @@
 
 미국 은행 계좌 개설 보너스를 공개 소스에서 모아, "지금 할 만한 오퍼"를 한눈에 보여 주는 개인용 도구.
 **admin 전용 + devOnly** — `page.tsx`가 세션·`is_admin`을 직접 검사 (`/tools/*`는 middleware 밖), prod에서는 404.
-추출은 코드(정규식)가 먼저, 정규식이 못 채운 칸만 근거 인용이 확인된 AI 값으로 채운다 (아래 "AI 추출과 근거 정책").
+추출은 코드(정규식)가 먼저, 정규식이 못 채운 칸만 Cowork가 뽑아 저장소에 커밋한 값으로 채운다 — 근거 인용이 원문에서 확인될 때만 (아래 "Cowork 파이프라인").
+Worker에서 외부 AI API를 부르지 않는다.
 
 ## 데이터 흐름
 
@@ -15,12 +16,13 @@ GET /api/admin/bank-bonus/refresh   (admin 세션, 임시 GET — 추후 POST + 
      ├ fetchDetails                   지금 할 만한 오퍼 + 관심(⭐) 오퍼의 DoC 상세 글
      │                                보너스 큰 순 최대 40건 · 300ms 간격 · 7일 안에 받은 건 건너뜀 → detail.ts → bb_offer_details
      │                                약관에서 읽은 재신청 기간은 bb_bank_rules(source='doc_post')에도 기록
-     └ aiExtract                      refresh가 20초 안이면, 빈 칸 있는 상세 글 최대 40건 → ai.ts (claude-haiku-5-5) → 근거 대조 → 빈 칸만 채움
+     └ coworkIngest                   data/bank-bonus/extractions.json (빌드 시 번들) → evidence.ts 근거 대조 → 빈 칸만 채움
 GET  /api/admin/bank-bonus/offers   저장 행(RSS 제외) → merge.ts → rules.ts(상세 글 값 우선) → offers.ts(필터·정렬·요약·Top 5)
 POST /api/admin/bank-bonus/flags    관심 / 숨김 / 신청 완료 / 메모 (bb_offer_flags)
 GET  /api/admin/bank-bonus/posts    최근 7일 RSS 글 (상단 고정 포함) — 오퍼와 별개
 GET  /api/admin/bank-bonus/runs     최근 run 50건
 GET  /api/admin/bank-bonus/probe    일회성 fetch probe (D1 쓰기 없음, prod 404)
+GET  /api/bank-bonus/export          Cowork용 공개 export (세션 불필요, prod 404) — DoC 원문 + 오퍼 키만
 ```
 
 DB (`AUTH_DB`): `bb_sources` · `bb_fetch_runs` · `bb_offers` · `bb_offer_flags` · `bb_offer_details` · `bb_bank_rules`
@@ -113,20 +115,33 @@ offers API는 상세 글 값을 우선하고, 없으면 master 불릿 값(DD·�
 | 공식 | `official` | bb_bank_rules (Phase 2c 은행 공식 페이지) |
 | DoC 글 | `doc_post` | 이 오퍼 상세 글 약관 정규식 (bb_offer_details.churn_months, 근거 method=regex). 은행 단위로도 기록하지만 표시엔 이 오퍼 글만 쓴다 (같은 은행 다른 상품 혼동 방지). |
 | DoC 처닝 목록 | `doc_churn` | bb_bank_rules, 은행명 매칭 (`banks.ts` bankMatches — 정규화 후 같거나 "규칙명 + 공백"으로 시작) |
-| AI | `ai` | 이 오퍼 상세 글에서 AI가 근거와 함께 채운 값 (근거 method=ai) |
+| Cowork | `cowork` | 이 오퍼 상세 글에서 Cowork가 근거와 함께 채운 값 (근거 method=cowork) |
 
-표시 우선순위: **manual > official > doc_post > doc_churn > ai**.
+표시 우선순위: **manual > official > doc_post > doc_churn > cowork**.
+개인 계좌 오퍼는 "business"가 든 약관 문장을 재신청 근거로 쓰지 않는다 (글 약관·DoC 처닝 목록 모두). DoC 처닝 목록 규칙은 사업자 오퍼에 붙이지 않는다.
 값 있음 → "12개월 후 가능" · 글을 읽었는데 없음 → "글에 명시 없음" / "Not stated in post" · 글을 못 읽음 → "확인 필요" / "Needs checking".
 
-## AI 추출과 근거 정책 (`ai.ts`)
+## Cowork 파이프라인
 
-- 대상: 상세 글(HTTP 2xx) 중 정규식 뒤에도 expires_on · churn_months · dd_amount · dd_days · deposit_hold_amount 중 하나라도 빈 것.
-- 입력: "Offer at a glance" 목록 + The Fine Print, 6000자 상한. 모델 `claude-haiku-5-5`, effort low, JSON 스키마 출력.
-- 요청 형식: {expires_on, churn_months, churn_text, dd_amount, dd_days, deposit_hold_amount, deposit_hold_days, apply_methods, evidence: {필드: 원문 그대로 인용}}.
-- **채택 조건**: 인용이 보낸 원문에 그대로 있음(공백·따옴표·대시 차이만 무시, 15자 이상) AND 값이 그 인용 안에 있음(금액·일수 숫자, 날짜 일치, 기간 단어). 아니면 그 필드는 버린다.
-- **덮지 않음**: 비어 있는 칸만 채운다 (COALESCE). 정규식·DoC 처닝 목록 값이 늘 이긴다 (위 우선순위).
-- 저장: 값 + evidence JSON(`{필드: {quote, method: 'ai'}}`) + ai_extracted_at, 하나라도 채택되면 extraction_method='ai'.
-- 한도: refresh당 40건, 동시 4건. refresh가 AI 시작 시점에 20초를 넘겼으면 이번엔 건너뛰고 응답에 `ai.skipped = "time_budget"`. 같은 글은 7일 뒤 재시도 (글을 다시 받으면 AI도 다시).
-- 키: Worker secret `ANTHROPIC_API_KEY` (`wrangler secret put ANTHROPIC_API_KEY --env preview`). 없으면 `ai.skipped = "no_api_key"`, refresh는 정상 완료. 키는 로그·응답에 싣지 않는다.
+```
+① export   GET https://dev.brennhub.com/api/bank-bonus/export        (?all=1 = 상세 글 받은 모든 오퍼)
+            → {generatedAt, items:[{offer_key, bank, detail_url, missing[], glance_text, fine_print_text}]}
+② Cowork   예약 작업이 export를 읽고, 각 글에서 값 + 원문 그대로 인용을 뽑는다
+③ 저장소   data/bank-bonus/extractions.json 에 커밋 → dev 브랜치 push → dev.brennhub.com 재배포
+④ ingest   refresh가 파일을 읽어 필드별 근거 대조 → 통과한 값만, 빈 칸만 채움
+```
 
-화면 "근거": 신청 마감 · 보너스 조건 · 재신청 가능 옆 작은 버튼 → 근거 문장 + 출처 종류(DoC 글 / DoC 처닝 목록 / AI 추출 / 공식) + 링크. 근거 없는 값엔 버튼 없음.
+- **export** (`app/api/bank-bonus/export/route.ts`, `lib/bank-bonus/export.ts`): 세션 없음, `/api/admin` 밖. prod에서는 404.
+  대상 = 지금 할 만한 오퍼 + 관심(⭐) 오퍼 중 상세 글(HTTP 2xx)이 있고 expires_on · churn_months · dd_amount · dd_days · deposit_hold_amount 중 하나라도 빈 것.
+  보너스 큰 순 최대 60건, 약관 원문 6000자 상한. **DoC 공개 원문과 오퍼 키만** — 표시·메모·계좌 등 소유자 정보는 없다
+  (관심 표시는 대상 선정에만 쓰고 응답엔 남지 않는다). 헤더: `Cache-Control: no-store`, `X-Robots-Tag: noindex`.
+- **데이터 파일** `data/bank-bonus/extractions.json`:
+  `{version: 1, generatedAt, items: [{offer_key, source_url, fields: {expires_on, churn_months, churn_text, dd_amount, dd_days, deposit_hold_amount, deposit_hold_days, apply_methods}, evidence: {필드: 원문 그대로 인용}}]}`.
+  Worker는 이 파일을 **빌드 시점 import**로 읽는다 (`lib/bank-bonus/cowork.ts` — OpenNext가 Worker 번들에 넣음). 파일을 바꾸면 다음 배포부터 반영.
+- **ingest** (`lib/bank-bonus/cowork.ts` + `evidence.ts`): 항목마다 저장된 요약(glance_text) + 약관(fine_print_text)을 원문으로 필드별 판정.
+  - 인용 없음 → `no_evidence` · 인용(15자 이상)이 원문에 없음(공백·따옴표·대시 차이만 무시) → `quote_not_found` · 값이 인용 안에 없음 → `value_not_in_quote` · 오퍼 키를 모르거나 원문 없음 → `unknown_offer`.
+  - 통과한 값만 저장: extraction_method='cowork', 근거 JSON `{필드: {quote, method: 'cowork'}}`, ai_extracted_at 칸 = 반영 시각.
+  - **덮지 않음**: 이미 값 있는 칸은 건너뜀(`skippedExisting`). 재신청은 표시 우선순위상 정규식·DoC 처닝 목록·공식·직접 입력이 늘 이긴다.
+  - refresh 응답: `"cowork": {fileGeneratedAt, items, accepted, rejected: {이유: 건수}, skippedExisting}`.
+
+화면 "근거": 신청 마감 · 보너스 조건 · 재신청 가능 옆 작은 버튼 → 근거 문장 + 출처 종류(DoC 글 / DoC 처닝 목록 / Cowork 추출 / 공식) + 링크. 근거 없는 값엔 버튼 없음.
