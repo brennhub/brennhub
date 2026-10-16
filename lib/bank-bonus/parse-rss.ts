@@ -14,7 +14,6 @@ import {
   htmlToText,
   parseBonus,
   parseStatesFromBracket,
-  parseStatesFromHeading,
   stripCdata,
 } from "./text";
 
@@ -23,11 +22,15 @@ function tag(xml: string, name: string): string | null {
   return m ? stripCdata(m[1]).trim() : null;
 }
 
+/**
+ * DoC 제목 관례: 앞 대괄호에 주 코드 → 그 주 한정(nationwide 0) / 대괄호 없음 → 전국(1) /
+ * 주 코드 없는 대괄호("[Targeted]", "[Expired]", "[Update]") → 판정 불가(NULL).
+ */
 function parseTitle(title: string) {
   const bracket = title.match(/^\s*\[([^\]]+)\]\s*/);
   const rest = bracket ? title.slice(bracket[0].length) : title;
-  const stateText =
-    (bracket ? parseStatesFromBracket(bracket[1]) : null) ?? parseStatesFromHeading(rest);
+  const stateText = bracket ? parseStatesFromBracket(bracket[1]) : null;
+  const nationwide: 0 | 1 | null = !bracket ? 1 : stateText ? 0 : null;
 
   // "Bank Name $400 Checking Bonus" 형태일 때만 은행명. "PayPal: Earn ..."·"Best ..."는 판정 불가.
   let bank: string | null = null;
@@ -35,7 +38,7 @@ function parseTitle(title: string) {
   if (m && !m[1].includes(":") && !/^best\b/i.test(m[1])) {
     bank = m[1].replace(/\s*[–—-]\s*$/, "").trim() || null;
   }
-  return { bank, stateText, bonus: parseBonus(rest) };
+  return { bank, stateText, nationwide, bonus: parseBonus(rest) };
 }
 
 export function parseRss(xml: string, now = Date.now()): ParseResult {
@@ -50,7 +53,7 @@ export function parseRss(xml: string, now = Date.now()): ParseResult {
     if (!guid || !title) continue;
 
     const pub = Date.parse(tag(it, "pubDate") ?? "");
-    const { bank, stateText, bonus } = parseTitle(title);
+    const { bank, stateText, nationwide, bonus } = parseTitle(title);
 
     items.push({
       externalKey: guid,
@@ -61,7 +64,7 @@ export function parseRss(xml: string, now = Date.now()): ParseResult {
       bonusMax: bonus.max,
       bonusText: bonus.text,
       stateText,
-      nationwide: stateText ? 0 : null, // 대괄호 없는 제목도 전국이라 단정하지 않는다.
+      nationwide,
       ddText: null,
       pullText: null,
       ccFundingText: null,

@@ -32,6 +32,7 @@ DB: `AUTH_DB`의 `bb_sources` / `bb_fetch_runs` / `bb_offers` — `migrations/au
 
 ## 판정 규칙 (추측 금지)
 
-- `nationwide`: master는 주 제한 없음 + 일반 섹션이면 1, 주 판정됨 또는 State/Region 섹션이면 0. RSS는 대괄호 주가 있으면 0, 없으면 NULL.
+- `nationwide`: master는 주 제한 없음 + 일반 섹션이면 1, 주 판정됨 또는 State/Region 섹션이면 0.
+- RSS (DoC 제목 관례): 앞 대괄호에 주 코드(`[FL, GA]`, `[NY, In Branch]`) → state_text + nationwide 0 / 대괄호 없음 → nationwide 1 / 주 코드 없는 대괄호(`[Targeted]`, `[Expired]`, `[Update]`) → nationwide NULL.
 - CA 가능(`caEligible=1`) = `nationwide=1` 또는 `state_text`에 CA. NULL은 제외.
 - 보너스: 첫 금액 표현 — `$300-$400`·`$300/$400`·`$75 – $300` → min/max, `Up To $500` → min NULL.

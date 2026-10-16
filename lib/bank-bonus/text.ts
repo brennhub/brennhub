@@ -71,15 +71,9 @@ export function parseStatesFromHeading(heading: string): string | null {
   return uniqueJoin(codes);
 }
 
-/** RSS 제목 앞 대괄호 "[FL, GA]" / "[UT Only]" / "[CA, UT In Branch]". 주 코드 외 단어가 남으면 null. */
+/** RSS 제목 앞 대괄호 "[FL, GA]" / "[UT Only]" / "[NY, In Branch]"의 주 코드. 없으면("[Targeted]" 등) null. */
 export function parseStatesFromBracket(bracket: string): string | null {
-  const tokens = bracket
-    .replace(/D\.C\./g, "DC")
-    .replace(/\b(only|and|in[\s-]branch)\b/gi, " ")
-    .split(/[\s,&+/]+/)
-    .filter(Boolean);
-  if (!tokens.length || !tokens.every((t) => STATE_CODES.has(t))) return null;
-  return uniqueJoin(tokens);
+  return uniqueJoin(codesIn(bracket));
 }
 
 export function accountTypeFromText(text: string): AccountType {
