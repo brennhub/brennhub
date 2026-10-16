@@ -2190,6 +2190,10 @@ export const messages: Record<Locale, Messages> = {
         description:
           "요리 영상을 보며 받아쓰고, 주방에서는 폰으로 따라 하기 — 인분 수에 맞춰 양도 같이 조절",
       },
+      "bank-bonus": {
+        name: "뱅크 보너스 트래커",
+        description: "미국 은행 계좌 개설 보너스를 한곳에 모아 조건·지역·금액으로 걸러 보기",
+      },
     },
   },
   en: {
@@ -3393,6 +3397,10 @@ export const messages: Record<Locale, Messages> = {
         name: "Recipe Note",
         description:
           "Jot a cooking video down as you watch, then follow it on your phone — with amounts that scale to your batch",
+      },
+      "bank-bonus": {
+        name: "Bank Bonus Tracker",
+        description: "US bank account sign-up bonuses in one place, filtered by requirements, state and amount",
       },
     },
   },
