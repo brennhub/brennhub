@@ -1,8 +1,9 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import type { FreshnessRow, OfferFlags, OfferInput, PostRow, SourceRow, StoredOffer } from "./types";
+import type { ApplyMethod, FreshnessRow, OfferDetail, OfferFlags, OfferInput, PostRow, SourceRow, StoredOffer } from "./types";
+import type { DetailExtract } from "./detail";
 
 /**
- * bank-bonus D1 접근 (AUTH_DB, bb_* 테이블 — migrations/auth/014_bank_bonus.sql, 015_bank_bonus_flags.sql).
+ * bank-bonus D1 접근 (AUTH_DB, bb_* 테이블 — migrations/auth/014 · 015 · 016).
  * AUTH_DB는 cloudflare-env.d.ts에 없어 repo 관례대로 인라인 캐스팅.
  */
 
@@ -58,7 +59,14 @@ export async function recordRun(db: D1Database, r: RunRecord): Promise<void> {
         r.sourceId, r.trigger, r.startedAt, r.finishedAt, r.httpStatus, r.finalUrl, r.bodyLength,
         r.lastModified, r.ageSeconds, r.sourceAsOf, r.ok ? 1 : 0, r.error, r.itemsFound, r.itemsNew, r.itemsUpdated,
       ),
-    db.prepare(`UPDATE bb_sources SET last_fetch_at = ?, last_status = ? WHERE id = ?`).bind(r.finishedAt, lastStatus, r.sourceId),
+    // first_ok_at: 첫 성공 run 종료 시각 — 한 번 정해지면 유지 (신규 판정 기준선).
+    db
+      .prepare(
+        `UPDATE bb_sources SET last_fetch_at = ?, last_status = ?,
+           first_ok_at = CASE WHEN first_ok_at IS NULL AND ? = 1 THEN ? ELSE first_ok_at END
+         WHERE id = ?`,
+      )
+      .bind(r.finishedAt, lastStatus, r.ok ? 1 : 0, r.finishedAt, r.sourceId),
   ]);
 }
 
@@ -91,6 +99,7 @@ const COMPARED = [
   ["section_rank", "sectionRank"],
   ["notes", "notes"],
   ["published_at", "publishedAt"],
+  ["bonus_note", "bonusNote"],
 ] as const;
 
 type ExistingRow = { id: number; external_key: string; status: string } & Record<
@@ -169,7 +178,7 @@ const STORED_COLUMNS = `o.id, s."key" AS source_key, s.name AS source_name, o.ba
   o.bonus_min, o.bonus_max, o.bonus_text, o.state_text, o.nationwide, o.dd_text, o.pull_text, o.cc_funding_text,
   o.detail_url, o.pinned, o.first_seen_at, o.last_seen_at, o.status, o.dd_required, o.dd_amount, o.expires_on,
   o.ca_eligible, o.deposit_hold_amount, o.deposit_hold_days, o.in_branch, o.hard_pull, o.targeted, o.is_offer,
-  o.section, o.section_rank, o.notes, o.published_at`;
+  o.section, o.section_rank, o.notes, o.published_at, o.bonus_note, s.first_ok_at AS source_first_ok_at`;
 
 /** 병합 대상 — active 행 중 RSS(글) 제외. 필터·점수는 merge/score에서. */
 export async function listStoredOffers(db: D1Database): Promise<StoredOffer[]> {
@@ -184,7 +193,7 @@ export async function listStoredOffers(db: D1Database): Promise<StoredOffer[]> {
 }
 
 /** 최근 RSS 글 — days일 이내 게시 또는 고정(미래 날짜). */
-export async function listPosts(db: D1Database, days = 14, now = Date.now()): Promise<PostRow[]> {
+export async function listPosts(db: D1Database, days = 7, now = Date.now()): Promise<PostRow[]> {
   const since = new Date(now - days * 86_400_000).toISOString();
   const { results } = await db
     .prepare(
@@ -225,6 +234,55 @@ export async function upsertFlag(db: D1Database, offerKey: string, patch: FlagPa
     .run();
   return next;
 }
+const DETAIL_COLUMNS = `offer_key, detail_url, fetched_at, http_status, fine_print_text, expires_on, apply_methods,
+  dd_amount, dd_days, dd_text, churn_months, churn_text, early_termination_text, monthly_fee_text, bank_offer_url, post_expired`;
+
+export async function listDetails(db: D1Database): Promise<Map<string, OfferDetail>> {
+  const { results } = await db
+    .prepare(`SELECT ${DETAIL_COLUMNS} FROM bb_offer_details`)
+    .all<Omit<OfferDetail, "apply_methods"> & { apply_methods: string | null }>();
+  return new Map(
+    results.map((r) => {
+      let methods: ApplyMethod[] | null = null;
+      try {
+        methods = r.apply_methods ? (JSON.parse(r.apply_methods) as ApplyMethod[]) : null;
+      } catch {
+        methods = null;
+      }
+      return [r.offer_key, { ...r, apply_methods: methods }];
+    }),
+  );
+}
+
+/** 상세 글 1건 저장 — 실패(HTTP 오류 등)도 fetched_at·http_status를 남겨 7일 재시도 간격을 지킨다. */
+export async function upsertDetail(
+  db: D1Database,
+  offerKey: string,
+  detailUrl: string,
+  httpStatus: number | null,
+  x: DetailExtract | null,
+  now: string,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO bb_offer_details (${DETAIL_COLUMNS}, extraction_method)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'regex')
+       ON CONFLICT(offer_key) DO UPDATE SET detail_url = excluded.detail_url, fetched_at = excluded.fetched_at,
+         http_status = excluded.http_status, fine_print_text = excluded.fine_print_text, expires_on = excluded.expires_on,
+         apply_methods = excluded.apply_methods, dd_amount = excluded.dd_amount, dd_days = excluded.dd_days,
+         dd_text = excluded.dd_text, churn_months = excluded.churn_months, churn_text = excluded.churn_text,
+         early_termination_text = excluded.early_termination_text, monthly_fee_text = excluded.monthly_fee_text,
+         bank_offer_url = excluded.bank_offer_url, post_expired = excluded.post_expired, extraction_method = 'regex'`,
+    )
+    .bind(
+      offerKey, detailUrl, now, httpStatus,
+      x?.finePrintText ?? null, x?.expiresOn ?? null, x?.applyMethods ? JSON.stringify(x.applyMethods) : null,
+      x?.ddAmount ?? null, x?.ddDays ?? null, x?.ddText ?? null, x?.churnMonths ?? null, x?.churnText ?? null,
+      x?.earlyTerminationText ?? null, x?.monthlyFeeText ?? null, x?.bankOfferUrl ?? null, x ? x.postExpired : null,
+    )
+    .run();
+}
+
 export async function listRuns(db: D1Database, limit = 50) {
   const { results } = await db
     .prepare(

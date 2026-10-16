@@ -1,12 +1,12 @@
 /**
- * 오퍼 목록 조립 (순수) — 저장 행 → 병합 → 점수 → 필터 → 정렬 + 요약 + Top 5.
- * offers API가 쓰고, 로컬 검증에서도 D1 없이 돌릴 수 있다.
+ * 오퍼 목록 조립 (순수) — 저장 행 → 병합 → 판정(rules.ts) → 필터 → 정렬 + 요약 + Top 5.
+ * offers API와 refresh(상세 글 대상 선정)가 같이 쓰고, 로컬 검증에서 D1 없이도 돌린다.
  */
 
 import { SCORE } from "./config";
 import { mergeOffers } from "./merge";
-import { existingBankOf, scoreOffer } from "./score";
-import type { AccountType, OfferFlags, ScoredOffer, StoredOffer } from "./types";
+import { existingBankOf, evaluateOffer } from "./rules";
+import type { AccountType, EvaluatedOffer, OfferDetail, OfferFlags, StoredOffer } from "./types";
 
 export type OfferQuery = {
   types: AccountType[];
@@ -17,7 +17,8 @@ export type OfferQuery = {
   excludeBranch: boolean;
   excludeHardPull: boolean;
   includeHidden: boolean;
-  sort: "score" | "bonus" | "expires";
+  doableOnly: boolean;
+  sort: "bonus" | "expires";
 };
 
 export const DEFAULT_QUERY: OfferQuery = {
@@ -29,19 +30,19 @@ export const DEFAULT_QUERY: OfferQuery = {
   excludeBranch: false,
   excludeHardPull: false,
   includeHidden: false,
-  sort: "score",
+  doableOnly: false,
+  sort: "bonus",
 };
 
 const ALL_TYPES: AccountType[] = ["checking", "savings", "business", "brokerage", "other", "unknown"];
 
 /** URLSearchParams → OfferQuery. 빠진 값은 기본값, 이상한 값은 무시. */
 export function parseOfferQuery(q: URLSearchParams): OfferQuery {
-  const bool = (k: string, d: boolean) => (q.has(k) ? q.get(k) === "1" : d);
+  const bool = (k: keyof OfferQuery, d: boolean) => (q.has(k) ? q.get(k) === "1" : d);
   const types = q.has("types")
     ? (q.get("types") ?? "").split(",").filter((t): t is AccountType => ALL_TYPES.includes(t as AccountType))
     : DEFAULT_QUERY.types;
   const min = q.get("minBonus");
-  const sort = q.get("sort");
   return {
     types,
     caOnly: bool("caOnly", DEFAULT_QUERY.caOnly),
@@ -51,65 +52,74 @@ export function parseOfferQuery(q: URLSearchParams): OfferQuery {
     excludeBranch: bool("excludeBranch", DEFAULT_QUERY.excludeBranch),
     excludeHardPull: bool("excludeHardPull", DEFAULT_QUERY.excludeHardPull),
     includeHidden: bool("includeHidden", DEFAULT_QUERY.includeHidden),
-    sort: sort === "bonus" || sort === "expires" ? sort : "score",
+    doableOnly: bool("doableOnly", DEFAULT_QUERY.doableOnly),
+    sort: q.get("sort") === "expires" ? "expires" : "bonus",
   };
 }
 
 export type OffersResponse = {
-  offers: ScoredOffer[];
-  top: ScoredOffer[];
-  summary: { recommended: number; expiringSoon: number; newThisWeek: number };
+  offers: EvaluatedOffer[];
+  top: EvaluatedOffer[];
+  /** 세 숫자 모두 "지금 할 만한 오퍼" 집합 기준 — 표 필터와 무관. */
+  summary: { doable: number; expiringSoon: number; newThisWeek: number };
   totals: { merged: number; nonOffers: number };
 };
 
-const bonusOf = (o: ScoredOffer) => o.bonusMax ?? o.bonusMin ?? -1;
+const bonusOf = (o: EvaluatedOffer) => o.bonusMax ?? o.bonusMin ?? -1;
+/** 보너스 큰 순, 같으면 하한 큰 순, 그다음 은행명. */
+export const byBonus = (a: EvaluatedOffer, b: EvaluatedOffer) =>
+  bonusOf(b) - bonusOf(a) || (b.bonusMin ?? -1) - (a.bonusMin ?? -1) || (a.bank ?? "").localeCompare(b.bank ?? "");
+const byExpires = (a: EvaluatedOffer, b: EvaluatedOffer) => {
+  const x = a.expiresOn ?? "9999";
+  const y = b.expiresOn ?? "9999";
+  return x < y ? -1 : x > y ? 1 : byBonus(a, b);
+};
+
+export function evaluateAll(
+  rows: StoredOffer[],
+  flags: Map<string, OfferFlags>,
+  details: Map<string, OfferDetail>,
+  now = Date.now(),
+): { all: EvaluatedOffer[]; merged: number } {
+  const merged = mergeOffers(rows);
+  return { all: merged.map((o) => evaluateOffer(o, flags.get(o.key), details.get(o.key), now)), merged: merged.length };
+}
 
 export function buildOffers(
   rows: StoredOffer[],
   flags: Map<string, OfferFlags>,
+  details: Map<string, OfferDetail>,
   q: OfferQuery,
   now = Date.now(),
 ): OffersResponse {
-  const merged = mergeOffers(rows);
-  const scored = merged.map((o) => scoreOffer(o, flags.get(o.key), now));
+  const { all, merged } = evaluateAll(rows, flags, details, now);
 
-  const offers = scored.filter((o) => {
+  const offers = all.filter((o) => {
     if (!o.isOffer) return false;
+    if (q.doableOnly && !o.doable) return false;
     if (q.types.length && !q.types.includes(o.accountType)) return false;
     if (q.caOnly && !(o.nationwide === 1 || o.caEligible === 1)) return false;
     if (q.minBonus != null && bonusOf(o) < q.minBonus) return false;
     if (q.excludeExisting && existingBankOf(o.bank)) return false;
     if (q.excludeHold && o.depositHoldAmount != null) return false;
-    if (q.excludeBranch && o.inBranch === 1) return false;
+    if (q.excludeBranch && o.tags.some((t) => t.code === "branch")) return false;
     if (q.excludeHardPull && o.hardPull === 1) return false;
     if (!q.includeHidden && o.flags.hidden) return false;
     return true;
   });
+  offers.sort(q.sort === "expires" ? byExpires : byBonus);
 
-  const byScore = (a: ScoredOffer, b: ScoredOffer) =>
-    Number(b.eligible) - Number(a.eligible) || b.score - a.score || bonusOf(b) - bonusOf(a);
-  const sorters = {
-    score: byScore,
-    bonus: (a: ScoredOffer, b: ScoredOffer) => bonusOf(b) - bonusOf(a) || byScore(a, b),
-    // 마감일 있는 것 먼저(빠른 순), 없는 것은 점수 순.
-    expires: (a: ScoredOffer, b: ScoredOffer) =>
-      (a.expiresOn ?? "9999") < (b.expiresOn ?? "9999") ? -1 : (a.expiresOn ?? "9999") > (b.expiresOn ?? "9999") ? 1 : byScore(a, b),
-  };
-  offers.sort(sorters[q.sort]);
-
-  // Top 5: 추천 대상 중 숨김·신청함 제외, 점수 순.
-  const recommended = offers.filter((o) => o.eligible && o.score > 0 && !o.flags.hidden);
-  const top = [...recommended].filter((o) => !o.flags.applied).sort(byScore).slice(0, SCORE.topN);
-  const has = (o: ScoredOffer, code: string) => o.tags.some((t) => t.code === code);
+  const doable = all.filter((o) => o.doable).sort(byBonus);
+  const has = (o: EvaluatedOffer, code: string) => o.tags.some((t) => t.code === code);
 
   return {
     offers,
-    top,
+    top: doable.slice(0, SCORE.topN),
     summary: {
-      recommended: recommended.length,
-      expiringSoon: offers.filter((o) => has(o, "expiring")).length,
-      newThisWeek: offers.filter((o) => has(o, "new")).length,
+      doable: doable.length,
+      expiringSoon: doable.filter((o) => has(o, "expiring")).length,
+      newThisWeek: doable.filter((o) => has(o, "new")).length,
     },
-    totals: { merged: merged.length, nonOffers: merged.filter((o) => !o.isOffer).length },
+    totals: { merged, nonOffers: all.filter((o) => !o.isOffer).length },
   };
 }

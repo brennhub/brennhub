@@ -21,6 +21,7 @@ export type OfferInput = {
   bonusMin: number | null;
   bonusMax: number | null;
   bonusText: string | null;
+  bonusNote?: string | null;
   stateText: string | null;
   nationwide: Flag;
   ddText: string | null;
@@ -89,12 +90,12 @@ export type StoredOffer = {
   section_rank: number | null;
   notes: string | null;
   published_at: string | null;
+  bonus_note: string | null;
+  /** 소스의 첫 성공 run 종료 시각 — 신규 판정 기준선. */
+  source_first_ok_at: string | null;
 };
 
 export type OfferFlags = { star: number; hidden: number; applied: number; note: string | null };
-
-export type Localized = { ko: string; en: string };
-export type Tag = { code: "hold" | "branch" | "hardPull" | "targeted" | "expiring" | "new" } & Localized;
 
 /** 실제 오퍼 1건 = 같은 키의 소스 행들을 합친 것. */
 export type MergedOffer = {
@@ -105,6 +106,7 @@ export type MergedOffer = {
   bonusMin: number | null;
   bonusMax: number | null;
   bonusText: string | null;
+  bonusNote: string | null;
   stateText: string | null;
   nationwide: number | null;
   caEligible: number | null;
@@ -128,14 +130,51 @@ export type MergedOffer = {
   sources: string[];
   firstSeenAt: string;
   lastSeenAt: string;
+  /** 첫 성공 run 이후에 처음 본 항목. 7일 창은 rules.ts. */
+  seenAfterBaseline: boolean;
 };
 
-export type ScoredOffer = MergedOffer & {
-  score: number;
-  eligible: boolean;
-  reasons: Localized[];
-  tags: Tag[];
+export type ApplyMethod = "online" | "branch" | "code" | "invite";
+
+/** bb_offer_details 1행 (apply_methods는 파싱된 배열). */
+export type OfferDetail = {
+  offer_key: string;
+  detail_url: string | null;
+  fetched_at: string | null;
+  http_status: number | null;
+  fine_print_text: string | null;
+  expires_on: string | null;
+  apply_methods: ApplyMethod[] | null;
+  dd_amount: number | null;
+  dd_days: number | null;
+  dd_text: string | null;
+  churn_months: number | null;
+  churn_text: string | null;
+  early_termination_text: string | null;
+  monthly_fee_text: string | null;
+  bank_offer_url: string | null;
+  post_expired: number | null;
+};
+
+export type TagCode = "hold" | "branch" | "hardPull" | "targeted" | "new" | "expiring";
+export type OfferTag = { code: TagCode; amount?: number | null; days?: number | null };
+
+/** 화면용 — 병합 오퍼 + 상세 글 값(우선) + 판정. 문구는 화면이 messages.ts로 만든다. */
+export type EvaluatedOffer = MergedOffer & {
+  expiresOn: string | null;
+  applyMethods: ApplyMethod[] | null;
+  churnMonths: number | null;
+  churnText: string | null;
+  earlyTerminationText: string | null;
+  monthlyFeeText: string | null;
+  bankOfferUrl: string | null;
+  postExpired: boolean;
+  ccFundingAllowed: 0 | 1 | null;
+  ccFundingMax: number | null;
+  doable: boolean;
+  tags: OfferTag[];
   flags: OfferFlags;
+  detailFetchedAt: string | null;
 };
 
 export type PostRow = {

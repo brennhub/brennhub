@@ -35,13 +35,25 @@ export function stripCdata(s: string): string {
 /**
  * 첫 보너스 표현 — "$300", "$300-$400", "$300 – $400", "$200/$500/$1,000", "Up To $500".
  * "Up To"는 하한을 모르므로 min = null.
+ * 금액이 든 괄호("($900 With Savings)", "($25 Per Month)")는 보너스가 아니다 — 떼어 note로.
  */
-export function parseBonus(text: string): { min: number | null; max: number | null; text: string | null } {
-  const m = text.match(/(up\s+to\s+)?\$\d[\d,]*(?:\s*[-–—/]\s*\$\d[\d,]*)*/i);
-  if (!m) return { min: null, max: null, text: null };
+export function parseBonus(text: string): {
+  min: number | null;
+  max: number | null;
+  text: string | null;
+  note: string | null;
+} {
+  const notes: string[] = [];
+  const main = text.replace(/\(([^()]*\$\d[^()]*)\)/g, (_, inner: string) => {
+    notes.push(inner.trim());
+    return " ";
+  });
+  const note = notes.length ? notes.join(" · ") : null;
+  const m = main.match(/(up\s+to\s+)?\$\d[\d,]*(?:\s*[-–—/]\s*\$\d[\d,]*)*/i);
+  if (!m) return { min: null, max: null, text: null, note };
   const nums = (m[0].match(/\d[\d,]*/g) ?? []).map((n) => parseInt(n.replace(/,/g, ""), 10));
   const max = Math.max(...nums);
-  return { min: m[1] ? null : Math.min(...nums), max, text: m[0].trim() };
+  return { min: m[1] ? null : Math.min(...nums), max, text: m[0].trim(), note };
 }
 
 const STATE_CODES = new Set(
