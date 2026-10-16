@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp, Star } from "lucide-react";
 import { useMessages } from "@/lib/i18n/provider";
 import { useBankBonusMessages, type BankBonusMessages } from "@/lib/bank-bonus/messages";
 import type { OffersResponse } from "@/lib/bank-bonus/offers";
-import type { AccountType, EvaluatedOffer, FreshnessRow, OfferFlags, OfferTag, PostRow } from "@/lib/bank-bonus/types";
+import type { AccountType, EvaluatedOffer, Evidence, FreshnessRow, OfferFlags, OfferTag, PostRow } from "@/lib/bank-bonus/types";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -76,9 +76,20 @@ type LoadState = { kind: "loading" } | { kind: "error"; message: string } | { ki
 
 type Shown = { text: string; muted?: boolean; amber?: boolean };
 
+/** 크게 보이는 금액 — 겹친 오퍼면 기본(직접입금만) 금액. */
 function bonusShown(t: M, o: EvaluatedOffer): Shown {
+  if (o.bonusBase != null) return { text: t.bonusRange(o.bonusBase, o.bonusBase) };
   if (o.bonusMax == null) return { text: t.unknown, muted: true };
   return { text: o.bonusMin == null ? t.bonusUpTo(o.bonusMax) : t.bonusRange(o.bonusMin, o.bonusMax) };
+}
+
+/** 금액 아래 작은 줄 — "저축 포함 시 $900 (예치금 $15,000, 90일)", 없으면 제목 괄호 메모. */
+function bonusSubline(t: M, o: EvaluatedOffer): string | null {
+  const shown = o.bonusBase ?? o.bonusMax;
+  if (o.bonusTotalWithDeposit != null && (shown == null || o.bonusTotalWithDeposit > shown)) {
+    return t.withDeposit(o.bonusTotalNote, o.bonusTotalWithDeposit, o.extraHoldAmount ?? o.depositHoldAmount, o.extraHoldDays ?? o.depositHoldDays);
+  }
+  return o.bonusNote;
 }
 
 function deadlineShown(t: M, o: EvaluatedOffer, nowMs: number): Shown {
@@ -94,8 +105,11 @@ function requirementShown(t: M, o: EvaluatedOffer): Shown {
   return { text: t.unknown, muted: true };
 }
 
-const reapplyShown = (t: M, o: EvaluatedOffer): Shown =>
-  o.churnMonths != null ? { text: t.reapply(o.churnMonths) } : { text: t.unknown, muted: true };
+function reapplyShown(t: M, o: EvaluatedOffer): Shown {
+  if (o.reapply.state === "value" && o.reapply.months != null) return { text: t.reapply(o.reapply.months) };
+  if (o.reapply.state === "not_stated") return { text: t.reapplyNotStated, muted: true };
+  return { text: t.unknown, muted: true };
+}
 
 function regionShown(t: M, o: EvaluatedOffer): Shown {
   if (o.nationwide === 1) return { text: t.region.nationwide };
@@ -334,6 +348,41 @@ function Value({ v, className }: { v: Shown; className?: string }) {
   );
 }
 
+/** 값 + 작은 "근거" 버튼 — 누르면 근거 문장·출처 종류·링크가 아래에 펼쳐진다. 근거 없으면 버튼 없음. */
+function Fact({ t, v, ev, className }: { t: M; v: Shown; ev?: Evidence | null; className?: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className={cn("inline-flex min-w-0 flex-col", className)}>
+      <span className="inline-flex flex-wrap items-baseline gap-x-2">
+        <Value v={v} />
+        {ev && (
+          <button
+            type="button"
+            onClick={() => setOpen((x) => !x)}
+            aria-expanded={open}
+            className="text-xs text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            {t.evidence}
+          </button>
+        )}
+      </span>
+      {ev && open && (
+        <span className="mt-1 block rounded-md border border-border bg-muted/40 p-2 text-xs text-muted-foreground">
+          <span className="block text-foreground">“{ev.quote}”</span>
+          <span className="mt-1 flex flex-wrap gap-x-2">
+            <span>{t.evidenceSources[ev.source]}</span>
+            {ev.url && (
+              <a href={ev.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">
+                {t.openSource}
+              </a>
+            )}
+          </span>
+        </span>
+      )}
+    </span>
+  );
+}
+
 function Chip({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs whitespace-nowrap", className)}>{children}</span>
@@ -414,18 +463,18 @@ function TopPicks({ t, data, nowMs, onFlag }: { t: M; data: OffersResponse | nul
               <h3 className="min-w-0 text-lg font-semibold text-foreground">{o.bank ?? o.title}</h3>
               <div className="shrink-0 text-right">
                 <Value v={bonusShown(t, o)} className="text-lg font-semibold tabular-nums" />
-                {o.bonusNote && <p className="text-xs text-muted-foreground">{o.bonusNote}</p>}
+                {bonusSubline(t, o) && <p className="text-xs text-muted-foreground">{bonusSubline(t, o)}</p>}
               </div>
             </div>
             <dl className="mt-4 grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-2 text-sm">
               <dt className="text-xs text-muted-foreground">{t.col.expires}</dt>
-              <dd><Value v={deadlineShown(t, o, nowMs)} /></dd>
+              <dd><Fact t={t} v={deadlineShown(t, o, nowMs)} ev={o.evidence.expires} /></dd>
               <dt className="text-xs text-muted-foreground">{t.col.methods}</dt>
               <dd><Methods t={t} o={o} /></dd>
               <dt className="text-xs text-muted-foreground">{t.col.requirement}</dt>
-              <dd><Value v={requirementShown(t, o)} /></dd>
+              <dd><Fact t={t} v={requirementShown(t, o)} ev={o.evidence.requirement} /></dd>
               <dt className="text-xs text-muted-foreground">{t.col.reapply}</dt>
-              <dd><Value v={reapplyShown(t, o)} /></dd>
+              <dd><Fact t={t} v={reapplyShown(t, o)} ev={o.reapply.evidence} /></dd>
               <dt className="text-xs text-muted-foreground">{t.col.region}</dt>
               <dd className="flex flex-wrap gap-x-2">
                 <Value v={regionShown(t, o)} />
@@ -650,12 +699,12 @@ function OfferTable({ t, offers, nowMs, onFlag }: { t: M; offers: EvaluatedOffer
                 </td>
                 <td className="px-2 py-2 whitespace-nowrap">
                   <Value v={bonusShown(t, o)} className="tabular-nums" />
-                  {o.bonusNote && <div className="text-muted-foreground">{o.bonusNote}</div>}
+                  {bonusSubline(t, o) && <div className="max-w-48 whitespace-normal text-muted-foreground">{bonusSubline(t, o)}</div>}
                 </td>
-                <td className="px-2 py-2 whitespace-nowrap"><Value v={deadlineShown(t, o, nowMs)} /></td>
+                <td className="min-w-28 px-2 py-2"><Fact t={t} v={deadlineShown(t, o, nowMs)} ev={o.evidence.expires} /></td>
                 <td className="px-2 py-2"><Methods t={t} o={o} /></td>
-                <td className="min-w-36 px-2 py-2"><Value v={requirementShown(t, o)} /></td>
-                <td className="px-2 py-2"><Value v={reapplyShown(t, o)} /></td>
+                <td className="min-w-36 max-w-64 px-2 py-2"><Fact t={t} v={requirementShown(t, o)} ev={o.evidence.requirement} /></td>
+                <td className="min-w-28 max-w-64 px-2 py-2"><Fact t={t} v={reapplyShown(t, o)} ev={o.reapply.evidence} /></td>
                 <td className="px-2 py-2 whitespace-nowrap"><Value v={regionShown(t, o)} /></td>
                 <td className="px-2 py-2"><Value v={pullShown(t, o)} /></td>
                 <td className="px-2 py-2"><Value v={ccShown(t, o)} /></td>
@@ -690,10 +739,10 @@ function OfferTable({ t, offers, nowMs, onFlag }: { t: M; offers: EvaluatedOffer
 function OfferCards({ t, offers, nowMs, onFlag }: { t: M; offers: EvaluatedOffer[]; nowMs: number; onFlag: FlagFn }) {
   const [open, setOpen] = useState<string | null>(null);
   const rows = (o: EvaluatedOffer): [string, React.ReactNode][] => [
-    [t.col.expires, <Value key="e" v={deadlineShown(t, o, nowMs)} />],
+    [t.col.expires, <Fact key="e" t={t} v={deadlineShown(t, o, nowMs)} ev={o.evidence.expires} />],
     [t.col.methods, <Methods key="m" t={t} o={o} />],
-    [t.col.requirement, <Value key="r" v={requirementShown(t, o)} />],
-    [t.col.reapply, <Value key="a" v={reapplyShown(t, o)} />],
+    [t.col.requirement, <Fact key="r" t={t} v={requirementShown(t, o)} ev={o.evidence.requirement} />],
+    [t.col.reapply, <Fact key="a" t={t} v={reapplyShown(t, o)} ev={o.reapply.evidence} />],
     [t.col.region, <Value key="g" v={regionShown(t, o)} />],
     [t.col.pull, <Value key="p" v={pullShown(t, o)} />],
     [t.col.cc, <Value key="c" v={ccShown(t, o)} />],
@@ -711,7 +760,7 @@ function OfferCards({ t, offers, nowMs, onFlag }: { t: M; offers: EvaluatedOffer
             <div className="flex shrink-0 items-start gap-1">
               <div className="text-right">
                 <Value v={bonusShown(t, o)} className="tabular-nums" />
-                {o.bonusNote && <div className="text-xs text-muted-foreground">{o.bonusNote}</div>}
+                {bonusSubline(t, o) && <div className="max-w-40 text-xs text-muted-foreground">{bonusSubline(t, o)}</div>}
               </div>
               <StarButton t={t} o={o} onFlag={onFlag} />
             </div>
