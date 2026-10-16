@@ -40,5 +40,10 @@ export default async function BankBonusPage() {
     loadError = e instanceof Error ? e.message : String(e);
   }
 
-  return <BankBonusClientShell freshness={freshness} loadError={loadError} />;
+  return <BankBonusClientShell freshness={freshness} loadError={loadError} nowMs={requestTime()} />;
+}
+
+/** 상대 시간("3시간 전")은 요청 시각 기준으로 고정 — 클라이언트와 hydration 불일치 방지. */
+function requestTime(): number {
+  return Date.now();
 }

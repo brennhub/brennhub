@@ -7,11 +7,14 @@ import { recordRun, upsertOffers } from "./db";
 import { blockMarkersIn, fetchFresh, type FetchResult } from "./http";
 import { parseMaster } from "./parse-master";
 import { parseRss } from "./parse-rss";
+import { parseQuickrefCsv } from "./parse-csv";
 import type { ParseResult, SourceRow } from "./types";
 
 const PARSERS: Record<string, (body: string) => ParseResult> = {
   doc_master: parseMaster,
   doc_rss: (body) => parseRss(body),
+  // 보관 중 (bb_sources.enabled=0) — 시트가 2021-12 이후 갱신 없음. 켜면 바로 동작.
+  doc_quickref: (body) => parseQuickrefCsv(body),
 };
 
 export type FetchSummary = {

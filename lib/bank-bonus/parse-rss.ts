@@ -16,6 +16,7 @@ import {
   parseStatesFromBracket,
   stripCdata,
 } from "./text";
+import { isTargeted } from "./derive";
 
 function tag(xml: string, name: string): string | null {
   const m = xml.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`));
@@ -71,6 +72,8 @@ export function parseRss(xml: string, now = Date.now()): ParseResult {
       detailUrl: link,
       pinned: Number.isFinite(pub) && pub > now ? 1 : 0,
       rawExcerpt: excerpt(htmlToText(tag(it, "description") ?? "")),
+      publishedAt: Number.isFinite(pub) ? new Date(pub).toISOString() : null,
+      targeted: isTargeted(title),
     });
   }
 
