@@ -86,7 +86,7 @@ const ko = {
       hold != null ? ` (예치금 ${usd(hold)}${days ? `, ${days}일` : ""})` : ""
     }`,
   evidence: "근거",
-  evidenceSources: { doc_post: "DoC 글", doc_churn: "DoC 처닝 목록", ai: "AI 추출", official: "공식", manual: "직접 입력" } as Record<RuleSource, string>,
+  evidenceSources: { doc_post: "DoC 글", doc_churn: "DoC 처닝 목록", cowork: "Cowork 추출", official: "공식", manual: "직접 입력" } as Record<RuleSource, string>,
   openSource: "출처 열기",
   region: { nationwide: "전국", ca: "CA 가능", notCa: "CA 불가" },
   pull: { soft: "기록 안 남음", hard: "기록 남음" },
@@ -201,7 +201,7 @@ const en: BankBonusMessages = {
       hold != null ? ` (deposit hold ${usd(hold)}${days ? `, ${days} days` : ""})` : ""
     }`,
   evidence: "Evidence",
-  evidenceSources: { doc_post: "DoC post", doc_churn: "DoC churn list", ai: "AI extracted", official: "Official", manual: "Manual" },
+  evidenceSources: { doc_post: "DoC post", doc_churn: "DoC churn list", cowork: "Cowork extracted", official: "Official", manual: "Manual" },
   openSource: "Open source",
   region: { nationwide: "Nationwide", ca: "CA eligible", notCa: "Not in CA" },
   pull: { soft: "No record left (soft)", hard: "Record left (hard)" },

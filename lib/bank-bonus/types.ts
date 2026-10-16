@@ -178,11 +178,11 @@ export type OfferDetail = {
   deposit_hold_scope: "extra" | "base" | null;
 };
 
-export type EvidenceMethod = "regex" | "ai";
+export type EvidenceMethod = "regex" | "cowork";
 /** 필드별 근거 문장 + 뽑은 방식. 키: expires_on · dd · churn_months · dd_amount · dd_days · deposit_hold_* · apply_methods. */
 export type DetailEvidence = Record<string, { quote: string; method: EvidenceMethod }>;
 
-export type RuleSource = "manual" | "official" | "doc_post" | "doc_churn" | "ai";
+export type RuleSource = "manual" | "official" | "doc_post" | "doc_churn" | "cowork";
 
 /** bb_bank_rules 1행. */
 export type BankRule = {

@@ -1,5 +1,5 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import type { AiAccepted } from "./ai";
+import type { ExtractValues } from "./evidence";
 import type { BankRuleInput } from "./parse-churn";
 import type { ApplyMethod, BankRule, DetailEvidence, FreshnessRow, OfferDetail, OfferFlags, OfferInput, PostRow, RuleSource, SourceRow, StoredOffer } from "./types";
 import type { DetailExtract } from "./detail";
@@ -15,17 +15,6 @@ export function getBankBonusDb(): D1Database | null {
   try {
     const { env } = getCloudflareContext();
     return (env as unknown as BankBonusEnv).AUTH_DB ?? null;
-  } catch {
-    return null;
-  }
-}
-
-/** AI 추출용 키 (Worker secret ANTHROPIC_API_KEY). 없으면 null — AI 단계는 건너뛴다. 값은 어디에도 싣지 않는다. */
-export function getAiApiKey(): string | null {
-  try {
-    const { env } = getCloudflareContext();
-    const key = (env as unknown as { ANTHROPIC_API_KEY?: string }).ANTHROPIC_API_KEY;
-    return key && key.trim() ? key.trim() : null;
   } catch {
     return null;
   }
@@ -310,17 +299,20 @@ export async function upsertDetail(
     .run();
 }
 
-/** AI 결과 반영 — 비어 있던 필드만 채우고(COALESCE), 근거는 기존 근거에 합친다. 채택 0건이어도 ai_extracted_at은 남긴다. */
-export async function applyAiResult(
+/**
+ * Cowork 추출 반영 — 근거 대조를 통과한 값만, 비어 있던 칸만 채운다(COALESCE). 근거는 기존 근거에 합친다.
+ * ai_extracted_at 칸을 반영 시각으로 재사용한다.
+ */
+export async function applyCoworkResult(
   db: D1Database,
   offerKey: string,
   prevEvidence: DetailEvidence,
-  r: AiAccepted,
+  values: ExtractValues,
+  quotes: Record<string, string>,
   now: string,
 ): Promise<void> {
   const evidence: DetailEvidence = { ...prevEvidence };
-  for (const [k, quote] of Object.entries(r.evidence)) if (quote && !evidence[k]) evidence[k] = { quote, method: "ai" };
-  const v = r.values;
+  for (const [k, quote] of Object.entries(quotes)) if (!evidence[k]) evidence[k] = { quote, method: "cowork" };
   await db
     .prepare(
       `UPDATE bb_offer_details SET
@@ -328,14 +320,13 @@ export async function applyAiResult(
          dd_amount = COALESCE(dd_amount, ?), dd_days = COALESCE(dd_days, ?),
          deposit_hold_amount = COALESCE(deposit_hold_amount, ?), deposit_hold_days = COALESCE(deposit_hold_days, ?),
          apply_methods = COALESCE(apply_methods, ?),
-         evidence = ?, ai_extracted_at = ?,
-         extraction_method = CASE WHEN ? > 0 THEN 'ai' ELSE extraction_method END
+         evidence = ?, ai_extracted_at = ?, extraction_method = 'cowork'
        WHERE offer_key = ?`,
     )
     .bind(
-      v.expires_on ?? null, v.churn_months ?? null, v.churn_text ?? null, v.dd_amount ?? null, v.dd_days ?? null,
-      v.deposit_hold_amount ?? null, v.deposit_hold_days ?? null, v.apply_methods ? JSON.stringify(v.apply_methods) : null,
-      JSON.stringify(evidence), now, r.accepted.length, offerKey,
+      values.expires_on ?? null, values.churn_months ?? null, values.churn_text ?? null, values.dd_amount ?? null,
+      values.dd_days ?? null, values.deposit_hold_amount ?? null, values.deposit_hold_days ?? null,
+      values.apply_methods ? JSON.stringify(values.apply_methods) : null, JSON.stringify(evidence), now, offerKey,
     )
     .run();
 }
