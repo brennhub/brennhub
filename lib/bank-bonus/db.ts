@@ -1,8 +1,8 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import type { FreshnessRow, OfferInput, OfferRow, SourceRow } from "./types";
+import type { FreshnessRow, OfferFlags, OfferInput, PostRow, SourceRow, StoredOffer } from "./types";
 
 /**
- * bank-bonus D1 접근 (AUTH_DB, bb_* 테이블 — migrations/auth/014_bank_bonus.sql).
+ * bank-bonus D1 접근 (AUTH_DB, bb_* 테이블 — migrations/auth/014_bank_bonus.sql, 015_bank_bonus_flags.sql).
  * AUTH_DB는 cloudflare-env.d.ts에 없어 repo 관례대로 인라인 캐스팅.
  */
 
@@ -77,6 +77,20 @@ const COMPARED = [
   ["detail_url", "detailUrl"],
   ["pinned", "pinned"],
   ["raw_excerpt", "rawExcerpt"],
+  ["dd_required", "ddRequired"],
+  ["dd_amount", "ddAmount"],
+  ["expires_on", "expiresOn"],
+  ["ca_eligible", "caEligible"],
+  ["deposit_hold_amount", "depositHoldAmount"],
+  ["deposit_hold_days", "depositHoldDays"],
+  ["in_branch", "inBranch"],
+  ["hard_pull", "hardPull"],
+  ["targeted", "targeted"],
+  ["is_offer", "isOffer"],
+  ["section", "section"],
+  ["section_rank", "sectionRank"],
+  ["notes", "notes"],
+  ["published_at", "publishedAt"],
 ] as const;
 
 type ExistingRow = { id: number; external_key: string; status: string } & Record<
@@ -110,6 +124,7 @@ export async function upsertOffers(
 
   for (const item of items) {
     const values = COMPARED.map(([, k]) => item[k] ?? null);
+    const status = item.status ?? "active";
     const prev = existing.get(item.externalKey);
     if (!prev) {
       itemsNew++;
@@ -117,21 +132,21 @@ export async function upsertOffers(
         db
           .prepare(
             `INSERT INTO bb_offers (source_id, external_key, ${cols}, first_seen_at, last_seen_at, status)
-             VALUES (?, ?, ${COMPARED.map(() => "?").join(", ")}, ?, ?, 'active')`,
+             VALUES (?, ?, ${COMPARED.map(() => "?").join(", ")}, ?, ?, ?)`,
           )
-          .bind(sourceId, item.externalKey, ...values, now, now),
+          .bind(sourceId, item.externalKey, ...values, now, now, status),
       );
       continue;
     }
-    const changed = prev.status !== "active" || COMPARED.some(([c], i) => (prev[c] ?? null) !== values[i]);
+    const changed = prev.status !== status || COMPARED.some(([c], i) => (prev[c] ?? null) !== values[i]);
     if (changed) {
       itemsUpdated++;
       stmts.push(
         db
           .prepare(
-            `UPDATE bb_offers SET ${COMPARED.map(([c]) => `${c} = ?`).join(", ")}, last_seen_at = ?, status = 'active' WHERE id = ?`,
+            `UPDATE bb_offers SET ${COMPARED.map(([c]) => `${c} = ?`).join(", ")}, last_seen_at = ?, status = ? WHERE id = ?`,
           )
-          .bind(...values, now, prev.id),
+          .bind(...values, now, status, prev.id),
       );
     } else {
       stmts.push(db.prepare(`UPDATE bb_offers SET last_seen_at = ? WHERE id = ?`).bind(now, prev.id));
@@ -150,41 +165,66 @@ export async function upsertOffers(
   return { itemsNew, itemsUpdated };
 }
 
-export type OfferFilters = {
-  type: string | null;
-  caEligible: boolean;
-  minBonus: number | null;
-  status: string;
-  sort: "asc" | "desc";
-};
+const STORED_COLUMNS = `o.id, s."key" AS source_key, s.name AS source_name, o.bank, o.title, o.account_type,
+  o.bonus_min, o.bonus_max, o.bonus_text, o.state_text, o.nationwide, o.dd_text, o.pull_text, o.cc_funding_text,
+  o.detail_url, o.pinned, o.first_seen_at, o.last_seen_at, o.status, o.dd_required, o.dd_amount, o.expires_on,
+  o.ca_eligible, o.deposit_hold_amount, o.deposit_hold_days, o.in_branch, o.hard_pull, o.targeted, o.is_offer,
+  o.section, o.section_rank, o.notes, o.published_at`;
 
-export async function listOffers(db: D1Database, f: OfferFilters): Promise<OfferRow[]> {
-  const where: string[] = [];
-  const args: unknown[] = [];
-  if (f.status !== "all") {
-    where.push("o.status = ?");
-    args.push(f.status);
-  }
-  if (f.type) {
-    where.push("o.account_type = ?");
-    args.push(f.type);
-  }
-  if (f.caEligible) where.push(`(o.nationwide = 1 OR (', ' || o.state_text || ',') LIKE '%, CA,%')`);
-  if (f.minBonus != null) {
-    where.push("o.bonus_max >= ?");
-    args.push(f.minBonus);
-  }
-  const sql = `SELECT o.id, s."key" AS source_key, s.name AS source_name, o.bank, o.title, o.account_type,
-      o.bonus_min, o.bonus_max, o.bonus_text, o.state_text, o.nationwide, o.dd_text, o.pull_text,
-      o.cc_funding_text, o.detail_url, o.pinned, o.first_seen_at, o.last_seen_at, o.status
-    FROM bb_offers o JOIN bb_sources s ON s.id = o.source_id
-    ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-    ORDER BY o.bonus_max IS NULL, o.bonus_max ${f.sort === "asc" ? "ASC" : "DESC"}, o.bank
-    LIMIT 1000`;
-  const { results } = await db.prepare(sql).bind(...args).all<OfferRow>();
+/** 병합 대상 — active 행 중 RSS(글) 제외. 필터·점수는 merge/score에서. */
+export async function listStoredOffers(db: D1Database): Promise<StoredOffer[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT ${STORED_COLUMNS} FROM bb_offers o JOIN bb_sources s ON s.id = o.source_id
+       WHERE o.status = 'active' AND s.fetch_kind <> 'rss'
+       ORDER BY s.weight DESC, s.id, o.id`,
+    )
+    .all<StoredOffer>();
   return results;
 }
 
+/** 최근 RSS 글 — days일 이내 게시 또는 고정(미래 날짜). */
+export async function listPosts(db: D1Database, days = 14, now = Date.now()): Promise<PostRow[]> {
+  const since = new Date(now - days * 86_400_000).toISOString();
+  const { results } = await db
+    .prepare(
+      `SELECT o.id, o.title, o.detail_url, o.pinned, o.published_at, o.first_seen_at, o.bonus_max, o.state_text
+       FROM bb_offers o JOIN bb_sources s ON s.id = o.source_id
+       WHERE s.fetch_kind = 'rss' AND (o.pinned = 1 OR COALESCE(o.published_at, o.first_seen_at) >= ?)
+       ORDER BY o.pinned DESC, COALESCE(o.published_at, o.first_seen_at) DESC
+       LIMIT 60`,
+    )
+    .bind(since)
+    .all<PostRow>();
+  return results;
+}
+
+export async function listFlags(db: D1Database): Promise<Map<string, OfferFlags>> {
+  const { results } = await db
+    .prepare(`SELECT offer_key, star, hidden, applied, note FROM bb_offer_flags`)
+    .all<OfferFlags & { offer_key: string }>();
+  return new Map(results.map(({ offer_key, ...f }) => [offer_key, f]));
+}
+
+export type FlagPatch = Partial<Pick<OfferFlags, "star" | "hidden" | "applied" | "note">>;
+
+/** 넘어온 필드만 바꾸고 나머지는 유지하는 upsert. */
+export async function upsertFlag(db: D1Database, offerKey: string, patch: FlagPatch): Promise<OfferFlags> {
+  const prev = await db
+    .prepare(`SELECT star, hidden, applied, note FROM bb_offer_flags WHERE offer_key = ?`)
+    .bind(offerKey)
+    .first<OfferFlags>();
+  const next: OfferFlags = { star: 0, hidden: 0, applied: 0, note: null, ...prev, ...patch };
+  await db
+    .prepare(
+      `INSERT INTO bb_offer_flags (offer_key, star, hidden, applied, note, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(offer_key) DO UPDATE SET star = excluded.star, hidden = excluded.hidden,
+         applied = excluded.applied, note = excluded.note, updated_at = excluded.updated_at`,
+    )
+    .bind(offerKey, next.star, next.hidden, next.applied, next.note, new Date().toISOString())
+    .run();
+  return next;
+}
 export async function listRuns(db: D1Database, limit = 50) {
   const { results } = await db
     .prepare(

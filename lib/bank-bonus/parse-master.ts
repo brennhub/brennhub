@@ -16,15 +16,41 @@ import {
   parseStatesFromHeading,
 } from "./text";
 
-type Section = { type: AccountType | null; stateOnly: boolean };
+import {
+  caEligibleFrom,
+  detectInBranch,
+  hardPullFrom,
+  isTargeted,
+  offerKind,
+  parseDd,
+  parseDepositHold,
+  parseExpires,
+} from "./derive";
+
+type Section = { key: string; type: AccountType | null; stateOnly: boolean };
 
 const SECTIONS: [RegExp, Section][] = [
-  [/^Best Checking/i, { type: "checking", stateOnly: false }],
-  [/^Best Sav/i, { type: "savings", stateOnly: false }],
-  [/^Best Business/i, { type: "business", stateOnly: false }],
-  [/^Best State Specific/i, { type: null, stateOnly: true }],
-  [/^Highly Region Specific/i, { type: null, stateOnly: true }],
+  [/^Best Checking/i, { key: "checking", type: "checking", stateOnly: false }],
+  [/^Best Sav/i, { key: "savings", type: "savings", stateOnly: false }],
+  [/^Best Business/i, { key: "business", type: "business", stateOnly: false }],
+  [/^Best State Specific/i, { key: "state", type: null, stateOnly: true }],
+  [/^Highly Region Specific/i, { key: "region", type: null, stateOnly: true }],
 ];
+
+/**
+ * 주·지역 섹션은 섹션이 유형을 말해 주지 않는다 — 제목, 글 URL slug("...-checking-bonus/"),
+ * 그다음 메모에서 한쪽만 언급될 때만.
+ */
+function inferType(title: string, notes: string, url: string | null): AccountType {
+  const fromTitle = accountTypeFromText(title);
+  if (fromTitle !== "unknown") return fromTitle;
+  const slug = url ? accountTypeFromText(url.replace(/[-/]/g, " ")) : "unknown";
+  if (slug !== "unknown") return slug;
+  const checking = /checking/i.test(notes);
+  const savings = /savings|money market/i.test(notes);
+  if (checking !== savings) return checking ? "checking" : "savings";
+  return "unknown";
+}
 
 function sectionFor(heading: string): Section | null {
   return SECTIONS.find(([re]) => re.test(heading))?.[1] ?? null;
@@ -71,11 +97,13 @@ export function parseMaster(html: string): ParseResult {
   const seen = new Map<string, number>();
   let section: Section | null = null;
   let sawSection = false;
+  let rank = 0;
 
   for (let i = 0; i < headings.length; i++) {
     const h = headings[i];
     if (h.level === 2) {
       section = sectionFor(h.text);
+      rank = 0;
       if (section) sawSection = true;
       else if (sawSection) break; // Recent Changes 등 — 섹션 목록 끝.
       continue;
@@ -92,6 +120,13 @@ export function parseMaster(html: string): ParseResult {
       (bullets.find((b) => href.test(b.html)) ?? bullets.find((b) => re.test(b.text)))?.text ?? null;
     const fullPost = block.match(/<a[^>]+href="([^"]+)"[^>]*>\s*Read our full post/i)?.[1] ?? null;
 
+    // 항목 아래 <p> 메모 ("Direct link to offer" 링크 줄 제외).
+    const notes = [...block.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+      .map((m) => htmlToText(m[1]))
+      .filter((t) => t && !/^direct link to offer$/i.test(t))
+      .join("\n");
+    const blockText = htmlToText(block);
+
     const title = h.text;
     const bonus = parseBonus(title);
     const bankPart = title.split(/\s*[–—]\s*|\s+-\s+/)[0];
@@ -103,22 +138,43 @@ export function parseMaster(html: string): ParseResult {
     seen.set(key, dup + 1);
     if (dup) key = `${key} #${dup + 1}`;
 
+    const ddText = find(/href="[^"]*count-direct-deposits/i, /direct deposit/i);
+    const pullText = find(/href="[^"]*soft-or-hard-pull/i, /\bpull\b/i);
+    const nationwide = stateText || section.stateOnly ? 0 : 1;
+    const dd = parseDd(ddText ?? (/direct deposit not required/i.test(title) ? title : null));
+    const hold = parseDepositHold(`${notes}\n${bullets.map((b) => b.text).join("\n")}`);
+    const kind = offerKind(title, section.type ?? inferType(title, notes, fullPost));
+    rank++;
+
     items.push({
       externalKey: key,
       bank,
       title,
-      accountType: section.type ?? accountTypeFromText(title),
+      accountType: kind.accountType,
       bonusMin: bonus.min,
       bonusMax: bonus.max,
       bonusText: bonus.text,
       stateText,
-      nationwide: stateText || section.stateOnly ? 0 : 1,
-      ddText: find(/href="[^"]*count-direct-deposits/i, /direct deposit/i),
-      pullText: find(/href="[^"]*soft-or-hard-pull/i, /\bpull\b/i),
+      nationwide,
+      ddText,
+      pullText,
       ccFundingText: find(/href="[^"]*funding-a-bank-account-with-a-credit-card/i, /credit card/i),
       detailUrl: fullPost,
       pinned: 0,
-      rawExcerpt: excerpt(htmlToText(block)),
+      rawExcerpt: excerpt(blockText),
+      ddRequired: dd.required,
+      ddAmount: dd.amount,
+      expiresOn: parseExpires(blockText),
+      caEligible: caEligibleFrom(nationwide, stateText),
+      depositHoldAmount: hold.amount,
+      depositHoldDays: hold.days,
+      inBranch: detectInBranch(title, notes),
+      hardPull: hardPullFrom(pullText),
+      targeted: isTargeted(title),
+      isOffer: kind.isOffer,
+      section: section.key,
+      sectionRank: rank,
+      notes: notes || null,
     });
   }
 
