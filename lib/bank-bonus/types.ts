@@ -1,3 +1,6 @@
+/** 총액 조건: 저축 계좌까지 겹칠 때 / 최상위 예치 등급일 때. */
+export type BonusTotalNote = "savings" | "top_tier";
+
 export type AccountType = "checking" | "savings" | "business" | "brokerage" | "other" | "unknown";
 
 export type SourceRow = {
@@ -22,6 +25,9 @@ export type OfferInput = {
   bonusMax: number | null;
   bonusText: string | null;
   bonusNote?: string | null;
+  bonusBase?: number | null;
+  bonusTotalWithDeposit?: number | null;
+  bonusTotalNote?: BonusTotalNote | null;
   stateText: string | null;
   nationwide: Flag;
   ddText: string | null;
@@ -91,6 +97,9 @@ export type StoredOffer = {
   notes: string | null;
   published_at: string | null;
   bonus_note: string | null;
+  bonus_base: number | null;
+  bonus_total_with_deposit: number | null;
+  bonus_total_note: BonusTotalNote | null;
   /** 소스의 첫 성공 run 종료 시각 — 신규 판정 기준선. */
   source_first_ok_at: string | null;
 };
@@ -107,6 +116,9 @@ export type MergedOffer = {
   bonusMax: number | null;
   bonusText: string | null;
   bonusNote: string | null;
+  bonusBase: number | null;
+  bonusTotalWithDeposit: number | null;
+  bonusTotalNote: BonusTotalNote | null;
   stateText: string | null;
   nationwide: number | null;
   caEligible: number | null;
@@ -154,13 +166,51 @@ export type OfferDetail = {
   monthly_fee_text: string | null;
   bank_offer_url: string | null;
   post_expired: number | null;
+  glance_text: string | null;
+  evidence: DetailEvidence;
+  ai_extracted_at: string | null;
+  extraction_method: string | null;
+  bonus_base: number | null;
+  bonus_total_with_deposit: number | null;
+  bonus_total_note: BonusTotalNote | null;
+  deposit_hold_amount: number | null;
+  deposit_hold_days: number | null;
+  deposit_hold_scope: "extra" | "base" | null;
 };
+
+export type EvidenceMethod = "regex" | "ai";
+/** 필드별 근거 문장 + 뽑은 방식. 키: expires_on · dd · churn_months · dd_amount · dd_days · deposit_hold_* · apply_methods. */
+export type DetailEvidence = Record<string, { quote: string; method: EvidenceMethod }>;
+
+export type RuleSource = "manual" | "official" | "doc_post" | "doc_churn" | "ai";
+
+/** bb_bank_rules 1행. */
+export type BankRule = {
+  bank: string;
+  churn_months: number | null;
+  churn_text: string | null;
+  source: RuleSource;
+  source_url: string | null;
+  evidence: string | null;
+};
+
+/** 화면 "근거" — 문장 + 출처 종류 + 링크. */
+export type Evidence = { quote: string; source: RuleSource; url: string | null };
 
 export type TagCode = "hold" | "branch" | "hardPull" | "targeted" | "new" | "expiring";
 export type OfferTag = { code: TagCode; amount?: number | null; days?: number | null };
 
 /** 화면용 — 병합 오퍼 + 상세 글 값(우선) + 판정. 문구는 화면이 messages.ts로 만든다. */
 export type EvaluatedOffer = MergedOffer & {
+  /** 정렬·Top 5 기준 금액 = 기본(직접입금만) 금액, 모르면 bonus_max. */
+  sortBonus: number | null;
+  /** 겹친 부분 예치 (기본 보너스는 예치 없이 가능). */
+  extraHoldAmount: number | null;
+  extraHoldDays: number | null;
+  reapply: { state: "value" | "not_stated" | "unknown"; months: number | null; evidence: Evidence | null };
+  evidence: { expires?: Evidence; requirement?: Evidence };
+  /** 상세 글을 실제로 읽었는지 (HTTP 2xx). */
+  detailRead: boolean;
   expiresOn: string | null;
   applyMethods: ApplyMethod[] | null;
   churnMonths: number | null;

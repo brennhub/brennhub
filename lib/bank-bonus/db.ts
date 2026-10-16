@@ -1,5 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import type { ApplyMethod, FreshnessRow, OfferDetail, OfferFlags, OfferInput, PostRow, SourceRow, StoredOffer } from "./types";
+import type { AiAccepted } from "./ai";
+import type { BankRuleInput } from "./parse-churn";
+import type { ApplyMethod, BankRule, DetailEvidence, FreshnessRow, OfferDetail, OfferFlags, OfferInput, PostRow, RuleSource, SourceRow, StoredOffer } from "./types";
 import type { DetailExtract } from "./detail";
 
 /**
@@ -13,6 +15,17 @@ export function getBankBonusDb(): D1Database | null {
   try {
     const { env } = getCloudflareContext();
     return (env as unknown as BankBonusEnv).AUTH_DB ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** AI 추출용 키 (Worker secret ANTHROPIC_API_KEY). 없으면 null — AI 단계는 건너뛴다. 값은 어디에도 싣지 않는다. */
+export function getAiApiKey(): string | null {
+  try {
+    const { env } = getCloudflareContext();
+    const key = (env as unknown as { ANTHROPIC_API_KEY?: string }).ANTHROPIC_API_KEY;
+    return key && key.trim() ? key.trim() : null;
   } catch {
     return null;
   }
@@ -100,6 +113,9 @@ const COMPARED = [
   ["notes", "notes"],
   ["published_at", "publishedAt"],
   ["bonus_note", "bonusNote"],
+  ["bonus_base", "bonusBase"],
+  ["bonus_total_with_deposit", "bonusTotalWithDeposit"],
+  ["bonus_total_note", "bonusTotalNote"],
 ] as const;
 
 type ExistingRow = { id: number; external_key: string; status: string } & Record<
@@ -178,7 +194,8 @@ const STORED_COLUMNS = `o.id, s."key" AS source_key, s.name AS source_name, o.ba
   o.bonus_min, o.bonus_max, o.bonus_text, o.state_text, o.nationwide, o.dd_text, o.pull_text, o.cc_funding_text,
   o.detail_url, o.pinned, o.first_seen_at, o.last_seen_at, o.status, o.dd_required, o.dd_amount, o.expires_on,
   o.ca_eligible, o.deposit_hold_amount, o.deposit_hold_days, o.in_branch, o.hard_pull, o.targeted, o.is_offer,
-  o.section, o.section_rank, o.notes, o.published_at, o.bonus_note, s.first_ok_at AS source_first_ok_at`;
+  o.section, o.section_rank, o.notes, o.published_at, o.bonus_note, o.bonus_base,
+  o.bonus_total_with_deposit, o.bonus_total_note, s.first_ok_at AS source_first_ok_at`;
 
 /** 병합 대상 — active 행 중 RSS(글) 제외. 필터·점수는 merge/score에서. */
 export async function listStoredOffers(db: D1Database): Promise<StoredOffer[]> {
@@ -235,26 +252,35 @@ export async function upsertFlag(db: D1Database, offerKey: string, patch: FlagPa
   return next;
 }
 const DETAIL_COLUMNS = `offer_key, detail_url, fetched_at, http_status, fine_print_text, expires_on, apply_methods,
-  dd_amount, dd_days, dd_text, churn_months, churn_text, early_termination_text, monthly_fee_text, bank_offer_url, post_expired`;
+  dd_amount, dd_days, dd_text, churn_months, churn_text, early_termination_text, monthly_fee_text, bank_offer_url, post_expired,
+  glance_text, evidence, ai_extracted_at, extraction_method, bonus_base, bonus_total_with_deposit, bonus_total_note,
+  deposit_hold_amount, deposit_hold_days, deposit_hold_scope`;
+
+function parseJson<T>(s: string | null, fallback: T): T {
+  if (!s) return fallback;
+  try {
+    return JSON.parse(s) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+type DetailDbRow = Omit<OfferDetail, "apply_methods" | "evidence"> & { apply_methods: string | null; evidence: string | null };
 
 export async function listDetails(db: D1Database): Promise<Map<string, OfferDetail>> {
-  const { results } = await db
-    .prepare(`SELECT ${DETAIL_COLUMNS} FROM bb_offer_details`)
-    .all<Omit<OfferDetail, "apply_methods"> & { apply_methods: string | null }>();
+  const { results } = await db.prepare(`SELECT ${DETAIL_COLUMNS} FROM bb_offer_details`).all<DetailDbRow>();
   return new Map(
-    results.map((r) => {
-      let methods: ApplyMethod[] | null = null;
-      try {
-        methods = r.apply_methods ? (JSON.parse(r.apply_methods) as ApplyMethod[]) : null;
-      } catch {
-        methods = null;
-      }
-      return [r.offer_key, { ...r, apply_methods: methods }];
-    }),
+    results.map((r) => [
+      r.offer_key,
+      { ...r, apply_methods: parseJson<ApplyMethod[] | null>(r.apply_methods, null), evidence: parseJson<DetailEvidence>(r.evidence, {}) },
+    ]),
   );
 }
 
-/** 상세 글 1건 저장 — 실패(HTTP 오류 등)도 fetched_at·http_status를 남겨 7일 재시도 간격을 지킨다. */
+/**
+ * 상세 글 1건 저장 (정규식 결과로 교체). 실패(HTTP 오류 등)도 fetched_at·http_status를 남겨 7일 재시도 간격을 지킨다.
+ * 다시 받은 글은 AI 결과도 새로 — ai_extracted_at을 비워 다음 AI 단계 대상이 되게 한다.
+ */
 export async function upsertDetail(
   db: D1Database,
   offerKey: string,
@@ -263,23 +289,104 @@ export async function upsertDetail(
   x: DetailExtract | null,
   now: string,
 ): Promise<void> {
+  const evidence: DetailEvidence = {};
+  for (const [k, quote] of Object.entries(x?.evidence ?? {})) if (quote) evidence[k] = { quote, method: "regex" };
+  const st = x?.stacked;
+  const cols = DETAIL_COLUMNS.split(",").map((c) => c.trim());
   await db
     .prepare(
-      `INSERT INTO bb_offer_details (${DETAIL_COLUMNS}, extraction_method)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'regex')
-       ON CONFLICT(offer_key) DO UPDATE SET detail_url = excluded.detail_url, fetched_at = excluded.fetched_at,
-         http_status = excluded.http_status, fine_print_text = excluded.fine_print_text, expires_on = excluded.expires_on,
-         apply_methods = excluded.apply_methods, dd_amount = excluded.dd_amount, dd_days = excluded.dd_days,
-         dd_text = excluded.dd_text, churn_months = excluded.churn_months, churn_text = excluded.churn_text,
-         early_termination_text = excluded.early_termination_text, monthly_fee_text = excluded.monthly_fee_text,
-         bank_offer_url = excluded.bank_offer_url, post_expired = excluded.post_expired, extraction_method = 'regex'`,
+      `INSERT INTO bb_offer_details (${cols.join(", ")}) VALUES (${cols.map(() => "?").join(", ")})
+       ON CONFLICT(offer_key) DO UPDATE SET ${cols.filter((c) => c !== "offer_key").map((c) => `${c} = excluded.${c}`).join(", ")}`,
     )
     .bind(
       offerKey, detailUrl, now, httpStatus,
       x?.finePrintText ?? null, x?.expiresOn ?? null, x?.applyMethods ? JSON.stringify(x.applyMethods) : null,
       x?.ddAmount ?? null, x?.ddDays ?? null, x?.ddText ?? null, x?.churnMonths ?? null, x?.churnText ?? null,
       x?.earlyTerminationText ?? null, x?.monthlyFeeText ?? null, x?.bankOfferUrl ?? null, x ? x.postExpired : null,
+      x?.glanceText ?? null, JSON.stringify(evidence), null, "regex",
+      st?.bonusBase ?? null, st?.bonusTotalWithDeposit ?? null, st?.bonusTotalNote ?? null,
+      st?.holdAmount ?? null, st?.holdDays ?? null, st?.holdScope ?? null,
     )
+    .run();
+}
+
+/** AI 결과 반영 — 비어 있던 필드만 채우고(COALESCE), 근거는 기존 근거에 합친다. 채택 0건이어도 ai_extracted_at은 남긴다. */
+export async function applyAiResult(
+  db: D1Database,
+  offerKey: string,
+  prevEvidence: DetailEvidence,
+  r: AiAccepted,
+  now: string,
+): Promise<void> {
+  const evidence: DetailEvidence = { ...prevEvidence };
+  for (const [k, quote] of Object.entries(r.evidence)) if (quote && !evidence[k]) evidence[k] = { quote, method: "ai" };
+  const v = r.values;
+  await db
+    .prepare(
+      `UPDATE bb_offer_details SET
+         expires_on = COALESCE(expires_on, ?), churn_months = COALESCE(churn_months, ?), churn_text = COALESCE(churn_text, ?),
+         dd_amount = COALESCE(dd_amount, ?), dd_days = COALESCE(dd_days, ?),
+         deposit_hold_amount = COALESCE(deposit_hold_amount, ?), deposit_hold_days = COALESCE(deposit_hold_days, ?),
+         apply_methods = COALESCE(apply_methods, ?),
+         evidence = ?, ai_extracted_at = ?,
+         extraction_method = CASE WHEN ? > 0 THEN 'ai' ELSE extraction_method END
+       WHERE offer_key = ?`,
+    )
+    .bind(
+      v.expires_on ?? null, v.churn_months ?? null, v.churn_text ?? null, v.dd_amount ?? null, v.dd_days ?? null,
+      v.deposit_hold_amount ?? null, v.deposit_hold_days ?? null, v.apply_methods ? JSON.stringify(v.apply_methods) : null,
+      JSON.stringify(evidence), now, r.accepted.length, offerKey,
+    )
+    .run();
+}
+
+export async function listBankRules(db: D1Database): Promise<BankRule[]> {
+  const { results } = await db
+    .prepare(`SELECT bank, churn_months, churn_text, source, source_url, evidence FROM bb_bank_rules`)
+    .all<BankRule>();
+  return results;
+}
+
+/** 목록형 소스(doc_churn)는 통째로 교체 — 목록에서 빠진 은행 규칙이 남지 않게. */
+export async function replaceBankRules(
+  db: D1Database,
+  source: RuleSource,
+  sourceUrl: string,
+  rules: BankRuleInput[],
+  now: string,
+): Promise<number> {
+  const stmts = [
+    db.prepare(`DELETE FROM bb_bank_rules WHERE source = ?`).bind(source),
+    ...rules.map((r) =>
+      db
+        .prepare(
+          `INSERT OR REPLACE INTO bb_bank_rules (bank, churn_months, churn_text, source, source_url, evidence, verified_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .bind(r.bank, r.churnMonths, r.churnText, source, sourceUrl, r.evidence, now),
+    ),
+  ];
+  for (let i = 0; i < stmts.length; i += BATCH) await db.batch(stmts.slice(i, i + BATCH));
+  return rules.length;
+}
+
+/** 상세 글 약관에서 읽은 규칙을 은행 단위로도 남긴다 (source='doc_post', 같은 은행은 마지막 글이 이긴다). */
+export async function upsertDocPostRule(
+  db: D1Database,
+  bank: string,
+  months: number,
+  text: string | null,
+  url: string,
+  now: string,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO bb_bank_rules (bank, churn_months, churn_text, source, source_url, evidence, verified_at)
+       VALUES (?, ?, ?, 'doc_post', ?, ?, ?)
+       ON CONFLICT(bank, source) DO UPDATE SET churn_months = excluded.churn_months, churn_text = excluded.churn_text,
+         source_url = excluded.source_url, evidence = excluded.evidence, verified_at = excluded.verified_at`,
+    )
+    .bind(bank, months, text, url, text, now)
     .run();
 }
 

@@ -7,7 +7,7 @@
 
 import { useLocale } from "@/lib/i18n/provider";
 import type { Locale } from "@/lib/i18n/types";
-import type { AccountType, ApplyMethod } from "./types";
+import type { AccountType, ApplyMethod, BonusTotalNote, RuleSource } from "./types";
 
 const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -20,7 +20,12 @@ const ko = {
   flagFailed: "저장하지 못했습니다",
 
   // 신선도
-  sources: { doc_master: "닥터 오브 크레딧 월간 목록", doc_rss: "닥터 오브 크레딧 새 글", doc_quickref: "닥터 오브 크레딧 요약 시트" } as Record<string, string>,
+  sources: {
+    doc_master: "닥터 오브 크레딧 월간 목록",
+    doc_rss: "닥터 오브 크레딧 새 글",
+    doc_quickref: "닥터 오브 크레딧 요약 시트",
+    doc_churn: "닥터 오브 크레딧 재신청 목록",
+  } as Record<string, string>,
   ago: (mins: number) =>
     mins < 1 ? "방금 수집" : mins < 60 ? `${mins}분 전 수집` : mins < 1440 ? `${Math.floor(mins / 60)}시간 전 수집` : `${Math.floor(mins / 1440)}일 전 수집`,
   never: "수집 기록 없음",
@@ -75,6 +80,14 @@ const ko = {
       : `직접입금 필요(금액 미상)${days ? `, ${days}일 이내` : ""}`,
   ddNone: "직접입금 불필요",
   reapply: (months: number) => `${months}개월 후 가능`,
+  reapplyNotStated: "글에 명시 없음",
+  withDeposit: (note: BonusTotalNote | null, total: number, hold: number | null, days: number | null) =>
+    `${note === "top_tier" ? "최고 등급" : note === "savings" ? "저축 포함 시" : "예치 포함 시"} ${usd(total)}${
+      hold != null ? ` (예치금 ${usd(hold)}${days ? `, ${days}일` : ""})` : ""
+    }`,
+  evidence: "근거",
+  evidenceSources: { doc_post: "DoC 글", doc_churn: "DoC 처닝 목록", ai: "AI 추출", official: "공식", manual: "직접 입력" } as Record<RuleSource, string>,
+  openSource: "출처 열기",
   region: { nationwide: "전국", ca: "CA 가능", notCa: "CA 불가" },
   pull: { soft: "기록 안 남음", hard: "기록 남음" },
   cc: { upTo: (n: number) => `가능 ${usd(n)}까지`, yes: "가능(한도 미상)", no: "불가" },
@@ -126,7 +139,12 @@ const en: BankBonusMessages = {
   loadFailed: "Couldn't load",
   flagFailed: "Couldn't save",
 
-  sources: { doc_master: "Doctor of Credit monthly list", doc_rss: "Doctor of Credit new posts", doc_quickref: "Doctor of Credit quick reference sheet" },
+  sources: {
+    doc_master: "Doctor of Credit monthly list",
+    doc_rss: "Doctor of Credit new posts",
+    doc_quickref: "Doctor of Credit quick reference sheet",
+    doc_churn: "Doctor of Credit reapply list",
+  },
   ago: (mins: number) =>
     mins < 1 ? "fetched just now" : mins < 60 ? `fetched ${mins}m ago` : mins < 1440 ? `fetched ${Math.floor(mins / 60)}h ago` : `fetched ${Math.floor(mins / 1440)}d ago`,
   never: "Never fetched",
@@ -177,6 +195,14 @@ const en: BankBonusMessages = {
       : `Direct deposit required (amount not stated)${days ? ` within ${days} days` : ""}`,
   ddNone: "No direct deposit needed",
   reapply: (months: number) => `Eligible again after ${months} months`,
+  reapplyNotStated: "Not stated in post",
+  withDeposit: (note: BonusTotalNote | null, total: number, hold: number | null, days: number | null) =>
+    `${note === "top_tier" ? "Top tier" : note === "savings" ? "With savings" : "With deposit"} ${usd(total)}${
+      hold != null ? ` (deposit hold ${usd(hold)}${days ? `, ${days} days` : ""})` : ""
+    }`,
+  evidence: "Evidence",
+  evidenceSources: { doc_post: "DoC post", doc_churn: "DoC churn list", ai: "AI extracted", official: "Official", manual: "Manual" },
+  openSource: "Open source",
   region: { nationwide: "Nationwide", ca: "CA eligible", notCa: "Not in CA" },
   pull: { soft: "No record left (soft)", hard: "Record left (hard)" },
   cc: { upTo: (n: number) => `Up to ${usd(n)}`, yes: "Allowed (limit not stated)", no: "Not allowed" },

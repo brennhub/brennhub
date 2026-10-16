@@ -7,6 +7,7 @@
  * 댓글은 <article> 밖이라 보지 않는다. <del>(취소선) 안의 옛 값은 버린다.
  */
 
+import { parseDepositHold } from "./derive";
 import { decodeEntities, htmlToText } from "./text";
 import type { ApplyMethod } from "./types";
 
@@ -23,6 +24,22 @@ export type DetailExtract = {
   monthlyFeeText: string | null;
   bankOfferUrl: string | null;
   postExpired: 0 | 1;
+  /** "Offer at a glance" 목록 평문 (AI 추출 입력·근거 대조용). */
+  glanceText: string | null;
+  /** 정규식이 값을 뽑은 문장 — 화면 "근거"용. */
+  evidence: { expires_on?: string; dd?: string; churn_months?: string };
+  stacked: StackedExtract;
+};
+
+/** 겹친(스택)·등급 오퍼. base = 직접입금만으로 받는 금액, total = 예치까지 채운 총액. */
+export type StackedExtract = {
+  bonusBase: number | null;
+  bonusTotalWithDeposit: number | null;
+  bonusTotalNote: "savings" | "top_tier" | null;
+  holdAmount: number | null;
+  holdDays: number | null;
+  /** extra = 겹친 부분만 예치 필요 (기본 보너스는 예치 없음) · base = 어떤 보너스든 예치 필요. */
+  holdScope: "extra" | "base" | null;
 };
 
 const FINE_PRINT_MAX = 4000;
@@ -127,22 +144,29 @@ function lastTouched(art: string, articleText: string): string | null {
   return dates.length ? dates.sort().at(-1)! : null;
 }
 
-function findExpires(art: string, articleText: string, glanceExpiry: string | null, searchText: string): string | null {
-  const candidates: (string | null)[] = [];
+function findExpires(
+  art: string,
+  articleText: string,
+  glanceExpiry: string | null,
+  searchText: string,
+): { date: string | null; quote: string | null } {
+  const candidates: { date: string | null; quote: string }[] = [];
+  const quoteOf = (text: string, needle: string) => sentences(text).find((x) => x.includes(needle)) ?? needle;
   // 1) "Update ...: Extended to/through/till <date>" (글 맨 위 문단이 최신).
   const ext = articleText.match(new RegExp(`extended\\s+(?:to|through|until|till)\\s+(${DATE_RE})`, "i"));
-  if (ext) candidates.push(parseDate(ext[1]));
+  if (ext) candidates.push({ date: parseDate(ext[1]), quote: quoteOf(articleText, ext[0]) });
   // 2) "Offer at a glance" 만료일 (취소선 제거 후 마지막 날짜).
-  if (glanceExpiry) candidates.push(lastDate(glanceExpiry));
+  if (glanceExpiry) candidates.push({ date: lastDate(glanceExpiry), quote: `Expiration date: ${glanceExpiry}` });
   // 3) 본문 문구.
   const phrase = searchText.match(
     new RegExp(`(?:expires?\\s+on|valid\\s+through|valid\\s+until|through|until|by)\\s+(${DATE_RE})`, "i"),
   );
-  if (phrase) candidates.push(parseDate(phrase[1]));
+  if (phrase) candidates.push({ date: parseDate(phrase[1]), quote: quoteOf(searchText, phrase[0]) });
 
   // 글을 마지막으로 손본 날보다 이른 마감일은 방치된 옛 값 — 쓰지 않는다.
   const floor = lastTouched(art, articleText);
-  return candidates.find((d): d is string => !!d && (!floor || d >= floor)) ?? null;
+  const hit = candidates.find((c) => !!c.date && (!floor || c.date >= floor));
+  return hit ? { date: hit.date, quote: hit.quote.slice(0, 500) } : { date: null, quote: null };
 }
 
 // 재신청 기간 — 과거를 보는 창만: "in the last 365 days", "within the past twelve (12) months",
@@ -155,7 +179,9 @@ const CHURN_WINDOWS = [
 ];
 const ELIGIBILITY = /\b(?:bonus|owned|had|have not|has not|member|customer|closed|received|eligible|available|participate)\b/i;
 
-function churnWindow(s: string): number | null | undefined {
+export function churnWindow(s: string): number | null | undefined {
+  // "one (1) checking account promotional offer per year" / "once per calendar year".
+  if (/\b(?:one|1|once)\b(?:\s*\(1\))?[^.]{0,100}?\bper\s+(?:calendar\s+)?year\b/i.test(s)) return 12;
   for (const re of CHURN_WINDOWS) {
     const m = s.match(re);
     if (!m) continue;
@@ -168,12 +194,12 @@ function churnWindow(s: string): number | null | undefined {
   return undefined; // 창 없음
 }
 
-function findChurn(text: string): { months: number | null; text: string | null } {
-  const all = sentences(text).filter((s) => ELIGIBILITY.test(s));
+export function findChurn(text: string): { months: number | null; text: string | null } {
+  const all = sentences(text).filter((s) => ELIGIBILITY.test(s) || /per (?:calendar )?year/i.test(s));
   const withWindow = all.filter((s) => churnWindow(s) !== undefined);
-  // 보너스 이력 문장 우선 ("received a bonus ... within the past 12 months", "one bonus every two years").
+  // 보너스·오퍼 자격 문장 우선 ("received a bonus ... within the past 12 months", "not eligible for this offer if ...").
   const s =
-    withWindow.find((x) => /bonus/i.test(x)) ??
+    withWindow.find((x) => /bonus|offer|eligible|promotion/i.test(x)) ??
     withWindow[0] ??
     all.find((x) => /previously received|closed an account/i.test(x));
   if (!s) return { months: null, text: null };
@@ -203,6 +229,78 @@ function glanceAmount(v: string | null): number | null {
   if (!v || !/^yes/i.test(v)) return null;
   const m = v.match(/\$([\d,]+)/);
   return m ? money(m[1]) : null;
+}
+
+/**
+ * 겹친·등급 오퍼.
+ *  ① The Offer 불릿에 "입출금 보너스 $X(예치 없음)" + "저축 + 예치/유지" 불릿이 함께 → base X, total = 요약 최대액, 예치는 저축 쪽(extra).
+ *  ② 요약 "Additional requirements: None for checking; $15,000 balance for savings" → 저축 겹침 (base는 불릿에서만).
+ *  ③ 직접입금 불필요 + 요약 "Additional requirements: $20,000-$100,000 deposit" → 등급형: total = 최대액, 예치 = 최상위 금액(base).
+ *  ④ "$900 | New Money Deposit Amount $15,000 or more" 같은 등급 줄 → 최상위 등급.
+ */
+function findStacked(g: Map<string, string>, offerText: string, offerHtml: string | null, termsText: string): StackedExtract {
+  const none: StackedExtract = { bonusBase: null, bonusTotalWithDeposit: null, bonusTotalNote: null, holdAmount: null, holdDays: null, holdScope: null };
+  const maxM = getGlance(g, /^maximum bonus/)?.match(/\$([\d,]+)/);
+  const glanceMax = maxM ? money(maxM[1]) : null;
+  const additional = getGlance(g, /^additional requirement/) ?? "";
+  const ddReq = getGlance(g, /^direct deposit/) ?? "";
+
+  // 불릿은 <li> 시작마다 자른다 — 중첩 목록에서 바깥 불릿("checking & savings ... up to $900")이 안쪽 불릿과 섞이지 않게.
+  const bullets = offerHtml
+    ? offerHtml
+        .split(/<li[^>]*>/i)
+        .slice(1)
+        .map((chunk) => htmlToText(chunk.split(/<\/li>|<ul[\s>]/i)[0]))
+        .filter(Boolean)
+    : [];
+  const amountIn = (b: string) => b.match(/bonus of \$([\d,]+)|\$([\d,]+)\s+(?:checking\s+)?bonus|receive \$([\d,]+)/i);
+  const checking = bullets.find((b) => /checking/i.test(b) && !/savings/i.test(b) && !/new money|balance|maintain/i.test(b) && amountIn(b));
+  const savings = bullets.find((b) => /savings/i.test(b) && /new money|balance|maintain|deposit \$/i.test(b));
+
+  // ①
+  const checkingAmount = checking ? amountIn(checking)! : null;
+  const base = checkingAmount ? money(checkingAmount[1] ?? checkingAmount[2] ?? checkingAmount[3]) : null;
+  // 총액이 기본보다 커야 겹친 오퍼 (같으면 저축 불릿은 별개 안내일 뿐).
+  if (base != null && savings && glanceMax != null && glanceMax > base) {
+    const hold = parseDepositHold(savings);
+    return {
+      bonusBase: base,
+      bonusTotalWithDeposit: glanceMax,
+      bonusTotalNote: "savings",
+      holdAmount: hold.amount,
+      holdDays: hold.days,
+      holdScope: "extra",
+    };
+  }
+  // ②
+  const forSavings = additional.match(/none for checking[^$]*\$([\d,]+)[^.]*savings/i);
+  if (forSavings) {
+    const hold = parseDepositHold(`${offerText}\n${termsText}`);
+    return { ...none, bonusTotalWithDeposit: glanceMax, bonusTotalNote: "savings", holdAmount: money(forSavings[1]), holdDays: hold.days, holdScope: "extra" };
+  }
+  // ③
+  const range = additional.match(/\$([\d,]+)(?:\s*[-–]\s*\$([\d,]+))?\+?\s+(?:deposit|balance|in new money|new money)/i);
+  if (range && /^(?:no|none)\b/i.test(ddReq)) {
+    const hold = parseDepositHold(`${offerText}\n${termsText}`);
+    return {
+      ...none,
+      bonusTotalWithDeposit: glanceMax,
+      bonusTotalNote: range[2] ? "top_tier" : null,
+      holdAmount: money(range[2] ?? range[1]),
+      holdDays: hold.days,
+      holdScope: "base",
+    };
+  }
+  // ④
+  const tiers = [...offerText.matchAll(/\$([\d,]+)\s*\|\s*[^$|]{0,60}?(?:deposit|balance|new money)[^$|]{0,40}?\$([\d,]+)/gi)].map((m) => ({
+    bonus: money(m[1]),
+    deposit: money(m[2]),
+  }));
+  if (tiers.length) {
+    const top = tiers.sort((a, b) => b.bonus - a.bonus)[0];
+    return { ...none, bonusTotalWithDeposit: top.bonus, bonusTotalNote: tiers.length > 1 ? "top_tier" : null, holdAmount: top.deposit, holdScope: "base" };
+  }
+  return none;
 }
 
 function sentenceWith(text: string, re: RegExp): string | null {
@@ -238,10 +336,16 @@ export function extractDetail(html: string): DetailExtract {
 
   const dd = findDd(searchText, getGlance(g, /^direct deposit/));
   const churn = findChurn(searchText);
+  const expires = findExpires(art, articleText, getGlance(g, /^expiration/), searchText);
+  const glanceText = g.size ? [...g.entries()].map(([k, v]) => `${k}: ${v}`).join("\n") : null;
+  const evidence: DetailExtract["evidence"] = {};
+  if (expires.date && expires.quote) evidence.expires_on = expires.quote;
+  if ((dd.amount != null || dd.days != null) && dd.text) evidence.dd = dd.text;
+  if (churn.months != null && churn.text) evidence.churn_months = churn.text;
 
   return {
     finePrintText: (finePrint ?? articleText).slice(0, FINE_PRINT_MAX) || null,
-    expiresOn: findExpires(art, articleText, getGlance(g, /^expiration/), searchText),
+    expiresOn: expires.date,
     applyMethods: methods.length ? methods : null,
     ddAmount: dd.amount,
     ddDays: dd.days,
@@ -253,5 +357,8 @@ export function extractDetail(html: string): DetailExtract {
     monthlyFeeText: getGlance(g, /^monthly fee/) ?? sentenceWith(articleText, /monthly (?:service |maintenance )?fee/i),
     bankOfferUrl,
     postExpired,
+    glanceText,
+    evidence,
+    stacked: findStacked(g, offerHtml ? htmlToText(offerHtml) : "", offerHtml, finePrint ?? ""),
   };
 }

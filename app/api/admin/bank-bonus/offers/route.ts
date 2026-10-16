@@ -5,7 +5,7 @@
  * Top 5·요약은 표 필터와 무관하게 "지금 할 만한 오퍼" 규칙(lib/bank-bonus/rules.ts) 기준.
  */
 
-import { getBankBonusDb, listDetails, listFlags, listStoredOffers } from "@/lib/bank-bonus/db";
+import { getBankBonusDb, listBankRules, listDetails, listFlags, listStoredOffers } from "@/lib/bank-bonus/db";
 import { buildOffers, parseOfferQuery } from "@/lib/bank-bonus/offers";
 
 export const dynamic = "force-dynamic";
@@ -16,8 +16,8 @@ export async function GET(req: Request) {
 
   const query = parseOfferQuery(new URL(req.url).searchParams);
   try {
-    const [rows, flags, details] = await Promise.all([listStoredOffers(db), listFlags(db), listDetails(db)]);
-    return Response.json({ query, ...buildOffers(rows, flags, details, query) }, { headers: { "Cache-Control": "no-store" } });
+    const [rows, flags, details, rules] = await Promise.all([listStoredOffers(db), listFlags(db), listDetails(db), listBankRules(db)]);
+    return Response.json({ query, ...buildOffers(rows, flags, details, query, rules) }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     return Response.json({ error: `offers query failed: ${String(e)}` }, { status: 500 });
   }

@@ -6,7 +6,7 @@
 import { SCORE } from "./config";
 import { mergeOffers } from "./merge";
 import { existingBankOf, evaluateOffer } from "./rules";
-import type { AccountType, EvaluatedOffer, OfferDetail, OfferFlags, StoredOffer } from "./types";
+import type { AccountType, BankRule, EvaluatedOffer, OfferDetail, OfferFlags, StoredOffer } from "./types";
 
 export type OfferQuery = {
   types: AccountType[];
@@ -66,9 +66,9 @@ export type OffersResponse = {
 };
 
 const bonusOf = (o: EvaluatedOffer) => o.bonusMax ?? o.bonusMin ?? -1;
-/** 보너스 큰 순, 같으면 하한 큰 순, 그다음 은행명. */
+/** 기본 금액(bonus_base, 모르면 bonus_max) 큰 순, 같으면 하한 큰 순, 그다음 은행명. */
 export const byBonus = (a: EvaluatedOffer, b: EvaluatedOffer) =>
-  bonusOf(b) - bonusOf(a) || (b.bonusMin ?? -1) - (a.bonusMin ?? -1) || (a.bank ?? "").localeCompare(b.bank ?? "");
+  (b.sortBonus ?? -1) - (a.sortBonus ?? -1) || (b.bonusMin ?? -1) - (a.bonusMin ?? -1) || (a.bank ?? "").localeCompare(b.bank ?? "");
 const byExpires = (a: EvaluatedOffer, b: EvaluatedOffer) => {
   const x = a.expiresOn ?? "9999";
   const y = b.expiresOn ?? "9999";
@@ -79,10 +79,11 @@ export function evaluateAll(
   rows: StoredOffer[],
   flags: Map<string, OfferFlags>,
   details: Map<string, OfferDetail>,
+  rules: BankRule[] = [],
   now = Date.now(),
 ): { all: EvaluatedOffer[]; merged: number } {
   const merged = mergeOffers(rows);
-  return { all: merged.map((o) => evaluateOffer(o, flags.get(o.key), details.get(o.key), now)), merged: merged.length };
+  return { all: merged.map((o) => evaluateOffer(o, flags.get(o.key), details.get(o.key), rules, now)), merged: merged.length };
 }
 
 export function buildOffers(
@@ -90,9 +91,10 @@ export function buildOffers(
   flags: Map<string, OfferFlags>,
   details: Map<string, OfferDetail>,
   q: OfferQuery,
+  rules: BankRule[] = [],
   now = Date.now(),
 ): OffersResponse {
-  const { all, merged } = evaluateAll(rows, flags, details, now);
+  const { all, merged } = evaluateAll(rows, flags, details, rules, now);
 
   const offers = all.filter((o) => {
     if (!o.isOffer) return false;

@@ -52,6 +52,11 @@ function inferType(title: string, notes: string, url: string | null): AccountTyp
   return "unknown";
 }
 
+function savingsTotal(note: string | null): number | null {
+  const m = note?.match(/\$([\d,]+)\s+with\s+savings/i);
+  return m ? parseInt(m[1].replace(/,/g, ""), 10) : null;
+}
+
 function sectionFor(heading: string): Section | null {
   return SECTIONS.find(([re]) => re.test(heading))?.[1] ?? null;
 }
@@ -155,6 +160,9 @@ export function parseMaster(html: string): ParseResult {
       bonusMax: bonus.max,
       bonusText: bonus.text,
       bonusNote: bonus.note,
+      // "Chase $300-$400 ($900 With Savings)" → 저축까지 겹친 총액. 기본(직접입금만) 금액은 상세 글에서만 정한다.
+      bonusTotalWithDeposit: savingsTotal(bonus.note),
+      bonusTotalNote: savingsTotal(bonus.note) != null ? "savings" : null,
       stateText,
       nationwide,
       ddText,
