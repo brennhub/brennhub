@@ -1,7 +1,679 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-17T01:50:37Z",
+  "generatedAt": "2026-10-17T08:12:27Z",
   "items": [
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/sofi-checking-5000-direct-deposit-required",
+      "source_url": "https://www.sofi.com/banking/",
+      "fields": {
+        "expires_on": "2026-12-31",
+        "reapply_once_only": 1,
+        "ach_push": "no",
+        "ach_push_text": "Examples of deposits that are not eligible include check deposits, peer-to-peer transfers (e.g., transfers from Zelle®, PayPal, Venmo, Wise, etc.), merchant transactions (e.g., transactions from PayPal, Stripe, Square, etc.), bank ACH funds transfers, wire transfers from external accounts, and IRS tax refunds.",
+        "eligibility_text": "New and existing SoFi members who have never set up direct deposit with SoFi are eligible for the Direct Deposit Bonus.",
+        "fee_waiver_text": "We do not charge any account, service, or maintenance fees for SoFi Checking and Savings.",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "SoFi Checking and Savings 계좌 개설 (보너스 지급 시점까지 유지)",
+            "amount": null,
+            "days": null,
+            "quote": "You must have an open SoFi Checking account in good standing at the time of the bonus payment."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "dd",
+            "text": "첫 적격 직접입금(고용주·연금·정부 payroll ACH)을 2026-12-31까지 받기",
+            "amount": null,
+            "days": null,
+            "quote": "Set up your first Eligible Direct Deposit. SoFi must receive it on or before 12/31/26."
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "dd",
+            "text": "첫 입금 후 25일간 적격 직접입금 합계로 티어 결정: $1,000~$4,999.99 → $50, $5,000 이상 → $400",
+            "amount": null,
+            "days": 25,
+            "quote": "we will add up the Total Eligible Direct Deposits received over the next 25 calendar days. This total will determine the bonus amount.",
+            "tiered": true
+          },
+          {
+            "order": 4,
+            "portion": "base",
+            "kind": "other",
+            "text": "외부 은행 ACH 이체·P2P·수표는 적격 직접입금이 아님 (고용주 payroll만 인정)",
+            "amount": null,
+            "days": null,
+            "quote": "Examples of deposits that are not eligible include check deposits, peer-to-peer transfers (e.g., transfers from Zelle®, PayPal, Venmo, Wise, etc.), merchant transactions (e.g., transactions from PayPal, Stripe, Square, etc.), bank ACH funds transfers, wire transfers from external accounts, and IRS tax refunds."
+          }
+        ]
+      },
+      "evidence": {
+        "expires_on": "Set up your first Eligible Direct Deposit. SoFi must receive it on or before 12/31/26.",
+        "reapply_once_only": "New and existing SoFi members who have never set up direct deposit with SoFi are eligible for the Direct Deposit Bonus.",
+        "ach_push": "Examples of deposits that are not eligible include check deposits, peer-to-peer transfers (e.g., transfers from Zelle®, PayPal, Venmo, Wise, etc.), merchant transactions (e.g., transactions from PayPal, Stripe, Square, etc.), bank ACH funds transfers, wire transfers from external accounts, and IRS tax refunds.",
+        "eligibility_text": "New and existing SoFi members who have never set up direct deposit with SoFi are eligible for the Direct Deposit Bonus.",
+        "fee_waiver_text": "We do not charge any account, service, or maintenance fees for SoFi Checking and Savings."
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/ca-only-stanford-federal-credit-union-100-checking-bonus",
+      "source_url": "https://www.sfcu.org/bonus/",
+      "fields": {
+        "dd_amount": 2500,
+        "ach_push": "no",
+        "ach_push_text": "Direct deposit is defined as recurring ACH payments from your employer. Other deposits such as checks, transfers, Venmo, Zelle ® and PayPal do not qualify.",
+        "fee_waiver_text": "Open a free checking (spending) account —no minimum balance or direct deposit requirements",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "Stanford FCU 멤버십 + Everyday/High Yield/Student Spending 계좌 개설",
+            "amount": null,
+            "days": null,
+            "quote": "open a new Stanford FCU membership with an Everyday, High Yield, or Student Spending account"
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "dd",
+            "text": "매월 $2,500 이상 payroll 또는 Social Security 직접입금을 3개월 연속 (이체·Venmo·Zelle·PayPal 불인정)",
+            "amount": 2500,
+            "days": null,
+            "quote": "receive a minimum $2,500 payroll or social security direct deposit each month for three consecutive calendar months (other deposits such as checks, transfers, Venmo, Zelle® and PayPal do not qualify)"
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "debit_txn",
+            "text": "SFCU 체크·신용카드로 매월 $1,000 이상 사용, 3개월 연속 ($500 보너스 조건)",
+            "amount": 1000,
+            "days": null,
+            "quote": "spend a minimum combined $1,000 per month on Stanford FCU debit and/or credit cards (excluding refunds and returns) for three consecutive calendar months"
+          },
+          {
+            "order": 4,
+            "portion": "base",
+            "kind": "other",
+            "text": "세 조건을 같은 3개월 안에, 가입 후 3번째 꽉 찬 달 말까지의 자격 기간 안에 충족",
+            "amount": null,
+            "days": null,
+            "quote": "All requirements must be met in the same three consecutive calendar months within the member’s eligibility period."
+          }
+        ]
+      },
+      "evidence": {
+        "dd_amount": "receive a minimum $2,500 payroll or social security direct deposit each month for three consecutive calendar months (other deposits such as checks, transfers, Venmo, Zelle® and PayPal do not qualify)",
+        "ach_push": "Direct deposit is defined as recurring ACH payments from your employer. Other deposits such as checks, transfers, Venmo, Zelle ® and PayPal do not qualify.",
+        "fee_waiver_text": "Open a free checking (spending) account —no minimum balance or direct deposit requirements"
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/il-wi-mn-in-az-fl-ks-mo-bmo-harris-350-checking-300-savings-bonus",
+      "source_url": "https://www.bmo.com/en-us/main/personal/checking-accounts/digital-offer/",
+      "fields": {
+        "ach_push": "no",
+        "ach_push_text": "Non-qualifying examples include: teller deposits, wire transfers, ATM transfers or deposits, BMO Digital Banking transfers or deposits, deposits processed as a debit card credit or real-time credit, transfers from any bank or brokerage account, Account to Account or Peer to Peer (e.g. Zelle ® , Venmo) transfers and deposits received via merchant payment platforms (such as Square ® ).",
+        "fee_waiver_text": "Everyday banking with no monthly maintenance fees",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "2026-12-15까지 프로모 코드로 Smart Money / Smart Advantage / Relationship Checking 개설 (온라인은 코드 자동 적용)",
+            "amount": null,
+            "days": null,
+            "quote": "you must open your account between September 9, 2026 and December 15, 2026, and use the promo code."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "dd",
+            "text": "개설 다음 달부터 매월 $1,000 이상 적격 직접입금 → 그 달 $100 지급",
+            "amount": 1000,
+            "days": null,
+            "quote": "Beginning the month following account opening, earn a $100 cash bonus each consecutive month you have a cumulative total of $1,000 or more in qualifying direct deposits post to your account."
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "other",
+            "text": "최대 6개월 연속 × $100 = $600. 조건 못 채운 달은 건너뛰고 다음 달 다시 가능",
+            "amount": null,
+            "days": null,
+            "quote": "Your checking account is eligible for up to 6 consecutive cash bonuses."
+          },
+          {
+            "order": 4,
+            "portion": "base",
+            "kind": "other",
+            "text": "다른 은행·증권 계좌에서 오는 이체, Zelle, Venmo는 불인정 (고용주 급여형 입금만)",
+            "amount": null,
+            "days": null,
+            "quote": "Non-qualifying examples include: teller deposits, wire transfers, ATM transfers or deposits, BMO Digital Banking transfers or deposits, deposits processed as a debit card credit or real-time credit, transfers from any bank or brokerage account, Account to Account or Peer to Peer (e.g. Zelle ® , Venmo) transfers and deposits received via merchant payment platforms (such as Square ® )."
+          }
+        ]
+      },
+      "evidence": {
+        "ach_push": "Non-qualifying examples include: teller deposits, wire transfers, ATM transfers or deposits, BMO Digital Banking transfers or deposits, deposits processed as a debit card credit or real-time credit, transfers from any bank or brokerage account, Account to Account or Peer to Peer (e.g. Zelle ® , Venmo) transfers and deposits received via merchant payment platforms (such as Square ® ).",
+        "fee_waiver_text": "Everyday banking with no monthly maintenance fees"
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/ca-frontwave-credit-union-200-checking-bonus",
+      "source_url": "https://www.frontwavecu.com/101kgb",
+      "fields": {
+        "churn_months": 18,
+        "dd_days": 90,
+        "ach_push": "yes",
+        "ach_push_text": "To qualify, your deposits must come through as standard direct deposit or ACH into your Frontwave bank account.",
+        "eligibility_text": "Offer available to new Frontwave members age 18 or older who live, work, or attend school in San Diego, Riverside, Imperial or San Bernardino counties, or who qualify through a Select Employer Group (SEG) or military affiliation.",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "Frontwave Checking과 Savings를 같은 날 개설, 신청 시 \"TD Sent Me\" 선택",
+            "amount": null,
+            "days": null,
+            "quote": "To receive the $600 bonus, open new Frontwave Checking and Savings accounts on the same day (subject to approval)."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "enroll",
+            "text": "90일 안에 eStatements 등록 + 체크카드 활성화 + 저축으로 월 $25 이상 자동이체 2개월",
+            "amount": null,
+            "days": 90,
+            "quote": "Within 90 days of account opening, enroll in eStatements, activate your Frontwave Visa® Debit Card, receive $1,000 or more in qualifying direct deposits or ACH credits during two consecutive calendar months, and set up automatic transfers of at least $25 to savings for two consecutive months."
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "dd",
+            "text": "직접입금 또는 ACH 입금 합계 $1,000 이상을 2개월 연속 (90일 안에)",
+            "amount": 1000,
+            "days": 90,
+            "quote": "Within 90 days of account opening, enroll in eStatements, activate your Frontwave Visa® Debit Card, receive $1,000 or more in qualifying direct deposits or ACH credits during two consecutive calendar months, and set up automatic transfers of at least $25 to savings for two consecutive months."
+          }
+        ]
+      },
+      "evidence": {
+        "churn_months": "Not available to employees, volunteers, or anyone who has had a Frontwave account closed within the past 18 months.",
+        "dd_days": "Within 90 days of account opening, enroll in eStatements, activate your Frontwave Visa® Debit Card, receive $1,000 or more in qualifying direct deposits or ACH credits during two consecutive calendar months, and set up automatic transfers of at least $25 to savings for two consecutive months.",
+        "ach_push": "To qualify, your deposits must come through as standard direct deposit or ACH into your Frontwave bank account.",
+        "eligibility_text": "Offer available to new Frontwave members age 18 or older who live, work, or attend school in San Diego, Riverside, Imperial or San Bernardino counties, or who qualify through a Select Employer Group (SEG) or military affiliation."
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/four-leaf-federal-credit-union-550-checking-bonus-fka-as-bethpage-federalcredit-union",
+      "source_url": "https://www.fourleaffcu.com/queens-open-an-account/",
+      "fields": {
+        "reapply_once_only": 1,
+        "dd_amount": 500,
+        "ach_push": "no",
+        "ach_push_text": "A Qualifying Direct Deposit is a recurring electronic deposit of a paycheck, pension, or government benefits (such as Social Security) from an employer, the government, or similar third party of $500.00 or more.",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "2026-12-31까지 Free / Smart / Student Checking 개설",
+            "amount": null,
+            "days": null,
+            "quote": "you must open a Free Checking, Smart Checking, or Student Checking account with FourLeaf between February 2, 2026 and December 31, 2026, which is subject to approval, and have a Qualifying Direct Deposit (as defined below) post to the checking account within ninety (90) calendar days of account opening date."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "dd",
+            "text": "개설 후 90일 안에 적격 직접입금 1회 ($350 지급)",
+            "amount": null,
+            "days": 90,
+            "quote": "you must open a Free Checking, Smart Checking, or Student Checking account with FourLeaf between February 2, 2026 and December 31, 2026, which is subject to approval, and have a Qualifying Direct Deposit (as defined below) post to the checking account within ninety (90) calendar days of account opening date."
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "other",
+            "text": "적격 직접입금 = 고용주·정부에서 오는 $500 이상 반복 전자입금 (온라인 뱅킹 이체·Zelle은 아닐 수 있음)",
+            "amount": 500,
+            "days": null,
+            "quote": "A Qualifying Direct Deposit is a recurring electronic deposit of a paycheck, pension, or government benefits (such as Social Security) from an employer, the government, or similar third party of $500.00 or more."
+          },
+          {
+            "order": 4,
+            "portion": "extra",
+            "kind": "dd",
+            "text": "첫 입금 다음 달부터 12개월 연속 직접입금 유지 → 추가 $100",
+            "amount": null,
+            "days": null,
+            "quote": "To receive an additional $100.00 bonus (the “Second Direct Deposit Bonus”), you must continue to have a Qualifying Direct Deposit post to the checking account for twelve (12) consecutive months following the month of the initial Qualifying Direct Deposit."
+          },
+          {
+            "order": 5,
+            "portion": "extra",
+            "kind": "dd",
+            "text": "24개월 연속 직접입금 유지 → 추가 $100 (총 $550)",
+            "amount": null,
+            "days": null,
+            "quote": "To receive an additional $100.00 bonus (the “Third Direct Deposit Bonus”), you must continue to have a Qualifying Direct Deposit post to the checking account for twenty-four (24) consecutive months following the month of the initial Qualifying Direct Deposit."
+          }
+        ],
+        "dd_days": 90
+      },
+      "evidence": {
+        "reapply_once_only": "you must not have an existing FourLeaf checking account in which you are the primary account holder on the checking account and have not previously received a new checking account opening related bonus from FourLeaf Federal Credit Union (formerly known as Bethpage Federal Credit Union).",
+        "dd_amount": "A Qualifying Direct Deposit is a recurring electronic deposit of a paycheck, pension, or government benefits (such as Social Security) from an employer, the government, or similar third party of $500.00 or more.",
+        "ach_push": "A Qualifying Direct Deposit is a recurring electronic deposit of a paycheck, pension, or government benefits (such as Social Security) from an employer, the government, or similar third party of $500.00 or more.",
+        "dd_days": "have a Qualifying Direct Deposit (as defined below) post to the checking account within ninety (90) calendar days of account opening date"
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/ca-only-heritage-community-credit-union-500-checking-bonus",
+      "source_url": "https://www.heritageccu.com/lp/winner.html",
+      "fields": {
+        "expires_on": "2026-10-31",
+        "churn_months": 3,
+        "ach_push": "no",
+        "ach_push_text": "Person-to-person payments such as Zelle&reg;, transfers between accounts, and deposits made through payment apps do not qualify as direct deposits.",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "프로모 코드 5002026CK로 체킹 개설, 최소 $25 입금 → $100",
+            "amount": 25,
+            "days": null,
+            "quote": "To receive the $100 bonus, open a new HCCU checking account using promo code 5002026CK, subject to approval, and fund the account with a minimum opening deposit of $25."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "debit_txn",
+            "text": "60일 안에 체크카드 구매 40회 → $200",
+            "amount": null,
+            "days": 60,
+            "quote": "Earn an additional $200 when you complete 40 qualifying debit card purchase transactions within 60 days of account opening.",
+            "count": 40
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "dd",
+            "text": "60일 안에 월 $500 이상 반복 직접입금(ACH) 설정 → $200",
+            "amount": 500,
+            "days": 60,
+            "quote": "Earn an additional $200 when recurring direct deposits totaling at least $500 per month are received into the new checking account through the Automated Clearing House (ACH) network within 60 days of account opening."
+          }
+        ],
+        "dd_days": 60
+      },
+      "evidence": {
+        "expires_on": "Offer Ends October 31, 2026",
+        "churn_months": "Offer is unavailable to existing Heritage Community Credit Union (HCCU) checking account holders and members whose checking account was closed within the previous 90 days or closed with a negative balance.",
+        "ach_push": "Person-to-person payments such as Zelle&reg;, transfers between accounts, and deposits made through payment apps do not qualify as direct deposits.",
+        "dd_days": "Earn an additional $200 when recurring direct deposits totaling at least $500 per month are received into the new checking account through the Automated Clearing House (ACH) network within 60 days of account opening"
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/az-ca-fl-in-mi-nj-ny-oh-wi-flagstar-bank-250-350-checking-bonus",
+      "source_url": "https://www.flagstar.com/personal/bank/promo/checking/cash-offer.html",
+      "fields": {
+        "reapply_once_only": 1,
+        "dd_amount": 7500,
+        "dd_days": 90,
+        "ach_push": "yes",
+        "ach_push_text": "Within the first 90 days after account opening, you must receive one or more direct deposits (ACH credits) totaling at least $500 during each of the three consecutive 30-day timeframes (days 1-30, days 31-60, and days 61-90), for a cumulative total of at least $1,500 in direct deposits (ACH) credits to qualify for the Ready Checking $400 offer; or at least $2,500 during each of the three consecutive 30-day timeframes (days 1-30, days 31-60, and days 61-90), following account opening (for a cumulative total of at least $7,500) to qualify for the Elite Checking $500 offer.",
+        "early_termination_text": "early account closure fee and reclamation of bonus may be imposed for accounts closed within 180 days",
+        "fee_waiver_text": "Flagstar Elite Checking: $15 monthly service charge, which you can avoid by being an active-duty U.S. military member or a veteran, or by maintaining a $25,000 combined monthly average balance in your Flagstar personal deposit accounts.",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "Flagstar Elite Checking 개설 ($50 최소 입금). Ready Checking $400은 FL·MI·OH 거주자만",
+            "amount": null,
+            "days": null,
+            "quote": "If you are a new Flagstar customer, open a Flagstar Ready or Elite Checking account online in minutes."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "dd",
+            "text": "개설 후 90일 동안 30일 구간마다 직접입금(ACH 입금) $2,500 이상 × 3회 (총 $7,500) → $500",
+            "amount": 2500,
+            "days": 90,
+            "quote": "Within the first 90 days after account opening, you must receive one or more direct deposits (ACH credits) totaling at least $500 during each of the three consecutive 30-day timeframes (days 1-30, days 31-60, and days 61-90), for a cumulative total of at least $1,500 in direct deposits (ACH) credits to qualify for the Ready Checking $400 offer; or at least $2,500 during each of the three consecutive 30-day timeframes (days 1-30, days 31-60, and days 61-90), following account opening (for a cumulative total of at least $7,500) to qualify for the Elite Checking $500 offer."
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "other",
+            "text": "Elite Checking 월 수수료 $15: 군인이거나 $25,000 평균 잔고가 아니면 매달 부과",
+            "amount": 15,
+            "days": null,
+            "quote": "Flagstar Elite Checking: $15 monthly service charge, which you can avoid by being an active-duty U.S. military member or a veteran, or by maintaining a $25,000 combined monthly average balance in your Flagstar personal deposit accounts."
+          },
+          {
+            "order": 4,
+            "portion": "base",
+            "kind": "other",
+            "text": "180일 안에 계좌를 닫으면 조기 해지 수수료와 보너스 회수 가능",
+            "amount": null,
+            "days": 180,
+            "quote": "early account closure fee and reclamation of bonus may be imposed for accounts closed within 180 days"
+          }
+        ]
+      },
+      "evidence": {
+        "reapply_once_only": "if any signer on this account has been paid a checking cash bonus previously, you are ineligible to receive this offer",
+        "dd_amount": "Within the first 90 days after account opening, you must receive one or more direct deposits (ACH credits) totaling at least $500 during each of the three consecutive 30-day timeframes (days 1-30, days 31-60, and days 61-90), for a cumulative total of at least $1,500 in direct deposits (ACH) credits to qualify for the Ready Checking $400 offer; or at least $2,500 during each of the three consecutive 30-day timeframes (days 1-30, days 31-60, and days 61-90), following account opening (for a cumulative total of at least $7,500) to qualify for the Elite Checking $500 offer.",
+        "dd_days": "Within the first 90 days after account opening, you must receive one or more direct deposits (ACH credits) totaling at least $500 during each of the three consecutive 30-day timeframes (days 1-30, days 31-60, and days 61-90), for a cumulative total of at least $1,500 in direct deposits (ACH) credits to qualify for the Ready Checking $400 offer; or at least $2,500 during each of the three consecutive 30-day timeframes (days 1-30, days 31-60, and days 61-90), following account opening (for a cumulative total of at least $7,500) to qualify for the Elite Checking $500 offer.",
+        "ach_push": "Within the first 90 days after account opening, you must receive one or more direct deposits (ACH credits) totaling at least $500 during each of the three consecutive 30-day timeframes (days 1-30, days 31-60, and days 61-90), for a cumulative total of at least $1,500 in direct deposits (ACH) credits to qualify for the Ready Checking $400 offer; or at least $2,500 during each of the three consecutive 30-day timeframes (days 1-30, days 31-60, and days 61-90), following account opening (for a cumulative total of at least $7,500) to qualify for the Elite Checking $500 offer.",
+        "early_termination_text": "early account closure fee and reclamation of bonus may be imposed for accounts closed within 180 days",
+        "fee_waiver_text": "Flagstar Elite Checking: $15 monthly service charge, which you can avoid by being an active-duty U.S. military member or a veteran, or by maintaining a $25,000 combined monthly average balance in your Flagstar personal deposit accounts."
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/u-s-bank-450-100-checking-bonus",
+      "source_url": "https://www.usbank.com/splash/checking/2026-all-market-checking-offer.html",
+      "fields": {
+        "expires_on": "2026-11-10",
+        "dd_days": 90,
+        "ach_push": "no",
+        "ach_push_text": "A direct deposit is an electronic deposit of your paycheck made through the Automated Clearing House (ACH) network or an electronic deposit of your government benefits, such as Social Security, from your employer or the government. Other electronic deposits or person-to-person payments are not considered a direct deposit.",
+        "fee_waiver_text": "All others can have it waived by meeting any one of the following criteria: Have combined monthly direct deposits totaling $1,500 or more; or keep a minimum average account balance of $1,500 or more; or owner on a U.S. Bank Smartly™ Visa Signature® Card; or owner of an eligible U.S. Bank small business checking account; or qualify for one of the three Smart Rewards® tiers (Gold Tier, Platinum Tier or Platinum Plus Tier).",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "2026-11-10까지 프로모 페이지에서 Smartly Checking 개설, 60일 안에 $25 이상 입금",
+            "amount": 25,
+            "days": 60,
+            "quote": "Apply by November 10, 2026, and make an opening deposit of at least $25 within 60 days."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "enroll",
+            "text": "90일 안에 모바일 앱 또는 온라인 뱅킹 등록",
+            "amount": null,
+            "days": 90,
+            "quote": "Additionally, you must enroll in the U.S. Bank Mobile App or online banking within 90 days of opening your account."
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "dd",
+            "text": "90일 안에 직접입금 2회 이상, 합계 티어: $2,000~$4,999.99 → $250, $5,000~$7,999.99 → $350, $8,000 이상 → $450",
+            "amount": null,
+            "days": 90,
+            "quote": "You must also complete two or more direct deposits within 90 days of opening your account that total: $2,000 to $4,999.99 to earn the $250 bonus, $5,000 to $7,999.99 to earn the $350 bonus, or $8,000 or more to earn the $450 bonus.",
+            "tiered": true
+          },
+          {
+            "order": 4,
+            "portion": "base",
+            "kind": "other",
+            "text": "직접입금 = 고용주 급여 또는 정부 혜택의 ACH 입금. 그 외 전자입금·P2P는 불인정",
+            "amount": null,
+            "days": null,
+            "quote": "A direct deposit is an electronic deposit of your paycheck made through the Automated Clearing House (ACH) network or an electronic deposit of your government benefits, such as Social Security, from your employer or the government. Other electronic deposits or person-to-person payments are not considered a direct deposit."
+          }
+        ]
+      },
+      "evidence": {
+        "expires_on": "Apply by November 10, 2026, and make an opening deposit of at least $25 within 60 days.",
+        "dd_days": "You must also complete two or more direct deposits within 90 days of opening your account that total: $2,000 to $4,999.99 to earn the $250 bonus, $5,000 to $7,999.99 to earn the $350 bonus, or $8,000 or more to earn the $450 bonus.",
+        "ach_push": "A direct deposit is an electronic deposit of your paycheck made through the Automated Clearing House (ACH) network or an electronic deposit of your government benefits, such as Social Security, from your employer or the government. Other electronic deposits or person-to-person payments are not considered a direct deposit.",
+        "fee_waiver_text": "All others can have it waived by meeting any one of the following criteria: Have combined monthly direct deposits totaling $1,500 or more; or keep a minimum average account balance of $1,500 or more; or owner on a U.S. Bank Smartly™ Visa Signature® Card; or owner of an eligible U.S. Bank small business checking account; or qualify for one of the three Smart Rewards® tiers (Gold Tier, Platinum Tier or Platinum Plus Tier)."
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/navy-federal-credit-union-200-new-member-bonus",
+      "source_url": "https://www.navyfederal.org/campaigns/checking/a33580-checking-offer.html",
+      "fields": {
+        "churn_months": 9,
+        "ach_push": "yes",
+        "ach_push_text": "(3) monthly non-payroll ACH or payroll allotment totaling at least $500 and recurring for at least 3 out of 4 consecutive months that are deposited into Navy Federal deposit accounts where you are Primary Owner",
+        "eligibility_text": "Navy Federal membership is open to members of the Coast Guard, all Department of Defense uniformed personnel, reservists, Active Duty, retired, Veterans, Army and Air National Guard, DoD civilian employees, contractors, and their immediate family.",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "2026-12-31까지 프로모 코드 CHK26SRC로 가입하고 체킹 개설 (군인·국방부 관련자와 직계가족만 가입 가능)",
+            "amount": null,
+            "days": null,
+            "quote": "1) Join Navy Federal online, in branch, or by phone using promo code CHK26SRC between 10/1/2026 and 12/31/2026, 2) Open a checking account (as primary owner) by 12/31/2026, AND 3) Complete qualifying direct deposit transactions, as defined below, by 4/30/2027."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "dd",
+            "text": "2027-04-30까지 월 $500 이상 ACH(비급여 포함) 입금을 4개월 중 3개월 이상 반복",
+            "amount": 500,
+            "days": null,
+            "quote": "(3) monthly non-payroll ACH or payroll allotment totaling at least $500 and recurring for at least 3 out of 4 consecutive months that are deposited into Navy Federal deposit accounts where you are Primary Owner"
+          }
+        ]
+      },
+      "evidence": {
+        "churn_months": "Offer not valid for existing members or applicants whose Membership Share Savings account was closed within 270 days prior to establishing new membership.",
+        "ach_push": "(3) monthly non-payroll ACH or payroll allotment totaling at least $500 and recurring for at least 3 out of 4 consecutive months that are deposited into Navy Federal deposit accounts where you are Primary Owner",
+        "eligibility_text": "Navy Federal membership is open to members of the Coast Guard, all Department of Defense uniformed personnel, reservists, Active Duty, retired, Veterans, Army and Air National Guard, DoD civilian employees, contractors, and their immediate family."
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/pnc-up-to-250-400-checking-bonus",
+      "source_url": "https://www.pnc.com/en/personal-banking/banking/checking/campaigns/checking-offer-for-PNC-customers.html",
+      "fields": {
+        "expires_on": "2027-01-07",
+        "dd_amount": 5000,
+        "dd_days": 60,
+        "ach_push": "no",
+        "ach_push_text": "Credit card cash advance transfers, wire transfers, person-to-person transfers, transfers from one account to another, or deposits made at a branch, ATM, mobile device or through the mail do not qualify as qualifying direct deposits.",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "오퍼 페이지 링크 또는 지점에서 Virtual Wallet with Performance Select 개설 ($400) 또는 Virtual Wallet ($100)",
+            "amount": null,
+            "days": null,
+            "quote": "1) Open a new, eligible checking product online via the application link on this page or in a physical PNC location."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "dd",
+            "text": "개설 후 60일 안에 적격 직접입금 설정·수령",
+            "amount": null,
+            "days": 60,
+            "quote": "2) Set up and receive a qualifying direct deposit(s) within the first 60 days."
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "dd",
+            "text": "직접입금 합계 Performance Select $5,000 → $400 / Virtual Wallet $500 → $100",
+            "amount": 5000,
+            "days": null,
+            "quote": "The total amount of all qualifying direct deposits credited to your Spend account must be at least $5,000 for Virtual Wallet with Performance Select or $500 for Virtual Wallet.",
+            "tiered": true
+          },
+          {
+            "order": 4,
+            "portion": "base",
+            "kind": "other",
+            "text": "계좌 간 이체·P2P·지점/ATM 입금은 불인정 (고용주·기관 전자입금만)",
+            "amount": null,
+            "days": null,
+            "quote": "Credit card cash advance transfers, wire transfers, person-to-person transfers, transfers from one account to another, or deposits made at a branch, ATM, mobile device or through the mail do not qualify as qualifying direct deposits."
+          }
+        ]
+      },
+      "evidence": {
+        "expires_on": "Offer is valid 9/1/2026 through 1/7/2027 and may be extended, modified, or discontinued at any time and may vary by market.",
+        "dd_amount": "The total amount of all qualifying direct deposits credited to your Spend account must be at least $5,000 for Virtual Wallet with Performance Select or $500 for Virtual Wallet.",
+        "dd_days": "2) Set up and receive a qualifying direct deposit(s) within the first 60 days.",
+        "ach_push": "Credit card cash advance transfers, wire transfers, person-to-person transfers, transfers from one account to another, or deposits made at a branch, ATM, mobile device or through the mail do not qualify as qualifying direct deposits."
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/fifth-third-200-checking-bonus-fl-ga-il-ky-mi-nc-oh-tn-wv",
+      "source_url": "https://www.53.com/content/fifth-third/en/mkg/checking-offer.html",
+      "fields": {
+        "dd_amount": 500,
+        "dd_days": 90,
+        "ach_push": "no",
+        "ach_push_text": "Qualifying direct deposits include payroll, Social Security,\npension, and government benefits.\nTransfers from other accounts or mobile deposits do not qualify.",
+        "fee_waiver_text": "No, there are no monthly fees for Fifth Third Momentum ®\nChecking accounts.",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "오퍼 코드로 Momentum 또는 Preferred Checking 개설",
+            "amount": null,
+            "days": null,
+            "quote": "To qualify, open a new Fifth Third Momentum ® or\nPreferred Checking account by the\noffer deadline, and make qualifying direct deposits totaling $ 500 or more within 90 days."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "dd",
+            "text": "90일 안에 적격 직접입금 합계 $500 이상",
+            "amount": 500,
+            "days": 90,
+            "quote": "To qualify, open a new Fifth Third Momentum ® or\nPreferred Checking account by the\noffer deadline, and make qualifying direct deposits totaling $ 500 or more within 90 days."
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "other",
+            "text": "다른 계좌에서의 이체·모바일 입금은 불인정 (급여·Social Security·연금·정부 혜택만)",
+            "amount": null,
+            "days": null,
+            "quote": "Qualifying direct deposits include payroll, Social Security,\npension, and government benefits.\nTransfers from other accounts or mobile deposits do not qualify."
+          }
+        ]
+      },
+      "evidence": {
+        "dd_amount": "To qualify, open a new Fifth Third Momentum ® or\nPreferred Checking account by the\noffer deadline, and make qualifying direct deposits totaling $ 500 or more within 90 days.",
+        "dd_days": "To qualify, open a new Fifth Third Momentum ® or\nPreferred Checking account by the\noffer deadline, and make qualifying direct deposits totaling $ 500 or more within 90 days.",
+        "ach_push": "Qualifying direct deposits include payroll, Social Security,\npension, and government benefits.\nTransfers from other accounts or mobile deposits do not qualify.",
+        "fee_waiver_text": "No, there are no monthly fees for Fifth Third Momentum ®\nChecking accounts."
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/ca-first-us-community-credit-union-300-checking-bonus",
+      "source_url": "https://firstus.org/btf-bonus-offer",
+      "fields": {
+        "expires_on": "2026-12-31",
+        "ach_push": "no",
+        "ach_push_text": "Deposits processed as a debit card credit or via Account to Account or Peer to Peer (e.g. Zelle®, Venmo) transfers do not qualify.",
+        "fee_waiver_text": "No monthly service charge with eStatements or for members 60+.",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "프로모 코드 BTF300으로 Better Than Free Checking 개설 (멤버십 자격 필요)",
+            "amount": null,
+            "days": null,
+            "quote": "Account can be opened at a First U.S. branch, online or via phone using code promo code BTF300. Must qualify for membership."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "dd",
+            "text": "90일 안에 $500 이상 반복 payroll 직접입금 + 체크카드 거래 5회",
+            "amount": 500,
+            "days": 90,
+            "quote": "*Cash bonus offer valid until December 31, 2026, when a new Better Than Free checking account is opened with recurring payroll direct deposit of $500 or more and at least 5 debit transactions within 90 days.",
+            "count": 5
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "other",
+            "text": "계좌 간 이체·P2P(Zelle, Venmo)·체크카드 크레딧은 불인정",
+            "amount": null,
+            "days": null,
+            "quote": "Deposits processed as a debit card credit or via Account to Account or Peer to Peer (e.g. Zelle®, Venmo) transfers do not qualify."
+          }
+        ]
+      },
+      "evidence": {
+        "expires_on": "*Cash bonus offer valid until December 31, 2026, when a new Better Than Free checking account is opened with recurring payroll direct deposit of $500 or more and at least 5 debit transactions within 90 days.",
+        "ach_push": "Deposits processed as a debit card credit or via Account to Account or Peer to Peer (e.g. Zelle®, Venmo) transfers do not qualify.",
+        "fee_waiver_text": "No monthly service charge with eStatements or for members 60+."
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/pa-only-psecu-100-250-checking-bonus",
+      "source_url": "https://go.psecu.com/promo",
+      "fields": {
+        "reapply_once_only": 1,
+        "dd_amount": 500,
+        "dd_days": 100,
+        "ach_push": "no",
+        "ach_push_text": "The following do not qualify and will not be counted toward bonus eligibility: person-to-person transfers (P2P), transfers between demand deposit accounts (for example, from a checking account to another checking account), and deposits or ACH transfers not originating directly from an employer or the government (for example, online transfers or bank transfers).",
+        "requirements": [
+          {
+            "order": 1,
+            "portion": "base",
+            "kind": "open_account",
+            "text": "프로모 코드 2026PROMO로 가입, 저축 + 체킹 각 1개 개설",
+            "amount": null,
+            "days": null,
+            "quote": "This includes: using promotional code 2026PROMO at the time of application, being approved for and opening at least one savings and one checking account, and setting up and receiving two (2) Qualifying Payroll Direct Deposits of $500 or more each into either the new savings or checking account."
+          },
+          {
+            "order": 2,
+            "portion": "base",
+            "kind": "dd",
+            "text": "$500 이상 payroll 직접입금 2회 수령 (고용주·정부 발신만 인정)",
+            "amount": 500,
+            "days": null,
+            "quote": "This includes: using promotional code 2026PROMO at the time of application, being approved for and opening at least one savings and one checking account, and setting up and receiving two (2) Qualifying Payroll Direct Deposits of $500 or more each into either the new savings or checking account.",
+            "count": 2
+          },
+          {
+            "order": 3,
+            "portion": "base",
+            "kind": "other",
+            "text": "모든 조건을 가입 후 100일 안에 완료, 보너스는 145일 안에 지급",
+            "amount": null,
+            "days": 100,
+            "quote": "Please note: Promo requirements must be completed within 100 days of establishing membership."
+          },
+          {
+            "order": 4,
+            "portion": "base",
+            "kind": "other",
+            "text": "온라인 이체·은행 간 ACH 이체·P2P는 불인정",
+            "amount": null,
+            "days": null,
+            "quote": "The following do not qualify and will not be counted toward bonus eligibility: person-to-person transfers (P2P), transfers between demand deposit accounts (for example, from a checking account to another checking account), and deposits or ACH transfers not originating directly from an employer or the government (for example, online transfers or bank transfers)."
+          }
+        ]
+      },
+      "evidence": {
+        "reapply_once_only": "You are not eligible to receive this bonus if you ever received any new member incentive bonus from PSECU for opening a new account, regardless of when the prior bonus was awarded.",
+        "dd_amount": "This includes: using promotional code 2026PROMO at the time of application, being approved for and opening at least one savings and one checking account, and setting up and receiving two (2) Qualifying Payroll Direct Deposits of $500 or more each into either the new savings or checking account.",
+        "dd_days": "Please note: Promo requirements must be completed within 100 days of establishing membership.",
+        "ach_push": "The following do not qualify and will not be counted toward bonus eligibility: person-to-person transfers (P2P), transfers between demand deposit accounts (for example, from a checking account to another checking account), and deposits or ACH transfers not originating directly from an employer or the government (for example, online transfers or bank transfers)."
+      }
+    },
     {
       "offer_key": "url:https://www.doctorofcredit.com/targeted-chase-900-checking-savings-bonus",
       "fields": {
@@ -11,24 +683,6 @@
       "evidence": {
         "deposit_hold_amount": "Maintain at least a $15,000 balance for 90 days from the coupon enrollment",
         "deposit_hold_days": "Maintain at least a $15,000 balance for 90 days from the coupon enrollment"
-      }
-    },
-    {
-      "offer_key": "url:https://www.doctorofcredit.com/four-leaf-federal-credit-union-550-checking-bonus-fka-as-bethpage-federalcredit-union",
-      "fields": {
-        "dd_days": 90
-      },
-      "evidence": {
-        "dd_days": "have a Qualifying Direct Deposit (as defined below) post to the checking account within ninety (90) calendar days of account opening date"
-      }
-    },
-    {
-      "offer_key": "url:https://www.doctorofcredit.com/ca-only-heritage-community-credit-union-500-checking-bonus",
-      "fields": {
-        "dd_days": 60
-      },
-      "evidence": {
-        "dd_days": "Earn an additional $200 when recurring direct deposits totaling at least $500 per month are received into the new checking account through the Automated Clearing House (ACH) network within 60 days of account opening"
       }
     },
     {
