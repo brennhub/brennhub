@@ -2,9 +2,10 @@
 
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, Star } from "lucide-react";
-import { useMessages } from "@/lib/i18n/provider";
+import { useLocale, useMessages } from "@/lib/i18n/provider";
 import { useBankBonusMessages, type BankBonusMessages } from "@/lib/bank-bonus/messages";
 import type { OffersResponse } from "@/lib/bank-bonus/offers";
+import { textFragmentUrl } from "@/lib/bank-bonus/links";
 import type { AccountType, EvaluatedOffer, Evidence, FreshnessRow, OfferFlags, OfferTag, PostRow, RequirementStep } from "@/lib/bank-bonus/types";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -76,14 +77,27 @@ type LoadState = { kind: "loading" } | { kind: "error"; message: string } | { ki
 
 type Shown = { text: string; muted?: boolean; amber?: boolean };
 
-/** 크게 보이는 금액 — 겹친 오퍼면 기본(직접입금만) 금액. */
-function bonusShown(t: M, o: EvaluatedOffer): Shown {
+/** DoC 표기 금액 (겹친 오퍼면 기본 금액). */
+function docBonusShown(t: M, o: EvaluatedOffer): Shown {
   if (o.bonusBase != null) return { text: t.bonusRange(o.bonusBase, o.bonusBase) };
   if (o.bonusMax == null) return { text: t.unknown, muted: true };
   return { text: o.bonusMin == null ? t.bonusUpTo(o.bonusMax) : t.bonusRange(o.bonusMin, o.bonusMax) };
 }
 
 /** 금액 아래 작은 줄 — "저축 포함 시 $900 (예치금 $15,000, 90일)", 없으면 제목 괄호 메모. */
+/** 크게 보이는 금액 — 공식 약관 최대액이 있으면 그것, 없으면 DoC 표기. */
+function bonusShown(t: M, o: EvaluatedOffer): Shown {
+  if (o.bonusOfficialMax != null) return { text: t.bonusRange(o.bonusOfficialMax, o.bonusOfficialMax) };
+  return docBonusShown(t, o);
+}
+
+/** 공식 금액이 DoC 표기와 다를 때 작은 회색 "DoC 표기 $675". */
+function docBonusNote(t: M, o: EvaluatedOffer): string | null {
+  if (o.bonusOfficialMax == null) return null;
+  const doc = docBonusShown(t, o);
+  return doc.muted || doc.text === bonusShown(t, o).text ? null : t.docListed(doc.text);
+}
+
 function bonusSubline(t: M, o: EvaluatedOffer): string | null {
   const shown = o.bonusBase ?? o.bonusMax;
   if (o.bonusTotalWithDeposit != null && (shown == null || o.bonusTotalWithDeposit > shown)) {
@@ -125,7 +139,21 @@ const CIRCLED = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", 
 function stepEvidence(o: EvaluatedOffer, st: RequirementStep): Evidence | null {
   if (!st.quote) return null;
   const official = st.source === "official";
-  return { quote: st.quote, source: official ? "official" : "doc_post", url: official ? o.official.url : o.detailUrl, via: st.via };
+  return {
+    quote: st.quote,
+    quote_ko: st.quote_ko ?? null,
+    source: official ? "official" : "doc_post",
+    url: official ? o.official.url : o.detailUrl,
+    via: st.via,
+  };
+}
+
+const HANGUL = /[가-힣]/;
+
+/** 단계 한 줄 — 한국어 화면이고 Cowork 단계 글이 한국어면 그 글, 아니면 종류·금액으로 만든 문구. */
+function stepLabel(t: M, locale: string, o: EvaluatedOffer, st: RequirementStep, stacked: boolean): string {
+  if (locale === "ko" && HANGUL.test(st.text)) return st.text;
+  return t.step(st.kind === "dd" && o.ddTiered ? { ...st, tiered: true } : st, stacked && st.portion === "base");
 }
 
 function regionShown(t: M, o: EvaluatedOffer): Shown {
@@ -366,88 +394,160 @@ function Value({ v, className }: { v: Shown; className?: string }) {
   );
 }
 
-/** 값 + 작은 "근거" 버튼 — 누르면 근거 문장·출처 종류·링크가 아래에 펼쳐진다. 근거 없으면 버튼 없음. */
-function Fact({ t, v, ev, className }: { t: M; v: Shown; ev?: Evidence | null; className?: string }) {
-  const [open, setOpen] = useState(false);
+/** 작은 "근거" 칩 — 줄마다 하나. */
+function EvidenceChip({ t, open, onClick }: { t: M; open: boolean; onClick: () => void }) {
   return (
-    <span className={cn("inline-flex min-w-0 flex-col", className)}>
-      <span className="inline-flex flex-wrap items-baseline gap-x-2">
-        <Value v={v} />
-        {ev?.stale && (
-          <span className="rounded border border-border px-1 text-[11px] text-muted-foreground" title={t.docBasedHint}>
-            {t.docBased}
-          </span>
-        )}
-        {ev && (
-          <button
-            type="button"
-            onClick={() => setOpen((x) => !x)}
-            aria-expanded={open}
-            className="text-xs text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-          >
-            {t.evidence}
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={open}
+      className={cn(
+        "shrink-0 rounded-full border px-1.5 text-[11px] leading-4 transition-colors",
+        open ? "border-blue-600 text-blue-700 dark:border-blue-400 dark:text-blue-300" : "border-border text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {t.evidence}
+    </button>
+  );
+}
+
+/** 근거 1건 — 한국어 화면은 번역 먼저 + "원문" 토글, 영어 화면은 원문만. 출처 열기 = 인용 위치로 가는 링크. */
+function EvidenceItem({ t, ev }: { t: M; ev: Evidence }) {
+  const { locale } = useLocale();
+  const [showOriginal, setShowOriginal] = useState(false);
+  const ko = locale === "ko" && ev.quote_ko ? ev.quote_ko : null;
+  const href = textFragmentUrl(ev.url, ev.quote);
+  return (
+    <li className="space-y-1">
+      <p className="text-foreground">“{ko ?? ev.quote}”</p>
+      {ko && showOriginal && <p className="text-muted-foreground">“{ev.quote}”</p>}
+      <p className="flex flex-wrap gap-x-3">
+        <span>
+          {t.evidenceSources[ev.source]}
+          {ev.via === "cowork" && ev.source !== "cowork" ? t.viaCowork : ""}
+        </span>
+        {ko && (
+          <button type="button" onClick={() => setShowOriginal((x) => !x)} aria-expanded={showOriginal} className="underline underline-offset-2 hover:text-foreground">
+            {t.original}
           </button>
         )}
-      </span>
-      {ev && open && (
-        <span className="mt-1 block rounded-md border border-border bg-muted/40 p-2 text-xs text-muted-foreground">
-          <span className="block text-foreground">“{ev.quote}”</span>
-          <span className="mt-1 flex flex-wrap gap-x-2">
-            <span>
-              {t.evidenceSources[ev.source]}
-              {ev.via === "cowork" && ev.source !== "cowork" ? t.viaCowork : ""}
-            </span>
-            {ev.url && (
-              <a href={ev.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">
-                {t.openSource}
-              </a>
-            )}
-          </span>
-        </span>
-      )}
-    </span>
+        {href && (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">
+            {t.openSource}
+          </a>
+        )}
+      </p>
+    </li>
+  );
+}
+
+function EvidenceDrawer({ t, items }: { t: M; items: Evidence[] }) {
+  return (
+    <ul className="mt-1 space-y-2 rounded-md border border-border bg-muted/40 p-2 text-xs text-muted-foreground">
+      {items.map((ev, i) => (
+        <EvidenceItem key={i} t={t} ev={ev} />
+      ))}
+    </ul>
   );
 }
 
 /**
- * 보너스 조건 체크리스트 — 기본 몫 단계 먼저, 그다음 "+$N 받으려면" + 추가 몫 단계. 단계마다 근거.
- * 체크리스트가 없으면 한 줄 요약에 "요약(확인 필요)" 표시.
+ * 값 + 줄당 "근거" 칩 하나. 칩을 누르면 그 줄 아래에 근거 서랍(번역·원문·출처·링크). 처음엔 모두 닫힘.
+ * 근거가 없으면 칩도 없다. children이 있으면 값 대신 그 내용을 보인다 (체크리스트).
+ */
+function Fact({
+  t,
+  v,
+  ev,
+  className,
+  children,
+}: {
+  t: M;
+  v?: Shown;
+  ev?: Evidence | Evidence[] | null;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const items = (Array.isArray(ev) ? ev : ev ? [ev] : []).filter(Boolean);
+  const stale = items.some((x) => x.stale);
+  return (
+    <span className={cn("flex min-w-0 flex-col", className)}>
+      <span className="flex min-w-0 items-start gap-x-2">
+        <span className="min-w-0">{children ?? (v ? <Value v={v} /> : null)}</span>
+        {stale && (
+          <span className="shrink-0 rounded border border-border px-1 text-[11px] leading-4 text-muted-foreground" title={t.docBasedHint}>
+            {t.docBased}
+          </span>
+        )}
+        {items.length > 0 && <EvidenceChip t={t} open={open} onClick={() => setOpen((x) => !x)} />}
+      </span>
+      {open && items.length > 0 && <EvidenceDrawer t={t} items={items} />}
+    </span>
+  );
+}
+
+const MAX_CARD_STEPS = 4;
+
+/**
+ * 보너스 조건 체크리스트 — 단계 글만(짧은 한국어 줄), 인용은 줄의 근거 칩 하나로.
+ * 기본 몫 단계 → "+$N 받으려면" → 추가 몫 단계. 체크리스트가 없으면 한 줄 요약 + "요약(확인 필요)".
+ * compact(카드)는 4단계까지 보이고 나머지는 "외 N단계" — 근거 서랍에는 전 단계 인용.
  */
 function Requirements({ t, o, compact }: { t: M; o: EvaluatedOffer; compact?: boolean }) {
+  const { locale } = useLocale();
   const steps = o.requirements;
   if (!steps?.length) {
     return (
-      <span className="inline-flex flex-col">
-        <span className="text-xs text-muted-foreground">{t.summaryUnverified}</span>
-        <Fact t={t} v={requirementShown(t, o)} ev={o.evidence.requirement} />
-      </span>
+      <Fact t={t} ev={o.evidence.requirement}>
+        <span className="block text-xs text-muted-foreground">{t.summaryUnverified}</span>
+        <Value v={requirementShown(t, o)} />
+      </Fact>
     );
   }
   const base = steps.filter((x) => x.portion === "base");
   const extra = steps.filter((x) => x.portion === "extra");
   const stacked = extra.length > 0;
   const extraAmount = o.bonusTotalWithDeposit != null && o.bonusBase != null ? o.bonusTotalWithDeposit - o.bonusBase : null;
-  // 보너스 자체가 범위인데 기본 금액을 모르면 직접입금 한 숫자는 부분값 — 티어로 보인다.
-  const label = (st: RequirementStep) =>
-    t.step(st.kind === "dd" && o.ddTiered ? { ...st, tiered: true } : st, stacked && st.portion === "base");
-  const item = (st: RequirementStep, n: number) => (
-    <li key={`${st.portion}-${st.order}`} className="flex gap-1">
-      <span className="text-muted-foreground">{CIRCLED[n] ?? `${n + 1}.`}</span>
-      <Fact t={t} v={{ text: label(st) }} ev={stepEvidence(o, st)} />
-    </li>
-  );
+  const ordered = [...base, ...extra];
+  const shown = compact ? ordered.slice(0, MAX_CARD_STEPS) : ordered;
+  const evidence = ordered.map((st) => stepEvidence(o, st)).filter((x): x is Evidence => !!x);
   return (
-    <ol className={cn("flex flex-col", compact ? "gap-0.5" : "gap-1")}>
-      {base.map((st, i) => item(st, i))}
-      {stacked && <li className="pt-1 text-xs text-muted-foreground">{t.extraFor(extraAmount)}</li>}
-      {extra.map((st, i) => item(st, base.length + i))}
-    </ol>
+    <Fact t={t} ev={evidence}>
+      <ol className="flex flex-col gap-0.5">
+        {shown.map((st, i) => {
+          const label = stepLabel(t, locale, o, st, stacked);
+          return (
+            <Fragment key={`${st.portion}-${st.order}`}>
+              {stacked && i === base.length && <li className="text-xs text-muted-foreground">{t.extraFor(extraAmount)}</li>}
+              <li className="flex min-w-0 gap-1" title={label}>
+                <span className="text-muted-foreground">{CIRCLED[i] ?? `${i + 1}.`}</span>
+                <span className={cn("min-w-0", compact && "truncate")}>{label}</span>
+              </li>
+            </Fragment>
+          );
+        })}
+        {shown.length < ordered.length && <li className="text-xs text-muted-foreground">{t.moreSteps(ordered.length - shown.length)}</li>}
+      </ol>
+    </Fact>
   );
 }
 
-function Chip({ children, className }: { children: React.ReactNode; className?: string }) {
+/** 태그 칩 — 가입 자격 제한은 걸린 사유를 툴팁으로. */
+function TagChip({ t, tag }: { t: M; tag: OfferTag }) {
+  const title = tag.code === "membership" && tag.reason ? t.restriction[tag.reason.kind](tag.reason.matched) : undefined;
   return (
-    <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs whitespace-nowrap", className)}>{children}</span>
+    <Chip className={TAG_TONE[tag.code]} title={title}>
+      {tagText(t, tag)}
+    </Chip>
+  );
+}
+
+function Chip({ children, className, title }: { children: React.ReactNode; className?: string; title?: string }) {
+  return (
+    <span title={title} className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs whitespace-nowrap", className)}>
+      {children}
+    </span>
   );
 }
 
@@ -470,9 +570,7 @@ function Tags({ t, o, className }: { t: M; o: EvaluatedOffer; className?: string
     <span className={cn("flex flex-wrap gap-1", className)}>
       {o.flags.applied ? <Chip className={ACCENT_ON}>{t.appliedBadge}</Chip> : null}
       {o.tags.map((tag) => (
-        <Chip key={tag.code} className={TAG_TONE[tag.code]}>
-          {tagText(t, tag)}
-        </Chip>
+        <TagChip key={tag.code} t={t} tag={tag} />
       ))}
     </span>
   );
@@ -512,57 +610,72 @@ const linkSecondary = "inline-flex h-8 items-center rounded-md border border-inp
 
 // ───────────────────────── Top 5 ─────────────────────────
 
+/**
+ * Top 5 카드 — 5초 판단용, 결론만. 순위·은행·금액(크게) → 다섯 줄(신청 마감·신청 방법·보너스 조건·재신청 가능·ACH 이체 인정)
+ * → 지역·신용조회 한 줄 → 태그 → 버튼. 줄마다 근거 칩 하나, 처음엔 모두 닫힘. 데스크톱에서 카드 높이 약 420px 목표.
+ */
 function TopPicks({ t, data, nowMs, onFlag }: { t: M; data: OffersResponse | null; nowMs: number; onFlag: FlagFn }) {
   return (
     <section className="mt-12">
       <h2 className="text-base font-semibold text-foreground">{t.top}</h2>
       {data && data.top.length === 0 && <p className="mt-2 text-sm text-muted-foreground">{t.topEmpty}</p>}
       <ol className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {data?.top.map((o, i) => (
-          <li key={o.key} className="flex h-full flex-col rounded-lg border border-border bg-card p-4">
-            <span className="text-xs text-muted-foreground">{i + 1}</span>
-            <div className="mt-1 flex items-start justify-between gap-4">
-              <h3 className="min-w-0 text-lg font-semibold text-foreground">{o.bank ?? o.title}</h3>
-              <div className="shrink-0 text-right">
-                <Value v={bonusShown(t, o)} className="text-lg font-semibold tabular-nums" />
-                {bonusSubline(t, o) && <p className="text-xs text-muted-foreground">{bonusSubline(t, o)}</p>}
+        {data?.top.map((o, i) => {
+          const sub = docBonusNote(t, o) ?? bonusSubline(t, o);
+          return (
+            <li key={o.key} className="flex h-full flex-col rounded-lg border border-border bg-card p-4">
+              <div className="flex items-start justify-between gap-4">
+                <h3 className="min-w-0 text-lg font-semibold text-foreground">
+                  <span className="mr-2 text-xs font-normal text-muted-foreground">{i + 1}</span>
+                  {o.bank ?? o.title}
+                </h3>
+                <div className="shrink-0 text-right">
+                  <Value v={bonusShown(t, o)} className="text-lg font-semibold tabular-nums" />
+                  {sub && <p className="max-w-40 text-xs text-muted-foreground">{sub}</p>}
+                </div>
               </div>
-            </div>
-            <dl className="mt-4 grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-2 text-sm">
-              <dt className="text-xs text-muted-foreground">{t.col.expires}</dt>
-              <dd><Fact t={t} v={deadlineShown(t, o, nowMs)} ev={o.evidence.expires} /></dd>
-              <dt className="text-xs text-muted-foreground">{t.col.methods}</dt>
-              <dd><Methods t={t} o={o} /></dd>
-              <dt className="text-xs text-muted-foreground">{t.col.requirement}</dt>
-              <dd><Requirements t={t} o={o} /></dd>
-              <dt className="text-xs text-muted-foreground">{t.col.reapply}</dt>
-              <dd><Fact t={t} v={reapplyShown(t, o)} ev={o.reapply.evidence} /></dd>
-              <dt className="text-xs text-muted-foreground">{t.col.ach}</dt>
-              <dd><Fact t={t} v={achShown(t, o)} ev={o.ach.evidence} /></dd>
-              <dt className="text-xs text-muted-foreground">{t.col.region}</dt>
-              <dd className="flex flex-wrap gap-x-2">
+              <dl className="mt-2 grid grid-cols-[5.5rem_1fr] items-start gap-x-2 gap-y-1 text-sm">
+                <dt className="pt-0.5 text-xs text-muted-foreground">{t.col.expires}</dt>
+                <dd className="min-w-0"><Fact t={t} v={deadlineShown(t, o, nowMs)} ev={o.evidence.expires} /></dd>
+                <dt className="pt-0.5 text-xs text-muted-foreground">{t.col.methods}</dt>
+                <dd className="min-w-0"><Methods t={t} o={o} /></dd>
+                <dt className="pt-0.5 text-xs text-muted-foreground">{t.col.requirement}</dt>
+                <dd className="min-w-0"><Requirements t={t} o={o} compact /></dd>
+                <dt className="pt-0.5 text-xs text-muted-foreground">{t.col.reapply}</dt>
+                <dd className="min-w-0"><Fact t={t} v={reapplyShown(t, o)} ev={o.reapply.evidence} /></dd>
+                <dt className="pt-0.5 text-xs text-muted-foreground">{t.col.ach}</dt>
+                <dd className="min-w-0"><Fact t={t} v={achShown(t, o)} ev={o.ach.evidence} /></dd>
+              </dl>
+              <p className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
+                <span>{t.col.region}</span>
                 <Value v={regionShown(t, o)} />
-                <span className="text-xs text-muted-foreground">{t.col.pull}</span>
+                <span aria-hidden>·</span>
+                <span>{t.col.pull}</span>
                 <Value v={pullShown(t, o)} />
-              </dd>
-            </dl>
-            <Tags t={t} o={o} className="mt-4" />
-            <div className="mt-auto flex flex-wrap gap-2 pt-4">
-              {o.detailUrl && (
-                <a href={o.detailUrl} target="_blank" rel="noopener noreferrer" className={linkPrimary}>
-                  {t.viewPost}
-                </a>
-              )}
-              {o.bankOfferUrl && (
-                <a href={o.bankOfferUrl} target="_blank" rel="noopener noreferrer" className={linkSecondary}>
-                  {t.bankPage}
-                </a>
-              )}
-              <FlagButtons t={t} o={o} onFlag={onFlag} />
-            </div>
-            {o.official.state === "unavailable" && <p className="mt-2 text-xs text-muted-foreground">{t.officialUnavailable}</p>}
-          </li>
-        ))}
+                {o.official.state === "unavailable" && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span>{t.officialUnavailable}</span>
+                  </>
+                )}
+              </p>
+              <Tags t={t} o={o} className="mt-2" />
+              <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
+                {o.detailUrl && (
+                  <a href={o.detailUrl} target="_blank" rel="noopener noreferrer" className={linkPrimary}>
+                    {t.viewPost}
+                  </a>
+                )}
+                {o.bankOfferUrl && (
+                  <a href={o.bankOfferUrl} target="_blank" rel="noopener noreferrer" className={linkSecondary}>
+                    {t.bankPage}
+                  </a>
+                )}
+                <FlagButtons t={t} o={o} onFlag={onFlag} />
+              </div>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );
@@ -764,7 +877,9 @@ function OfferTable({ t, offers, nowMs, onFlag }: { t: M; offers: EvaluatedOffer
                 </td>
                 <td className="px-2 py-2 whitespace-nowrap">
                   <Value v={bonusShown(t, o)} className="tabular-nums" />
-                  {bonusSubline(t, o) && <div className="max-w-48 whitespace-normal text-muted-foreground">{bonusSubline(t, o)}</div>}
+                  {(docBonusNote(t, o) ?? bonusSubline(t, o)) && (
+                    <div className="max-w-48 whitespace-normal text-muted-foreground">{docBonusNote(t, o) ?? bonusSubline(t, o)}</div>
+                  )}
                 </td>
                 <td className="min-w-28 px-2 py-2"><Fact t={t} v={deadlineShown(t, o, nowMs)} ev={o.evidence.expires} /></td>
                 <td className="px-2 py-2"><Methods t={t} o={o} /></td>
@@ -777,9 +892,7 @@ function OfferTable({ t, offers, nowMs, onFlag }: { t: M; offers: EvaluatedOffer
                 <td className="min-w-28 px-2 py-2">
                   <span className="flex flex-wrap gap-1">
                     {o.tags.map((tag) => (
-                      <Chip key={tag.code} className={TAG_TONE[tag.code]}>
-                        {tagText(t, tag)}
-                      </Chip>
+                      <TagChip key={tag.code} t={t} tag={tag} />
                     ))}
                   </span>
                 </td>
@@ -827,7 +940,9 @@ function OfferCards({ t, offers, nowMs, onFlag }: { t: M; offers: EvaluatedOffer
             <div className="flex shrink-0 items-start gap-1">
               <div className="text-right">
                 <Value v={bonusShown(t, o)} className="tabular-nums" />
-                {bonusSubline(t, o) && <div className="max-w-40 text-xs text-muted-foreground">{bonusSubline(t, o)}</div>}
+                {(docBonusNote(t, o) ?? bonusSubline(t, o)) && (
+                  <div className="max-w-40 text-xs text-muted-foreground">{docBonusNote(t, o) ?? bonusSubline(t, o)}</div>
+                )}
               </div>
               <StarButton t={t} o={o} onFlag={onFlag} />
             </div>

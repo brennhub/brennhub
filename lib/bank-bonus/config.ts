@@ -10,6 +10,14 @@ export const existingBanks: { name: string; note: string }[] = [
   { name: "Arrowhead", note: "Arrowhead Credit Union 기존 계좌" },
 ];
 
+/**
+ * 내 지역 — 가입 자격 판정용. 카운티·도시를 나열한 자격 문장은 아래 이름 중 하나라도 있으면 제한이 아니다.
+ * (Gardena · Torrance는 LA 카운티 안의 도시 — 도시 단위로만 적는 신협 대비.)
+ */
+export const myCounty = "Los Angeles";
+export const myState = "CA";
+export const myAreaNames = ["Los Angeles", "LA County", "Gardena", "Torrance"];
+
 export const SCORE = {
   expiringDays: 30,
   newDays: 7,

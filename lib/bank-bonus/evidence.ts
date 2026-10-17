@@ -29,6 +29,8 @@ export const EXTRACT_FIELDS = [
   "eligibility_text",
   "fee_waiver_text",
   "early_termination_text",
+  "bonus_official_max",
+  "bonus_official_note",
   "requirements",
 ] as const;
 export type ExtractField = (typeof EXTRACT_FIELDS)[number];
@@ -48,13 +50,19 @@ export const FIELD_COLUMN: Record<ExtractField, string> = {
   eligibility_text: "eligibility_text",
   fee_waiver_text: "fee_waiver_text",
   early_termination_text: "early_termination_text",
+  // 공식 금액은 상세 칸이 없다 — official_fields에만 (공식 본문에서 근거가 확인될 때만 채택).
+  bonus_official_max: "bonus_official_max",
+  bonus_official_note: "bonus_official_note",
   requirements: "requirements_json",
 };
+
+/** 공식 본문에서만 받는 필드 — DoC 원문에서 찾은 인용은 quote_not_found로 버린다. */
+export const OFFICIAL_ONLY = new Set<ExtractField>(["bonus_official_max", "bonus_official_note"]);
 
 /** export 대상 판정 필드 — 이 중 하나라도 비면 Cowork가 볼 오퍼. */
 export const TARGET_FIELDS = ["expires_on", "churn_months", "dd_amount", "dd_days", "deposit_hold_amount", "requirements", "ach_push"] as const;
 
-const TEXT_FIELDS = new Set<ExtractField>(["eligibility_text", "fee_waiver_text", "early_termination_text"]);
+const TEXT_FIELDS = new Set<ExtractField>(["eligibility_text", "fee_waiver_text", "early_termination_text", "bonus_official_note"]);
 
 export type ExtractValues = {
   expires_on?: string | null;
@@ -71,6 +79,8 @@ export type ExtractValues = {
   eligibility_text?: string | null;
   fee_waiver_text?: string | null;
   early_termination_text?: string | null;
+  bonus_official_max?: number | null;
+  bonus_official_note?: string | null;
   requirements?: RequirementStep[] | null;
 };
 
@@ -103,6 +113,7 @@ export function valueInQuote(field: ScalarField, value: unknown, quote: string):
   switch (field) {
     case "dd_amount":
     case "deposit_hold_amount":
+    case "bonus_official_max":
     case "dd_days":
     case "deposit_hold_days":
       return typeof value === "number" && Number.isInteger(value) && value > 0 && digitsIn(quote, value);
@@ -122,6 +133,7 @@ export function valueInQuote(field: ScalarField, value: unknown, quote: string):
     case "eligibility_text":
     case "fee_waiver_text":
     case "early_termination_text":
+    case "bonus_official_note":
       // 글 필드는 인용 자체가 값 — 값이 인용의 일부여야 한다.
       return typeof value === "string" && value.trim().length > 0 && normalizeForMatch(quote).includes(normalizeForMatch(value).replace(/[.;:,]+$/, ""));
   }
@@ -160,12 +172,13 @@ export function checkRequirements(
   steps: unknown,
   quotes: (string | null | undefined)[],
   hay: Haystacks,
+  quotesKo: (string | null | undefined)[] = [],
 ): { ok: true; steps: RequirementStep[]; source: MatchSource } | { ok: false; reason: GateReason } {
   if (!Array.isArray(steps) || !steps.length) return { ok: false, reason: "value_not_in_quote" };
   const out: RequirementStep[] = [];
   let allOfficial = true;
   for (let i = 0; i < steps.length; i++) {
-    const st = steps[i] as Partial<RequirementStep> & { quote?: string };
+    const st = steps[i] as Partial<RequirementStep> & { quote?: string; quote_ko?: string };
     const quote = st.quote ?? quotes[i];
     if (!quote || !quote.trim()) return { ok: false, reason: "no_evidence" };
     const source = locate(quote, hay);
@@ -192,6 +205,8 @@ export function checkRequirements(
       count: st.count ?? null,
       tiered: st.tiered ?? false,
       quote: quote.trim().slice(0, 500),
+      // 번역은 게이트 대상 아님 — 영어 인용이 통과한 단계에만 붙인다.
+      quote_ko: (st.quote_ko ?? quotesKo[i] ?? null)?.toString().trim().slice(0, 500) || null,
       source,
       via: "cowork",
     });

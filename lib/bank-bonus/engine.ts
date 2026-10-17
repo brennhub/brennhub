@@ -144,8 +144,12 @@ export async function fetchDetails(db: D1Database): Promise<DetailSummary> {
   const now = Date.now();
   const wanted = all.filter((o) => o.detailUrl && (o.doable || o.flags.star)).sort(byBonus);
   const fresh = (key: string) => {
-    const at = details.get(key)?.fetched_at;
-    return !!at && now - Date.parse(at) < DETAIL_FETCH.refetchAfterDays * 86_400_000;
+    const d = details.get(key);
+    const at = d?.fetched_at;
+    // 이전 추출기(Phase 2c-1 이전)로 읽은 글은 7일을 기다리지 않고 다시 읽는다 — 자격 문장·게시일·체크리스트가 비어 있다.
+    // 표지: 받은 글(2xx)인데 doc_posted_at이 없음.
+    const oldExtractor = !!d && d.http_status != null && d.http_status >= 200 && d.http_status < 300 && d.doc_posted_at == null;
+    return !!at && !oldExtractor && now - Date.parse(at) < DETAIL_FETCH.refetchAfterDays * 86_400_000;
   };
   const todo = wanted.filter((o) => !fresh(o.key)).slice(0, DETAIL_FETCH.maxPerRefresh);
 

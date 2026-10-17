@@ -206,12 +206,14 @@ export type RequirementStep = {
   tiered?: boolean;
   /** 근거 인용 + 어느 원문에서 확인됐는지. */
   quote?: string | null;
+  /** 근거 한국어 번역 (Cowork 파일 evidence_ko). 게이트는 영어 원문만 본다. */
+  quote_ko?: string | null;
   source?: "official" | "doc_post";
   via?: "regex" | "cowork";
 };
 
 /** 공식 약관이 근거인 값 — 필드 → {값, 인용, 방식}. */
-export type OfficialFields = Partial<Record<string, { value: unknown; quote: string; method: "regex" | "cowork" }>>;
+export type OfficialFields = Partial<Record<string, { value: unknown; quote: string; method: "regex" | "cowork"; quote_ko?: string | null }>>;
 
 /** bb_official_pages 1행. */
 export type OfficialPage = {
@@ -227,7 +229,7 @@ export type OfficialPage = {
 
 export type EvidenceMethod = "regex" | "cowork";
 /** 필드별 근거 문장 + 뽑은 방식. 키: expires_on · dd · churn_months · dd_amount · dd_days · deposit_hold_* · apply_methods. */
-export type DetailEvidence = Record<string, { quote: string; method: EvidenceMethod }>;
+export type DetailEvidence = Record<string, { quote: string; method: EvidenceMethod; quote_ko?: string | null; source?: "official" | "doc_post"; url?: string | null }>;
 
 export type RuleSource = "manual" | "official" | "doc_post" | "doc_churn" | "cowork";
 
@@ -243,6 +245,8 @@ export type BankRule = {
 
 /** 화면 "근거" — 문장 + 출처 종류 + 링크. */
 export type Evidence = {
+  /** 한국어 번역 — 한국어 화면에서 먼저, 영어 원문은 "원문" 토글 뒤. */
+  quote_ko?: string | null;
   quote: string;
   source: RuleSource;
   url: string | null;
@@ -253,12 +257,19 @@ export type Evidence = {
 };
 
 export type TagCode = "hold" | "branch" | "hardPull" | "targeted" | "membership" | "new" | "expiring";
-export type OfferTag = { code: TagCode; amount?: number | null; days?: number | null };
+export type OfferTag = { code: TagCode; amount?: number | null; days?: number | null; reason?: RestrictionReason | null };
+
+/** 가입 자격 제한 사유 — 지역(카운티·도시, 내 지역 미포함) / 소속(고용주·학교·군인·단체). */
+export type RestrictionReason = { kind: "geo" | "affiliation"; matched: string };
 
 /** 화면용 — 병합 오퍼 + 상세 글 값(우선) + 판정. 문구는 화면이 messages.ts로 만든다. */
 export type EvaluatedOffer = MergedOffer & {
   /** 정렬·Top 5 기준 금액 = 기본(직접입금만) 금액, 모르면 bonus_max. */
   sortBonus: number | null;
+  /** 공식 약관의 최대 보너스 (Cowork, 근거 확인). 있으면 화면 금액·정렬 기준. */
+  bonusOfficialMax: number | null;
+  bonusOfficialNote: string | null;
+  bonusOfficialEvidence: Evidence | null;
   /** 겹친 부분 예치 (기본 보너스는 예치 없이 가능). */
   extraHoldAmount: number | null;
   extraHoldDays: number | null;
@@ -272,7 +283,7 @@ export type EvaluatedOffer = MergedOffer & {
   requirements: RequirementStep[] | null;
   requirementsEvidenceSource: RuleSource | null;
   ach: { value: AchPush | null; evidence: Evidence | null };
-  eligibility: { text: string | null; restricted: boolean; evidence: Evidence | null };
+  eligibility: { text: string | null; restricted: boolean; reason: RestrictionReason | null; evidence: Evidence | null };
   /** 공식 페이지: usable = 본문 확보, unavailable = 막힘·비200·글자 부족, none = 링크 없음·아직 안 받음. */
   official: { state: "usable" | "unavailable" | "none"; url: string | null };
   /** 상세 글을 실제로 읽었는지 (HTTP 2xx). */

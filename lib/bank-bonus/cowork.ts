@@ -16,6 +16,7 @@ import {
   FIELD_COLUMN,
   checkEvidence,
   checkRequirements,
+  OFFICIAL_ONLY,
   sourceText,
   type ExtractValues,
   type GateReason,
@@ -28,7 +29,9 @@ export type ExtractionItem = {
   source_url?: string | null;
   fields: ExtractValues;
   /** 단일 값 필드마다 인용 1개, requirements는 단계별 인용 배열(또는 "requirements.N" 키, 또는 단계의 quote). */
+  /** (선택) 같은 키의 한국어 번역 — evidence_ko.requirements는 단계 순서대로. 게이트는 영어 인용만 본다. */
   evidence: Record<string, string | (string | null)[] | null | undefined>;
+  evidence_ko?: Record<string, string | (string | null)[] | null | undefined>;
 };
 
 export type ExtractionFile = { version: 1; generatedAt: string | null; items: ExtractionItem[] };
@@ -89,20 +92,24 @@ export async function coworkIngest(db: D1Database, file: ExtractionFile = loadEx
     }
     const hay = { official, doc: doc.trim() ? doc : null };
     const docValues: ExtractValues = {};
-    const docQuotes: Record<string, string> = {};
+    const docQuotes: Record<string, { quote: string; quote_ko: string | null; url: string | null }> = {};
     const officialFields: OfficialFields = { ...(d.official_fields ?? {}) };
+    const ko = item.evidence_ko ?? {};
     let officialChanged = false;
 
-    const accept = (field: string, value: unknown, quote: string, source: "official" | "doc_post") => {
+    // 이미 있는 값: 정규식 등 다른 출처면 건너뜀. 이전 Cowork 반영분이면 새 파일 값·번역으로 갱신한다.
+    const accept = (field: string, value: unknown, quote: string, source: "official" | "doc_post", quoteKo: string | null) => {
       if (source === "official") {
-        if (officialFields[field]) return out.skippedExisting++;
-        officialFields[field] = { value, quote, method: "cowork" };
+        const prev = officialFields[field];
+        if (prev && prev.method !== "cowork") return out.skippedExisting++;
+        officialFields[field] = { value, quote, method: "cowork", quote_ko: quoteKo };
         officialChanged = true;
         out.acceptedOfficial++;
       } else {
-        if ((d as Record<string, unknown>)[FIELD_COLUMN[field as keyof typeof FIELD_COLUMN] ?? field] != null) return out.skippedExisting++;
+        const filled = (d as Record<string, unknown>)[FIELD_COLUMN[field as keyof typeof FIELD_COLUMN] ?? field] != null;
+        if (filled && d.evidence?.[field]?.method !== "cowork") return out.skippedExisting++;
         (docValues as Record<string, unknown>)[field] = value;
-        docQuotes[field] = quote;
+        docQuotes[field] = { quote, quote_ko: quoteKo, url: d.detail_url };
       }
       out.accepted++;
     };
@@ -111,9 +118,10 @@ export async function coworkIngest(db: D1Database, file: ExtractionFile = loadEx
       const value = item.fields[field];
       if (value == null || (Array.isArray(value) && !value.length)) continue; // 파일도 값 없음 — 판정 대상 아님
       if (field === "requirements") {
-        const r = checkRequirements(value, stepQuotes(item.evidence, (value as unknown[]).length), hay);
+        const n = (value as unknown[]).length;
+        const r = checkRequirements(value, stepQuotes(item.evidence, n), hay, stepQuotes(ko, n));
         if (!r.ok) out.rejected[r.reason]++;
-        else accept("requirements", r.steps, r.steps[0].quote ?? "", r.source);
+        else accept("requirements", r.steps, r.steps[0].quote ?? "", r.source, r.steps[0].quote_ko ?? null);
         continue;
       }
       const r = checkEvidence(field as ScalarField, value, asQuote(item.evidence[field]), hay);
@@ -121,10 +129,15 @@ export async function coworkIngest(db: D1Database, file: ExtractionFile = loadEx
         out.rejected[r.reason]++;
         continue;
       }
-      accept(field, value, r.quote, r.source);
+      // 공식 금액은 공식 본문에서 확인될 때만 — DoC 원문에서만 찾은 인용은 버린다.
+      if (OFFICIAL_ONLY.has(field) && r.source !== "official") {
+        out.rejected.quote_not_found++;
+        continue;
+      }
+      accept(field, value, r.quote, r.source, asQuote(ko[field])?.trim().slice(0, 500) || null);
       if (field === "churn_months") {
         const text = (item.fields.churn_text ?? r.quote).slice(0, 500);
-        if (r.source === "official" && officialFields.churn_months) officialFields.churn_text = { value: text, quote: r.quote, method: "cowork" };
+        if (r.source === "official" && officialFields.churn_months) officialFields.churn_text = { value: text, quote: r.quote, method: "cowork", quote_ko: asQuote(ko.churn_months) };
         else if (docValues.churn_months != null) docValues.churn_text = text;
       }
       if (field === "ach_push" && r.source === "doc_post" && docValues.ach_push != null) docValues.ach_push_text = r.quote;
