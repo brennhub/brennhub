@@ -1,5 +1,62 @@
 {
   "version": 1,
-  "generatedAt": null,
-  "items": []
+  "generatedAt": "2026-10-17T01:50:37Z",
+  "items": [
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/targeted-chase-900-checking-savings-bonus",
+      "fields": {
+        "deposit_hold_amount": 15000,
+        "deposit_hold_days": 90
+      },
+      "evidence": {
+        "deposit_hold_amount": "Maintain at least a $15,000 balance for 90 days from the coupon enrollment",
+        "deposit_hold_days": "Maintain at least a $15,000 balance for 90 days from the coupon enrollment"
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/four-leaf-federal-credit-union-550-checking-bonus-fka-as-bethpage-federalcredit-union",
+      "fields": {
+        "dd_days": 90
+      },
+      "evidence": {
+        "dd_days": "have a Qualifying Direct Deposit (as defined below) post to the checking account within ninety (90) calendar days of account opening date"
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/ca-only-heritage-community-credit-union-500-checking-bonus",
+      "fields": {
+        "dd_days": 60
+      },
+      "evidence": {
+        "dd_days": "Earn an additional $200 when recurring direct deposits totaling at least $500 per month are received into the new checking account through the Automated Clearing House (ACH) network within 60 days of account opening"
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/ca-long-beach-only-200-southland-credit-union-checking-bonus",
+      "fields": {
+        "dd_days": 90
+      },
+      "evidence": {
+        "dd_days": "Qualifications must be met within the first 90 days of account opening to qualify for rewards"
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/ca-only-sacramento-credit-union-150-checking-bonus",
+      "fields": {
+        "dd_days": 60
+      },
+      "evidence": {
+        "dd_days": "Direct Deposit (electronic transfer for payroll, pension or government benefits) must post to new checking account by day 60 after account opening"
+      }
+    },
+    {
+      "offer_key": "url:https://www.doctorofcredit.com/ca-california-coast-credit-union-150-checking-bonus-direct-deposit-required",
+      "fields": {
+        "dd_days": 60
+      },
+      "evidence": {
+        "dd_days": "To receive the $100 new member incentive bonus: you must within 60 days of opening your membership complete the following"
+      }
+    }
+  ]
 }
