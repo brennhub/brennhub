@@ -316,7 +316,8 @@ export async function upsertDetail(
 }
 
 /**
- * Cowork 추출 중 DoC 원문(요약+약관)에서 근거가 확인된 값 — 비어 있던 칸만 채운다(COALESCE). 근거는 기존 근거에 합친다.
+ * Cowork 추출 중 DoC 원문(요약+약관)에서 근거가 확인된 값. 넘어온 필드만 그 값으로 쓴다 —
+ * 호출부(cowork.ts accept)가 "비어 있거나 이전 Cowork 값"인 칸만 넘긴다(정규식 값은 덮지 않음).
  * ai_extracted_at 칸을 반영 시각으로 재사용한다.
  */
 export async function applyCoworkResult(
@@ -324,33 +325,40 @@ export async function applyCoworkResult(
   offerKey: string,
   prevEvidence: DetailEvidence,
   values: ExtractValues,
-  quotes: Record<string, string>,
+  quotes: Record<string, { quote: string; quote_ko: string | null; url: string | null }>,
   now: string,
 ): Promise<void> {
   const evidence: DetailEvidence = { ...prevEvidence };
-  for (const [k, quote] of Object.entries(quotes)) if (!evidence[k]) evidence[k] = { quote, method: "cowork" };
+  // 근거 = {quote, quote_ko, source, method, url}. 정규식 근거는 두고, 이전 Cowork 근거는 새 값으로.
+  for (const [k, q] of Object.entries(quotes)) {
+    if (evidence[k] && evidence[k].method !== "cowork") continue;
+    evidence[k] = { quote: q.quote, quote_ko: q.quote_ko, source: "doc_post", method: "cowork", url: q.url };
+  }
+  const COLS: Record<string, (v: ExtractValues) => unknown> = {
+    expires_on: (v) => v.expires_on,
+    churn_months: (v) => v.churn_months,
+    churn_text: (v) => v.churn_text,
+    dd_amount: (v) => v.dd_amount,
+    dd_days: (v) => v.dd_days,
+    deposit_hold_amount: (v) => v.deposit_hold_amount,
+    deposit_hold_days: (v) => v.deposit_hold_days,
+    apply_methods: (v) => (v.apply_methods ? JSON.stringify(v.apply_methods) : null),
+    reapply_once_only: (v) => v.reapply_once_only,
+    ach_push: (v) => v.ach_push,
+    ach_push_text: (v) => v.ach_push_text,
+    eligibility_text: (v) => v.eligibility_text,
+    fee_waiver_text: (v) => v.fee_waiver_text,
+    early_termination_text: (v) => v.early_termination_text,
+    requirements_json: (v) => (v.requirements ? JSON.stringify(v.requirements) : null),
+  };
+  const present = Object.keys(COLS).filter((c) => (c === "requirements_json" ? values.requirements != null : (values as Record<string, unknown>)[c] != null));
   await db
     .prepare(
-      `UPDATE bb_offer_details SET
-         expires_on = COALESCE(expires_on, ?), churn_months = COALESCE(churn_months, ?), churn_text = COALESCE(churn_text, ?),
-         dd_amount = COALESCE(dd_amount, ?), dd_days = COALESCE(dd_days, ?),
-         deposit_hold_amount = COALESCE(deposit_hold_amount, ?), deposit_hold_days = COALESCE(deposit_hold_days, ?),
-         apply_methods = COALESCE(apply_methods, ?),
-         reapply_once_only = COALESCE(reapply_once_only, ?), ach_push = COALESCE(ach_push, ?), ach_push_text = COALESCE(ach_push_text, ?),
-         eligibility_text = COALESCE(eligibility_text, ?), fee_waiver_text = COALESCE(fee_waiver_text, ?),
-         early_termination_text = COALESCE(early_termination_text, ?), requirements_json = COALESCE(requirements_json, ?),
+      `UPDATE bb_offer_details SET ${present.map((c) => `${c} = ?`).join(", ")}${present.length ? ", " : ""}
          evidence = ?, ai_extracted_at = ?, extraction_method = 'cowork'
        WHERE offer_key = ?`,
     )
-    .bind(
-      values.expires_on ?? null, values.churn_months ?? null, values.churn_text ?? null, values.dd_amount ?? null,
-      values.dd_days ?? null, values.deposit_hold_amount ?? null, values.deposit_hold_days ?? null,
-      values.apply_methods ? JSON.stringify(values.apply_methods) : null,
-      values.reapply_once_only ?? null, values.ach_push ?? null, values.ach_push_text ?? null,
-      values.eligibility_text ?? null, values.fee_waiver_text ?? null, values.early_termination_text ?? null,
-      values.requirements ? JSON.stringify(values.requirements) : null,
-      JSON.stringify(evidence), now, offerKey,
-    )
+    .bind(...present.map((c) => COLS[c](values) ?? null), JSON.stringify(evidence), now, offerKey)
     .run();
 }
 

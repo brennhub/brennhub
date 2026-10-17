@@ -113,6 +113,13 @@ const ko = {
   docBasedHint: "DoC 약관이 글의 최신 업데이트보다 오래됨",
   officialUnavailable: "공식 페이지 확인 불가",
   viaCowork: " · Cowork 추출",
+  original: "원문",
+  docListed: (amount: string) => `DoC 표기 ${amount}`,
+  moreSteps: (n: number) => `외 ${n}단계`,
+  restriction: {
+    geo: (m: string) => `지역 제한 — 내 카운티(LA) 미포함: "${m}"`,
+    affiliation: (m: string) => `소속 자격 필요 (고용주·학교·군인·단체): "${m}"`,
+  },
   withDeposit: (note: BonusTotalNote | null, total: number, hold: number | null, days: number | null) =>
     `${note === "top_tier" ? "최고 등급" : note === "savings" ? "저축 포함 시" : "예치 포함 시"} ${usd(total)}${
       hold != null ? ` (예치금 ${usd(hold)}${days ? `, ${days}일` : ""})` : ""
@@ -262,6 +269,13 @@ const en: BankBonusMessages = {
   docBasedHint: "DoC terms are older than the post's latest update",
   officialUnavailable: "Official page unavailable",
   viaCowork: " · Cowork extracted",
+  original: "Original",
+  docListed: (amount: string) => `DoC lists ${amount}`,
+  moreSteps: (n: number) => `+${n} more steps`,
+  restriction: {
+    geo: (m: string) => `Area limit — my county (LA) not listed: "${m}"`,
+    affiliation: (m: string) => `Affiliation required (employer, school, military, association): "${m}"`,
+  },
   withDeposit: (note: BonusTotalNote | null, total: number, hold: number | null, days: number | null) =>
     `${note === "top_tier" ? "Top tier" : note === "savings" ? "With savings" : "With deposit"} ${usd(total)}${
       hold != null ? ` (deposit hold ${usd(hold)}${days ? `, ${days} days` : ""})` : ""

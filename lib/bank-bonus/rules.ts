@@ -13,7 +13,7 @@
 
 import { bankMatches } from "./banks";
 import { SCORE, existingBanks } from "./config";
-import { isMembershipRestricted } from "./derive";
+import { restrictionOf } from "./eligibility";
 import type {
   AchPush,
   ApplyMethod,
@@ -65,7 +65,10 @@ function docIsStale(d: OfferDetail | undefined): boolean {
 function officialValue<T>(d: OfferDetail | undefined, key: string, page: OfficialPage | undefined): { value: T; evidence: Evidence } | null {
   const f = d?.official_fields?.[key];
   if (!f || f.value == null) return null;
-  return { value: f.value as T, evidence: { quote: f.quote, source: "official", url: page?.url ?? d?.bank_offer_url ?? null, via: f.method } };
+  return {
+    value: f.value as T,
+    evidence: { quote: f.quote, quote_ko: f.quote_ko ?? null, source: "official", url: page?.url ?? d?.bank_offer_url ?? null, via: f.method },
+  };
 }
 
 /** DoC 상세 칸 값 → 값 + 근거 (근거 방식이 cowork면 via=cowork). 오래된 약관이면 stale. */
@@ -74,7 +77,9 @@ function docValue<T>(d: OfferDetail | undefined, value: T | null | undefined, ev
   const e = d.evidence?.[evidenceKey];
   return {
     value,
-    evidence: e ? { quote: e.quote, source: "doc_post", url: d.detail_url, via: e.method === "cowork" ? "cowork" : "regex", stale: docIsStale(d) } : null,
+    evidence: e
+      ? { quote: e.quote, quote_ko: e.quote_ko ?? null, source: "doc_post", url: e.url ?? d.detail_url, via: e.method === "cowork" ? "cowork" : "regex", stale: docIsStale(d) }
+      : null,
   };
 }
 
@@ -206,7 +211,9 @@ export function evaluateOffer(
   const offElig = officialValue<string>(d, "eligibility_text", page);
   const docElig = docValue(d, d?.eligibility_text, "eligibility_text");
   const elig = offElig ?? docElig;
-  const restricted = isMembershipRestricted(elig?.value ?? null);
+  // 내 지역(LA)·"누구나 가입" 문구를 보고 판정 — 사유는 태그 툴팁에.
+  const restriction = restrictionOf(elig?.value ?? null);
+  const restricted = !!restriction;
 
   // ACH 이체 인정 — 공식 먼저.
   const offAch = officialValue<AchPush>(d, "ach_push", page);
@@ -218,7 +225,7 @@ export function evaluateOffer(
   if (inBranch) tags.push({ code: "branch" });
   if (o.hardPull === 1) tags.push({ code: "hardPull" });
   if (o.targeted === 1 || applyMethods?.includes("invite")) tags.push({ code: "targeted" });
-  if (restricted) tags.push({ code: "membership" });
+  if (restriction) tags.push({ code: "membership", reason: restriction });
   if (o.seenAfterBaseline && now - Date.parse(o.firstSeenAt) <= SCORE.newDays * DAY) tags.push({ code: "new" });
   if (expiresOn) {
     const left = daysUntil(expiresOn, now);
@@ -247,6 +254,10 @@ export function evaluateOffer(
       docValue(d, 1, "dd")?.evidence ?? docValue(d, 1, "dd_amount")?.evidence ?? docValue(d, 1, "dd_days")?.evidence ?? undefined;
   }
 
+  // 공식 약관 최대 보너스 (Cowork, 공식 본문 근거) — 있으면 화면 금액·정렬 기준.
+  const offMax = officialValue<number>(d, "bonus_official_max", page);
+  const offNote = officialValue<string>(d, "bonus_official_note", page);
+
   const officialState: EvaluatedOffer["official"]["state"] = page?.text ? "usable" : page?.fetched_at ? "unavailable" : "none";
 
   return {
@@ -254,7 +265,10 @@ export function evaluateOffer(
     bonusBase,
     bonusTotalWithDeposit,
     bonusTotalNote,
-    sortBonus: bonusBase ?? o.bonusMax ?? o.bonusMin,
+    sortBonus: offMax?.value ?? bonusBase ?? o.bonusMax ?? o.bonusMin,
+    bonusOfficialMax: offMax?.value ?? null,
+    bonusOfficialNote: offNote?.value ?? null,
+    bonusOfficialEvidence: offMax?.evidence ?? null,
     depositHoldAmount: baseHoldAmount,
     depositHoldDays: baseHoldDays,
     extraHoldAmount,
@@ -273,7 +287,7 @@ export function evaluateOffer(
     requirements: req.steps,
     requirementsEvidenceSource: req.source,
     ach: { value: ach?.value ?? null, evidence: ach?.evidence ?? null },
-    eligibility: { text: elig?.value ?? null, restricted, evidence: elig?.evidence ?? null },
+    eligibility: { text: elig?.value ?? null, restricted, reason: restriction, evidence: elig?.evidence ?? null },
     official: { state: officialState, url: page?.url ?? d?.bank_offer_url ?? null },
     detailRead,
     earlyTerminationText: officialValue<string>(d, "early_termination_text", page)?.value ?? d?.early_termination_text ?? null,

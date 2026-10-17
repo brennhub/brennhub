@@ -65,7 +65,8 @@ export type OffersResponse = {
   totals: { merged: number; nonOffers: number };
 };
 
-const bonusOf = (o: EvaluatedOffer) => o.bonusMax ?? o.bonusMin ?? -1;
+// 최소 보너스 필터 — 공식 약관 최대액이 있으면 그것, 없으면 DoC 표기.
+const bonusOf = (o: EvaluatedOffer) => o.bonusOfficialMax ?? o.bonusMax ?? o.bonusMin ?? -1;
 /** 기본 금액(bonus_base, 모르면 bonus_max) 큰 순, 같으면 하한 큰 순, 그다음 은행명. */
 export const byBonus = (a: EvaluatedOffer, b: EvaluatedOffer) =>
   (b.sortBonus ?? -1) - (a.sortBonus ?? -1) || (b.bonusMin ?? -1) - (a.bonusMin ?? -1) || (a.bank ?? "").localeCompare(b.bank ?? "");

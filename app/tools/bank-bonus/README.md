@@ -208,3 +208,25 @@ requirements([{order, portion, kind, text, amount, days}]). 근거: 단일 값 �
 게이트: 인용은 **공식 본문 먼저, 그다음 DoC 요약+약관**에서 찾고(15자 이상, 공백·따옴표·대시 무시), 찾은 쪽을 출처로 기록.
 글 필드(eligibility_text·fee_waiver_text·early_termination_text)는 값이 인용의 일부여야 한다. requirements는 한 단계라도 실패하면 전체 버림.
 공식 근거 값 → `official_fields`, DoC 근거 값 → 상세 칸(비어 있을 때만).
+
+## Phase 2c-3 — 카드 압축 · 근거 번역 · 인용 위치 링크 · 공식 금액 · 카운티 규칙
+
+**근거 번역 `evidence_ko`** (Cowork 파일, 선택): `evidence`와 같은 키, `evidence_ko.requirements`는 단계 순서 배열.
+게이트는 영어 인용만 본다 — 번역은 통과한 값에만 붙는다. 저장(마이그레이션 없음):
+DoC 근거 → `bb_offer_details.evidence[필드] = {quote, quote_ko, source: 'doc_post', method: 'cowork', url}`,
+공식 근거 → `official_fields[필드] = {value, quote, quote_ko, method}`, 체크리스트 단계 → `step.quote_ko`.
+같은 파일을 다시 반영하면 이전 Cowork 값·번역은 갱신(정규식 값은 그대로). 한국어 화면: 번역 먼저 + "원문" 토글, 영어 화면: 원문만, 번역 없으면 원문.
+
+**인용 위치 링크** (`links.ts` `textFragmentUrl(url, quote)`): `url#:~:text=<조각>` — 인용 첫 줄의 첫 문장부호까지, 최대 12단어·120자 미만,
+끝 문장부호 제거, `-`는 `%2D`. DoC 근거는 DoC 글, 공식 근거는 공식 페이지 주소. 지원 안 하는 브라우저는 페이지 맨 위를 연다.
+
+**카드**: 순위·은행·금액 → 신청 마감 / 신청 방법 / 보너스 조건(단계 글만, 4단계까지 + "외 N단계") / 재신청 가능 / ACH 이체 인정 → 지역·신용조회 한 줄 → 태그 → 버튼.
+줄마다 "근거" 칩 하나 → 그 줄 아래 서랍(번역·원문·출처·출처 열기), 처음엔 모두 닫힘. 표·폰 목록도 같은 칩.
+
+**공식 금액**: Cowork 필드 `bonus_official_max`(근거 인용에 숫자로 있어야 함) · `bonus_official_note`(글 필드) — 공식 본문에서 근거가 확인될 때만, `official_fields`에.
+있으면 화면 금액·정렬·최소 보너스 필터 기준, DoC 금액이 다르면 작은 회색 "DoC 표기 $675". offers API 응답 `bonusOfficialMax`/`bonusOfficialNote`.
+
+**카운티 규칙** (`eligibility.ts`, `config.ts` myCounty="Los Angeles" · myState="CA" · myAreaNames):
+지역(카운티·도시 나열, live/work/worship/attend school in …)은 Los Angeles · LA County · Gardena · Torrance가 문장에 없을 때만 제한, 주 전체(California)만 말하면 제한 아님.
+소속(고용주·학교·군인·단체·field of membership)은 "anyone can join" / "open to everyone" / "membership is open to anyone" 류가 없으면 제한. 지역 쪽이 나를 받아 주면 소속은 대안이라 제한 아님.
+태그 툴팁에 걸린 사유·표현. **이전 추출기로 읽은 DoC 글(doc_posted_at 없음)은 7일을 기다리지 않고 다시 읽어** 자격 문장을 채운다.
