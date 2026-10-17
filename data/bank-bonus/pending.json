@@ -1,17 +1,23 @@
 {
-  "generatedAt": "2026-10-17T01:20:43.793Z",
+  "generatedAt": "2026-10-17T07:46:10.756Z",
   "items": [
     {
       "offer_key": "url:https://www.doctorofcredit.com/targeted-chase-900-checking-savings-bonus",
       "bank": "Chase",
       "detail_url": "https://www.doctorofcredit.com/targeted-chase-900-checking-savings-bonus/",
       "missing": [
+        "reapply_once_only",
         "dd_amount",
-        "deposit_hold_amount",
-        "deposit_hold_days"
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Checking offer is not available to existing Chase checking customers. Savings offer is not available to existing Chase savings customers. Both offers are not available to those whose accounts have been closed within 90 days or closed with a negative balance within the last 3 years. You can receive only one new checking and one new savings account opening related bonus every two years from the last coupon enrollment date and only one bonus per account. Coupon is good for one-time use. To receive the checking bonus: 1) Open a new Chase Total Checking account, which is subject to approval; AND 2) Have your direct deposit made to this account within 90 days of coupon enrollment. Your direct deposit needs to be an electronic deposit of your paycheck, pension or government benefits (such as Social Security) from your employer or the government. Person to Person payments (such as Zelle®) are not considered a direct deposit. (Micro-deposits do not qualify as a direct deposit for the bonus. Micro-deposits are small deposits, typically less than $1, that are sent to your account to verify it is the correct account.) After you have completed all the above checking requirements, we’ll deposit the bonus in your new account within 15 days. To receive the savings bonus: 1) Open a new Chase SavingsSM account, which is subject to approval; 2) Deposit a total of $15,000 or more in new money into the new savings account within 30 days of coupon enrollment; AND 3) Maintain at least a $15,000 balance for 90 days from the coupon enrollment. The new money cannot be funds held by you at Chase or its affiliates. After you have completed all the above savings requirements, we’ll deposit the bonus in your new account within 15 days. To receive the extra bonus: You must open the checking and savings account at the same time and complete all requirements above for BOTH the checking bonus and savings bonus. After you have completed all requirements, we will deposit the remaining bonus due in your new account within 15 days. To receive any of the above bonuses, the enrolled account must not be closed or restricted at the time of payout. Eligibility may be limited based on account ownership. The Annual Percentage Yield (APY) for Chase SavingsSM, effective as of 12/29/2022, is 0.01% for all balances in all states. Interest rates are variable and subject to change. Additionally, fees may reduce earnings on the account. Bonuses are considered interest and will be reported on IRS Form 1099-INT (or Form 1042-S, if applicable)."
+      "fine_print_text": "Checking offer is not available to existing Chase checking customers. Savings offer is not available to existing Chase savings customers. Both offers are not available to those whose accounts have been closed within 90 days or closed with a negative balance within the last 3 years. You can receive only one new checking and one new savings account opening related bonus every two years from the last coupon enrollment date and only one bonus per account. Coupon is good for one-time use. To receive the checking bonus: 1) Open a new Chase Total Checking account, which is subject to approval; AND 2) Have your direct deposit made to this account within 90 days of coupon enrollment. Your direct deposit needs to be an electronic deposit of your paycheck, pension or government benefits (such as Social Security) from your employer or the government. Person to Person payments (such as Zelle®) are not considered a direct deposit. (Micro-deposits do not qualify as a direct deposit for the bonus. Micro-deposits are small deposits, typically less than $1, that are sent to your account to verify it is the correct account.) After you have completed all the above checking requirements, we’ll deposit the bonus in your new account within 15 days. To receive the savings bonus: 1) Open a new Chase SavingsSM account, which is subject to approval; 2) Deposit a total of $15,000 or more in new money into the new savings account within 30 days of coupon enrollment; AND 3) Maintain at least a $15,000 balance for 90 days from the coupon enrollment. The new money cannot be funds held by you at Chase or its affiliates. After you have completed all the above savings requirements, we’ll deposit the bonus in your new account within 15 days. To receive the extra bonus: You must open the checking and savings account at the same time and complete all requirements above for BOTH the checking bonus and savings bonus. After you have completed all requirements, we will deposit the remaining bonus due in your new account within 15 days. To receive any of the above bonuses, the enrolled account must not be closed or restricted at the time of payout. Eligibility may be limited based on account ownership. The Annual Percentage Yield (APY) for Chase SavingsSM, effective as of 12/29/2022, is 0.01% for all balances in all states. Interest rates are variable and subject to change. Additionally, fees may reduce earnings on the account. Bonuses are considered interest and will be reported on IRS Form 1099-INT (or Form 1042-S, if applicable).",
+      "official_url": "https://account.chase.com/consumer/banking/checkingandsavingsoffer",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/sofi-checking-5000-direct-deposit-required",
@@ -20,12 +26,20 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Eligible Participants: All new members who open a SoFi Checking and Savings account during the Promotion Period and all existing SoFi Checkings and Savings customers who have not previously set up Direct Deposit transactions (“Direct Deposit”) into their SoFi Checking and Savings account as of the beginning of the Promotion Period are eligible for the Program. Bonus Terms:In order to qualify for eligibility for a bonus, SoFi must receive at least one Qualifying Direct Deposit (as defined below) from an Eligible Participant before the end of the Promotion Period. Qualifying Direct Deposits are defined as deposits of $1,000.00 or greater from an enrolled member’s employer, payroll, or benefits provider via ACH deposit. Deposits that are not from an employer (such as check deposits; P2P transfers such as from PayPal or Venmo, etc.; merchant transactions such as from PayPal, Stripe, Square, etc.; and external bank ACH transfers not from employers) and bank ACH transfers not from employers) do not qualify for this Direct Deposit promotion. The amount of the bonus, if any, will be calculated during the Evaluation Period as described and defined below. Evaluation Period: The bonus amount will vary based on the total amount of Qualifying Direct Deposits received during the Evaluation Period. The Evaluation Period is defined as 25 days from the date your first Qualifying Direct Deposit is received. For example, if you receive $1,000-$1,999 in Qualifying Direct Deposits in the Evaluation Period, you will receive a cash bonus of $50. A member may only qualify for one bonus tier and will not be eligible for future bonus payments if inflows subsequently increase beyond the Evaluation Period. Total Qualifying Direct Deposit amount in 30-day Evaluation Period Cash bonus Payment timeline: SoFi will credit members who meet qualification criteria within 14 days of the end of the Evaluation Period. This offer cannot be combined with the SoFi Checking and Savings Direct Deposit rate discount on a SoFi personal loan. Bonuses are considered miscellaneous income, and may be reportable to the IRS on Form 1099-MISC (or Form 1042-S, if applicable). SoFi reserves the right to exclude any Members from participating in the Program for any reason, including suspected fraud, misuse, or if suspicious activities are observed. SoFi also reserves the right to stop or make changes to the Program at any time."
+      "fine_print_text": "Eligible Participants: All new members who open a SoFi Checking and Savings account during the Promotion Period and all existing SoFi Checkings and Savings customers who have not previously set up Direct Deposit transactions (“Direct Deposit”) into their SoFi Checking and Savings account as of the beginning of the Promotion Period are eligible for the Program. Bonus Terms:In order to qualify for eligibility for a bonus, SoFi must receive at least one Qualifying Direct Deposit (as defined below) from an Eligible Participant before the end of the Promotion Period. Qualifying Direct Deposits are defined as deposits of $1,000.00 or greater from an enrolled member’s employer, payroll, or benefits provider via ACH deposit. Deposits that are not from an employer (such as check deposits; P2P transfers such as from PayPal or Venmo, etc.; merchant transactions such as from PayPal, Stripe, Square, etc.; and external bank ACH transfers not from employers) and bank ACH transfers not from employers) do not qualify for this Direct Deposit promotion. The amount of the bonus, if any, will be calculated during the Evaluation Period as described and defined below. Evaluation Period: The bonus amount will vary based on the total amount of Qualifying Direct Deposits received during the Evaluation Period. The Evaluation Period is defined as 25 days from the date your first Qualifying Direct Deposit is received. For example, if you receive $1,000-$1,999 in Qualifying Direct Deposits in the Evaluation Period, you will receive a cash bonus of $50. A member may only qualify for one bonus tier and will not be eligible for future bonus payments if inflows subsequently increase beyond the Evaluation Period. Total Qualifying Direct Deposit amount in 30-day Evaluation Period Cash bonus Payment timeline: SoFi will credit members who meet qualification criteria within 14 days of the end of the Evaluation Period. This offer cannot be combined with the SoFi Checking and Savings Direct Deposit rate discount on a SoFi personal loan. Bonuses are considered miscellaneous income, and may be reportable to the IRS on Form 1099-MISC (or Form 1042-S, if applicable). SoFi reserves the right to exclude any Members from participating in the Program for any reason, including suspected fraud, misuse, or if suspicious activities are observed. SoFi also reserves the right to stop or make changes to the Program at any time.",
+      "official_url": "https://www.sofi.com/banking/",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-only-stanford-federal-credit-union-100-checking-bonus",
@@ -34,24 +48,40 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_amount",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Valid through 12/31/18. First direct deposit must be received within 60 days of account opening $5 minimum required to open account Offer does not apply to second or multiple checking accounts and/or existing checking members and is limited to one bonus per household Bonus $100 will be credited to your account within 30 days after satisfaction of conditions All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "Valid through 12/31/18. First direct deposit must be received within 60 days of account opening $5 minimum required to open account Offer does not apply to second or multiple checking accounts and/or existing checking members and is limited to one bonus per household Bonus $100 will be credited to your account within 30 days after satisfaction of conditions All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.sfcu.org/bonus/",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/il-wi-mn-in-az-fl-ks-mo-bmo-harris-350-checking-300-savings-bonus",
       "bank": "BMO Bank",
       "detail_url": "https://www.doctorofcredit.com/il-wi-mn-in-az-fl-ks-mo-bmo-harris-350-checking-300-savings-bonus/",
       "missing": [
+        "reapply_once_only",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Offer is limited to one per client and account (including trustees, signers, and joint account owners). Offer is not available for existing BMO personal checking clients (including trustees, signers, and joint account owners) or those who have closed a BMO personal checking account within the past 12 months. This offer is only available for accounts where the primary applicant (first person listed on the account) resides in Arizona, California, Colorado, Florida, Iowa, Illinois, Indiana, Minnesota, New Mexico, Nevada, Oregon, Utah, Washington, or Wisconsin at the time of application. Proof of address may be required. To take advantage of the new personal checking account cash bonus offer, you must open your account between September 9, 2026 and December 15, 2026, and use the promo code. You may open your account at a BMO financial center, online, or by calling 1-800-546-6101. To apply for a checking account online, click through to the personal checking account cash bonus offer page, select “OPEN IN MINUTES,” for the checking account of your choice and we’ll automatically apply the promo code for you. To apply at a financial center or by phone for a checking account, click through to the personal checking account cash bonus offer page, enter your information, and select “SEND MY PROMO CODE” to receive the promo code you must use when opening your account. Accounts opened online on December 15, 2026 must have their applications submitted and approved prior to 9:00 p.m. Central Time. If you open your account by calling 1-800-546-6101, we must receive your opening deposit and all signed account opening documents by December 15, 2026. Personal checking new account cash bonus of up to $600: Earn a $100 cash bonus per month (up to $600 for 6 months) when you open a new BMO Smart Money Checking, BMO Smart Advantage Checking, or BMO Relationship Checking account and have qualifying activities. To receive the personal checking new account cash bonus of up to $600: Open a new BMO Smart Money Checking, BMO Smart Advantage Checking, or BMO Relationship Checking account; and The primary applicant (first person listed on the account) must reside in Arizona, California, Colorado, Florida, Iowa, Illinois, Indiana, Minnesota, New Mexico, Nevada, Oregon, Utah, Washington, or Wisconsin at the time of application; and Beginning the month following account opening, earn a $100 cash bonus each consecutive month you have a cumulative total of $1,000 or more in qualifying direct deposits post to your account. Business Days are Monday through Friday excluding any holiday on which the Bank and/or the Federal Reserve are closed for processing. Transactions received or occurring on a day other than a Business Day will be posted the next Business Day. Qualifying direct deposits are deposits of regular income from an employer or similar third party – such as your salary, paycheck, pension payment, Social Security payment, or other government benefits payment electronically deposited into the account – using your account number and BMO’s routing number that you provide to them. Non-qualifying examples include: teller deposits, wire transfers, ATM transfers or deposits, BMO Digital Banking transfers or deposits, deposits processed as a debit card credit or real-time credit, transfers from any bank or brokerage account, Account to Account or Peer to Peer (e.g. Zelle®, Venmo) transfers and deposits received via merchant payment platforms (such as Square®). We reserve the right to request documentation, such as a pay stub or statement of earnings, that the direct deposits qualify. Your checking account is eligible for up to 6 consecutive cash bonuses. Tracking begins the first calendar day of the month following account opening. Each month you meet offer requirements listed above, a $100 cash bonus will be paid to your account approximately 10 days after the beginning of the next month. The last $100 cash bonus can be earned 6 months after tracking begins. If y"
+      "fine_print_text": "Offer is limited to one per client and account (including trustees, signers, and joint account owners). Offer is not available for existing BMO personal checking clients (including trustees, signers, and joint account owners) or those who have closed a BMO personal checking account within the past 12 months. This offer is only available for accounts where the primary applicant (first person listed on the account) resides in Arizona, California, Colorado, Florida, Iowa, Illinois, Indiana, Minnesota, New Mexico, Nevada, Oregon, Utah, Washington, or Wisconsin at the time of application. Proof of address may be required. To take advantage of the new personal checking account cash bonus offer, you must open your account between September 9, 2026 and December 15, 2026, and use the promo code. You may open your account at a BMO financial center, online, or by calling 1-800-546-6101. To apply for a checking account online, click through to the personal checking account cash bonus offer page, select “OPEN IN MINUTES,” for the checking account of your choice and we’ll automatically apply the promo code for you. To apply at a financial center or by phone for a checking account, click through to the personal checking account cash bonus offer page, enter your information, and select “SEND MY PROMO CODE” to receive the promo code you must use when opening your account. Accounts opened online on December 15, 2026 must have their applications submitted and approved prior to 9:00 p.m. Central Time. If you open your account by calling 1-800-546-6101, we must receive your opening deposit and all signed account opening documents by December 15, 2026. Personal checking new account cash bonus of up to $600: Earn a $100 cash bonus per month (up to $600 for 6 months) when you open a new BMO Smart Money Checking, BMO Smart Advantage Checking, or BMO Relationship Checking account and have qualifying activities. To receive the personal checking new account cash bonus of up to $600: Open a new BMO Smart Money Checking, BMO Smart Advantage Checking, or BMO Relationship Checking account; and The primary applicant (first person listed on the account) must reside in Arizona, California, Colorado, Florida, Iowa, Illinois, Indiana, Minnesota, New Mexico, Nevada, Oregon, Utah, Washington, or Wisconsin at the time of application; and Beginning the month following account opening, earn a $100 cash bonus each consecutive month you have a cumulative total of $1,000 or more in qualifying direct deposits post to your account. Business Days are Monday through Friday excluding any holiday on which the Bank and/or the Federal Reserve are closed for processing. Transactions received or occurring on a day other than a Business Day will be posted the next Business Day. Qualifying direct deposits are deposits of regular income from an employer or similar third party – such as your salary, paycheck, pension payment, Social Security payment, or other government benefits payment electronically deposited into the account – using your account number and BMO’s routing number that you provide to them. Non-qualifying examples include: teller deposits, wire transfers, ATM transfers or deposits, BMO Digital Banking transfers or deposits, deposits processed as a debit card credit or real-time credit, transfers from any bank or brokerage account, Account to Account or Peer to Peer (e.g. Zelle®, Venmo) transfers and deposits received via merchant payment platforms (such as Square®). We reserve the right to request documentation, such as a pay stub or statement of earnings, that the direct deposits qualify. Your checking account is eligible for up to 6 consecutive cash bonuses. Tracking begins the first calendar day of the month following account opening. Each month you meet offer requirements listed above, a $100 cash bonus will be paid to your account approximately 10 days after the beginning of the next month. The last $100 cash bonus can be earned 6 months after tracking begins. If y",
+      "official_url": "https://www.bmo.com/en-us/main/personal/checking-accounts/digital-offer/",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-frontwave-credit-union-200-checking-bonus",
@@ -60,12 +90,20 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "To receive the $350 bonus, open new Frontwave Checking and Savings accounts within the same day (subject to approval), enroll in e-statements, and set up recurring external direct deposits or ACH transfers totaling $1,000 or more. The $1,000 must post within a single calendar month and within 90 days of account opening. (Example: Two $500 paychecks within the same month qualifies.) Transfers between Frontwave accounts do not qualify. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "To receive the $350 bonus, open new Frontwave Checking and Savings accounts within the same day (subject to approval), enroll in e-statements, and set up recurring external direct deposits or ACH transfers totaling $1,000 or more. The $1,000 must post within a single calendar month and within 90 days of account opening. (Example: Two $500 paychecks within the same month qualifies.) Transfers between Frontwave accounts do not qualify. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.frontwavecu.com/101kgb",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/four-leaf-federal-credit-union-550-checking-bonus-fka-as-bethpage-federalcredit-union",
@@ -73,35 +111,57 @@
       "detail_url": "https://www.doctorofcredit.com/four-leaf-federal-credit-union-550-checking-bonus-fka-as-bethpage-federalcredit-union/",
       "missing": [
         "churn_months",
-        "dd_days",
+        "reapply_once_only",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "To be eligible for the FourLeaf Checking Up to $550 Bonus Offer and receive up to a maximum of $550.00 in bonuses, you must not have an existing FourLeaf checking account in which you are the primary account holder on the checking account and have not previously received a new checking account opening related bonus from FourLeaf. To receive the initial $350.00 bonus (the “First Direct Deposit Bonus”), you must open a Free Checking, Smart Checking, or Student Checking account with FourLeaf between February 2, 2026 and December 31, 2026, which is subject to approval, and have a Qualifying Direct Deposit (as defined below) post to the checking account within ninety (90) calendar days of account opening date. The First Direct Deposit Bonus will be deposited to the checking account within sixty (60) calendar days following the initial Qualifying Direct Deposit. To receive an additional $100.00 bonus (the “Second Direct Deposit Bonus”), you must continue to have a Qualifying Direct Deposit post to the checking account for twelve (12) consecutive months following the month of the initial Qualifying Direct Deposit. The Second Direct Deposit Bonus will be deposited to the checking account within sixty (60) calendar days of receiving the applicable Qualifying Direct Deposit for the Second Direct Deposit Bonus. To receive an additional $100.00 bonus (the “Third Direct Deposit Bonus”), you must continue to have a Qualifying Direct Deposit post to the checking account for twenty-four (24) consecutive months following the month of the initial Qualifying Direct Deposit. The Third Direct Deposit Bonus will be deposited to the checking account within sixty (60) calendar days of receiving the applicable Qualifying Direct Deposit for the Third Direct Deposit Bonus. If a Qualifying Direct Deposit does not post to the checking account in any subsequent months following the initial Qualifying Direct Deposit, the checking account will not be eligible to receive the Second Direct Deposit Bonus and Third Direct Deposit Bonus. The checking account must remain open and in good standing up to and including the date each bonus is deposited to receive the applicable bonus. A Qualifying Direct Deposit is a recurring electronic deposit of a paycheck, pension, or government benefits (such as Social Security) from an employer, the government, or similar third party of $500.00 or more. Certain types of electronically deposited funds may not be considered a Qualifying Direct Deposit including ATM deposits, debit card transfers, online banking transfers or deposits, and person to person payments such as Zelle®. Bonuses are considered interest and will be reported on IRS Form 1099-INT. The primary account owner is responsible for any applicable taxes. You are only eligible for one (1) new checking account bonus offer. If you open multiple checking accounts, you will only be eligible to receive one (1) new checking account bonus offer. Offer may be modified or discontinued without notice. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "To be eligible for the FourLeaf Checking Up to $550 Bonus Offer and receive up to a maximum of $550.00 in bonuses, you must not have an existing FourLeaf checking account in which you are the primary account holder on the checking account and have not previously received a new checking account opening related bonus from FourLeaf. To receive the initial $350.00 bonus (the “First Direct Deposit Bonus”), you must open a Free Checking, Smart Checking, or Student Checking account with FourLeaf between February 2, 2026 and December 31, 2026, which is subject to approval, and have a Qualifying Direct Deposit (as defined below) post to the checking account within ninety (90) calendar days of account opening date. The First Direct Deposit Bonus will be deposited to the checking account within sixty (60) calendar days following the initial Qualifying Direct Deposit. To receive an additional $100.00 bonus (the “Second Direct Deposit Bonus”), you must continue to have a Qualifying Direct Deposit post to the checking account for twelve (12) consecutive months following the month of the initial Qualifying Direct Deposit. The Second Direct Deposit Bonus will be deposited to the checking account within sixty (60) calendar days of receiving the applicable Qualifying Direct Deposit for the Second Direct Deposit Bonus. To receive an additional $100.00 bonus (the “Third Direct Deposit Bonus”), you must continue to have a Qualifying Direct Deposit post to the checking account for twenty-four (24) consecutive months following the month of the initial Qualifying Direct Deposit. The Third Direct Deposit Bonus will be deposited to the checking account within sixty (60) calendar days of receiving the applicable Qualifying Direct Deposit for the Third Direct Deposit Bonus. If a Qualifying Direct Deposit does not post to the checking account in any subsequent months following the initial Qualifying Direct Deposit, the checking account will not be eligible to receive the Second Direct Deposit Bonus and Third Direct Deposit Bonus. The checking account must remain open and in good standing up to and including the date each bonus is deposited to receive the applicable bonus. A Qualifying Direct Deposit is a recurring electronic deposit of a paycheck, pension, or government benefits (such as Social Security) from an employer, the government, or similar third party of $500.00 or more. Certain types of electronically deposited funds may not be considered a Qualifying Direct Deposit including ATM deposits, debit card transfers, online banking transfers or deposits, and person to person payments such as Zelle®. Bonuses are considered interest and will be reported on IRS Form 1099-INT. The primary account owner is responsible for any applicable taxes. You are only eligible for one (1) new checking account bonus offer. If you open multiple checking accounts, you will only be eligible to receive one (1) new checking account bonus offer. Offer may be modified or discontinued without notice. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.fourleaffcu.com/queens-open-an-account/",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-only-heritage-community-credit-union-500-checking-bonus",
       "bank": "Heritage Community Credit Union",
       "detail_url": "https://www.doctorofcredit.com/ca-only-heritage-community-credit-union-500-checking-bonus/",
       "missing": [
-        "dd_days",
+        "reapply_once_only",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "New Checking Account Bonus: Offer valid through September 30, 2026. Offer is unavailable to existing Heritage Community Credit Union (HCCU) checking account holders and members whose checking account was closed within the previous 90 days or closed with a negative balance. To receive the $100 bonus, open a new HCCU checking account using promo code 5002026CK, subject to approval, and fund the account with a minimum opening deposit of $25. The bonus will be deposited into the new checking account within 30 days of satisfying the account opening requirements. Debit Card Bonus: Earn an additional $200 when you complete 40 qualifying debit card purchase transactions within 60 days of account opening. ATM transactions, person-to-person payments, returned purchases, and other non-purchase transactions do not qualify. The bonus will be deposited into the checking account within 30 days after all qualifying requirements have been met. Direct Deposit Bonus: Earn an additional $200 when recurring direct deposits totaling at least $500 per month are received into the new checking account through the Automated Clearing House (ACH) network within 60 days of account opening. Qualifying direct deposits include payroll, pension, Social Security, or other government benefits. Person-to-person payments such as Zelle®, transfers between accounts, and deposits made through payment apps do not qualify as direct deposits. The bonus will be deposited into the checking account within 30 days after the qualifying direct deposit requirement has been satisfied. To receive any bonus, the checking account must be open, active, and not restricted at the time of bonus payout. Bonuses may be reported to the IRS as interest, and the recipient is responsible for any applicable taxes. HCCU reserves the right to modify or discontinue this offer at any time without notice. Membership eligibility requirements apply. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "New Checking Account Bonus: Offer valid through September 30, 2026. Offer is unavailable to existing Heritage Community Credit Union (HCCU) checking account holders and members whose checking account was closed within the previous 90 days or closed with a negative balance. To receive the $100 bonus, open a new HCCU checking account using promo code 5002026CK, subject to approval, and fund the account with a minimum opening deposit of $25. The bonus will be deposited into the new checking account within 30 days of satisfying the account opening requirements. Debit Card Bonus: Earn an additional $200 when you complete 40 qualifying debit card purchase transactions within 60 days of account opening. ATM transactions, person-to-person payments, returned purchases, and other non-purchase transactions do not qualify. The bonus will be deposited into the checking account within 30 days after all qualifying requirements have been met. Direct Deposit Bonus: Earn an additional $200 when recurring direct deposits totaling at least $500 per month are received into the new checking account through the Automated Clearing House (ACH) network within 60 days of account opening. Qualifying direct deposits include payroll, pension, Social Security, or other government benefits. Person-to-person payments such as Zelle®, transfers between accounts, and deposits made through payment apps do not qualify as direct deposits. The bonus will be deposited into the checking account within 30 days after the qualifying direct deposit requirement has been satisfied. To receive any bonus, the checking account must be open, active, and not restricted at the time of bonus payout. Bonuses may be reported to the IRS as interest, and the recipient is responsible for any applicable taxes. HCCU reserves the right to modify or discontinue this offer at any time without notice. Membership eligibility requirements apply. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.heritageccu.com/lp/winner.html",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/wells-fargo-500-checking-bonus",
       "bank": "Wells Fargo",
       "detail_url": "https://www.doctorofcredit.com/wells-fargo-500-checking-bonus/",
       "missing": [
+        "reapply_once_only",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "To be eligible: Offer is for new consumer checking customers only and is available only to the primary owner of the new checking account. The primary account owner is the owner whose Taxpayer Identification Number, such as a Social Security Number, is assigned to the account and has tax responsibility. Offer is not available to customers that received a bonus for a Wells Fargo consumer checking account within the past 12 months, are Wells Fargo employees, or are non-resident aliens or foreign entities signing any version of IRS Form W-8. Deposit accounts that are part of the Wells Fargo Private Bank experience are not eligible for this offer. To receive the $500 bonus: you must use your bonus offer code when opening a new Wells Fargo consumer checking account, which is subject to approval, by October 6, 2026 and receive $1,000 or more in qualifying electronic deposits within 90 calendar days of account opening (the “qualification period”). A qualifying electronic deposit is a deposit of funds, such as your salary, government benefit payment, or other income, that has posted to your account and is (1) a direct deposit made through the Automated Clearing House (ACH) network, (2) an instant payment processed through the RTP® network (real-time payment system) or FedNow℠ Service, or (3) an electronic credit from a third-party service that facilitates payments to your debit card using the Visa® or Mastercard® network (e.g., an Original Credit Transaction). Transfers from one account to another, mobile deposits, Zelle®, or deposits made at a branch or ATM are not considered a qualifying electronic deposit. An ACH direct deposit made available early with Early Pay Day does not count toward the bonus requirements until it posts to your account and is no longer pending (e.g., scheduled payment date). Once you have met all requirements, we will deposit the bonus into your new account within 30 calendar days . Your new account must stay open through the time we attempt to deposit the bonus. We may close accounts with a zero balance without prior notice. You are responsible for any taxes due on the bonus. We will report the bonus as income to tax authorities, as required by applicable law. If you are subject to backup withholding at the time of payment, we may withhold the required amount and remit to tax authorities. Other Terms: This offer may be discontinued or changed at any time without notice and cannot be combined with any other consumer deposit offer (limit one bonus per customer/account). Offer cannot be reproduced, purchased, sold, transferred, or traded. If we suspect bonus or promotional offer abuse, we may close or restrict the account and decline or reverse any bonus. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "To be eligible: Offer is for new consumer checking customers only and is available only to the primary owner of the new checking account. The primary account owner is the owner whose Taxpayer Identification Number, such as a Social Security Number, is assigned to the account and has tax responsibility. Offer is not available to customers that received a bonus for a Wells Fargo consumer checking account within the past 12 months, are Wells Fargo employees, or are non-resident aliens or foreign entities signing any version of IRS Form W-8. Deposit accounts that are part of the Wells Fargo Private Bank experience are not eligible for this offer. To receive the $500 bonus: you must use your bonus offer code when opening a new Wells Fargo consumer checking account, which is subject to approval, by October 6, 2026 and receive $1,000 or more in qualifying electronic deposits within 90 calendar days of account opening (the “qualification period”). A qualifying electronic deposit is a deposit of funds, such as your salary, government benefit payment, or other income, that has posted to your account and is (1) a direct deposit made through the Automated Clearing House (ACH) network, (2) an instant payment processed through the RTP® network (real-time payment system) or FedNow℠ Service, or (3) an electronic credit from a third-party service that facilitates payments to your debit card using the Visa® or Mastercard® network (e.g., an Original Credit Transaction). Transfers from one account to another, mobile deposits, Zelle®, or deposits made at a branch or ATM are not considered a qualifying electronic deposit. An ACH direct deposit made available early with Early Pay Day does not count toward the bonus requirements until it posts to your account and is no longer pending (e.g., scheduled payment date). Once you have met all requirements, we will deposit the bonus into your new account within 30 calendar days . Your new account must stay open through the time we attempt to deposit the bonus. We may close accounts with a zero balance without prior notice. You are responsible for any taxes due on the bonus. We will report the bonus as income to tax authorities, as required by applicable law. If you are subject to backup withholding at the time of payment, we may withhold the required amount and remit to tax authorities. Other Terms: This offer may be discontinued or changed at any time without notice and cannot be combined with any other consumer deposit offer (limit one bonus per customer/account). Offer cannot be reproduced, purchased, sold, transferred, or traded. If we suspect bonus or promotional offer abuse, we may close or restrict the account and decline or reverse any bonus. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://accountoffers.wellsfargo.com/offerbonus/",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/az-ca-fl-in-mi-nj-ny-oh-wi-flagstar-bank-250-350-checking-bonus",
@@ -110,12 +170,20 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "You must be a new personal checking customer of Flagstar Bank. You must open a Flagstar Ready Checking or Flagstar Elite Checking account. Minimum $50 deposit to open checking account. You will receive a $250 credit for Flagstar Ready Checking or a $350 credit for Flagstar Elite Checking into this account as a bonus 91-104 days after an initial deposit is made to the new account (account funding) opened, subject to the following conditions: Within the first 90 days of the account funding (bonus period) you must maintain an average daily Balance of $500 or more and have one or more direct deposits (ACH credits) totaling $500 or more. Additionally, (i) this offer is limited to one checking bonus per household, (ii)Flagstar Ready Checking account must be funded within 90 days of the account opening date, Flagstar Elite Checking account must be funded within 60 days of the account opening date, (iii) early account closure fee and reclamation of bonus may be imposed for accounts closed within 180 days, and (iv) Flagstar Bank employees are not eligible for the offer. If you have been paid a checking cash bonus previously, you are ineligible to receive this offer. For tax purposes, you will receive an IRS form from Flagstar Bank. Offer subject to change or cancellation at any time without notice. Receiving this offer does not guarantee your eligibility. A ll account applications are subject to our normal approval process. Area restrictions may apply. Offer expires April 30, 2024. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "You must be a new personal checking customer of Flagstar Bank. You must open a Flagstar Ready Checking or Flagstar Elite Checking account. Minimum $50 deposit to open checking account. You will receive a $250 credit for Flagstar Ready Checking or a $350 credit for Flagstar Elite Checking into this account as a bonus 91-104 days after an initial deposit is made to the new account (account funding) opened, subject to the following conditions: Within the first 90 days of the account funding (bonus period) you must maintain an average daily Balance of $500 or more and have one or more direct deposits (ACH credits) totaling $500 or more. Additionally, (i) this offer is limited to one checking bonus per household, (ii)Flagstar Ready Checking account must be funded within 90 days of the account opening date, Flagstar Elite Checking account must be funded within 60 days of the account opening date, (iii) early account closure fee and reclamation of bonus may be imposed for accounts closed within 180 days, and (iv) Flagstar Bank employees are not eligible for the offer. If you have been paid a checking cash bonus previously, you are ineligible to receive this offer. For tax purposes, you will receive an IRS form from Flagstar Bank. Offer subject to change or cancellation at any time without notice. Receiving this offer does not guarantee your eligibility. A ll account applications are subject to our normal approval process. Area restrictions may apply. Offer expires April 30, 2024. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.flagstar.com/personal/bank/promo/checking/cash-offer.html",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-travis-credit-union-250-checking-bonus",
@@ -124,26 +192,42 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_amount",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "$350 offer applies to new and existing Travis Credit Union (TCU) members who open their first TCU checking account and meet the deposit requirements. Only Free Checking and Access Checking accounts are eligible for this offer. To qualify for the $350 reward, a new membership and/or a new TCU Free Checking or Access Checking account must be opened using the promo code. The $350 reward will be payable into the checking account after 90 days if a total of $2,000 of external electronic deposits have been made within the 90-day period. Person to person payments such as Zelle® and other cash apps are not eligible for this offer. Only new money qualifies and no cash deposits (cash allowed for the initial deposits). New money is defined as funds not currently on deposit with TCU. Offer only applies to ages 18 years and over. Excludes Travis Credit Union employees. Only one offer per member allowed. Membership eligibility and other restrictions may apply. Membership requires a one-time non-refundable $5 fee plus a $5.00 minimum deposit. Only the Free Checking or Access Checking account qualifies for this offer and requires a $50.00 minimum deposit. The $350 reward is considered interest and will be reported on IRS form 1099-INT. See disclosure for details at traviscu.org. This offer is subject to change or cancellation at any time. Insured by NCUA. Applicant must meet membership and account qualifications. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "$350 offer applies to new and existing Travis Credit Union (TCU) members who open their first TCU checking account and meet the deposit requirements. Only Free Checking and Access Checking accounts are eligible for this offer. To qualify for the $350 reward, a new membership and/or a new TCU Free Checking or Access Checking account must be opened using the promo code. The $350 reward will be payable into the checking account after 90 days if a total of $2,000 of external electronic deposits have been made within the 90-day period. Person to person payments such as Zelle® and other cash apps are not eligible for this offer. Only new money qualifies and no cash deposits (cash allowed for the initial deposits). New money is defined as funds not currently on deposit with TCU. Offer only applies to ages 18 years and over. Excludes Travis Credit Union employees. Only one offer per member allowed. Membership eligibility and other restrictions may apply. Membership requires a one-time non-refundable $5 fee plus a $5.00 minimum deposit. Only the Free Checking or Access Checking account qualifies for this offer and requires a $50.00 minimum deposit. The $350 reward is considered interest and will be reported on IRS form 1099-INT. See disclosure for details at traviscu.org. This offer is subject to change or cancellation at any time. Insured by NCUA. Applicant must meet membership and account qualifications. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.traviscu.org/checkingx75/",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/citi-300-checking-bonus",
       "bank": "Citi",
       "detail_url": "https://www.doctorofcredit.com/citi-300-checking-bonus/",
       "missing": [
+        "reapply_once_only",
         "dd_days",
         "deposit_hold_amount",
         "deposit_hold_days",
-        "apply_methods"
+        "apply_methods",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "An EDD is an electronic deposit through the Automated Clearing House (“ACH”) Network of payroll, pension, social security, government benefits and other payments to your checking or savings account. An Enhanced Direct Deposit also includes all deposits via Zelle® and other P2P payments when made via ACH using providers such as Venmo or PayPal. Teller deposits, cash deposits, check deposits, wire transfers, transfers between Citibank accounts, ATM transfers and deposits, mobile check deposits, and P2P payments using a debit card do not qualify as an Enhanced Direct Deposit. (Note: see this comment about Zelle. ) So long as you have not owned a Citi checking account in the last 365 days , meet Tax Requirements, and are at least 18 years old, you can apply to participate in the Enhanced Direct Deposit Checking Acquisition Offer (“Enhanced Direct Deposit Offer”) (click the Offer, Product & Pricing Information link at the top of the fine print to see this) All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "An EDD is an electronic deposit through the Automated Clearing House (“ACH”) Network of payroll, pension, social security, government benefits and other payments to your checking or savings account. An Enhanced Direct Deposit also includes all deposits via Zelle® and other P2P payments when made via ACH using providers such as Venmo or PayPal. Teller deposits, cash deposits, check deposits, wire transfers, transfers between Citibank accounts, ATM transfers and deposits, mobile check deposits, and P2P payments using a debit card do not qualify as an Enhanced Direct Deposit. (Note: see this comment about Zelle. ) So long as you have not owned a Citi checking account in the last 365 days , meet Tax Requirements, and are at least 18 years old, you can apply to participate in the Enhanced Direct Deposit Checking Acquisition Offer (“Enhanced Direct Deposit Offer”) (click the Offer, Product & Pricing Information link at the top of the fine print to see this) All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": null,
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/u-s-bank-450-100-checking-bonus",
@@ -151,12 +235,20 @@
       "detail_url": "https://www.doctorofcredit.com/u-s-bank-450-100-checking-bonus/",
       "missing": [
         "expires_on",
+        "reapply_once_only",
         "dd_amount",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "U.S. Bank Smartly® Checking bonus: To be eligible, you or any owner(s) on your new Bank Smartly Checking account cannot have an existing U.S. Bank consumer checking account, had a U.S. Bank consumer checking account in the last 12 months or received other U.S. Bank consumer checking bonus offers within the past 12 months. You must also use the promo code 2024JUL at account opening. To receive the bonus, you must open a new U.S. Bank Smartly® Checking account with a minimum deposit of $25 either online, in a branch or over the phone from July 9, 2024 through and including September 26, 2024. Additionally, you must enroll in the U.S. Bank Mobile App or online banking within 90 days of opening your account. You must also complete two or more direct deposits within 90 days of opening your account that total: $2,000 to $4,999.99 to earn the $250 bonus, $5,000 to $7,999.99 to earn the $350 bonus, or $8,000 or more to earn the $450 bonus. A direct deposit is an electronic deposit of your paycheck made through the Automated Clearing House (ACH) network or an electronic deposit of your government benefits, such as Social Security, from your employer or the government. Other electronic deposits or person-to-person payments are not considered a direct deposit. Your checking bonus (“adjusted interest”) will be credited to your new checking account within 60 days following the end of the calendar month during which you completed all the offer requirements. Account must be open and have a positive balance to receive the bonus. Bonus will be reported as interest earned on IRS form 1099-INT, and recipient is responsible for any applicable taxes. Offer may not be combined with any other checking account bonus offers. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "U.S. Bank Smartly® Checking bonus: To be eligible, you or any owner(s) on your new Bank Smartly Checking account cannot have an existing U.S. Bank consumer checking account, had a U.S. Bank consumer checking account in the last 12 months or received other U.S. Bank consumer checking bonus offers within the past 12 months. You must also use the promo code 2024JUL at account opening. To receive the bonus, you must open a new U.S. Bank Smartly® Checking account with a minimum deposit of $25 either online, in a branch or over the phone from July 9, 2024 through and including September 26, 2024. Additionally, you must enroll in the U.S. Bank Mobile App or online banking within 90 days of opening your account. You must also complete two or more direct deposits within 90 days of opening your account that total: $2,000 to $4,999.99 to earn the $250 bonus, $5,000 to $7,999.99 to earn the $350 bonus, or $8,000 or more to earn the $450 bonus. A direct deposit is an electronic deposit of your paycheck made through the Automated Clearing House (ACH) network or an electronic deposit of your government benefits, such as Social Security, from your employer or the government. Other electronic deposits or person-to-person payments are not considered a direct deposit. Your checking bonus (“adjusted interest”) will be credited to your new checking account within 60 days following the end of the calendar month during which you completed all the offer requirements. Account must be open and have a positive balance to receive the bonus. Bonus will be reported as interest earned on IRS form 1099-INT, and recipient is responsible for any applicable taxes. Offer may not be combined with any other checking account bonus offers. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.usbank.com/splash/checking/2026-all-market-checking-offer.html",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/chime-earn-10000-swagbucks-for-opening-a-new-account-receiving-a-direct-deposit",
@@ -165,25 +257,41 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_days",
         "deposit_hold_amount",
         "deposit_hold_days",
-        "apply_methods"
+        "apply_methods",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": null,
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/navy-federal-credit-union-200-new-member-bonus",
       "bank": "Navy Federal Credit Union",
       "detail_url": "https://www.doctorofcredit.com/navy-federal-credit-union-200-new-member-bonus/",
       "missing": [
+        "reapply_once_only",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Offer valid 10/1/2026–12/31/2026 and can expire anytime without prior notice. Must be 18 years of age or older. To qualify for the $400 bonus, complete each of the following items: 1) Join Navy Federal online, in branch, or by phone using promo code CHK26SRC between 10/1/2026 and 12/31/2026, 2) Open a checking account (as primary owner) by 12/31/2026, AND 3) Complete qualifying direct deposit transactions, as defined below, by 4/30/2027. Offer not valid for existing members or applicants whose Membership Share Savings account was closed within 270 days prior to establishing new membership. Navy Federal membership is open to members of the Coast Guard, all Department of Defense uniformed personnel, reservists, Active Duty, retired, Veterans, Army and Air National Guard, DoD civilian employees, contractors, and their immediate family . $5 minimum balance is required to open and maintain Membership Savings Account and to obtain bonus. If you have not funded your new Membership Savings Account at the time the bonus is credited, we will hold the minimum $5 share required for your membership. Membership Savings Account Annual Percentage Yield (APY) is 0.25%. Checking account APY vary depending on the checking account selected. For example, our Free Easy Checking account earns a 0.05% APY. Or earn a 0.01% APY on a Free EveryDay Checking account. APYs accurate as of 8/14/2026. Fees may reduce earnings, and rates may change. Other restrictions may apply. Limit one (1) $400 bonus per member . New member must be the primary account owner of the checking account to qualify. Checking account must remain open and with a positive balance at the time of bonus crediting. It may take up to 120 days to confirm your direct deposit establishment. Recipient is solely responsible for any personal tax liability resulting from the acceptance of this bonus. Navy Federal does not provide tax advice. You may qualify for direct deposit if you have (1) a recurring ACH from employer, military pay, or certain government agency pay or benefits in your name that is deposited into a Navy Federal deposit account where you are Primary or Secondary Owner; OR (2) mobile deposits, ATM deposits, branch deposits, or payments from the FedNow® Payment network, the Real Time Payment network, or third-party services that facilitate payments to your debit card using the Navy Federal Credit Union Debit Card, totaling at least $500 and recurring for at least 3 out of 4 consecutive months that are deposited into Navy Federal deposit accounts where you are Primary Owner; OR (3) monthly non-payroll ACH or payroll allotment totaling at least $500 and recurring for at least 3 out of 4 consecutive months that are deposited into Navy Federal deposit accounts where you are Primary Owner; OR (4) monthly non-payroll ACH or payroll allotment totaling at least $500 and recurring for at least 3 out of 4 consecutive months that are deposited into Navy Federal deposit accounts where you are Secondary Owner All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "Offer valid 10/1/2026–12/31/2026 and can expire anytime without prior notice. Must be 18 years of age or older. To qualify for the $400 bonus, complete each of the following items: 1) Join Navy Federal online, in branch, or by phone using promo code CHK26SRC between 10/1/2026 and 12/31/2026, 2) Open a checking account (as primary owner) by 12/31/2026, AND 3) Complete qualifying direct deposit transactions, as defined below, by 4/30/2027. Offer not valid for existing members or applicants whose Membership Share Savings account was closed within 270 days prior to establishing new membership. Navy Federal membership is open to members of the Coast Guard, all Department of Defense uniformed personnel, reservists, Active Duty, retired, Veterans, Army and Air National Guard, DoD civilian employees, contractors, and their immediate family . $5 minimum balance is required to open and maintain Membership Savings Account and to obtain bonus. If you have not funded your new Membership Savings Account at the time the bonus is credited, we will hold the minimum $5 share required for your membership. Membership Savings Account Annual Percentage Yield (APY) is 0.25%. Checking account APY vary depending on the checking account selected. For example, our Free Easy Checking account earns a 0.05% APY. Or earn a 0.01% APY on a Free EveryDay Checking account. APYs accurate as of 8/14/2026. Fees may reduce earnings, and rates may change. Other restrictions may apply. Limit one (1) $400 bonus per member . New member must be the primary account owner of the checking account to qualify. Checking account must remain open and with a positive balance at the time of bonus crediting. It may take up to 120 days to confirm your direct deposit establishment. Recipient is solely responsible for any personal tax liability resulting from the acceptance of this bonus. Navy Federal does not provide tax advice. You may qualify for direct deposit if you have (1) a recurring ACH from employer, military pay, or certain government agency pay or benefits in your name that is deposited into a Navy Federal deposit account where you are Primary or Secondary Owner; OR (2) mobile deposits, ATM deposits, branch deposits, or payments from the FedNow® Payment network, the Real Time Payment network, or third-party services that facilitate payments to your debit card using the Navy Federal Credit Union Debit Card, totaling at least $500 and recurring for at least 3 out of 4 consecutive months that are deposited into Navy Federal deposit accounts where you are Primary Owner; OR (3) monthly non-payroll ACH or payroll allotment totaling at least $500 and recurring for at least 3 out of 4 consecutive months that are deposited into Navy Federal deposit accounts where you are Primary Owner; OR (4) monthly non-payroll ACH or payroll allotment totaling at least $500 and recurring for at least 3 out of 4 consecutive months that are deposited into Navy Federal deposit accounts where you are Secondary Owner All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.navyfederal.org/campaigns/checking/a33580-checking-offer.html",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-usc-credit-union-250-checking-bonus",
@@ -191,25 +299,41 @@
       "detail_url": "https://www.doctorofcredit.com/ca-usc-credit-union-250-checking-bonus/",
       "missing": [
         "expires_on",
+        "reapply_once_only",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Offer is available to members who have not owned a USC Credit Union personal checking account within the last twelve (12) months or closed with a negative balance within the last 3 years. You can receive only one new checking account opening-related bonus per account. To receive the checking bonus all requirements must be met: Open a new USC Credit Union personal checking account using promotional code: at account opening, which is subject to membership eligibility (membership fee may apply; please call 1-877-670-5860 or visit www.USCcreditunion.org to confirm eligibility). Business checking accounts are not eligible. Have qualifying direct deposits totaling $1,000 or more every 30 days for the first 90 days of checking account opening. Your direct deposit needs to be an electronic deposit of your paycheck, pension, or government benefits (such as Social Security) from your employer or the government. Person to Person payments (such as Zelle®, Bill Pay, Cash Apps, ACH transfers between external bank accounts, etc.) are not considered a direct deposit. Micro-deposits do not qualify as a direct deposit for the bonus. Micro-deposits are small deposits, typically less than $1, that are sent to your account to verify it is the correct account; Make a minimum of ten (10) debit card transactions or more every 30 days for the first 90 days of checking account opening. After you have completed all the above requirements, we’ll deposit the bonus in your new account within 15 days. To receive this bonus, the enrolled account must not be closed or restricted at the time of payout. The bonus is considered interest and will be reported on IRS Form 1099-INT (or Form 1042-S, if applicable). Offer subject to change without notice. Offer valid for new checking accounts opened from 5/6/2024 to 6/4/2024 and cannot be combined with any other offers. All credit union programs, terms and conditions are subject to change without notice. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "Offer is available to members who have not owned a USC Credit Union personal checking account within the last twelve (12) months or closed with a negative balance within the last 3 years. You can receive only one new checking account opening-related bonus per account. To receive the checking bonus all requirements must be met: Open a new USC Credit Union personal checking account using promotional code: at account opening, which is subject to membership eligibility (membership fee may apply; please call 1-877-670-5860 or visit www.USCcreditunion.org to confirm eligibility). Business checking accounts are not eligible. Have qualifying direct deposits totaling $1,000 or more every 30 days for the first 90 days of checking account opening. Your direct deposit needs to be an electronic deposit of your paycheck, pension, or government benefits (such as Social Security) from your employer or the government. Person to Person payments (such as Zelle®, Bill Pay, Cash Apps, ACH transfers between external bank accounts, etc.) are not considered a direct deposit. Micro-deposits do not qualify as a direct deposit for the bonus. Micro-deposits are small deposits, typically less than $1, that are sent to your account to verify it is the correct account; Make a minimum of ten (10) debit card transactions or more every 30 days for the first 90 days of checking account opening. After you have completed all the above requirements, we’ll deposit the bonus in your new account within 15 days. To receive this bonus, the enrolled account must not be closed or restricted at the time of payout. The bonus is considered interest and will be reported on IRS Form 1099-INT (or Form 1042-S, if applicable). Offer subject to change without notice. Offer valid for new checking accounts opened from 5/6/2024 to 6/4/2024 and cannot be combined with any other offers. All credit union programs, terms and conditions are subject to change without notice. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://info.usccreditunion.org/400bonus",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/pnc-up-to-250-400-checking-bonus",
       "bank": "PNC",
       "detail_url": "https://www.doctorofcredit.com/pnc-up-to-250-400-checking-bonus/",
       "missing": [
+        "reapply_once_only",
         "dd_amount",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Offer is contingent on product availability and may vary based on where you open your account and the Zip code of your primary address. For online or phone origination, the Zip code of your primary address will be used to determine product availability. For origination through a PNC location, product availability will be based on the physical PNC location. You may earn a $400 reward if you open a new Virtual Wallet with Performance Select or a $250 reward if you open a new Virtual Wallet with Performance Spend. Changing your product type any time after account opening and prior to the payout of your earned reward, could result in different offer requirements and reward amount. To qualify for the reward, the new Virtual Wallet product must be opened online via the application links on this page between 9/21/2021 to 10/31/2021, and a qualifying Direct Deposit(s) must be received within the first 60 days. Your Virtual Wallet product must remain open in order for you to receive the reward, which will be credited to the eligible account within 60–90 days after all conditions have been met and will be identified as “Cash Trans Promo Reward” on your monthly statement. A qualifying Direct Deposit for this offer, is defined as a recurring Direct Deposit of a paycheck, pension, Social Security or other regular monthly income electronically deposited by an employer or an outside agency into the Spend account of a Virtual Wallet with Performance Select or Virtual Wallet with Performance Spend. The total amount of all qualifying Direct Deposits credited to your Spend account must be at least $5,000 for Virtual Wallet Performance Select or $2,000 for Virtual Wallet Performance Spend. Credit card cash advance transfers, wire transfers, person to person transfers, transfers from one account to another or deposits made at a physical PNC location or ATM do not qualify as qualifying Direct Deposits. New account will not be eligible for offer if any signer has signing authority on an existing PNC Bank consumer checking account or has closed an account within the past 90 days, or has been paid a promotional premium in the past 24 months. If multiple accounts are opened with the same signers, only one account will be eligible for the premium. Trust, Estate and other specialty titled accounts are excluded from this offer. For this offer, signing authority will be defined by the customer name(s) and Social Security number(s) registered on the account. Offer may be extended, modified or discontinued at any time and may vary by market. The value of the reward may be reported on Internal Revenue Service (IRS) Form 1099, and may be considered taxable income to you. Please consult your tax adviser regarding your specific situation. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "Offer is contingent on product availability and may vary based on where you open your account and the Zip code of your primary address. For online or phone origination, the Zip code of your primary address will be used to determine product availability. For origination through a PNC location, product availability will be based on the physical PNC location. You may earn a $400 reward if you open a new Virtual Wallet with Performance Select or a $250 reward if you open a new Virtual Wallet with Performance Spend. Changing your product type any time after account opening and prior to the payout of your earned reward, could result in different offer requirements and reward amount. To qualify for the reward, the new Virtual Wallet product must be opened online via the application links on this page between 9/21/2021 to 10/31/2021, and a qualifying Direct Deposit(s) must be received within the first 60 days. Your Virtual Wallet product must remain open in order for you to receive the reward, which will be credited to the eligible account within 60–90 days after all conditions have been met and will be identified as “Cash Trans Promo Reward” on your monthly statement. A qualifying Direct Deposit for this offer, is defined as a recurring Direct Deposit of a paycheck, pension, Social Security or other regular monthly income electronically deposited by an employer or an outside agency into the Spend account of a Virtual Wallet with Performance Select or Virtual Wallet with Performance Spend. The total amount of all qualifying Direct Deposits credited to your Spend account must be at least $5,000 for Virtual Wallet Performance Select or $2,000 for Virtual Wallet Performance Spend. Credit card cash advance transfers, wire transfers, person to person transfers, transfers from one account to another or deposits made at a physical PNC location or ATM do not qualify as qualifying Direct Deposits. New account will not be eligible for offer if any signer has signing authority on an existing PNC Bank consumer checking account or has closed an account within the past 90 days, or has been paid a promotional premium in the past 24 months. If multiple accounts are opened with the same signers, only one account will be eligible for the premium. Trust, Estate and other specialty titled accounts are excluded from this offer. For this offer, signing authority will be defined by the customer name(s) and Social Security number(s) registered on the account. Offer may be extended, modified or discontinued at any time and may vary by market. The value of the reward may be reported on Internal Revenue Service (IRS) Form 1099, and may be considered taxable income to you. Please consult your tax adviser regarding your specific situation. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.pnc.com/en/personal-banking/banking/checking/campaigns/checking-offer-for-PNC-customers.html#",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/fifth-third-200-checking-bonus-fl-ga-il-ky-mi-nc-oh-tn-wv",
@@ -217,13 +341,21 @@
       "detail_url": "https://www.doctorofcredit.com/fifth-third-200-checking-bonus-fl-ga-il-ky-mi-nc-oh-tn-wv/",
       "missing": [
         "expires_on",
+        "reapply_once_only",
         "dd_amount",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Offer not available to existing checking or Express Banking customers or to those with a Fifth Third Checking or Express Banking account that has been closed within the last 13 months. Bank reserves the right to limit each customer to one new account-related gift incentive per calendar year. Essential Checking account must be opened between 1/1/2021 and 3/31/2021. Bonus will be deposited into your new checking account within 10 business days of completing requirements. Basic Checking, Express Banking and Business Checking accounts are excluded from this offer. Bonus may be taxable as interest income and reported on IRS Form 1099-INT."
+      "fine_print_text": "Offer not available to existing checking or Express Banking customers or to those with a Fifth Third Checking or Express Banking account that has been closed within the last 13 months. Bank reserves the right to limit each customer to one new account-related gift incentive per calendar year. Essential Checking account must be opened between 1/1/2021 and 3/31/2021. Bonus will be deposited into your new checking account within 10 business days of completing requirements. Basic Checking, Express Banking and Business Checking accounts are excluded from this offer. Bonus may be taxable as interest income and reported on IRS Form 1099-INT.",
+      "official_url": "https://www.53.com/content/fifth-third/en/mkg/checking-offer.html",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-first-us-community-credit-union-300-checking-bonus",
@@ -232,11 +364,19 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Cash bonus offer valid from August 1, 2024 to Dec. 31, 2024 when a new personal checking account is opened with a direct deposit of $500 or more within 90 days. Account can be opened at a First U.S. branch, online or via phone using code BTF300. Must qualify for membership. Membership requires you maintain $25 in a Member Share (Savings) account. Offer is limited to one per member and account. Offer is not available for existing First U.S. members with a personal checking account. Cash bonus will be reported to the IRS for tax purposes. Offer can be changed or canceled without notice at any time. Your account must be open, in good standing and have a balance greater than zero when the cash bonus is paid. Deposits processed as a debit card credit or via Account to Account or Peer to Peer (e.g. Zelle®, Venmo) transfers do not qualify. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "Cash bonus offer valid from August 1, 2024 to Dec. 31, 2024 when a new personal checking account is opened with a direct deposit of $500 or more within 90 days. Account can be opened at a First U.S. branch, online or via phone using code BTF300. Must qualify for membership. Membership requires you maintain $25 in a Member Share (Savings) account. Offer is limited to one per member and account. Offer is not available for existing First U.S. members with a personal checking account. Cash bonus will be reported to the IRS for tax purposes. Offer can be changed or canceled without notice at any time. Your account must be open, in good standing and have a balance greater than zero when the cash bonus is paid. Deposits processed as a debit card credit or via Account to Account or Peer to Peer (e.g. Zelle®, Venmo) transfers do not qualify. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://firstus.org/btf-bonus-offer",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-only-keypoint-credit-union-200-checking-bonus",
@@ -244,11 +384,19 @@
       "detail_url": "https://www.doctorofcredit.com/ca-only-keypoint-credit-union-200-checking-bonus/",
       "missing": [
         "expires_on",
+        "reapply_once_only",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "New Member bonus is paid within 90 days of account opening if (a) you open your KeyPoint checking account with the required minimum balance and (b) you set up recurring monthly direct deposit of net pay or other income ($1,000 per month minimum) to your KeyPoint checking account and the first direct deposit posts within 60 days after account opening. New KeyPoint membership required. Individuals who have been KeyPoint Members within one calendar year prior to account opening are not eligible. Direct deposit must be new to KeyPoint, not moved from an existing KeyPoint account. Offer cannot be combined with other promotions KeyPoint employees, officials and their immediate families may not participate. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "New Member bonus is paid within 90 days of account opening if (a) you open your KeyPoint checking account with the required minimum balance and (b) you set up recurring monthly direct deposit of net pay or other income ($1,000 per month minimum) to your KeyPoint checking account and the first direct deposit posts within 60 days after account opening. New KeyPoint membership required. Individuals who have been KeyPoint Members within one calendar year prior to account opening are not eligible. Direct deposit must be new to KeyPoint, not moved from an existing KeyPoint account. Offer cannot be combined with other promotions KeyPoint employees, officials and their immediate families may not participate. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": null,
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/percapita-fintech-300-checking-bonus-25-per-month-direct-deposit-not-required",
@@ -256,25 +404,41 @@
       "detail_url": "https://www.doctorofcredit.com/percapita-fintech-300-checking-bonus-25-per-month-direct-deposit-not-required/",
       "missing": [
         "churn_months",
+        "reapply_once_only",
         "dd_amount",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "New Percapita customers who are one of the first 3,200 new customers to open a Percapita Cash Account between April 16, 2025, and April 15, 2026, shall earn a twenty-five-dollar ($25) incentive payment for each calendar month in which they spend three hundred dollars ($300) or more using their Percapita Visa® Debit Card during their first year after account opening. To be considered a new Percapita customer and thereby qualify for the incentive payment, you must not have previously opened a Cash Account. For purposes of this offer, using your Percapita Visa Debit Card for cash withdrawals at an ATM, cash substitutes (e.g., sports betting, casino chips, money orders, gift cards, prepaid cards, check cashing services) or for money movement (e.g., peer-to-peer transfers or account funding transfers) will not be considered spending or a purchase, and, therefore, will not contribute toward the three hundred dollar ($300) qualifying requirement. To qualify for a monthly incentive payment the new Cash Account must have a balance greater than zero and remain open and active throughout the applicable incentive month (which means that the account has been open and has had at least one monetary (non-fee) transaction during the applicable incentive month. If the above eligibility criteria are met, the $25 incentive payment will be credited to the new customer’s Cash Account within ten (10) days of the applicable incentive month-end unless the customer has a Goals Account, then all incentives will be credited to the Goals Account. New Cash Account holders will also be eligible to receive an additional one-time incentive payment of $10 when they open a Goals Account within thirty (30) days of opening the Cash Account, which will be paid within ten (10) days of Goals Account opening. This one-time $10 incentive payment will be credited to the newly opened Goals Account. This promotion is valid from April 16, 2025, through April 16, 2026. Percapita reserves the right to revoke or modify this offer at any time, with or without notice. If it is determined that a customer has engaged in or plans to engage in abuse or gaming in connection with this offer, that customer will be prohibited from further participation in the offer and will forfeit all rights to any incentive payments. Percapita may report to the IRS the value of any incentive payment made, and any applicable taxes are the responsibility of the recipient. Incentive payments are offered and paid by Percapita and not by Sutton Bank. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "New Percapita customers who are one of the first 3,200 new customers to open a Percapita Cash Account between April 16, 2025, and April 15, 2026, shall earn a twenty-five-dollar ($25) incentive payment for each calendar month in which they spend three hundred dollars ($300) or more using their Percapita Visa® Debit Card during their first year after account opening. To be considered a new Percapita customer and thereby qualify for the incentive payment, you must not have previously opened a Cash Account. For purposes of this offer, using your Percapita Visa Debit Card for cash withdrawals at an ATM, cash substitutes (e.g., sports betting, casino chips, money orders, gift cards, prepaid cards, check cashing services) or for money movement (e.g., peer-to-peer transfers or account funding transfers) will not be considered spending or a purchase, and, therefore, will not contribute toward the three hundred dollar ($300) qualifying requirement. To qualify for a monthly incentive payment the new Cash Account must have a balance greater than zero and remain open and active throughout the applicable incentive month (which means that the account has been open and has had at least one monetary (non-fee) transaction during the applicable incentive month. If the above eligibility criteria are met, the $25 incentive payment will be credited to the new customer’s Cash Account within ten (10) days of the applicable incentive month-end unless the customer has a Goals Account, then all incentives will be credited to the Goals Account. New Cash Account holders will also be eligible to receive an additional one-time incentive payment of $10 when they open a Goals Account within thirty (30) days of opening the Cash Account, which will be paid within ten (10) days of Goals Account opening. This one-time $10 incentive payment will be credited to the newly opened Goals Account. This promotion is valid from April 16, 2025, through April 16, 2026. Percapita reserves the right to revoke or modify this offer at any time, with or without notice. If it is determined that a customer has engaged in or plans to engage in abuse or gaming in connection with this offer, that customer will be prohibited from further participation in the offer and will forfeit all rights to any incentive payments. Percapita may report to the IRS the value of any incentive payment made, and any applicable taxes are the responsibility of the recipient. Incentive payments are offered and paid by Percapita and not by Sutton Bank. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.percapita.com/en/earn300",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/pa-only-psecu-100-250-checking-bonus",
       "bank": "PSECU",
       "detail_url": "https://www.doctorofcredit.com/pa-only-psecu-100-250-checking-bonus/",
       "missing": [
+        "reapply_once_only",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Participant must be a U.S. Resident. Promotion open to persons 18 years of age or older at the time the account is opened. One promo code per New Member. Additional promo code will be invalid. The recipient of the $100 bonus is solely responsible for payment of applicable taxes on that amount. If you have any questions, please seek the advice of a qualified tax professional. PSECU reserves the right to recall the $100 bonus if the member account is closed within the first year of establishing membership. PSECU reserves the right to recall the $250 direct deposit bonus if the payroll direct deposit(s) is/are not active for six consecutive months or if the member account is closed within the first year of establishing membership.” If PSECU is unable to confirm any qualifying monthly direct deposit is a recurring payroll deposit, or if the member is not in good standing as defined by PSECU’s Bylaws Article II, Section 1, PSECU reserves the right to withhold the payment of the $250 direct deposit bonus. If the member is not in good standing, at any time prior to the payment of the bonus, as defined by PSECU’s Bylaws Article II, Section 1, PSECU reserves the right to withhold the payment of the $100 bonus. Payment of the $100 bonus will be deposited into the Regular share within 45 days after the requirements are satisfied. This offer is only open to new members who meet PSECU eligibility requirements. All decisions of PSECU regarding this promotion are final. PSECU may terminate or change the terms and conditions of this promotion without notice. Employees, agents, and officials of PSECU and immediate family members of any of these are not eligible for this promotion. Subject to all applicable federal, state and local laws and regulations. Promotion open to persons 18 years of age or older at the time the account is opened. Limit (1) new member incentive bonus per tax identification number used to open a new account per rolling 12-month period. PSECU will only pay one new member incentive bonus per tax identification number per rolling 12-month period. This is a one-time offer available to new members only, who have not previously been a PSECU member within the last 12 months. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "Participant must be a U.S. Resident. Promotion open to persons 18 years of age or older at the time the account is opened. One promo code per New Member. Additional promo code will be invalid. The recipient of the $100 bonus is solely responsible for payment of applicable taxes on that amount. If you have any questions, please seek the advice of a qualified tax professional. PSECU reserves the right to recall the $100 bonus if the member account is closed within the first year of establishing membership. PSECU reserves the right to recall the $250 direct deposit bonus if the payroll direct deposit(s) is/are not active for six consecutive months or if the member account is closed within the first year of establishing membership.” If PSECU is unable to confirm any qualifying monthly direct deposit is a recurring payroll deposit, or if the member is not in good standing as defined by PSECU’s Bylaws Article II, Section 1, PSECU reserves the right to withhold the payment of the $250 direct deposit bonus. If the member is not in good standing, at any time prior to the payment of the bonus, as defined by PSECU’s Bylaws Article II, Section 1, PSECU reserves the right to withhold the payment of the $100 bonus. Payment of the $100 bonus will be deposited into the Regular share within 45 days after the requirements are satisfied. This offer is only open to new members who meet PSECU eligibility requirements. All decisions of PSECU regarding this promotion are final. PSECU may terminate or change the terms and conditions of this promotion without notice. Employees, agents, and officials of PSECU and immediate family members of any of these are not eligible for this promotion. Subject to all applicable federal, state and local laws and regulations. Promotion open to persons 18 years of age or older at the time the account is opened. Limit (1) new member incentive bonus per tax identification number used to open a new account per rolling 12-month period. PSECU will only pay one new member incentive bonus per tax identification number per rolling 12-month period. This is a one-time offer available to new members only, who have not previously been a PSECU member within the last 12 months. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://go.psecu.com/promo",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-long-beach-only-200-southland-credit-union-checking-bonus",
@@ -283,12 +447,19 @@
       "missing": [
         "expires_on",
         "churn_months",
-        "dd_days",
+        "reapply_once_only",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "$200 reward will be deposited to the Long Beach Checking account on the next available business day upon receipt of first direct deposit or first bill payment made. Qualifications must be met within the first 90 days of account opening to qualify for rewards. Qualifications include direct deposit of at least $200 or recurring use of ePay/Bill Pay, and the Long Beach Checking Account must maintain a positive balance. If these qualifications are not met within the first 90 days of account opening, rewards will not be paid. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "$200 reward will be deposited to the Long Beach Checking account on the next available business day upon receipt of first direct deposit or first bill payment made. Qualifications must be met within the first 90 days of account opening to qualify for rewards. Qualifications include direct deposit of at least $200 or recurring use of ePay/Bill Pay, and the Long Beach Checking Account must maintain a positive balance. If these qualifications are not met within the first 90 days of account opening, rewards will not be paid. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.southlandcu.org/scu-news/2026/august/debit-card-rewards-how-to-earn-points-on-everyday/",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/il-or-ca-only-cefcu-125-checking-bonus-direct-deposit-not-required",
@@ -297,13 +468,21 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_amount",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "The bonuses are not available on transfers of existing CEFCU Checking accounts. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "The bonuses are not available on transfers of existing CEFCU Checking accounts. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.cefcu.com/promos/checkingbonus",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-only-california-credit-union-100-checking-bonus",
@@ -312,11 +491,19 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Restrictions apply. $100 offer applies to NEW eChecking accounts for NEW members only, who enroll in Digital Banking and establish a recurring Direct Deposit with a minimum of $500 per month. Recurring Direct Deposit must be a Direct Deposit or Payroll Deposit. Limit one (1) bonus per member. Direct Deposit must be established within 120 days of membership opening to qualify for bonus. Three (3) months of recurring Direct Deposits must be credited to the account before qualifying for the bonus. The bonus will be added to the checking account within 8-12 weeks from the qualifying date and will be reported as income. Refer to the current rate sheet for regular dividends to be paid on eligible balances. The bonus is not included in the calculations of regular dividends and is not recurring. The bonus will be forfeited by the member if the account does not remain open for a minimum of 6 months. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "Restrictions apply. $100 offer applies to NEW eChecking accounts for NEW members only, who enroll in Digital Banking and establish a recurring Direct Deposit with a minimum of $500 per month. Recurring Direct Deposit must be a Direct Deposit or Payroll Deposit. Limit one (1) bonus per member. Direct Deposit must be established within 120 days of membership opening to qualify for bonus. Three (3) months of recurring Direct Deposits must be credited to the account before qualifying for the bonus. The bonus will be added to the checking account within 8-12 weeks from the qualifying date and will be reported as income. Refer to the current rate sheet for regular dividends to be paid on eligible balances. The bonus is not included in the calculations of regular dividends and is not recurring. The bonus will be forfeited by the member if the account does not remain open for a minimum of 6 months. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.ccu.com/echecking-offer/",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/farmers-insurance-federal-credit-union-figfcu-250-checking-bonus",
@@ -325,12 +512,20 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://figfcu.org/cashback-checking-google",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-select-counties-valley-strong-credit-union-250-checking-bonus-direct-deposit-not-required",
@@ -339,13 +534,21 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_amount",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "New accounts must be open and in good standing for 90 calendar days. Payment will be made automatically to the qualifying account by direct deposit on or around the 91st day after the new account is opened. Taxes due are the sole responsibility of the recipient. Valley Strong Credit Union will report to state and federal agencies as required by applicable law. This offer cannot be combined with other offers. Must be a resident of Tulare, San Joaquin and Solano Counties. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "New accounts must be open and in good standing for 90 calendar days. Payment will be made automatically to the qualifying account by direct deposit on or around the 91st day after the new account is opened. Taxes due are the sole responsibility of the recipient. Valley Strong Credit Union will report to state and federal agencies as required by applicable law. This offer cannot be combined with other offers. Must be a resident of Tulare, San Joaquin and Solano Counties. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.valleystrong.com/250",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-only-sacramento-credit-union-150-checking-bonus",
@@ -354,13 +557,20 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_amount",
-        "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Existing Sacramento Credit Union checking account holders are ineligible for the $200 bonus. Direct Deposit (electronic transfer for payroll, pension or government benefits) must post to new checking account by day 60 after account opening. A $200 bonus will be deposited into the new free checking account on the first business day after 60 days of the account opening. Bonus is considered interest and will be reported on IRS form 1099-INT. Offer valid through December 31, 2024."
+      "fine_print_text": "Existing Sacramento Credit Union checking account holders are ineligible for the $200 bonus. Direct Deposit (electronic transfer for payroll, pension or government benefits) must post to new checking account by day 60 after account opening. A $200 bonus will be deposited into the new free checking account on the first business day after 60 days of the account opening. Bonus is considered interest and will be reported on IRS form 1099-INT. Offer valid through December 31, 2024.",
+      "official_url": "https://www.sactocu.org/Landing-Pages/Academy-Special",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-safe-1-credit-union-200-checking-bonus-no-direct-deposit-required",
@@ -369,11 +579,19 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "To qualify, you must have or open a regular share savings account with a minimum initial deposit of $5.00, be eligible to open a Safe 1 checking account, open a new checking account with recurring direct deposit of $500 or more per month OR at least 10 debit card transactions within 60 days of account opening, and enroll in eDocuments. Qualified members will have $200 deposited to their share savings account within sixty (60) days after account opening. Deposit will be posted as a dividend and will be reported to the IRS on a 1099 form. Federal, state, and local taxes may apply and are the sole responsibility of the bonus recipient. Fees apply for non-sufficient funds. Dividends paid using average daily balance method which applies a periodic rate to the average daily balance in the account for the period. Other restrictions apply. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "To qualify, you must have or open a regular share savings account with a minimum initial deposit of $5.00, be eligible to open a Safe 1 checking account, open a new checking account with recurring direct deposit of $500 or more per month OR at least 10 debit card transactions within 60 days of account opening, and enroll in eDocuments. Qualified members will have $200 deposited to their share savings account within sixty (60) days after account opening. Deposit will be posted as a dividend and will be reported to the IRS on a 1099 form. Federal, state, and local taxes may apply and are the sole responsibility of the bonus recipient. Fees apply for non-sufficient funds. Dividends paid using average daily balance method which applies a periodic rate to the average daily balance in the account for the period. Other restrictions apply. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.safe1.org/checking-account-promotion/",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-california-coast-credit-union-150-checking-bonus-direct-deposit-required",
@@ -382,13 +600,20 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_amount",
-        "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "This promotion is available for a limited time and may be changed or discontinued at any time without notice. Use promo code: “Reset” at account opening. Offers cannot be combined. Cal Coast Credit Union employees are not eligible. New members must be at least 13 years old to qualify. Members ages 13-15 must have a parent or legal guardian as a joint owner on the account. Must meet membership and account eligibility requirements. A one-time $5 membership fee may apply All incentive bonus payments will be paid to the savings account within 120 days after qualifications are met. All incentive bonuses are considered interest, subject to tax, and will be reported on IRS Form 1099-INT. To receive the $100 new member incentive bonus: you must within 60 days of opening your membership complete the following: 1) open an Extra Value Checking account; 2) enroll in eStatements; 3) maintain at least $50 in checking account; 4) set up at least one of the following: a) direct deposit; b) Online or Mobile Banking; c) Online Bill Pay. To receive the $50 debit card bonus: Use your Cal Coast Debit Mastercard 10 times per month for the first 3 months (or 30 times within 90 days of account opening). To receive the $50 referral bonus: Eligible members can earn a $50 bonus through the Cal Coast Member Referral program. To qualify for the $50 referral bonus, the referring member must be an existing, active Cal Coast Credit Union member in good standing. The referred member must be a new member to Cal Coast Credit Union, open a separate membership account which includes payment of a one-time $5 membership fee, and meet the membership and account eligibility requirements. Bonus limits: a) $50 max referral bonus per referred member, b) $500 max total referral Additional Member Referral Program Terms: Referring members must be 18 years old to participate in the Coast into Cash referral program. Referred members who are 13 to 15 years old require a parent or guardian to be a joint owner on the account. Referrals are subject to verification. All related individuals may no longer qualify for this promotion and may not receive all or a portion of the bonus if, in Cal Coast Credit Union’s sole discretion, they are linked to an unqualified referral or misuse of the program. Learn more at calcoastcu.org/refer. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "This promotion is available for a limited time and may be changed or discontinued at any time without notice. Use promo code: “Reset” at account opening. Offers cannot be combined. Cal Coast Credit Union employees are not eligible. New members must be at least 13 years old to qualify. Members ages 13-15 must have a parent or legal guardian as a joint owner on the account. Must meet membership and account eligibility requirements. A one-time $5 membership fee may apply All incentive bonus payments will be paid to the savings account within 120 days after qualifications are met. All incentive bonuses are considered interest, subject to tax, and will be reported on IRS Form 1099-INT. To receive the $100 new member incentive bonus: you must within 60 days of opening your membership complete the following: 1) open an Extra Value Checking account; 2) enroll in eStatements; 3) maintain at least $50 in checking account; 4) set up at least one of the following: a) direct deposit; b) Online or Mobile Banking; c) Online Bill Pay. To receive the $50 debit card bonus: Use your Cal Coast Debit Mastercard 10 times per month for the first 3 months (or 30 times within 90 days of account opening). To receive the $50 referral bonus: Eligible members can earn a $50 bonus through the Cal Coast Member Referral program. To qualify for the $50 referral bonus, the referring member must be an existing, active Cal Coast Credit Union member in good standing. The referred member must be a new member to Cal Coast Credit Union, open a separate membership account which includes payment of a one-time $5 membership fee, and meet the membership and account eligibility requirements. Bonus limits: a) $50 max referral bonus per referred member, b) $500 max total referral Additional Member Referral Program Terms: Referring members must be 18 years old to participate in the Coast into Cash referral program. Referred members who are 13 to 15 years old require a parent or guardian to be a joint owner on the account. Referrals are subject to verification. All related individuals may no longer qualify for this promotion and may not receive all or a portion of the bonus if, in Cal Coast Credit Union’s sole discretion, they are linked to an unqualified referral or misuse of the program. Learn more at calcoastcu.org/refer. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.calcoastcu.org/200/",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-only-san-mateo-credit-union-100-checking-bonus-direct-deposit-not-required",
@@ -397,12 +622,20 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "Open a new San Mateo Credit Union (SMCU) Premium or Free Checking account (no other account types are eligible) from 4/1/19 – 5/31/19. During the full calendar month immediately following the month in which the account is opened, initiate 10 or more PIN or Signature-based purchases or payments for at least $100 in spend using the SMCU debit card(s) associated with the new checking account. ATM and ACH transactions are not eligible. Offer is not available for existing SMCU members who have an open checking account as of 3/31/19. SMCU employees, affiliates, and their families are not eligible Limit of one bonus-eligible checking account per individual and per mailing address. Cash bonus for the month will be paid to the open, eligible checking account within 31 days after the qualification period ends. The account must have a positive balance at the time of payout to receive the bonus. SMCU will classify the bonus as interest paid to the checking account where the bonus is credited. Any applicable taxes associated with the bonus are the responsibility of the SMCU account holder. To the extent required by law, SMCU will report the total value of this bonus to the IRS on Form 1099-INT for the tax year in which the bonus was paid. In the case of a joint account, purchases and payments from multiple debit cards will be added together."
+      "fine_print_text": "Open a new San Mateo Credit Union (SMCU) Premium or Free Checking account (no other account types are eligible) from 4/1/19 – 5/31/19. During the full calendar month immediately following the month in which the account is opened, initiate 10 or more PIN or Signature-based purchases or payments for at least $100 in spend using the SMCU debit card(s) associated with the new checking account. ATM and ACH transactions are not eligible. Offer is not available for existing SMCU members who have an open checking account as of 3/31/19. SMCU employees, affiliates, and their families are not eligible Limit of one bonus-eligible checking account per individual and per mailing address. Cash bonus for the month will be paid to the open, eligible checking account within 31 days after the qualification period ends. The account must have a positive balance at the time of payout to receive the bonus. SMCU will classify the bonus as interest paid to the checking account where the bonus is credited. Any applicable taxes associated with the bonus are the responsibility of the SMCU account holder. To the extent required by law, SMCU will report the total value of this bonus to the IRS on Form 1099-INT for the tax year in which the bonus was paid. In the case of a joint account, purchases and payments from multiple debit cards will be added together.",
+      "official_url": "https://www.monterra.org/checking150",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/affinity-federal-credit-union-100-referral-bonus",
@@ -411,11 +644,19 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "*The Member, or Referrer. Members of Affinity Federal Credit Union in good standing and 18 years of age or older with an active Affinity checking or savings account are eligible to participate. Once a member makes a referral, they become a “Referrer” and will be provided with a unique referral link that allows them to receive a $100 bonus for each referred friend or family that has met all the qualifying criteria as defined below. The member may earn a maximum of $1,000 in referral bonuses per calendar year, which equates to 10 friends, family or colleagues completing the qualifying criteria. There is no limit to the number of referrals a member can make. The Friend, Family or Referred. In order to receive the $100 bonus, the referred friend or member must 1) Open an Affinity Cash Back Debit account 2) Make a qualifying direct deposit of $100 or more within 60 days of account opening. A qualifying direct deposit is an automatic electronic deposit known as an ACH (Automated Clearing House) of your paycheck, Social Security, pension, or other recurring income in the amount of $100 or more. Multiple deposits totaling $100 do not qualify. External and internal transfers, mobile deposits, cash, or check deposits and person-to-person payments such as Zelle®, do not qualify as a direct deposit. Offer valid only for new members who join Affinity. Fulfillment. Bonus will be deposited into the referring member and new member’s checking account by the last business day of the month following completion of all qualifying criteria (for example: if the new member’s account is opened on July 15, 2022; qualifying deposits are made by August 13; $100 bonus will be deposited to the members eligible checking or savings account and the new member’s Cash Back debit account by September 30, 2022). Bonus may be reported as taxable income and will be reported on an IRS 1099 Form, if applicable. Additional exclusions may apply. Offer subject to change without notice. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "*The Member, or Referrer. Members of Affinity Federal Credit Union in good standing and 18 years of age or older with an active Affinity checking or savings account are eligible to participate. Once a member makes a referral, they become a “Referrer” and will be provided with a unique referral link that allows them to receive a $100 bonus for each referred friend or family that has met all the qualifying criteria as defined below. The member may earn a maximum of $1,000 in referral bonuses per calendar year, which equates to 10 friends, family or colleagues completing the qualifying criteria. There is no limit to the number of referrals a member can make. The Friend, Family or Referred. In order to receive the $100 bonus, the referred friend or member must 1) Open an Affinity Cash Back Debit account 2) Make a qualifying direct deposit of $100 or more within 60 days of account opening. A qualifying direct deposit is an automatic electronic deposit known as an ACH (Automated Clearing House) of your paycheck, Social Security, pension, or other recurring income in the amount of $100 or more. Multiple deposits totaling $100 do not qualify. External and internal transfers, mobile deposits, cash, or check deposits and person-to-person payments such as Zelle®, do not qualify as a direct deposit. Offer valid only for new members who join Affinity. Fulfillment. Bonus will be deposited into the referring member and new member’s checking account by the last business day of the month following completion of all qualifying criteria (for example: if the new member’s account is opened on July 15, 2022; qualifying deposits are made by August 13; $100 bonus will be deposited to the members eligible checking or savings account and the new member’s Cash Back debit account by September 30, 2022). Bonus may be reported as taxable income and will be reported on an IRS 1099 Form, if applicable. Additional exclusions may apply. Offer subject to change without notice. All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://share.affinityfcu.org/zone/microsite?journey.campaign_id=7134729748330288377",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/ca-only-orange-countys-credit-union-100-checking-referral-bonus-direct-deposit-not-required",
@@ -424,13 +665,21 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_amount",
         "dd_days",
         "deposit_hold_amount",
-        "deposit_hold_days"
+        "deposit_hold_days",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "All bank account bonuses are treated as income/interest and as such you have to pay taxes on them"
+      "fine_print_text": "All bank account bonuses are treated as income/interest and as such you have to pay taxes on them",
+      "official_url": "https://www.orangecountyscu.org/landing/refer-a-friend/",
+      "official_status": null,
+      "official_text": null
     },
     {
       "offer_key": "url:https://www.doctorofcredit.com/united-launches-new-mileageplus-debit-card-10000-miles-signup-bonus-more",
@@ -439,14 +688,23 @@
       "missing": [
         "expires_on",
         "churn_months",
+        "reapply_once_only",
         "dd_amount",
         "dd_days",
         "deposit_hold_amount",
         "deposit_hold_days",
-        "apply_methods"
+        "apply_methods",
+        "ach_push",
+        "eligibility_text",
+        "fee_waiver_text",
+        "early_termination_text",
+        "requirements"
       ],
       "glance_text": null,
-      "fine_print_text": "United Launches New MileagePlus Debit Card (10,000 Miles Signup Bonus & More) November 4, 2025 229 Comments by Chuck Contents 1. United MileagePlus Debit Rewards Card 2. Key Details 3. Our Verdict United MileagePlus Debit Rewards Card Direct debit card link United has officially launched a new MileagePlus Debit Rewards Card, a Visa card issued by Sunrise Banks. The card earns United MileagePlus miles on debit spend and includes both spending and saving bonuses. Fees: $4 monthly fee, waived with a $2,000 average monthly balance. Welcome bonus: 10,000 MileagePlus miles after spending $500 within the first 4 months. Key Details Earning structure: 1 mile per $1 spent on United Airlines purchases, including flights and the like 1 mile per $2 spent on all other purchases Benefits: Spend bonus: 2,500 bonus miles each anniversary year after $10,000 in annual debit purchases Savings bonus: Up to 70,000 bonus miles each year based on your average account balance: $2,500 = 2,500 miles $5,000 = 5,000 miles $10,000 = 15,000 miles $25,000 = 30,000 miles $50,000 = 70,000 miles Other Notes: No credit check required Funds are FDIC insured up to $250,000 through Sunrise Banks, N.A. Our Verdict This product is mostly similar the recently-released Southwest debit card and the Wyndham debit card , and it’s as we expected . The 10,000 miles launch offer is solid for a simple debit card signup. Longer term, these debit cards will mainly appeal to debit-only users. For hobbyists this might be a way to get some rewards for certain types of purchases which don’t allow credit cards. It’s yet unknown whether someone can hold the United, Southwest, and Wyndham debit cards or if there’s some sort of limit. Also unknown what happens if you cancel these cards and eventually sign up again in terms of signup bonuses. The card adds the option of earning miles from keeping deposits in the account. At current savings APY rates , the savings bonus tiers don’t seem competitive, but maybe if the miles are non-taxable (???) then it can start making sense. Or if interest rates drop. Tags (learn how to use and combine tags here ): debit cards , rewards debit card , united airlines"
+      "fine_print_text": "United Launches New MileagePlus Debit Card (10,000 Miles Signup Bonus & More) November 4, 2025 229 Comments by Chuck Contents 1. United MileagePlus Debit Rewards Card 2. Key Details 3. Our Verdict United MileagePlus Debit Rewards Card Direct debit card link United has officially launched a new MileagePlus Debit Rewards Card, a Visa card issued by Sunrise Banks. The card earns United MileagePlus miles on debit spend and includes both spending and saving bonuses. Fees: $4 monthly fee, waived with a $2,000 average monthly balance. Welcome bonus: 10,000 MileagePlus miles after spending $500 within the first 4 months. Key Details Earning structure: 1 mile per $1 spent on United Airlines purchases, including flights and the like 1 mile per $2 spent on all other purchases Benefits: Spend bonus: 2,500 bonus miles each anniversary year after $10,000 in annual debit purchases Savings bonus: Up to 70,000 bonus miles each year based on your average account balance: $2,500 = 2,500 miles $5,000 = 5,000 miles $10,000 = 15,000 miles $25,000 = 30,000 miles $50,000 = 70,000 miles Other Notes: No credit check required Funds are FDIC insured up to $250,000 through Sunrise Banks, N.A. Our Verdict This product is mostly similar the recently-released Southwest debit card and the Wyndham debit card , and it’s as we expected . The 10,000 miles launch offer is solid for a simple debit card signup. Longer term, these debit cards will mainly appeal to debit-only users. For hobbyists this might be a way to get some rewards for certain types of purchases which don’t allow credit cards. It’s yet unknown whether someone can hold the United, Southwest, and Wyndham debit cards or if there’s some sort of limit. Also unknown what happens if you cancel these cards and eventually sign up again in terms of signup bonuses. The card adds the option of earning miles from keeping deposits in the account. At current savings APY rates , the savings bonus tiers don’t seem competitive, but maybe if the miles are non-taxable (???) then it can start making sense. Or if interest rates drop. Tags (learn how to use and combine tags here ): debit cards , rewards debit card , united airlines",
+      "official_url": null,
+      "official_status": null,
+      "official_text": null
     }
   ]
 }
