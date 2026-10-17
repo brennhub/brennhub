@@ -7,16 +7,29 @@ import type { AccountType } from "./types";
 
 const money = (s: string) => parseInt(s.replace(/[$,]/g, ""), 10);
 
-/** "$1,000 direct deposit required" / "No direct deposit required" / "Direct deposit of $2,000-$8,000 required". */
-export function parseDd(text: string | null): { required: 0 | 1 | null; amount: number | null; days: number | null } {
-  if (!text) return { required: null, amount: null, days: null };
+/** 금액 범위·등급("$2,000-$8,000", "$1,000 to $4,999.99", "$250/$350/$450") — 한 숫자로 줄이면 부분값이 된다. */
+export function isTieredAmount(text: string): boolean {
+  return (
+    /\$\d[\d,.]*\+?\s*(?:[-–—/]|to)\s*\$\d/i.test(text) ||
+    (text.match(/to earn (?:the |a )?\$\d/gi) ?? []).length > 1 ||
+    (text.match(/\$\d[\d,]*/g) ?? []).length > 2
+  );
+}
+
+/**
+ * "$1,000 direct deposit required" / "No direct deposit required".
+ * 범위·등급("Direct deposit of $2,000-$8,000 required")은 amount를 비우고 tiered — 하한을 조건으로 쓰지 않는다.
+ */
+export function parseDd(text: string | null): { required: 0 | 1 | null; amount: number | null; days: number | null; tiered: boolean } {
+  if (!text) return { required: null, amount: null, days: null, tiered: false };
   if (/\bno direct deposit|direct deposit (?:is )?not required|no dd\b/i.test(text)) {
-    return { required: 0, amount: null, days: null };
+    return { required: 0, amount: null, days: null, tiered: false };
   }
-  if (!/direct deposit/i.test(text)) return { required: null, amount: null, days: null };
+  if (!/direct deposit/i.test(text)) return { required: null, amount: null, days: null, tiered: false };
+  const tiered = isTieredAmount(text);
   const amt = text.match(/\$\d[\d,]*/);
   const days = text.match(/(?:within|in|for)\s+(\d{1,3})\s+days/i);
-  return { required: 1, amount: amt ? money(amt[0]) : null, days: days ? Number(days[1]) : null };
+  return { required: 1, amount: amt && !tiered ? money(amt[0]) : null, days: days ? Number(days[1]) : null, tiered };
 }
 
 /** "Valid through 1/27/27" · "expires 12/31/26" · "ends 11/30/2026" → YYYY-MM-DD. */
@@ -95,4 +108,28 @@ export function caEligibleFrom(nationwide: number | null, stateText: string | nu
   if (stateText) return stateText.split(/,\s*/).includes("CA") ? 1 : 0;
   if (nationwide === 1) return 1;
   return null;
+}
+
+/**
+ * 가입 자격 제한 — 군인·특정 고용주·카운티·학교 등 회원 자격이 걸린 문장.
+ * "Wells Fargo employees are not eligible" 같은 직원 제외 문구는 자격 제한이 아니다 (반대 뜻).
+ */
+const MEMBERSHIP = /\b(?:field of membership|membership (?:is )?(?:open|available) to|eligible (?:to join|for membership)|must (?:first )?(?:be|become) a member|live,? work,? (?:worship|or attend)|live or work|work or worship|attend school|military|armed forces|active duty|veterans?|department of defense|select employer|employer (?:group|partner)s?|sponsor(?:ing)? (?:company|organization)|count(?:y|ies)|school district|alumni)\b/i;
+
+export function membershipSentence(text: string | null): string | null {
+  if (!text) return null;
+  for (const s of text.split(/(?<=[.!?])\s+|\n+/)) {
+    if (!MEMBERSHIP.test(s)) continue;
+    // 제한하는 문장이어야 한다 — "recurring ACH from employer, military pay"(직접입금 정의), 수수료 면제 대상 목록,
+    // "best credit union in Orange County"(소개 문구) 같은 문장은 제외.
+    if (!/\b(?:must|only|open to|resides?|resident of|lives?|works?|limited to|restricted to|field of membership|eligible for membership|eligible to join|membership is)\b/i.test(s)) continue;
+    if (/\breferr(?:al|er|ed|ing)?\b/i.test(s)) continue; // 추천 보너스 문구는 가입 자격 문장이 아니다.
+    if (/\bemployees?\b[^.]{0,40}\b(?:not eligible|ineligible|excluded|are not)\b|\bnot available to\b[^.]{0,60}\bemployees?\b/i.test(s)) continue;
+    return s.trim().slice(0, 500);
+  }
+  return null;
+}
+
+export function isMembershipRestricted(text: string | null): boolean {
+  return !!text && MEMBERSHIP.test(text);
 }

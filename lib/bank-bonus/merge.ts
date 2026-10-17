@@ -67,6 +67,7 @@ export function mergeOffers(rows: StoredOffer[]): MergedOffer[] {
       ddRequired: pick(csvFirst, "dd_required"),
       ddAmount: pick(csvFirst, "dd_amount"),
       ddDays: parseDd(dd).days,
+      ddTiered: parseDd(dd).tiered,
       ddText: dd,
       pullText: pick(masterFirst, "pull_text"),
       hardPull: pick(masterFirst, "hard_pull"),

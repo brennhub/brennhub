@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp, Star } from "lucide-react";
 import { useMessages } from "@/lib/i18n/provider";
 import { useBankBonusMessages, type BankBonusMessages } from "@/lib/bank-bonus/messages";
 import type { OffersResponse } from "@/lib/bank-bonus/offers";
-import type { AccountType, EvaluatedOffer, Evidence, FreshnessRow, OfferFlags, OfferTag, PostRow } from "@/lib/bank-bonus/types";
+import type { AccountType, EvaluatedOffer, Evidence, FreshnessRow, OfferFlags, OfferTag, PostRow, RequirementStep } from "@/lib/bank-bonus/types";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -99,16 +99,33 @@ function deadlineShown(t: M, o: EvaluatedOffer, nowMs: number): Shown {
   return { text: o.expiresOn, amber: left <= 30 };
 }
 
+/** 체크리스트가 없을 때의 한 줄 요약. 금액이 등급이면 한 숫자 대신 "티어". */
 function requirementShown(t: M, o: EvaluatedOffer): Shown {
   if (o.ddRequired === 0) return { text: t.ddNone };
-  if (o.ddRequired === 1) return { text: t.dd(o.ddAmount, o.ddDays) };
+  if (o.ddRequired === 1) return { text: o.ddTiered ? t.ddTier : t.dd(o.ddAmount, o.ddDays) };
   return { text: t.unknown, muted: true };
 }
 
 function reapplyShown(t: M, o: EvaluatedOffer): Shown {
   if (o.reapply.state === "value" && o.reapply.months != null) return { text: t.reapply(o.reapply.months) };
+  if (o.reapply.state === "once_only") return { text: t.reapplyOnce };
+  if (o.reapply.state === "official_not_stated") return { text: t.reapplyOfficialNotStated, muted: true };
   if (o.reapply.state === "not_stated") return { text: t.reapplyNotStated, muted: true };
   return { text: t.unknown, muted: true };
+}
+
+function achShown(t: M, o: EvaluatedOffer): Shown {
+  if (o.ach.value) return { text: t.ach[o.ach.value], muted: o.ach.value === "unclear" };
+  return { text: t.unknown, muted: true };
+}
+
+const CIRCLED = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"];
+
+/** 단계 근거 — 단계의 인용·출처를 화면 근거 모양으로. */
+function stepEvidence(o: EvaluatedOffer, st: RequirementStep): Evidence | null {
+  if (!st.quote) return null;
+  const official = st.source === "official";
+  return { quote: st.quote, source: official ? "official" : "doc_post", url: official ? o.official.url : o.detailUrl, via: st.via };
 }
 
 function regionShown(t: M, o: EvaluatedOffer): Shown {
@@ -140,6 +157,7 @@ const TAG_TONE: Record<OfferTag["code"], string> = {
   hardPull: "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300",
   expiring: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300",
   new: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  membership: "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300",
   targeted: "border-border bg-muted text-muted-foreground",
 };
 
@@ -355,6 +373,11 @@ function Fact({ t, v, ev, className }: { t: M; v: Shown; ev?: Evidence | null; c
     <span className={cn("inline-flex min-w-0 flex-col", className)}>
       <span className="inline-flex flex-wrap items-baseline gap-x-2">
         <Value v={v} />
+        {ev?.stale && (
+          <span className="rounded border border-border px-1 text-[11px] text-muted-foreground" title={t.docBasedHint}>
+            {t.docBased}
+          </span>
+        )}
         {ev && (
           <button
             type="button"
@@ -370,7 +393,10 @@ function Fact({ t, v, ev, className }: { t: M; v: Shown; ev?: Evidence | null; c
         <span className="mt-1 block rounded-md border border-border bg-muted/40 p-2 text-xs text-muted-foreground">
           <span className="block text-foreground">“{ev.quote}”</span>
           <span className="mt-1 flex flex-wrap gap-x-2">
-            <span>{t.evidenceSources[ev.source]}</span>
+            <span>
+              {t.evidenceSources[ev.source]}
+              {ev.via === "cowork" && ev.source !== "cowork" ? t.viaCowork : ""}
+            </span>
             {ev.url && (
               <a href={ev.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">
                 {t.openSource}
@@ -380,6 +406,42 @@ function Fact({ t, v, ev, className }: { t: M; v: Shown; ev?: Evidence | null; c
         </span>
       )}
     </span>
+  );
+}
+
+/**
+ * 보너스 조건 체크리스트 — 기본 몫 단계 먼저, 그다음 "+$N 받으려면" + 추가 몫 단계. 단계마다 근거.
+ * 체크리스트가 없으면 한 줄 요약에 "요약(확인 필요)" 표시.
+ */
+function Requirements({ t, o, compact }: { t: M; o: EvaluatedOffer; compact?: boolean }) {
+  const steps = o.requirements;
+  if (!steps?.length) {
+    return (
+      <span className="inline-flex flex-col">
+        <span className="text-xs text-muted-foreground">{t.summaryUnverified}</span>
+        <Fact t={t} v={requirementShown(t, o)} ev={o.evidence.requirement} />
+      </span>
+    );
+  }
+  const base = steps.filter((x) => x.portion === "base");
+  const extra = steps.filter((x) => x.portion === "extra");
+  const stacked = extra.length > 0;
+  const extraAmount = o.bonusTotalWithDeposit != null && o.bonusBase != null ? o.bonusTotalWithDeposit - o.bonusBase : null;
+  // 보너스 자체가 범위인데 기본 금액을 모르면 직접입금 한 숫자는 부분값 — 티어로 보인다.
+  const label = (st: RequirementStep) =>
+    t.step(st.kind === "dd" && o.ddTiered ? { ...st, tiered: true } : st, stacked && st.portion === "base");
+  const item = (st: RequirementStep, n: number) => (
+    <li key={`${st.portion}-${st.order}`} className="flex gap-1">
+      <span className="text-muted-foreground">{CIRCLED[n] ?? `${n + 1}.`}</span>
+      <Fact t={t} v={{ text: label(st) }} ev={stepEvidence(o, st)} />
+    </li>
+  );
+  return (
+    <ol className={cn("flex flex-col", compact ? "gap-0.5" : "gap-1")}>
+      {base.map((st, i) => item(st, i))}
+      {stacked && <li className="pt-1 text-xs text-muted-foreground">{t.extraFor(extraAmount)}</li>}
+      {extra.map((st, i) => item(st, base.length + i))}
+    </ol>
   );
 }
 
@@ -472,9 +534,11 @@ function TopPicks({ t, data, nowMs, onFlag }: { t: M; data: OffersResponse | nul
               <dt className="text-xs text-muted-foreground">{t.col.methods}</dt>
               <dd><Methods t={t} o={o} /></dd>
               <dt className="text-xs text-muted-foreground">{t.col.requirement}</dt>
-              <dd><Fact t={t} v={requirementShown(t, o)} ev={o.evidence.requirement} /></dd>
+              <dd><Requirements t={t} o={o} /></dd>
               <dt className="text-xs text-muted-foreground">{t.col.reapply}</dt>
               <dd><Fact t={t} v={reapplyShown(t, o)} ev={o.reapply.evidence} /></dd>
+              <dt className="text-xs text-muted-foreground">{t.col.ach}</dt>
+              <dd><Fact t={t} v={achShown(t, o)} ev={o.ach.evidence} /></dd>
               <dt className="text-xs text-muted-foreground">{t.col.region}</dt>
               <dd className="flex flex-wrap gap-x-2">
                 <Value v={regionShown(t, o)} />
@@ -496,6 +560,7 @@ function TopPicks({ t, data, nowMs, onFlag }: { t: M; data: OffersResponse | nul
               )}
               <FlagButtons t={t} o={o} onFlag={onFlag} />
             </div>
+            {o.official.state === "unavailable" && <p className="mt-2 text-xs text-muted-foreground">{t.officialUnavailable}</p>}
           </li>
         ))}
       </ol>
@@ -665,7 +730,7 @@ function Original({ t, o, onFlag }: { t: M; o: EvaluatedOffer; onFlag: FlagFn })
 
 function OfferTable({ t, offers, nowMs, onFlag }: { t: M; offers: EvaluatedOffer[]; nowMs: number; onFlag: FlagFn }) {
   const c = t.col;
-  const cols = [c.bank, c.bonus, c.expires, c.methods, c.requirement, c.reapply, c.region, c.pull, c.cc, c.tags, c.source, c.star];
+  const cols = [c.bank, c.bonus, c.expires, c.methods, c.requirement, c.reapply, c.ach, c.region, c.pull, c.cc, c.tags, c.source, c.star];
   const [open, setOpen] = useState<Set<string>>(new Set());
   const toggle = (key: string) =>
     setOpen((s) => {
@@ -703,8 +768,9 @@ function OfferTable({ t, offers, nowMs, onFlag }: { t: M; offers: EvaluatedOffer
                 </td>
                 <td className="min-w-28 px-2 py-2"><Fact t={t} v={deadlineShown(t, o, nowMs)} ev={o.evidence.expires} /></td>
                 <td className="px-2 py-2"><Methods t={t} o={o} /></td>
-                <td className="min-w-36 max-w-64 px-2 py-2"><Fact t={t} v={requirementShown(t, o)} ev={o.evidence.requirement} /></td>
+                <td className="min-w-44 max-w-72 px-2 py-2"><Requirements t={t} o={o} compact /></td>
                 <td className="min-w-28 max-w-64 px-2 py-2"><Fact t={t} v={reapplyShown(t, o)} ev={o.reapply.evidence} /></td>
+                <td className="min-w-20 max-w-48 px-2 py-2"><Fact t={t} v={achShown(t, o)} ev={o.ach.evidence} /></td>
                 <td className="px-2 py-2 whitespace-nowrap"><Value v={regionShown(t, o)} /></td>
                 <td className="px-2 py-2"><Value v={pullShown(t, o)} /></td>
                 <td className="px-2 py-2"><Value v={ccShown(t, o)} /></td>
@@ -741,8 +807,9 @@ function OfferCards({ t, offers, nowMs, onFlag }: { t: M; offers: EvaluatedOffer
   const rows = (o: EvaluatedOffer): [string, React.ReactNode][] => [
     [t.col.expires, <Fact key="e" t={t} v={deadlineShown(t, o, nowMs)} ev={o.evidence.expires} />],
     [t.col.methods, <Methods key="m" t={t} o={o} />],
-    [t.col.requirement, <Fact key="r" t={t} v={requirementShown(t, o)} ev={o.evidence.requirement} />],
+    [t.col.requirement, <Requirements key="r" t={t} o={o} compact />],
     [t.col.reapply, <Fact key="a" t={t} v={reapplyShown(t, o)} ev={o.reapply.evidence} />],
+    [t.col.ach, <Fact key="h" t={t} v={achShown(t, o)} ev={o.ach.evidence} />],
     [t.col.region, <Value key="g" v={regionShown(t, o)} />],
     [t.col.pull, <Value key="p" v={pullShown(t, o)} />],
     [t.col.cc, <Value key="c" v={ccShown(t, o)} />],

@@ -125,6 +125,8 @@ export type MergedOffer = {
   ddRequired: number | null;
   ddAmount: number | null;
   ddDays: number | null;
+  /** 직접입금 금액이 범위·등급 — 한 숫자로 보이지 않는다 ("티어"). */
+  ddTiered: boolean;
   ddText: string | null;
   pullText: string | null;
   hardPull: number | null;
@@ -176,6 +178,51 @@ export type OfferDetail = {
   deposit_hold_amount: number | null;
   deposit_hold_days: number | null;
   deposit_hold_scope: "extra" | "base" | null;
+  requirements_json: RequirementStep[] | null;
+  reapply_once_only: number | null;
+  eligibility_text: string | null;
+  ach_push: AchPush | null;
+  ach_push_text: string | null;
+  fee_waiver_text: string | null;
+  official_fields: OfficialFields;
+  doc_posted_at: string | null;
+  doc_updated_at: string | null;
+};
+
+export type AchPush = "yes" | "no" | "unclear";
+export type RequirementKind = "dd" | "deposit_hold" | "open_account" | "debit_txn" | "enroll" | "other";
+
+/** 보너스 조건 체크리스트 1단계. base = 기본 보너스 몫, extra = 겹친(추가) 보너스 몫. text는 출처 원문(200자 이하). */
+export type RequirementStep = {
+  order: number;
+  portion: "base" | "extra";
+  kind: RequirementKind;
+  text: string;
+  amount: number | null;
+  days: number | null;
+  /** 직불카드 거래 횟수 등. */
+  count?: number | null;
+  /** 금액이 범위·등급 — 한 숫자로 보이지 않는다. */
+  tiered?: boolean;
+  /** 근거 인용 + 어느 원문에서 확인됐는지. */
+  quote?: string | null;
+  source?: "official" | "doc_post";
+  via?: "regex" | "cowork";
+};
+
+/** 공식 약관이 근거인 값 — 필드 → {값, 인용, 방식}. */
+export type OfficialFields = Partial<Record<string, { value: unknown; quote: string; method: "regex" | "cowork" }>>;
+
+/** bb_official_pages 1행. */
+export type OfficialPage = {
+  offer_key: string;
+  url: string | null;
+  fetched_at: string | null;
+  http_status: number | null;
+  text: string | null;
+  text_hash: string | null;
+  last_changed_at: string | null;
+  error: string | null;
 };
 
 export type EvidenceMethod = "regex" | "cowork";
@@ -195,9 +242,17 @@ export type BankRule = {
 };
 
 /** 화면 "근거" — 문장 + 출처 종류 + 링크. */
-export type Evidence = { quote: string; source: RuleSource; url: string | null };
+export type Evidence = {
+  quote: string;
+  source: RuleSource;
+  url: string | null;
+  /** Cowork가 뽑고 근거 대조를 통과한 값. */
+  via?: "regex" | "cowork";
+  /** DoC 약관이 글의 최신 Update보다 오래됨 — "DoC 기준" 표시. */
+  stale?: boolean;
+};
 
-export type TagCode = "hold" | "branch" | "hardPull" | "targeted" | "new" | "expiring";
+export type TagCode = "hold" | "branch" | "hardPull" | "targeted" | "membership" | "new" | "expiring";
 export type OfferTag = { code: TagCode; amount?: number | null; days?: number | null };
 
 /** 화면용 — 병합 오퍼 + 상세 글 값(우선) + 판정. 문구는 화면이 messages.ts로 만든다. */
@@ -207,8 +262,19 @@ export type EvaluatedOffer = MergedOffer & {
   /** 겹친 부분 예치 (기본 보너스는 예치 없이 가능). */
   extraHoldAmount: number | null;
   extraHoldDays: number | null;
-  reapply: { state: "value" | "not_stated" | "unknown"; months: number | null; evidence: Evidence | null };
+  reapply: {
+    state: "value" | "once_only" | "official_not_stated" | "not_stated" | "unknown";
+    months: number | null;
+    evidence: Evidence | null;
+  };
   evidence: { expires?: Evidence; requirement?: Evidence };
+  /** 보너스 조건 체크리스트 (공식 약관 > DoC). 없으면 null → 화면은 한 줄 요약(확인 필요). */
+  requirements: RequirementStep[] | null;
+  requirementsEvidenceSource: RuleSource | null;
+  ach: { value: AchPush | null; evidence: Evidence | null };
+  eligibility: { text: string | null; restricted: boolean; evidence: Evidence | null };
+  /** 공식 페이지: usable = 본문 확보, unavailable = 막힘·비200·글자 부족, none = 링크 없음·아직 안 받음. */
+  official: { state: "usable" | "unavailable" | "none"; url: string | null };
   /** 상세 글을 실제로 읽었는지 (HTTP 2xx). */
   detailRead: boolean;
   expiresOn: string | null;
