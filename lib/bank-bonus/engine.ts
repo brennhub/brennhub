@@ -3,15 +3,18 @@
  * 파서는 source.key로 고른다. AI 호출 없음 (코드 파싱만).
  */
 
-import { DETAIL_FETCH } from "./config";
+import { DETAIL_FETCH, OFFICIAL_FETCH } from "./config";
 import { coworkIngest, type CoworkSummary } from "./cowork";
 import {
   listBankRules,
   listDetails,
   listEnabledSources,
   listFlags,
+  listOfficialPages,
   listStoredOffers,
   recordRun,
+  saveOfficialFields,
+  upsertOfficialPage,
   replaceBankRules,
   upsertDetail,
   upsertDocPostRule,
@@ -24,6 +27,7 @@ import { parseMaster } from "./parse-master";
 import { parseRss } from "./parse-rss";
 import { parseQuickrefCsv } from "./parse-csv";
 import { parseChurnList } from "./parse-churn";
+import { officialRegexFields, officialText, officialUsability, sha256Hex } from "./official";
 import type { ParseResult, SourceRow } from "./types";
 
 const PARSERS: Record<string, (body: string) => ParseResult> = {
@@ -129,8 +133,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * 7일 안에 받은 것은 건너뛰고, 보너스 큰 순으로 최대 40건, 300ms 간격.
  */
 export async function fetchDetails(db: D1Database): Promise<DetailSummary> {
-  const [rows, flags, details, rules] = await Promise.all([listStoredOffers(db), listFlags(db), listDetails(db), listBankRules(db)]);
-  const { all } = evaluateAll(rows, flags, details, rules);
+  const [rows, flags, details, rules, pages] = await Promise.all([
+    listStoredOffers(db),
+    listFlags(db),
+    listDetails(db),
+    listBankRules(db),
+    listOfficialPages(db),
+  ]);
+  const { all } = evaluateAll(rows, flags, details, rules, pages);
   const now = Date.now();
   const wanted = all.filter((o) => o.detailUrl && (o.doable || o.flags.star)).sort(byBonus);
   const fresh = (key: string) => {
@@ -174,11 +184,93 @@ export async function fetchDetails(db: D1Database): Promise<DetailSummary> {
   return summary;
 }
 
-/** refresh 1회 — 활성 소스 전부 → 상세 글 → Cowork 추출 파일 반영. 외부 AI 호출 없음. */
+export type OfficialSummary = {
+  candidates: number;
+  fetched: number;
+  usable: number;
+  unusable: number;
+  skippedRecent: number;
+  /** 은행·사유 — 막힘(403)·비200·스크립트로 그려진 페이지 등. */
+  unusableReasons: string[];
+};
+
+/**
+ * 은행 공식 오퍼 페이지 — 지금 할 만한 오퍼 + 관심(⭐) 오퍼의 bank_offer_url.
+ * 보너스 큰 순 최대 15건, 300ms 간격, 7일 캐시, DoC와 같은 데스크톱 UA. 막히거나 비200이면 status·error만 남긴다.
+ * 쓸 만한 본문이면 정규식으로 확실한 값(재신청 기간·1회 한정·가입 자격)을 official_fields에 넣는다 (Cowork 공식 값은 덮지 않음).
+ */
+export async function fetchOfficial(db: D1Database): Promise<OfficialSummary> {
+  const [rows, flags, details, rules, pages] = await Promise.all([
+    listStoredOffers(db),
+    listFlags(db),
+    listDetails(db),
+    listBankRules(db),
+    listOfficialPages(db),
+  ]);
+  const { all } = evaluateAll(rows, flags, details, rules, pages);
+  const now = Date.now();
+  const wanted = all.filter((o) => (o.doable || o.flags.star) && details.get(o.key)?.bank_offer_url).sort(byBonus);
+  const fresh = (key: string) => {
+    const at = pages.get(key)?.fetched_at;
+    return !!at && now - Date.parse(at) < OFFICIAL_FETCH.refetchAfterDays * 86_400_000;
+  };
+  const todo = wanted.filter((o) => !fresh(o.key)).slice(0, OFFICIAL_FETCH.maxPerRefresh);
+  const out: OfficialSummary = {
+    candidates: wanted.length,
+    fetched: 0,
+    usable: 0,
+    unusable: 0,
+    skippedRecent: wanted.length - wanted.filter((o) => !fresh(o.key)).length,
+    unusableReasons: [],
+  };
+
+  for (let i = 0; i < todo.length; i++) {
+    const o = todo[i];
+    const d = details.get(o.key)!;
+    const url = d.bank_offer_url!;
+    if (i > 0) await sleep(OFFICIAL_FETCH.gapMs);
+    const at = new Date().toISOString();
+    let status: number | null = null;
+    let why: string | null = null;
+    let text = "";
+    let html = "";
+    try {
+      const res = await fetchFresh(url);
+      status = res.status;
+      html = res.body;
+      text = officialText(html);
+      why = officialUsability(res.status, html, text);
+    } catch (e) {
+      why = `fetch failed: ${e instanceof Error ? e.message : String(e)}`;
+    }
+    out.fetched++;
+    const usable = !why;
+    await upsertOfficialPage(db, o.key, url, status, usable ? text : null, usable ? await sha256Hex(text) : null, why, at);
+    if (!usable) {
+      out.unusable++;
+      out.unusableReasons.push(`${o.bank ?? o.key}: ${why}`);
+      continue;
+    }
+    out.usable++;
+    // 정규식 공식 값은 새 본문 기준으로 갈아끼우되, Cowork가 공식 본문에서 근거를 확인한 값은 둔다.
+    const merged = { ...(d.official_fields ?? {}) };
+    for (const [k, v] of Object.entries(merged)) if (v?.method === "regex") delete merged[k];
+    for (const [k, v] of Object.entries(officialRegexFields(text, o.accountType !== "business"))) if (!merged[k]) merged[k] = v;
+    await saveOfficialFields(db, o.key, merged, at);
+  }
+  return out;
+}
+
+/** refresh 1회 — 활성 소스 전부 → 상세 글 → 은행 공식 페이지 → Cowork 추출 파일 반영. 외부 AI 호출 없음. */
 export async function refreshAll(
   db: D1Database,
   trigger: "manual" | "cron",
-): Promise<{ sources: FetchSummary[]; details: DetailSummary | { error: string }; cowork: CoworkSummary | { error: string } }> {
+): Promise<{
+  sources: FetchSummary[];
+  details: DetailSummary | { error: string };
+  official: OfficialSummary | { error: string };
+  cowork: CoworkSummary | { error: string };
+}> {
   const sources: FetchSummary[] = [];
   for (const s of await listEnabledSources(db)) sources.push(await fetchSource(db, s, trigger));
   let details: DetailSummary | { error: string };
@@ -187,11 +279,17 @@ export async function refreshAll(
   } catch (e) {
     details = { error: e instanceof Error ? e.message : String(e) };
   }
+  let official: OfficialSummary | { error: string };
+  try {
+    official = await fetchOfficial(db);
+  } catch (e) {
+    official = { error: e instanceof Error ? e.message : String(e) };
+  }
   let cowork: CoworkSummary | { error: string };
   try {
     cowork = await coworkIngest(db);
   } catch (e) {
     cowork = { error: e instanceof Error ? e.message : String(e) };
   }
-  return { sources, details, cowork };
+  return { sources, details, official, cowork };
 }

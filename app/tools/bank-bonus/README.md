@@ -57,7 +57,7 @@ Top 5 = 위 집합을 **기본 금액(`bonus_base`, 모르면 bonus_max)** 큰 �
 |---|---|
 | `expires_on` | ① "Update …: Extended to/through/till <날짜>" ② "Offer at a glance"의 Expiration date ③ 약관의 expires on / valid through / through / until / by <날짜>. **글을 마지막으로 손본 날(게시일·최신 Update)보다 이른 날짜는 방치된 옛 값이라 버림.** |
 | `apply_methods` | online: "Direct link to offer" 링크 또는 온라인 개설 문구 · branch: in-branch · code: offer/promo/bonus/coupon code · invite: targeted/mailer. 요약·The Offer·약관만 본다 (Our Verdict·FAQ는 반대 뜻으로도 써서 제외). |
-| `dd_amount` / `dd_days` | "direct deposit(s) of $X … within Y days", "$X or more in qualifying electronic/direct deposits within Y days" (범위면 하한, 예시 문장 제외). 금액 없으면 요약의 "Direct deposit required: Yes, $X". |
+| `dd_amount` / `dd_days` | "direct deposit(s) of $X … within Y days", "$X or more in qualifying electronic/direct deposits within Y days" (예시 문장 제외). **범위·등급이면 금액을 비우고 티어**(Phase 2c-1). 금액 없으면 요약의 "Direct deposit required: Yes, $X"(범위면 역시 티어). |
 | `churn_months` / `churn_text` | 자격 문장의 과거 창: past/last/previous/prior N months·years·days, within N … prior, every N years. 보너스 언급 문장 우선. 일→개월 환산. |
 | `early_termination_text` / `monthly_fee_text` | 요약 항목 우선, 없으면 해당 문구 문장. |
 | `bank_offer_url` | "Direct link to offer" 링크 (취소선 처리된 옛 링크 대신 붙은 "New link" 포함). |
@@ -161,3 +161,50 @@ offers API는 상세 글 값을 우선하고, 없으면 master 불릿 값(DD·�
 수동 실행: GitHub 저장소 → **Actions** 탭 → 왼쪽 "Bank Bonus Pending Export" → **Run workflow** → 브랜치 선택 → Run.
 또는 `gh workflow run bank-bonus-pending.yml --ref dev`.
 주의: GitHub는 `schedule`(그리고 Actions 탭의 Run workflow 버튼)을 **기본 브랜치(main)에 있는 워크플로 파일**에만 붙인다 — main에 들어가기 전에는 매주 실행이 돌지 않는다.
+
+## 은행 공식 약관 (Phase 2c-1) — 다섯 질문의 기준
+
+refresh 순서: 소스 → DoC 상세 글 → **은행 공식 페이지** → Cowork 반영.
+
+- **수집** (`engine.ts` fetchOfficial, `official.ts`): 지금 할 만한 오퍼 + 관심(⭐) 오퍼의 `bank_offer_url`(DoC "Direct link to offer").
+  refresh당 최대 15건, 300ms 간격, 7일 캐시, DoC와 같은 데스크톱 UA. script·style·nav·header·footer 등을 지우고 보이는 글자만,
+  24000자 상한 — 넘으면 terms and conditions / offer details / eligibility / bonus가 처음 나오는 구간부터.
+  200이 아니거나 막힘·글자 부족(스크립트로 그리는 페이지)이면 본문 없이 `http_status`·`error`만 저장 → 화면 "공식 페이지 확인 불가".
+  본문 해시가 바뀌면 `last_changed_at` 갱신. 저장: `bb_official_pages`.
+- **공식 본문 정규식** (`officialRegexFields`): 재신청 기간(개인 계좌면 business 문장 제외), 평생 1회("once per lifetime" 등 — "limit one per customer"는 아님),
+  가입 자격 제한 문장 → `bb_offer_details.official_fields` (method=regex). Cowork가 공식 본문에서 근거를 확인한 값(method=cowork)은 덮지 않는다.
+
+## 표시 규칙
+
+- 우선순위: **manual > official(공식 약관) > doc_post(DoC 글 — 정규식·Cowork) > doc_churn**.
+- 재신청: 직접 입력 > "1회만 (재신청 불가)"(공식·DoC) > 기간 > DoC 처닝 목록. **공식과 DoC 글 기간이 다르면 긴 쪽** — 둘 다 지켜야 하는 조건
+  (예: Chase 공식 페이지 "closed within 90 days" vs DoC 약관 "one bonus every two years" → 24개월).
+  "closed with a negative balance within the last N years"는 계좌 이력 제한이라 기간으로 읽지 않는다.
+  값 없음: 공식 본문을 읽었으면 "공식 약관에 명시 없음", DoC 글만 읽었으면 "글에 명시 없음", 둘 다 없으면 "확인 필요".
+- **부분값 금지**: 직접입금 금액이 범위·등급("$1,000-$1,999", "$2,000 to $4,999.99 to earn the $250 bonus, …", "Yes, $1,000 – $5,000")이면
+  하한을 쓰지 않고 `tiered` → "직접입금 (티어)". 보너스 자체가 범위인데 기본 금액을 모르면(예: Citi $325/$475/…) 한 숫자 DD도 "티어".
+- **DoC 기준**: 값의 근거가 DoC 약관뿐이고 글에 게시일보다 늦은 Update가 있으면 작은 "DoC 기준" 표시.
+- **가입 자격 제한**: 공식 → DoC 순으로 찾은 자격 문장이 군인·고용주·카운티·학교 등 회원 자격을 **제한하는 문장**(must / only / open to / reside / live·work /
+  field of membership …)이면 태그 "가입 자격 제한" + 할 만한 오퍼·Top 5에서 제외. 직원 제외 문구·수수료 면제 대상 목록·추천 보너스 문구는 해당 없음.
+- **ACH 이체 인정**: 예 / 아니오 / 불명확 / 확인 필요 (Cowork 값만, 근거 있음).
+- 근거 출처 표기: 공식 약관 / DoC 글 / DoC 처닝 목록 / Cowork 추출 (Cowork 값이 공식 본문에서 확인되면 "공식 약관 · Cowork 추출").
+
+## 보너스 조건 체크리스트 (`requirements_json`)
+
+단계 = `{order, portion: base|extra, kind: dd|deposit_hold|open_account|debit_txn|enroll|other, text(원문 ≤200자), amount, days, count?, tiered?, quote, source, via}`.
+화면: 기본 몫 단계 → "+$N 받으려면" → 추가 몫 단계, 단계마다 근거. 예) Chase: ① 체킹 직접입금 90일 이내 / +$600 받으려면 ② 저축 계좌 동시 개설 ③ $15,000을 90일 유지.
+정규식(DoC): 겹친 오퍼(입출금 불릿 + 저축 불릿), 직접입금 문장(금액·기한·티어), 기본 예치, 직불카드 거래 횟수. 못 세우면 null → 한 줄 요약 + "요약(확인 필요)".
+우선: 공식 약관 근거 체크리스트(Cowork) > DoC 체크리스트(정규식·Cowork).
+
+## Export 스키마 (Cowork)
+
+`GET https://dev.brennhub.com/api/bank-bonus/export` (`?all=1`) →
+`{generatedAt, items: [{offer_key, bank, detail_url, missing[], glance_text, fine_print_text(≤6000), official_url, official_status, official_text(≤24000, 쓸 만한 본문만)}]}`.
+`missing` = 아직 값 없는 추출 필드(DoC 칸·공식 값 둘 다 빈 것).
+
+Cowork 파일(`data/bank-bonus/extractions.json`) 필드: expires_on, churn_months(+churn_text), reapply_once_only(0|1), dd_amount, dd_days,
+deposit_hold_amount, deposit_hold_days, apply_methods, ach_push(yes|no|unclear), eligibility_text, fee_waiver_text, early_termination_text,
+requirements([{order, portion, kind, text, amount, days}]). 근거: 단일 값 필드마다 인용 1개, requirements는 `evidence.requirements` 배열(단계별 인용 1개).
+게이트: 인용은 **공식 본문 먼저, 그다음 DoC 요약+약관**에서 찾고(15자 이상, 공백·따옴표·대시 무시), 찾은 쪽을 출처로 기록.
+글 필드(eligibility_text·fee_waiver_text·early_termination_text)는 값이 인용의 일부여야 한다. requirements는 한 단계라도 실패하면 전체 버림.
+공식 근거 값 → `official_fields`, DoC 근거 값 → 상세 칸(비어 있을 때만).

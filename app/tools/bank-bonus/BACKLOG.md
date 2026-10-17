@@ -1,9 +1,10 @@
 # bank-bonus BACKLOG
 
 - [ ] Manual refresh button on the page (on hold, revisit later)
-- [ ] Card condition checklist: numbered requirements with base vs extra portions
-- [ ] Phase 2b: historical comparison badge from the quick reference CSV expired rows, post phrases, and own history
-- [ ] Phase 2c: official bank page verification (bb_bank_rules source='official', 마감일·DD 조건 확인)
+- [ ] Phase 2b history badge from quick reference CSV expired rows (next) — + post phrases and own history
+- [x] Card condition checklist: numbered requirements with base vs extra portions (Phase 2c-1)
+- [x] Phase 2c-1: official page capture + checklist + no partial values
+- [ ] Phase 2c-2: script-rendered / blocked official pages (403·JS) — 다른 경로 검토, bb_bank_rules source='official'
 - [ ] export route sits under /api, which robots.ts disallows; fine for CI, revisit if a direct reader is ever needed
 - [ ] Weekly schedule needs the workflow file on main (GitHub runs `schedule` only from the default branch)
 - [ ] Cowork 예약 작업 설정 — export(`/api/bank-bonus/export`) → `data/bank-bonus/extractions.json` 커밋 (dev)

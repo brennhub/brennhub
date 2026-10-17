@@ -6,7 +6,7 @@
 import { SCORE } from "./config";
 import { mergeOffers } from "./merge";
 import { existingBankOf, evaluateOffer } from "./rules";
-import type { AccountType, BankRule, EvaluatedOffer, OfferDetail, OfferFlags, StoredOffer } from "./types";
+import type { AccountType, BankRule, EvaluatedOffer, OfferDetail, OfferFlags, OfficialPage, StoredOffer } from "./types";
 
 export type OfferQuery = {
   types: AccountType[];
@@ -80,10 +80,14 @@ export function evaluateAll(
   flags: Map<string, OfferFlags>,
   details: Map<string, OfferDetail>,
   rules: BankRule[] = [],
+  pages: Map<string, OfficialPage> = new Map(),
   now = Date.now(),
 ): { all: EvaluatedOffer[]; merged: number } {
   const merged = mergeOffers(rows);
-  return { all: merged.map((o) => evaluateOffer(o, flags.get(o.key), details.get(o.key), rules, now)), merged: merged.length };
+  return {
+    all: merged.map((o) => evaluateOffer(o, flags.get(o.key), details.get(o.key), rules, pages.get(o.key), now)),
+    merged: merged.length,
+  };
 }
 
 export function buildOffers(
@@ -92,9 +96,10 @@ export function buildOffers(
   details: Map<string, OfferDetail>,
   q: OfferQuery,
   rules: BankRule[] = [],
+  pages: Map<string, OfficialPage> = new Map(),
   now = Date.now(),
 ): OffersResponse {
-  const { all, merged } = evaluateAll(rows, flags, details, rules, now);
+  const { all, merged } = evaluateAll(rows, flags, details, rules, pages, now);
 
   const offers = all.filter((o) => {
     if (!o.isOffer) return false;

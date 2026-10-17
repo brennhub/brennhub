@@ -7,9 +7,9 @@
  * 댓글은 <article> 밖이라 보지 않는다. <del>(취소선) 안의 옛 값은 버린다.
  */
 
-import { parseDepositHold } from "./derive";
+import { isTieredAmount, membershipSentence, parseDepositHold } from "./derive";
 import { decodeEntities, htmlToText } from "./text";
-import type { ApplyMethod } from "./types";
+import type { ApplyMethod, RequirementStep } from "./types";
 
 export type DetailExtract = {
   finePrintText: string | null;
@@ -29,6 +29,13 @@ export type DetailExtract = {
   /** 정규식이 값을 뽑은 문장 — 화면 "근거"용. */
   evidence: { expires_on?: string; dd?: string; churn_months?: string };
   stacked: StackedExtract;
+  /** 보너스 조건 체크리스트 (정규식, DoC 원문). 확신 없으면 null. */
+  requirements: RequirementStep[] | null;
+  /** 회원 자격 제한 문장 (군인·고용주·카운티·학교 등). */
+  eligibilityText: string | null;
+  /** 글 게시일 · 최신 "Update M/D/YY" (YYYY-MM-DD). */
+  docPostedAt: string | null;
+  docUpdatedAt: string | null;
 };
 
 /** 겹친(스택)·등급 오퍼. base = 직접입금만으로 받는 금액, total = 예치까지 채운 총액. */
@@ -129,6 +136,16 @@ function lastDate(text: string): string | null {
  * 글이 마지막으로 손본 날 — 제목 아래 게시일과 "Update M/D/YY" 중 가장 늦은 날.
  * DoC는 "Offer at a glance" 만료일을 자주 방치한다 (2019·2023 날짜가 남은 채 글은 2026에 갱신).
  */
+function postDates(art: string, articleText: string): { posted: string | null; updated: string | null } {
+  const byline = art.match(/<\/h1>([\s\S]{0,600})/i);
+  const d = byline ? htmlToText(byline[1]).match(new RegExp(DATE_RE, "i")) : null;
+  const updates = [...articleText.matchAll(/\bUpdate\s+(\d{1,2}\/\d{1,2}\/\d{2,4})\b/g)]
+    .map((m) => parseDate(m[1]))
+    .filter((x): x is string => !!x)
+    .sort();
+  return { posted: d ? parseDate(d[0]) : null, updated: updates.at(-1) ?? null };
+}
+
 function lastTouched(art: string, articleText: string): string | null {
   const dates: string[] = [];
   const byline = art.match(/<\/h1>([\s\S]{0,600})/i);
@@ -179,7 +196,9 @@ const CHURN_WINDOWS = [
 ];
 const ELIGIBILITY = /\b(?:bonus|owned|had|have not|has not|member|customer|closed|received|eligible|available|participate)\b/i;
 
-export function churnWindow(s: string): number | null | undefined {
+export function churnWindow(raw: string): number | null | undefined {
+  // "closed with a negative balance within the last 3 years"는 재신청 규칙이 아니라 계좌 이력 제한 — 창에서 뺀다.
+  const s = raw.replace(/\b(?:closed|charged[- ]off)\s+with\s+a\s+negative\s+balance\s+(?:with)?in\s+the\s+(?:last|past)\s+\S+\s+(?:years?|months?|days?)/gi, " ");
   // "one (1) checking account promotional offer per year" / "once per calendar year".
   if (/\b(?:one|1|once)\b(?:\s*\(1\))?[^.]{0,100}?\bper\s+(?:calendar\s+)?year\b/i.test(s)) return 12;
   for (const re of CHURN_WINDOWS) {
@@ -203,38 +222,119 @@ export function findChurn(text: string, opts: { personal?: boolean } = {}): { mo
     .filter((s) => ELIGIBILITY.test(s) || /per (?:calendar )?year/i.test(s))
     .filter((s) => !opts.personal || !/\bbusiness\b/i.test(s));
   const withWindow = all.filter((s) => churnWindow(s) !== undefined);
-  // 보너스·오퍼 자격 문장 우선 ("received a bonus ... within the past 12 months", "not eligible for this offer if ...").
+  // 보너스 수령 이력 문장 최우선 ("one bonus every two years", "received a bonus ... within the past 12 months"),
+  // 그다음 오퍼 자격 문장 ("not eligible for this offer if ...").
   const s =
-    withWindow.find((x) => /bonus|offer|eligible|promotion/i.test(x)) ??
+    withWindow.find((x) => /\bbonus(?:es)?\b/i.test(x)) ??
+    withWindow.find((x) => /offer|eligible|promotion/i.test(x)) ??
     withWindow[0] ??
     all.find((x) => /previously received|closed an account/i.test(x));
   if (!s) return { months: null, text: null };
   return { months: churnWindow(s) ?? null, text: s.slice(0, 500) };
 }
 
-function findDd(text: string, glanceDd: string | null): { amount: number | null; days: number | null; text: string | null } {
+type DdFound = { amount: number | null; days: number | null; text: string | null; tiered: boolean };
+
+function findDd(text: string, glanceDd: string | null): DdFound {
   // "direct deposit(s) of $X ... within Y days" / "$X or more in qualifying direct|electronic deposits within Y days".
   for (const s of sentences(text)) {
     if (!/direct deposit|qualifying (?:electronic|direct) deposit/i.test(s)) continue;
     if (/^for example\b/i.test(s)) continue; // 등급 예시 문장은 조건이 아니다.
-    // 범위("$1,000-$1,999 in ... deposits")면 하한 — 그 금액부터 보너스가 생긴다.
+    // 범위·등급("$1,000-$1,999", "$2,000 to $4,999.99 to earn the $250 bonus, ...")은 한 숫자로 줄이지 않는다 — 티어로 남긴다.
+    const tiered = isTieredAmount(s);
     const a =
       s.match(/direct deposits?\s+(?:totaling\s+|of\s+|totaling\s+at\s+least\s+|of\s+at\s+least\s+)\$([\d,]+)/i) ??
       s.match(/\$([\d,]+)(?:\s*[-–]\s*\$[\d,]+)?\+?\s+(?:or more\s+)?(?:in\s+)?(?:total\s+)?(?:qualifying\s+)?(?:electronic\s+|direct\s+)deposits?/i);
     // 기한은 입금 표현 바로 뒤의 "within N days"만 — 보너스 지급 시기("credit ... within 14 days")는 제외.
     const dm = s.match(/deposits?\b[^.]{0,80}?within\s+(\d{1,3})\s+(?:calendar\s+|business\s+)?days/i);
     const d = dm && !/\b(?:credit|credited|paid|pay|bonus will)\b/i.test(dm[0]) ? dm : null;
-    if (a || d) {
-      return { amount: a ? money(a[1]) : glanceAmount(glanceDd), days: d ? Number(d[1]) : null, text: s.slice(0, 500) };
+    if (a || d || tiered) {
+      return {
+        amount: tiered ? null : a ? money(a[1]) : glanceAmount(glanceDd),
+        days: d ? Number(d[1]) : null,
+        text: s.slice(0, 500),
+        tiered: tiered || (!a && glanceTiered(glanceDd)),
+      };
     }
   }
-  return { amount: glanceAmount(glanceDd), days: null, text: glanceDd };
+  return { amount: glanceAmount(glanceDd), days: null, text: glanceDd, tiered: glanceTiered(glanceDd) };
 }
 
+const glanceTiered = (v: string | null) => !!v && /^yes/i.test(v) && isTieredAmount(v);
+
 function glanceAmount(v: string | null): number | null {
-  if (!v || !/^yes/i.test(v)) return null;
+  if (!v || !/^yes/i.test(v) || isTieredAmount(v)) return null;
   const m = v.match(/\$([\d,]+)/);
   return m ? money(m[1]) : null;
+}
+
+/** The Offer 불릿 — <li> 시작마다 자른다 (중첩 목록에서 바깥 불릿이 안쪽 불릿과 섞이지 않게). */
+function offerBullets(offerHtml: string | null): string[] {
+  return offerHtml
+    ? offerHtml
+        .split(/<li[^>]*>/i)
+        .slice(1)
+        .map((chunk) => htmlToText(chunk.split(/<\/li>|<ul[\s>]/i)[0]))
+        .filter(Boolean)
+    : [];
+}
+
+const amountIn = (b: string) => b.match(/bonus of \$([\d,]+)|\$([\d,]+)\s+(?:checking\s+)?bonus|receive \$([\d,]+)/i);
+
+/** 겹친 오퍼 판정용 불릿: 입출금(예치 문구 없음) + 저축(예치/유지). */
+function stackBullets(offerHtml: string | null) {
+  const bullets = offerBullets(offerHtml);
+  return {
+    bullets,
+    amountIn,
+    checking: bullets.find((b) => /checking/i.test(b) && !/savings/i.test(b) && !/new money|balance|maintain/i.test(b) && amountIn(b)),
+    savings: bullets.find((b) => /savings/i.test(b) && /new money|balance|maintain|deposit \$/i.test(b)),
+  };
+}
+
+const WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12, fifteen: 15, twenty: 20, thirty: 30 };
+
+/**
+ * 보너스 조건 체크리스트 (DoC 원문 정규식). 단계마다 출처 문장을 인용으로 남긴다.
+ *  - 겹친 오퍼: base = 입출금 불릿(직접입금 기한), extra = 저축 계좌 개설 + 예치 유지.
+ *  - 그 밖: 직접입금(금액·기한, 등급이면 tiered) · 기본 예치 · 직불카드 거래 횟수.
+ * 단계를 하나도 못 세우면 null (화면은 한 줄 요약 + "확인 필요").
+ */
+function buildRequirements(offerHtml: string | null, stacked: StackedExtract, dd: DdFound, searchText: string): RequirementStep[] | null {
+  const steps: Omit<RequirementStep, "order">[] = [];
+  const clip = (t: string) => t.trim().slice(0, 200);
+  const daysIn = (t: string) => {
+    const m = t.match(/within\s+(\d{1,3})\s+(?:calendar\s+|business\s+)?days/i);
+    return m ? Number(m[1]) : null;
+  };
+  const base = { source: "doc_post" as const, via: "regex" as const };
+
+  const { checking, savings } = stackBullets(offerHtml);
+  if (stacked.holdScope === "extra" && stacked.bonusBase != null && checking && savings) {
+    const ddCheck = /direct deposit/i.test(checking);
+    steps.push({ ...base, portion: "base", kind: ddCheck ? "dd" : "other", text: clip(checking), amount: null, days: daysIn(checking), quote: clip(checking) });
+    steps.push({ ...base, portion: "extra", kind: "open_account", text: clip(savings), amount: null, days: null, quote: clip(savings) });
+    const hold = parseDepositHold(savings);
+    if (hold.amount != null) {
+      steps.push({ ...base, portion: "extra", kind: "deposit_hold", text: clip(savings), amount: hold.amount, days: hold.days, quote: clip(savings) });
+    }
+  } else {
+    if (dd.text && (dd.amount != null || dd.days != null || dd.tiered)) {
+      steps.push({ ...base, portion: "base", kind: "dd", text: clip(dd.text), amount: dd.tiered ? null : dd.amount, days: dd.days, tiered: dd.tiered, quote: clip(dd.text) });
+    }
+    if (stacked.holdScope === "base" && stacked.holdAmount != null) {
+      const needle = stacked.holdAmount.toLocaleString("en-US");
+      const q = sentences(searchText).find((x) => x.includes(needle) || x.includes(String(stacked.holdAmount)));
+      if (q) steps.push({ ...base, portion: "base", kind: "deposit_hold", text: clip(q), amount: stacked.holdAmount, days: stacked.holdDays, quote: clip(q) });
+    }
+    const debit = sentences(searchText).find((x) => /\b(\d{1,2}|[a-z]+)\s+(?:or more\s+)?(?:qualifying\s+|eligible\s+)?debit card\s+(?:transactions|purchases)\b/i.test(x));
+    if (debit) {
+      const m = debit.match(/\b(\d{1,2}|[a-z]+)\s+(?:or more\s+)?(?:qualifying\s+|eligible\s+)?debit card\s+(?:transactions|purchases)\b/i)!;
+      const count = /^\d+$/.test(m[1]) ? Number(m[1]) : (WORDS[m[1].toLowerCase()] ?? null);
+      if (count != null) steps.push({ ...base, portion: "base", kind: "debit_txn", text: clip(debit), amount: null, days: daysIn(debit), count, quote: clip(debit) });
+    }
+  }
+  return steps.length ? steps.map((x, i) => ({ ...x, order: i + 1 })) : null;
 }
 
 /**
@@ -251,17 +351,7 @@ function findStacked(g: Map<string, string>, offerText: string, offerHtml: strin
   const additional = getGlance(g, /^additional requirement/) ?? "";
   const ddReq = getGlance(g, /^direct deposit/) ?? "";
 
-  // 불릿은 <li> 시작마다 자른다 — 중첩 목록에서 바깥 불릿("checking & savings ... up to $900")이 안쪽 불릿과 섞이지 않게.
-  const bullets = offerHtml
-    ? offerHtml
-        .split(/<li[^>]*>/i)
-        .slice(1)
-        .map((chunk) => htmlToText(chunk.split(/<\/li>|<ul[\s>]/i)[0]))
-        .filter(Boolean)
-    : [];
-  const amountIn = (b: string) => b.match(/bonus of \$([\d,]+)|\$([\d,]+)\s+(?:checking\s+)?bonus|receive \$([\d,]+)/i);
-  const checking = bullets.find((b) => /checking/i.test(b) && !/savings/i.test(b) && !/new money|balance|maintain/i.test(b) && amountIn(b));
-  const savings = bullets.find((b) => /savings/i.test(b) && /new money|balance|maintain|deposit \$/i.test(b));
+  const { checking, savings, amountIn } = stackBullets(offerHtml);
 
   // ①
   const checkingAmount = checking ? amountIn(checking)! : null;
@@ -344,6 +434,8 @@ export function extractDetail(html: string, opts: { personal?: boolean } = {}): 
   const churn = findChurn(searchText, { personal: opts.personal });
   const expires = findExpires(art, articleText, getGlance(g, /^expiration/), searchText);
   const glanceText = g.size ? [...g.entries()].map(([k, v]) => `${k}: ${v}`).join("\n") : null;
+  const stacked = findStacked(g, offerHtml ? htmlToText(offerHtml) : "", offerHtml, finePrint ?? "");
+  const dates = postDates(art, articleText);
   const evidence: DetailExtract["evidence"] = {};
   if (expires.date && expires.quote) evidence.expires_on = expires.quote;
   if ((dd.amount != null || dd.days != null) && dd.text) evidence.dd = dd.text;
@@ -365,6 +457,10 @@ export function extractDetail(html: string, opts: { personal?: boolean } = {}): 
     postExpired,
     glanceText,
     evidence,
-    stacked: findStacked(g, offerHtml ? htmlToText(offerHtml) : "", offerHtml, finePrint ?? ""),
+    stacked,
+    requirements: buildRequirements(offerHtml, stacked, dd, searchText),
+    eligibilityText: membershipSentence(termsText),
+    docPostedAt: dates.posted,
+    docUpdatedAt: dates.updated,
   };
 }

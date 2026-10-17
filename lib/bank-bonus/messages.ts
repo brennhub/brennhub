@@ -7,7 +7,7 @@
 
 import { useLocale } from "@/lib/i18n/provider";
 import type { Locale } from "@/lib/i18n/types";
-import type { AccountType, ApplyMethod, BonusTotalNote, RuleSource } from "./types";
+import type { AccountType, AchPush, ApplyMethod, BonusTotalNote, RequirementStep, RuleSource } from "./types";
 
 const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -66,6 +66,7 @@ const ko = {
     tags: "태그",
     source: "출처",
     star: "관심",
+    ach: "ACH 이체 인정",
   },
 
   // 값
@@ -79,14 +80,45 @@ const ko = {
       ? `직접입금 ${usd(amount)}${days ? `, ${days}일 이내` : ""}`
       : `직접입금 필요(금액 미상)${days ? `, ${days}일 이내` : ""}`,
   ddNone: "직접입금 불필요",
+  ddTier: "직접입금 (티어)",
+  tier: "티어",
+  summaryUnverified: "요약(확인 필요)",
+  extraFor: (n: number | null) => (n != null ? `+${usd(n)} 받으려면` : "추가 보너스 받으려면"),
+  step: (st: RequirementStep, stacked: boolean) => {
+    switch (st.kind) {
+      case "dd": {
+        const who = stacked ? "체킹 " : "";
+        if (st.tiered) return `${who}직접입금 (티어)`;
+        if (st.amount != null) return `${who}직접입금 ${usd(st.amount)}${st.days ? `, ${st.days}일 이내` : ""}`;
+        return `${who}직접입금${st.days ? ` ${st.days}일 이내` : ""}`;
+      }
+      case "deposit_hold":
+        return st.amount != null ? `${usd(st.amount)}을 ${st.days ? `${st.days}일 ` : ""}유지` : "예치금 유지";
+      case "open_account":
+        return /savings/i.test(st.text) ? "저축 계좌 동시 개설" : "계좌 추가 개설";
+      case "debit_txn":
+        return `직불카드 ${st.count != null ? `${st.count}회 ` : ""}사용${st.days ? `, ${st.days}일 이내` : ""}`;
+      case "enroll":
+        return "오퍼 등록·코드 입력";
+      default:
+        return "기타 조건 (원문 확인)";
+    }
+  },
   reapply: (months: number) => `${months}개월 후 가능`,
   reapplyNotStated: "글에 명시 없음",
+  reapplyOnce: "1회만 (재신청 불가)",
+  reapplyOfficialNotStated: "공식 약관에 명시 없음",
+  ach: { yes: "예", no: "아니오", unclear: "불명확" } as Record<AchPush, string>,
+  docBased: "DoC 기준",
+  docBasedHint: "DoC 약관이 글의 최신 업데이트보다 오래됨",
+  officialUnavailable: "공식 페이지 확인 불가",
+  viaCowork: " · Cowork 추출",
   withDeposit: (note: BonusTotalNote | null, total: number, hold: number | null, days: number | null) =>
     `${note === "top_tier" ? "최고 등급" : note === "savings" ? "저축 포함 시" : "예치 포함 시"} ${usd(total)}${
       hold != null ? ` (예치금 ${usd(hold)}${days ? `, ${days}일` : ""})` : ""
     }`,
   evidence: "근거",
-  evidenceSources: { doc_post: "DoC 글", doc_churn: "DoC 처닝 목록", cowork: "Cowork 추출", official: "공식", manual: "직접 입력" } as Record<RuleSource, string>,
+  evidenceSources: { doc_post: "DoC 글", doc_churn: "DoC 처닝 목록", cowork: "Cowork 추출", official: "공식 약관", manual: "직접 입력" } as Record<RuleSource, string>,
   openSource: "출처 열기",
   region: { nationwide: "전국", ca: "CA 가능", notCa: "CA 불가" },
   pull: { soft: "기록 안 남음", hard: "기록 남음" },
@@ -97,6 +129,7 @@ const ko = {
     branch: "지점 방문 필요",
     hardPull: "신용조회 기록 남음",
     targeted: "타겟 오퍼",
+    membership: "가입 자격 제한",
     new: "최근 7일 신규",
     expiring: "마감 임박",
   },
@@ -182,6 +215,7 @@ const en: BankBonusMessages = {
     tags: "Tags",
     source: "Source",
     star: "Interested",
+    ach: "Counts ACH transfer",
   },
 
   bonusRange: (min: number, max: number) => (min === max ? usd(max) : `${usd(min)}–${usd(max)}`),
@@ -194,14 +228,46 @@ const en: BankBonusMessages = {
       ? `Direct deposit ${usd(amount)}${days ? ` within ${days} days` : ""}`
       : `Direct deposit required (amount not stated)${days ? ` within ${days} days` : ""}`,
   ddNone: "No direct deposit needed",
+  ddTier: "Direct deposit (tiers)",
+  tier: "Tier",
+  summaryUnverified: "Summary (needs checking)",
+  extraFor: (n: number | null) => (n != null ? `To get +${usd(n)}` : "For the extra bonus"),
+  step: (st: RequirementStep, stacked: boolean) => {
+    switch (st.kind) {
+      case "dd": {
+        const who = stacked ? "Checking " : "";
+        const dd = stacked ? "direct deposit" : "Direct deposit";
+        if (st.tiered) return `${who}${dd} (tiers)`;
+        if (st.amount != null) return `${who}${dd} ${usd(st.amount)}${st.days ? ` within ${st.days} days` : ""}`;
+        return `${who}${dd}${st.days ? ` within ${st.days} days` : ""}`;
+      }
+      case "deposit_hold":
+        return st.amount != null ? `Keep ${usd(st.amount)}${st.days ? ` for ${st.days} days` : ""}` : "Keep a deposit";
+      case "open_account":
+        return /savings/i.test(st.text) ? "Open a savings account too" : "Open an additional account";
+      case "debit_txn":
+        return `Use the debit card${st.count != null ? ` ${st.count} times` : ""}${st.days ? ` within ${st.days} days` : ""}`;
+      case "enroll":
+        return "Enroll / enter the offer code";
+      default:
+        return "Other condition (see original)";
+    }
+  },
   reapply: (months: number) => `Eligible again after ${months} months`,
   reapplyNotStated: "Not stated in post",
+  reapplyOnce: "Once only (no reapply)",
+  reapplyOfficialNotStated: "Not stated in official terms",
+  ach: { yes: "Yes", no: "No", unclear: "Unclear" },
+  docBased: "DoC-based",
+  docBasedHint: "DoC terms are older than the post's latest update",
+  officialUnavailable: "Official page unavailable",
+  viaCowork: " · Cowork extracted",
   withDeposit: (note: BonusTotalNote | null, total: number, hold: number | null, days: number | null) =>
     `${note === "top_tier" ? "Top tier" : note === "savings" ? "With savings" : "With deposit"} ${usd(total)}${
       hold != null ? ` (deposit hold ${usd(hold)}${days ? `, ${days} days` : ""})` : ""
     }`,
   evidence: "Evidence",
-  evidenceSources: { doc_post: "DoC post", doc_churn: "DoC churn list", cowork: "Cowork extracted", official: "Official", manual: "Manual" },
+  evidenceSources: { doc_post: "DoC post", doc_churn: "DoC churn list", cowork: "Cowork extracted", official: "Official terms", manual: "Manual" },
   openSource: "Open source",
   region: { nationwide: "Nationwide", ca: "CA eligible", notCa: "Not in CA" },
   pull: { soft: "No record left (soft)", hard: "Record left (hard)" },
@@ -212,6 +278,7 @@ const en: BankBonusMessages = {
     branch: "Branch only",
     hardPull: "Hard credit pull",
     targeted: "Targeted",
+    membership: "Membership restricted",
     new: "New this week",
     expiring: "Ending soon",
   },

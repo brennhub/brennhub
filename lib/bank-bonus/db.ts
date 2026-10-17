@@ -1,7 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { ExtractValues } from "./evidence";
 import type { BankRuleInput } from "./parse-churn";
-import type { ApplyMethod, BankRule, DetailEvidence, FreshnessRow, OfferDetail, OfferFlags, OfferInput, PostRow, RuleSource, SourceRow, StoredOffer } from "./types";
+import type { ApplyMethod, BankRule, DetailEvidence, FreshnessRow, OfficialFields, OfficialPage, RequirementStep, OfferDetail, OfferFlags, OfferInput, PostRow, RuleSource, SourceRow, StoredOffer } from "./types";
 import type { DetailExtract } from "./detail";
 
 /**
@@ -240,10 +240,12 @@ export async function upsertFlag(db: D1Database, offerKey: string, patch: FlagPa
     .run();
   return next;
 }
+/** upsertDetail이 쓰는 칸 (DoC 글에서 나온 값). official_fields는 공식 페이지 몫이라 DoC 재수집이 건드리지 않는다. */
 const DETAIL_COLUMNS = `offer_key, detail_url, fetched_at, http_status, fine_print_text, expires_on, apply_methods,
   dd_amount, dd_days, dd_text, churn_months, churn_text, early_termination_text, monthly_fee_text, bank_offer_url, post_expired,
   glance_text, evidence, ai_extracted_at, extraction_method, bonus_base, bonus_total_with_deposit, bonus_total_note,
-  deposit_hold_amount, deposit_hold_days, deposit_hold_scope`;
+  deposit_hold_amount, deposit_hold_days, deposit_hold_scope,
+  requirements_json, reapply_once_only, eligibility_text, ach_push, ach_push_text, fee_waiver_text, doc_posted_at, doc_updated_at`;
 
 function parseJson<T>(s: string | null, fallback: T): T {
   if (!s) return fallback;
@@ -254,21 +256,32 @@ function parseJson<T>(s: string | null, fallback: T): T {
   }
 }
 
-type DetailDbRow = Omit<OfferDetail, "apply_methods" | "evidence"> & { apply_methods: string | null; evidence: string | null };
+type DetailDbRow = Omit<OfferDetail, "apply_methods" | "evidence" | "requirements_json" | "official_fields"> & {
+  apply_methods: string | null;
+  evidence: string | null;
+  requirements_json: string | null;
+  official_fields: string | null;
+};
 
 export async function listDetails(db: D1Database): Promise<Map<string, OfferDetail>> {
-  const { results } = await db.prepare(`SELECT ${DETAIL_COLUMNS} FROM bb_offer_details`).all<DetailDbRow>();
+  const { results } = await db.prepare(`SELECT ${DETAIL_COLUMNS}, official_fields FROM bb_offer_details`).all<DetailDbRow>();
   return new Map(
     results.map((r) => [
       r.offer_key,
-      { ...r, apply_methods: parseJson<ApplyMethod[] | null>(r.apply_methods, null), evidence: parseJson<DetailEvidence>(r.evidence, {}) },
+      {
+        ...r,
+        apply_methods: parseJson<ApplyMethod[] | null>(r.apply_methods, null),
+        evidence: parseJson<DetailEvidence>(r.evidence, {}),
+        requirements_json: parseJson<RequirementStep[] | null>(r.requirements_json, null),
+        official_fields: parseJson<OfficialFields>(r.official_fields, {}),
+      },
     ]),
   );
 }
 
 /**
  * 상세 글 1건 저장 (정규식 결과로 교체). 실패(HTTP 오류 등)도 fetched_at·http_status를 남겨 7일 재시도 간격을 지킨다.
- * 다시 받은 글은 AI 결과도 새로 — ai_extracted_at을 비워 다음 AI 단계 대상이 되게 한다.
+ * DoC 쪽 Cowork 값도 비운다 — 다음 refresh의 ingest가 파일에서 다시 채운다(근거 재대조). official_fields는 그대로.
  */
 export async function upsertDetail(
   db: D1Database,
@@ -280,6 +293,7 @@ export async function upsertDetail(
 ): Promise<void> {
   const evidence: DetailEvidence = {};
   for (const [k, quote] of Object.entries(x?.evidence ?? {})) if (quote) evidence[k] = { quote, method: "regex" };
+  if (x?.eligibilityText) evidence.eligibility_text = { quote: x.eligibilityText, method: "regex" };
   const st = x?.stacked;
   const cols = DETAIL_COLUMNS.split(",").map((c) => c.trim());
   await db
@@ -295,12 +309,14 @@ export async function upsertDetail(
       x?.glanceText ?? null, JSON.stringify(evidence), null, "regex",
       st?.bonusBase ?? null, st?.bonusTotalWithDeposit ?? null, st?.bonusTotalNote ?? null,
       st?.holdAmount ?? null, st?.holdDays ?? null, st?.holdScope ?? null,
+      x?.requirements ? JSON.stringify(x.requirements) : null, null, x?.eligibilityText ?? null, null, null, null,
+      x?.docPostedAt ?? null, x?.docUpdatedAt ?? null,
     )
     .run();
 }
 
 /**
- * Cowork 추출 반영 — 근거 대조를 통과한 값만, 비어 있던 칸만 채운다(COALESCE). 근거는 기존 근거에 합친다.
+ * Cowork 추출 중 DoC 원문(요약+약관)에서 근거가 확인된 값 — 비어 있던 칸만 채운다(COALESCE). 근거는 기존 근거에 합친다.
  * ai_extracted_at 칸을 반영 시각으로 재사용한다.
  */
 export async function applyCoworkResult(
@@ -320,14 +336,60 @@ export async function applyCoworkResult(
          dd_amount = COALESCE(dd_amount, ?), dd_days = COALESCE(dd_days, ?),
          deposit_hold_amount = COALESCE(deposit_hold_amount, ?), deposit_hold_days = COALESCE(deposit_hold_days, ?),
          apply_methods = COALESCE(apply_methods, ?),
+         reapply_once_only = COALESCE(reapply_once_only, ?), ach_push = COALESCE(ach_push, ?), ach_push_text = COALESCE(ach_push_text, ?),
+         eligibility_text = COALESCE(eligibility_text, ?), fee_waiver_text = COALESCE(fee_waiver_text, ?),
+         early_termination_text = COALESCE(early_termination_text, ?), requirements_json = COALESCE(requirements_json, ?),
          evidence = ?, ai_extracted_at = ?, extraction_method = 'cowork'
        WHERE offer_key = ?`,
     )
     .bind(
       values.expires_on ?? null, values.churn_months ?? null, values.churn_text ?? null, values.dd_amount ?? null,
       values.dd_days ?? null, values.deposit_hold_amount ?? null, values.deposit_hold_days ?? null,
-      values.apply_methods ? JSON.stringify(values.apply_methods) : null, JSON.stringify(evidence), now, offerKey,
+      values.apply_methods ? JSON.stringify(values.apply_methods) : null,
+      values.reapply_once_only ?? null, values.ach_push ?? null, values.ach_push_text ?? null,
+      values.eligibility_text ?? null, values.fee_waiver_text ?? null, values.early_termination_text ?? null,
+      values.requirements ? JSON.stringify(values.requirements) : null,
+      JSON.stringify(evidence), now, offerKey,
     )
+    .run();
+}
+
+/** 공식 약관이 근거인 값 저장 — 필드별로 합친다 (정규식·Cowork 공식 값). */
+export async function saveOfficialFields(db: D1Database, offerKey: string, fields: OfficialFields, now: string, viaCowork = false): Promise<void> {
+  await db
+    .prepare(`UPDATE bb_offer_details SET official_fields = ?${viaCowork ? ", ai_extracted_at = ?, extraction_method = 'cowork'" : ""} WHERE offer_key = ?`)
+    .bind(...(viaCowork ? [JSON.stringify(fields), now, offerKey] : [JSON.stringify(fields), offerKey]))
+    .run();
+}
+
+export async function listOfficialPages(db: D1Database): Promise<Map<string, OfficialPage>> {
+  const { results } = await db
+    .prepare(`SELECT offer_key, url, fetched_at, http_status, text, text_hash, last_changed_at, error FROM bb_official_pages`)
+    .all<OfficialPage>();
+  return new Map(results.map((r) => [r.offer_key, r]));
+}
+
+/** 공식 페이지 1건 저장. 본문 해시가 바뀌었을 때만 last_changed_at 갱신. */
+export async function upsertOfficialPage(
+  db: D1Database,
+  offerKey: string,
+  url: string,
+  httpStatus: number | null,
+  text: string | null,
+  textHash: string | null,
+  error: string | null,
+  now: string,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO bb_official_pages (offer_key, url, fetched_at, http_status, text, text_hash, last_changed_at, error)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(offer_key) DO UPDATE SET url = excluded.url, fetched_at = excluded.fetched_at, http_status = excluded.http_status,
+         text = excluded.text, error = excluded.error,
+         last_changed_at = CASE WHEN bb_official_pages.text_hash IS excluded.text_hash THEN bb_official_pages.last_changed_at ELSE excluded.last_changed_at END,
+         text_hash = excluded.text_hash`,
+    )
+    .bind(offerKey, url, now, httpStatus, text, textHash, textHash ? now : null, error)
     .run();
 }
 

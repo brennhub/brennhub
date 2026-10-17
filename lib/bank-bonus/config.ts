@@ -22,6 +22,13 @@ export const COWORK = {
   exportTextMax: 6000,
 } as const;
 
+/** 은행 공식 오퍼 페이지 수집 — refresh 1회당 상한·간격·재수집 주기. */
+export const OFFICIAL_FETCH = {
+  maxPerRefresh: 15,
+  gapMs: 300,
+  refetchAfterDays: 7,
+} as const;
+
 /** 상세 글 수집 — refresh 1회당 상한·간격·재수집 주기. */
 export const DETAIL_FETCH = {
   maxPerRefresh: 40,

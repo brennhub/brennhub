@@ -5,7 +5,7 @@
  */
 
 import { isProdEnv } from "@/lib/env.server";
-import { getBankBonusDb, listBankRules, listDetails, listFlags, listStoredOffers } from "@/lib/bank-bonus/db";
+import { getBankBonusDb, listBankRules, listDetails, listFlags, listOfficialPages, listStoredOffers } from "@/lib/bank-bonus/db";
 import { buildExport } from "@/lib/bank-bonus/export";
 import { evaluateAll } from "@/lib/bank-bonus/offers";
 
@@ -20,10 +20,16 @@ export async function GET(req: Request) {
   if (!db) return Response.json({ error: "AUTH_DB not bound" }, { status: 500, headers: HEADERS });
 
   try {
-    const [rows, flags, details, rules] = await Promise.all([listStoredOffers(db), listFlags(db), listDetails(db), listBankRules(db)]);
-    const { all } = evaluateAll(rows, flags, details, rules);
+    const [rows, flags, details, rules, pages] = await Promise.all([
+      listStoredOffers(db),
+      listFlags(db),
+      listDetails(db),
+      listBankRules(db),
+      listOfficialPages(db),
+    ]);
+    const { all } = evaluateAll(rows, flags, details, rules, pages);
     const includeAll = new URL(req.url).searchParams.get("all") === "1";
-    return Response.json(buildExport(all, details, includeAll), { headers: HEADERS });
+    return Response.json(buildExport(all, details, pages, includeAll), { headers: HEADERS });
   } catch {
     return Response.json({ error: "export failed" }, { status: 500, headers: HEADERS });
   }
