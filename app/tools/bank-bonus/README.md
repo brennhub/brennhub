@@ -145,3 +145,19 @@ offers API는 상세 글 값을 우선하고, 없으면 master 불릿 값(DD·�
   - refresh 응답: `"cowork": {fileGeneratedAt, items, accepted, rejected: {이유: 건수}, skippedExisting}`.
 
 화면 "근거": 신청 마감 · 보너스 조건 · 재신청 가능 옆 작은 버튼 → 근거 문장 + 출처 종류(DoC 글 / DoC 처닝 목록 / Cowork 추출 / 공식) + 링크. 근거 없는 값엔 버튼 없음.
+
+## Cowork transport (GitHub)
+
+세 번 건너간다:
+
+1. **Action → `bb-data`/pending.json** — `.github/workflows/bank-bonus-pending.yml`이 매주 월요일 13:00 UTC(LA 06:00, 서머타임 기준)와 수동 실행 때
+   `scripts/bank-bonus/pull-pending.mjs`로 `https://dev.brennhub.com/api/bank-bonus/export?all=1`을 받아
+   데이터 전용 브랜치 `bb-data`의 `data/bank-bonus/pending.json`에 커밋한다 (바뀌었을 때만, github-actions bot).
+   `bb-data`가 없으면 `data/bank-bonus/` + 짧은 README만 있는 orphan 브랜치로 만든다. 이 워크플로는 dev·main을 건드리지 않는다. 시크릿 불필요(공개 export).
+2. **Cowork → `feat/bank-bonus` `data/bank-bonus/extractions.json` → dev** — Cowork가 `bb-data`의 pending.json을 읽어 값 + 원문 인용을 뽑고,
+   `feat/bank-bonus`에 extractions.json을 커밋한 뒤 dev로 머지·push.
+3. **dev 배포 → refresh ingest** — dev push가 dev.brennhub.com을 재배포(파일은 빌드 시 번들), 다음 refresh가 근거 대조 후 빈 칸만 채운다.
+
+수동 실행: GitHub 저장소 → **Actions** 탭 → 왼쪽 "Bank Bonus Pending Export" → **Run workflow** → 브랜치 선택 → Run.
+또는 `gh workflow run bank-bonus-pending.yml --ref dev`.
+주의: GitHub는 `schedule`(그리고 Actions 탭의 Run workflow 버튼)을 **기본 브랜치(main)에 있는 워크플로 파일**에만 붙인다 — main에 들어가기 전에는 매주 실행이 돌지 않는다.

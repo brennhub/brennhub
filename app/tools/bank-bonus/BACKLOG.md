@@ -4,6 +4,8 @@
 - [ ] Card condition checklist: numbered requirements with base vs extra portions
 - [ ] Phase 2b: historical comparison badge from the quick reference CSV expired rows, post phrases, and own history
 - [ ] Phase 2c: official bank page verification (bb_bank_rules source='official', 마감일·DD 조건 확인)
+- [ ] export route sits under /api, which robots.ts disallows; fine for CI, revisit if a direct reader is ever needed
+- [ ] Weekly schedule needs the workflow file on main (GitHub runs `schedule` only from the default branch)
 - [ ] Cowork 예약 작업 설정 — export(`/api/bank-bonus/export`) → `data/bank-bonus/extractions.json` 커밋 (dev)
 - [ ] Quick reference CSV re-enable with bank+type join (시트 갱신 재개 시)
 - [ ] Existing banks list editable in UI (지금은 `lib/bank-bonus/config.ts` 상수 + 필터 문구에 이름 고정)
