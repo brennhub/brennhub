@@ -2180,6 +2180,10 @@ export const messages: Record<Locale, Messages> = {
         description:
           "오피스 문서(Word·Excel·PowerPoint)에서 핵심 키워드를 뽑아 칩으로 다듬고 문서 속성에 기록 — 전부 브라우저 안에서",
       },
+      english: {
+        name: "SCENE LOOP: 유튜브로 영어 공부",
+        description: "유튜브 영상과 스크립트로 대사 반복 듣기, 받아쓰기, 쉐도잉",
+      },
       tarot: {
         name: "타로 테이블",
         description:
@@ -3387,6 +3391,10 @@ export const messages: Record<Locale, Messages> = {
         name: "Tag-it",
         description:
           "Pull key terms from an Office doc (Word/Excel/PowerPoint) into chips, curate them, and write them to the document properties — all in the browser",
+      },
+      english: {
+        name: "SCENE LOOP: Learn English with YouTube",
+        description: "Loop lines, dictation and shadowing with a YouTube video and its transcript",
       },
       tarot: {
         name: "Tarot Table",

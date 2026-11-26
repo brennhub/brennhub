@@ -191,4 +191,16 @@ export const tools: Tool[] = [
     devOnly: true,
     hasPage: true,
   },
+  {
+    id: "english",
+    slug: "english",
+    status: "live",
+    category: "lifestyle",
+    createdAt: "2026-11-25",
+    // Static app at public/english/index.html; /tools/english only redirects there.
+    // devOnly hides the card and /tools/english on prod, but NOT public/english/ —
+    // do not merge feat/english to main without Brenn's explicit approval.
+    devOnly: true,
+    hasPage: true,
+  },
 ];
