@@ -7,6 +7,8 @@ import {
 import { cn } from "@/lib/utils";
 import type { Pillar } from "@/app/tools/saju-naming/lib/saju";
 import type { SajuApiResponse } from "../client-shell";
+import { GangyakSection } from "./saju-result-gangyak";
+import { DetailSection } from "./saju-result-detail";
 
 /** 오행별 표시 스타일 (전통 오행 색 계열). */
 const OHAENG: Record<
@@ -99,7 +101,18 @@ export function SajuResultView({ data }: { data: SajuApiResponse }) {
             <PillarColumn label="년주" pillar={saju.year} />
             <PillarColumn label="월주" pillar={saju.month} />
             <PillarColumn label="일주" pillar={saju.day} />
-            <PillarColumn label="시주" pillar={saju.hour} />
+            {saju.hour ? (
+              <PillarColumn label="시주" pillar={saju.hour} />
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-center text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  시주
+                </span>
+                <span className="text-center text-xs text-zinc-400 dark:text-zinc-500">
+                  미지
+                </span>
+              </div>
+            )}
           </div>
           <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
             위 칸 = 천간, 아래 칸 = 지지. 색은 각 글자의 오행을 나타냅니다.
@@ -209,6 +222,16 @@ export function SajuResultView({ data }: { data: SajuApiResponse }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* 일간 강약 + 조후 (B-3-b·B-3-c) — graceful degrade: 항상 산출 가능. */}
+      {saju.gangyak && (
+        <GangyakSection gangyak={saju.gangyak} ohaeng={ohaeng} />
+      )}
+
+      {/* 십신·합충 상세 (B-3-a + B-2) — 접기 카드. relations 없으면 십신만. */}
+      {saju.sipsin && (
+        <DetailSection sipsin={saju.sipsin} relations={saju.relations} />
+      )}
     </div>
   );
 }

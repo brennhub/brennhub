@@ -129,6 +129,15 @@
 
 ## Hooks
 
+### useSortable — `lib/ui/use-sortable.ts`
+- Pointer Events 드래그 정렬. 의존성 0. `{ itemCount, onReorder(from,to) }` → `itemProps(i)` 스프레드 + 항목 조상에 `data-sort-index={i}`.
+- 드롭 지점은 `elementFromPoint` 히트테스트 (rect 측정 X). 드래그 중 실시간 재정렬은 안 하고 drop 시 1회 `onReorder`.
+- 활성: mouse 5px 이동 / touch long-press. 활성 후에만 `touch-action: none`. 드래그 직후 click은 `onClickCapture`가 차단.
+- 고스트(프리뷰)는 **호출자 소유** — 필요하면 `previewPos`로 직접 포털 렌더 (`components/hub/favorites-section.tsx` 참고). 세로 리스트는 `isDragging`/`isOver` 클래스만으로 충분.
+- **선택 인자 기본값 = 허브 즐겨찾기 동작 그대로.** 폼처럼 조건이 다르면 켠다: `interactiveSelector`(기본 `"button"` — input/select 있는 행은 넓힐 것), `longPressMs`(300), `cancelTouchOnMovePx`(미지정=이동 무시), `abortOnPointerCancel`(false).
+- 사용: 허브 즐겨찾기(`components/hub/favorites-section.tsx`), recipe-note 재료 목록.
+- ⚠️ 별도 구현이 하나 더 있다 — `components/language-maker/character-grid.tsx`(픽셀 격자용, 이 hook 미사용).
+
 ### useMessages / useLocale — `lib/i18n/provider.tsx`
 - `useMessages()` → 현재 locale의 전체 `Messages` 객체. 사용: `const t = useMessages().stockSim;` 또는 `useMessages().feedback`.
 - `useLocale()` → `{ locale, setLocale }`. LocaleProvider 필요.

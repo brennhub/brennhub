@@ -268,6 +268,20 @@ function CandidateCard({
         <span className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           {candidate.breakdown}
         </span>
+        {/* 음양 배열 (C-1) — 작은 chip. 흉 fallback이면 노란 강조. */}
+        {candidate.eumyang && (
+          <span
+            className={
+              candidate.eumyang.result === "길"
+                ? "mt-2 inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+                : "mt-2 inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300"
+            }
+            title="성씨 + 이름 원획 홀짝 배합 (홀=양, 짝=음). 섞이면 길, 전부 같으면 흉."
+          >
+            <span>음양 {candidate.eumyang.pattern}</span>
+            <span className="font-medium">· {candidate.eumyang.result}</span>
+          </span>
+        )}
       </CardContent>
     </Card>
   );

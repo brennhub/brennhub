@@ -1,0 +1,76 @@
+# Bank Bonus Tracker — Cowork transport, hop 1.
+# Pulls the public export (dev.brennhub.com/api/bank-bonus/export?all=1) into
+# data/bank-bonus/pending.json on the data-only branch `bb-data`.
+# This workflow only ever pushes to bb-data — never to dev or main. No secrets needed (export is public).
+#
+# Note: GitHub runs `schedule` (and lists workflow_dispatch in the UI) only for workflow files on the
+# default branch (main). Until this file reaches main, run it with: gh workflow run bank-bonus-pending.yml --ref dev
+
+name: Bank Bonus Pending Export
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 13 * * 1" # Mondays 13:00 UTC = 06:00 Los Angeles (PDT)
+
+concurrency:
+  group: bank-bonus-pending
+  cancel-in-progress: false
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the triggering ref (for the script)
+        uses: actions/checkout@v4
+        with:
+          path: src
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Prepare bb-data worktree
+        working-directory: src
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin bb-data >/dev/null; then
+            git fetch --depth=1 origin bb-data:refs/remotes/origin/bb-data
+            git worktree add -B bb-data ../data origin/bb-data
+          else
+            # First run: orphan branch with only data/bank-bonus/ and a short README.
+            git worktree add --detach ../data
+            cd ../data
+            git checkout --orphan bb-data
+            git rm -rf --quiet . || true
+            git clean -fdx --quiet
+            mkdir -p data/bank-bonus
+            printf '%s\n' \
+              "# bb-data" \
+              "" \
+              "Data-only branch for the Bank Bonus Tracker Cowork pipeline." \
+              "Written by .github/workflows/bank-bonus-pending.yml — do not merge into dev or main." \
+              "" \
+              "- data/bank-bonus/pending.json: latest public export from dev.brennhub.com/api/bank-bonus/export?all=1" \
+              > README.md
+          fi
+
+      - name: Pull export
+        working-directory: data
+        run: node ../src/scripts/bank-bonus/pull-pending.mjs
+
+      - name: Commit and push to bb-data if changed
+        working-directory: data
+        run: |
+          git add -A data/bank-bonus
+          if [ -f README.md ]; then git add README.md; fi
+          if git diff --cached --quiet; then
+            echo "pending.json unchanged — nothing to commit"
+            exit 0
+          fi
+          git commit -m "bb-data: pending export $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push origin HEAD:refs/heads/bb-data

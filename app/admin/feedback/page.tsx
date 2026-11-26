@@ -26,6 +26,7 @@ const TOOL_LABEL: Record<string, string> = {
   shooter: "아케이드 슈터",
   "tag-it": "태그잇",
   tarot: "타로 테이블",
+  "recipe-note": "레시피 받아쓰기",
 };
 
 const CATEGORY_LABEL: Record<string, string> = {

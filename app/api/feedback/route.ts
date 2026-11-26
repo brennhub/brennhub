@@ -21,6 +21,7 @@ const TOOLS = [
   "singularity",
   "tag-it",
   "tarot",
+  "recipe-note",
 ] as const;
 const CATEGORIES = ["feature", "improvement", "complaint", "other"] as const;
 

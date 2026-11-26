@@ -26,7 +26,8 @@ export type FeedbackTool =
   | "lure"
   | "singularity"
   | "tag-it"
-  | "tarot";
+  | "tarot"
+  | "recipe-note";
 
 type Category = "feature" | "improvement" | "complaint" | "other";
 
@@ -153,6 +154,7 @@ export function FeedbackDialog({ open, onOpenChange, defaultTool }: Props) {
     { value: "singularity", label: t.toolSingularity },
     { value: "tag-it", label: t.toolTagIt },
     { value: "tarot", label: t.toolTarot },
+    { value: "recipe-note", label: t.toolRecipeNote },
   ];
   const categoryOptions: { value: Category; label: string }[] = [
     { value: "feature", label: t.categoryFeature },

@@ -1,0 +1,187 @@
+# 레시피 받아쓰기 (Recipe Note) · `recipe-note`
+
+유튜브 요리 영상을 보며 받아쓰고, 주방에서 폰으로 따라 하는 도구.
+
+## 한 줄 정의
+
+> **원문 보존 — 파서는 제안만 하고, 확정은 사용자가 한다.**
+> 정량(300g)과 감각량(한 움큼)은 동등한 1급 데이터다. "약간"을 그램으로 추정하는
+> 순간 이 도구는 거짓말을 시작한다.
+
+AI 호출 0. 전 과정 결정론.
+
+## 비원칙 (하지 않는 것)
+
+- 유튜브 자막·영상 추출 **X** — 사용자가 직접 받아쓴다. 그게 이 도구의 전부다.
+- LLM 호출 **X**
+- 감각량의 수치 추정 **X** — "약간"은 ×3에서도 "약간"이다.
+- 단위 간 환산(큰술 → ml) **X** — 재료마다 밀도가 다르다. 모르는 것을 아는 척하지 않는다.
+- 로그인 **X** — 수정 권한은 링크 + 로컬 토큰으로만.
+
+## 핵심 흐름
+
+```
+PC에서 영상 보며 입력  →  저장 → 숏링크 발급  →  폰에서 링크 열어 열람·조리
+   /tools/recipe-note         POST /api/recipe-note      /tools/recipe-note/r/[key]
+```
+
+## 화면
+
+| 경로 | 종류 | 하는 일 |
+|---|---|---|
+| `/tools/recipe-note` | server → client shell | 입력 폼(재료 줄 + 수량 드롭다운) + "내 레시피" 목록. 저장 성공 시 열람으로 이동 |
+| `/tools/recipe-note/r/[key]` | server(D1 직접 fetch) → client shell | 배율 환산·재료 체크리스트·순서·링크 복사, 조리 모드 진입 |
+| `/tools/recipe-note/edit/[key]` | server(D1 직접 fetch) → client shell | 동일 폼 + 기존 데이터. editToken 보유자만 |
+
+조리 모드는 **열람 페이지 내부 상태**다 — 라우트를 옮기지 않는다. 젖은 손으로 뒤로가기를 누르는 상황을 만들지 않기 위해서.
+
+## 파일 구조
+
+```
+app/tools/recipe-note/
+├── page.tsx                    server — metadata + 입력 셸
+├── client-shell.tsx            "use client" — 저장 플로우 + 내 레시피 (저장 성공 → 열람으로 push)
+├── r/[key]/page.tsx            server — D1 fetch + noindex metadata
+├── r/[key]/view-shell.tsx      "use client" — 배율·체크리스트·링크 복사·조리 모드 전환
+├── edit/[key]/page.tsx         server — D1 fetch
+├── edit/[key]/edit-shell.tsx   "use client" — PUT + 403 처리
+├── components/recipe-form.tsx  입력·수정 공용 폼
+├── components/qty-picker.tsx   수량 확정 UI — 후보 드롭다운 + 어절 탭 직접 지정
+├── components/cook-mode.tsx    스텝퍼 + 타이머 + Wake Lock + 단계별 재료
+├── components/recipe-not-found.tsx  조회 실패 fallback (server component)
+└── poc/parse.test.ts           단위 테스트 (76건)
+
+lib/recipe-note/
+├── types.ts     Ingredient · QtySelection · Step · Recipe · LIMITS · SCALE_STEPS
+├── parse.ts     후보 검출 · 수동 지정 · 타이머 · 단계별 재료 (순수 모듈)
+├── scale.ts     근사 분수 표기 + 제자리 배율 환산
+├── key.ts       base62 키(8자) · 수정 토큰(24자) — 거부 샘플링으로 편향 제거
+├── record.ts    입력 검증 + D1 row ↔ Recipe 변환 (서버·클라 공용)
+├── errors.ts    저장 실패 코드 → 사용자 문구
+├── storage.ts   "내 레시피" localStorage (schemaVersion 1)
+└── db.ts        AUTH_DB 접근 — 열람·수정 page.tsx의 server fetch 경로
+```
+
+`parse.ts`·`scale.ts`·`record.ts`·`key.ts`는 **순수 모듈**이다 (window·fetch·React 참조 0).
+API route(Workers)·server component·`npx tsx` 테스트가 같은 코드를 돈다.
+
+## 재료 모델 — 왜 이렇게 바뀌었나
+
+구 모델은 파서가 한 줄을 `{name, qty, unit, raw}`로 **쪼개서** 저장했고 원문은 어디에도 남지 않았다. 실사용에서 `"뜨거운 물"`이 이름 `"뜨거운"` + 양 `"물"`로 갈라졌고, 복구할 방법이 없었다.
+
+지금은 이렇다:
+
+```ts
+{ text: "만능 큐브삼겹살 (1kg)",            // 원문 — 절대 안 바뀐다
+  sel:  { start: 10, end: 13, qty: 1, qtyText: null, unit: "kg" },
+  optional?: boolean,                      // 선택 재료
+  brand?: string,                          // 브랜드·제품명
+  store?: string }                         // 구입처
+```
+
+뒤 셋은 전부 optional이다 — 이 필드들이 생기기 전 레코드가 그대로 로드돼야 한다.
+값이 비면 키를 아예 넣지 않아 저장 JSON이 불필요하게 커지지 않는다. 서버 검증은
+**필드 단위로만** 버린다: `optional`이 문자열로 오거나 `brand`가 100자를 넘으면
+그 필드만 떨어뜨리고 `text`·`sel`은 살린다. 줄 전체를 날리면 사용자가 적은 글자가
+사라지는데, 그건 이 도구가 하지 않기로 한 바로 그 일이다.
+
+파서는 `text` 안에서 수량으로 보이는 구간을 **제안**만 하고, 확정은 사용자가 드롭다운으로 한다. 파서가 틀려도 최악이 "배율이 안 먹는다"(복구 가능)이지 "글자가 바뀐다"(복구 불가)가 아니다.
+
+이 구조에서 **누락은 공짜다** — 후보가 0개면 원문이 그대로 남고 직접 지정하면 된다. 비싼 건 오탐 하나가 자동 선택까지 가서 배율을 바꾸는 순간 원문이 조용히 망가지는 경우뿐이라, 아래 가드는 전부 그것만 겨냥한다.
+
+### 자동 검출 (`findQtyCandidates`)
+
+`수량 + 단위` 한 덩어리를 훑는다. 단위는 **사전(32종)에 있는 것만** — 사전 밖은 후보 0개로 두고 수동 지정에 맡긴다.
+
+| 가드 | 막는 것 |
+|---|---|
+| 숫자 앞 `[A-Za-z0-9.,]` 차단 | `비타민B12` · **`물 1,000ml` → `000ml`(=0)** |
+| 한글 수사 앞뒤 한글 차단 | `세척한 대파` → `한 대` · `네모난 두부` → `네모` |
+| 숫자 뒤 한글은 **허용** | `삼겹살 300g짜리` 유지 |
+| `UNIT_TAIL_BLOCK` (`월`·`계`) | `3개월` → `3개` · `2단계` → `2단` |
+| `NOT_QTY_TOKENS` | `두부 세모 모양` → `세모` |
+
+두 블랙리스트는 납작한 배열이다 — 오탐 제보가 오면 한 줄 추가, 아니면 한 줄 삭제로 끝난다.
+
+- 후보 1개면 자동 선택, 2개 이상이면 미선택으로 두고 사용자가 고른다.
+- 가드는 lookbehind가 아니라 **매치 후 검증**이다. lookbehind는 실패 시 한 칸 전진해 재시도하므로 탈락한 매치 *안쪽*에 가짜 후보를 만든다 (`비타민A1/4컵` → `4컵`).
+- ⚠️ `KOREAN_NUMERALS`에 한자어 수사(일·이·삼…)나 `만/천/백`을 **추가하지 말 것** — `삼겹살`·`먹을만큼`이 깨진다.
+
+### 수동 지정 (`parseManualSpan`)
+
+사전을 보지 않는다. 사용자가 어절을 눌러 고른 구간의 앞머리를 수량으로 읽고 나머지 전부를 단위로 삼는다. 그래서 `500 그램`·`2공기`처럼 사전 밖 단위도, `3`처럼 단위 없는 수량도 잡힌다. 타이핑이 아니라 탭이라 오프셋이 절대 어긋나지 않는다.
+
+### 표시 (`scaleIngredientText`)
+
+확정 구간만 제자리에서 바꿔 끼우고 나머지 글자는 한 자도 안 건드린다. **배율 1이면 재구성 없이 원문 그대로** — 그래야 `2 ~ 3개`가 `2~3개`로, `200ML`이 `200ml`로 슬쩍 바뀌어 보이는 일이 없다.
+
+`unit`은 원문 그대로 저장한다(정규화 X). 덕분에 `200ML` ×2가 `400ML`이 되고, 구분자 복원이 기대는 "unit 길이 == 원문 길이"가 가정이 아니라 정의가 된다.
+
+**열람 화면은 저장된 `sel`만 렌더하고 후보를 다시 검출하지 않는다** — 검출 규칙을 고칠 때마다 과거 레시피가 조용히 달라지면 안 된다.
+
+## 재료 줄 인터랙션 — 세 제스처가 겹치는 자리
+
+한 줄에서 **본문 탭 = 선택 재료 토글**, **누르고 이동 = 순서 드래그**, **컨트롤 조작**이 동시에 성립해야 한다. 겹침은 로직이 아니라 **배치**로 풀었다:
+
+```
+<li data-sort-index={i} {...sortable.itemProps(i)}>   ← 드래그 표면
+  <div role="button">원문 + "선택" 배지 + brand·store 요약</div>   ← 본문(토글)
+  <QtyPicker/> <chevron> <삭제>                        ← 형제 — 클릭이 본문에 안 닿음
+</li>
+```
+
+- **본문은 `<button>`이면 안 된다.** `useSortable`의 `interactiveSelector`(여기선 `button, input, select, textarea, label`)에 걸려 본문에서 드래그가 시작되지 않는다. `role="button"` + `tabIndex` + Enter/Space 핸들러로 접근성만 맞춘다.
+- 컨트롤이 본문의 **형제**라 `stopPropagation`을 흩뿌릴 필요가 없다.
+- 드래그 직후의 click은 `useSortable`이 `onClickCapture`로 이미 막는다 → 드롭 후 토글이 튀지 않는다.
+- 행마다 **`uid`**(저장 안 되는 클라이언트 값)를 붙여 key로 쓴다. index를 key로 쓰면 순서가 바뀔 때 React가 행을 잘못 재사용해 `QtyPicker` 내부 상태와 입력 포커스가 다른 재료로 옮겨 붙는다.
+
+드래그는 `lib/ui/use-sortable.ts` 공유 hook을 쓴다. 폼에 맞춰 켠 옵션(기본값은 허브 즐겨찾기 동작):
+
+| 옵션 | 값 | 이유 |
+|---|---|---|
+| `interactiveSelector` | `button, input, select, textarea, label` | select/input의 포커스·캐럿·네이티브 드롭다운 보존 |
+| `longPressMs` | 400 | 모바일에서 탭 토글과 구분 |
+| `cancelTouchOnMovePx` | 10 | long-press 전 이동 = 스크롤 의도 → 드래그 포기 |
+| `abortOnPointerCancel` | true | 시스템 제스처에 순서가 커밋되지 않게 |
+
+세로 리스트라 포털 고스트는 만들지 않는다 — `isDragging`(opacity)·`isOver`(배경) 클래스로 충분하다.
+
+### 그 밖의 판단
+
+- **단위 대소문자**: `500ML`·`1KG`도 검출한다. 단 `T`(큰술)/`t`(작은술)는 대소문자가 의미를 가르므로 정규식에 `i` 플래그를 쓰지 않는다.
+- **대분수** `1 1/2컵`을 읽는다. 없으면 `1/2컵`만 잡혀 값이 틀린 채로 자동 선택된다.
+- **근사 분수 허용오차 ±0.02**, 후보는 `1/4 1/3 1/2 2/3 3/4`. `0.375`는 어느 후보와도 0.02 밖이라 `0.38`로 떨어진다. 8분모 확장은 BACKLOG.
+- **정수 스냅 밴드 없음**: `0.98`을 `1`로 당기지 않는다. 없는 반올림이고, 부동소수 찌꺼기(`2.9999…`)는 소수 2자리 반올림이 이미 흡수한다.
+- **아주 작은 양은 `0`으로 적지 않는다**: 2자리 반올림이 0이 되는 값(`0.001`)은 유효숫자를 늘려 `0.001`로 쓴다. `0`은 "없다"는 뜻이고, 있는 것을 없다고 적는 건 이 도구가 하지 않기로 한 종류의 거짓말이다.
+- **생성 rate limit**: 로그인 없는 공개 write 엔드포인트를 무제한으로 열어두지 않는다 — feedback·maze·game_scores와 동일 패턴(같은 IP 30초 1회).
+
+- **영상 주소·채널 입력 제거**: 실사용에서 채워지지 않았다. D1 컬럼과 `Recipe` 타입 필드는 남겨 둬 나중에 되살릴 수 있게 했다.
+- **저장 후 열람으로 이동**: 저장 직후에만 보이는 링크 패널을 두면 "그 화면을 닫으면 주소를 잃는다"는 불안이 생긴다. 링크 복사는 언제든 다시 열 수 있는 열람 화면에 둔다.
+
+## 데이터 · 인프라
+
+- **D1 binding `AUTH_DB`** — 별도 DB 미생성 정책 일관 (2026-05-27 이후 전 도구). 테이블 `recipe_note_recipes`.
+- **마이그레이션**: `migrations/auth/013_recipe_note.sql`. repo에 자동 적용 장치가 없다 — **사람이 `wrangler d1 execute`를 직접 돌려야 한다** (파일 헤더에 prod/preview 명령 명시).
+- **조회 API 없음** — 열람·수정 `page.tsx`가 server에서 D1을 직접 읽는다 (Server Component 우선 원칙).
+- **`export const runtime` 명시 금지** — OpenNext 미지원 (BRENNHUB.md §7).
+
+## 권한 모델 (로그인 없음)
+
+- 생성 시 `editToken`(base62 24자 ≈ 143비트)을 발급해 **생성자 브라우저 localStorage에만** 저장한다.
+- 열람 화면의 `수정` 버튼은 이 토큰 보유 여부로 노출을 결정한다 — **화면 분기용일 뿐**이다.
+- 실제 권한은 `PUT`이 검증한다. 토큰 불일치 403, 없는 레시피 404. 토큰은 어떤 응답에도 실려 나가지 않는다.
+- **한계(명시)**: 브라우저 데이터를 지우면 수정 권한이 사라진다. 클라우드 동기화는 BACKLOG — 지금은 이 한계를 UI 문구로 정직하게 알린다.
+
+## i18n
+
+UI 크롬만 ko/en (`Messages.recipeNote`). **레시피 본문은 사용자 데이터**라 번역 대상이 아니다.
+열람·수정 페이지는 `noindex` — 제목이 사용자 데이터이므로 검색 노출 대상이 아니다.
+
+## 검증
+
+```bash
+npx tsx app/tools/recipe-note/poc/parse.test.ts   # 원문 보존 + 후보 검출 76건
+npm run build                                      # TS + 라우트 emit 확인
+```
+
+D1 왕복은 로컬에서 검증하지 않는다 — dev 배포 후 실제 저장/열람으로 확인 (saju-naming 선례).

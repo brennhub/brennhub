@@ -60,6 +60,8 @@ per-한자 실사용 빈도 무료·기계가독 자료는 **미가용 재확인
 
 **정직한 결론**: 벽자(玟刁玢玪)·숫자/기능어(六全同共)는 사라졌으나, **점수 포화 + 비-작명 명사(皇革音列式吏)** 잔존으로 蘇 추천은 여전히 작명 품질 낮음. 이는 작명-특화 빈도(한국어문회 라이센스 / 인명 빈출 큐레이션) 또는 AI 어감(Task 45) 의존 = backlog. 본 task는 **벽자·기능어 제거 + 상용도 인프라 구축**까지의 부분 개선.
 
+> **dev 최종 회귀 (cap-skip)**: 0/40 503 · p50 214 p95 313ms · 차단대상 0 · null 0. char2는 yongsin별 최상용 1자 반복(蘇금→了 / 蘇수→夕 / 蘇목→入) — 비-작명·반복. **prod 보류 결정 (2026-05-29)**: 蘇玟刁→蘇황료는 사용자 체감 횡이동 → main 머지 보류, Task 45(AI 어감)로 실제 작명자 선별 후 prod. dev/feat 인프라 보존, **prod D1 007 미적용 유지**(코드/데이터 불일치 방지).
+
 ## 5. 산출물
 
 - `scripts/build-staged-frequency.ts` + `scripts/data/staged-frequency.json` (티어) + `scripts/data/edu-hanja-1800.json` (vendored, provenance).
