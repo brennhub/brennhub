@@ -1672,8 +1672,34 @@ var YTP = (function () {
   }
   function sttAvailable() { return !!Env.dict || (!Env.artifact && Env.sr); }
   function aiOff() { if (YTMODE) return "앱 안에서 바로 답하는 AI는 없어요. 'Claude용 질문 복사'를 누르고 Claude 채팅에 붙여넣어 물어보세요."; return Env.artifact ? "AI가 아직 연결되지 않았어요. 잠시 후 다시 눌러 보거나, Claude에서 이 페이지의 AI 사용을 허용해 주세요." : "AI 해설은 이 파일을 Claude 링크에서 열었을 때만 켜져요. 지금은 내 컴퓨터 파일로 열려 있어요."; }
+  // YouTube build: explanations come from Claude Code run by BrennHub Local on this PC.
+  var LOCAL_ASK = "http://127.0.0.1:5180/api/english/ask";
+  function localAsk(prompt, json, opts) {
+    var body = { prompt: prompt, json: !!json, cache: !(opts && opts.cache === false) };
+    return fetch(LOCAL_ASK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store" }).then(function (r) {
+      return r.json().catch(function () { return null; }).then(function (res) {
+        if (!r.ok || !res || res.ok !== true) throw { code: (res && res.code) || ("http_" + r.status), message: res && res.message };
+        return res;
+      });
+    }, function () { throw { code: "local_off" }; });
+  }
+  function flattenInput(input) {
+    if (typeof input === "string") return input;
+    return (input || []).map(function (m) { return (m.role === "assistant" ? "Assistant: " : "User: ") + m.content; }).join("\n\n") + "\n\nAssistant:";
+  }
+  function makeLocalAI() {
+    var ai = function (input, opts) { return localAsk(flattenInput(input), false, opts).then(function (res) { return { text: String(res.text || "") }; }); };
+    ai.json = function (prompt, opts) { return localAsk(prompt, true, opts).then(function (res) { if (res.data == null) throw { code: "invalid_json" }; return res.data; }); };
+    ai.local = true;
+    return ai;
+  }
   function aiErr(e) {
     var c = e && e.code;
+    if (c === "local_off") return "BrennHub Local에 연결하지 못했어요. 바탕화면의 'BrennHub Local' 바로가기를 눌러 켠 뒤 다시 눌러 주세요. 켜져 있다면 Chrome 주소창 왼쪽 사이트 정보 아이콘, '사이트 설정'에서 '로컬 네트워크 액세스'가 '허용'인지 확인해 주세요.";
+    if (c === "busy") return "BrennHub Local이 다른 해설을 쓰는 중이에요. 몇 초 뒤에 다시 눌러 주세요.";
+    if (c === "timeout") return "해설을 쓰는 데 너무 오래 걸려서 멈췄어요. 다시 눌러 주세요.";
+    if (c === "claude_failed") return "BrennHub Local에서 Claude Code가 답하지 못했어요." + (e.message ? " (" + e.message + ")" : "");
+    if (e && e.message && /^http_/.test(c || "")) return e.message;
     if (c === "not_granted" || c === "sampling_disabled" || c === "not_declared" || c === "capability_disabled" || c === "capability_removed") { Env.ai = null; return "AI 사용이 허용되지 않아서 꺼졌어요."; }
     if (c === "rate_limited") return "AI 요청이 많아요. 잠시 후 다시 눌러 주세요.";
     if (c === "refused") return "AI가 이 내용에는 답하지 않았어요.";
@@ -1881,7 +1907,7 @@ var YTP = (function () {
   }
 
   // ---------- speech to text ----------
-  var STT = { active: false, final: "", cb: null, wired: false, r: null, err: "" };
+  var STT = { active: false, final: "", cb: null, wired: false, r: null, err: "", want: false, base: "", sessFin: "", restarts: 0 };
   // Must be called straight from a click handler.
   function sttStart(cb) {
     STT.final = ""; STT.cb = cb; STT.active = true; STT.err = "";
@@ -1897,23 +1923,38 @@ var YTP = (function () {
     }
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR || Env.artifact) { STT.active = false; return false; }
-    try {
+    // Chrome ends or resets a recognition session after a pause. Keep what was already said in STT.base
+    // and quietly start a new session until the learner presses stop, so a pause never wipes earlier words.
+    STT.want = true; STT.base = ""; STT.sessFin = ""; STT.restarts = 0;
+    function joinText(a, b) { return (String(a || "") + " " + String(b || "")).replace(/\s+/g, " ").trim(); }
+    function startSession() {
       var r = new SR(); STT.r = r; r.lang = "en-US"; r.interimResults = true; r.continuous = true;
+      STT.sessFin = "";
       r.onresult = function (ev) {
         var fin = "", inter = "";
         for (var i = 0; i < ev.results.length; i++) { if (ev.results[i].isFinal) fin += ev.results[i][0].transcript + " "; else inter += ev.results[i][0].transcript + " "; }
-        STT.final = fin.trim(); cb.onText((fin + inter).trim(), !inter);
+        fin = fin.replace(/\s+/g, " ").trim();
+        if (STT.sessFin && fin.indexOf(STT.sessFin) !== 0 && fin.length < STT.sessFin.length) { STT.base = joinText(STT.base, STT.sessFin); }
+        STT.sessFin = fin;
+        STT.final = joinText(STT.base, fin);
+        if (STT.cb) STT.cb.onText(joinText(STT.final, inter), !inter.trim());
       };
       r.onerror = function (ev) { STT.err = ev.error || "error"; };
-      r.onend = function () { STT.active = false; cb.onEnd(STT.err && STT.err !== "no-speech" && STT.err !== "aborted" ? "error" : "stopped"); };
+      r.onend = function () {
+        STT.base = joinText(STT.base, STT.sessFin); STT.sessFin = ""; STT.final = STT.base;
+        var fatal = STT.err === "not-allowed" || STT.err === "service-not-allowed" || STT.err === "network" || STT.err === "audio-capture";
+        if (STT.want && !fatal && STT.restarts < 60) { STT.restarts++; STT.err = ""; try { startSession(); return; } catch (e) { /* fall through to end */ } }
+        STT.active = false; STT.want = false;
+        if (STT.cb) STT.cb.onEnd(fatal ? "error" : "stopped");
+      };
       r.start();
-      return true;
-    } catch (e) { STT.active = false; return false; }
+    }
+    try { startSession(); return true; } catch (e) { STT.active = false; STT.want = false; return false; }
   }
   function sttStop() {
     if (!STT.active) return;
     if (Env.dict) { try { Env.dict.stop().catch(noop); } catch (e) { /* ignore */ } }
-    else if (STT.r) { try { STT.r.stop(); } catch (e2) { /* ignore */ } }
+    else if (STT.r) { STT.want = false; try { STT.r.stop(); } catch (e2) { /* ignore */ } }
   }
   function sttErrText() {
     if (STT.err === "not-allowed" || STT.err === "service-not-allowed") return "마이크 권한이 없어서 음성 인식을 못 했어요. 대신 입력해서 확인할 수 있어요.";
@@ -1922,7 +1963,9 @@ var YTP = (function () {
   }
 
   // SCENE LOOP app, part 2: study view (stage, line strip, transport, six steps, script).
-  var STEPS = [["listen", "듣기"], ["dict", "받아쓰기"], ["explain", "해설"], ["shadow", "섀도잉"], ["dub", "더빙"], ["retrieve", "꺼내 말하기"]];
+  var STEPS = [["listen", "듣기", 1], ["dict", "받아쓰기", 2], ["explain", "해설", 3], ["shadow", "섀도잉", 4], ["dub", "더빙", 5], ["retrieve", "꺼내 말하기", 6]];
+  // YouTube transcripts carry no speaker names, so the per-character dubbing step is left out there.
+  if (YTMODE) STEPS = STEPS.filter(function (st) { return st[0] !== "dub"; });
   var CAUSES = ["모르는 단어", "연음", "속도", "기타"];
   function stepIdx() { for (var i = 0; i < STEPS.length; i++) if (STEPS[i][0] === S.step) return i; return 0; }
   function forcedOff() {
@@ -2128,7 +2171,7 @@ var YTP = (function () {
   function renderPasses() {
     var el = clear($("passes")), idx = stepIdx(), tabs = h("div", { class: "tabs", role: "tablist", "aria-label": "학습 단계" });
     STEPS.forEach(function (st, i) {
-      tabs.appendChild(h("button", { type: "button", role: "tab", class: "tab t" + (i + 1), "aria-selected": i === idx ? "true" : "false", onclick: function () { setStep(st[0]); } }, h("b", { text: (i + 1) + "단계" }), h("span", { text: st[1] })));
+      tabs.appendChild(h("button", { type: "button", role: "tab", class: "tab t" + st[2], "aria-selected": i === idx ? "true" : "false", onclick: function () { setStep(st[0]); } }, h("b", { text: (i + 1) + "단계" }), h("span", { text: st[1] })));
     });
     if (V.drill) {
       var d = V.drill;
@@ -2313,14 +2356,26 @@ var YTP = (function () {
     var ep = curEp(), li = S.cur.li, key = ep.id + ":" + li, L = ep.lines[li];
     if (feat("pitch") && backend(ep) === "video" && !YTMODE) wireVideo();
     recStart(feat("pitch")); V.rec = "rec"; renderPasses(); renderStrip();
-    var early = false, tail = null;
+    var early = false, tail = null, cancelled = false;
+    V.recMsg = ""; V.shText = "";
+    V.shSTT = sttAvailable() && sttStart({ onText: function (t) { V.shText = t; var n = $("shLive"); if (n) n.textContent = t || "듣는 중..."; }, onEnd: noop });
+    if (V.shSTT) renderPasses();
     V.recStopNow = function () { early = true; stopAll(); if (tail) tail(); };
+    V.recCancel = function () { cancelled = true; early = true; stopAll(); if (tail) tail(); };
     var played = await playLine(li, {});
     if (!early && played) await new Promise(function (r) { tail = r; setTimeout(r, Math.max(900, (L.e - L.s) * 450)); });
     var take = await recStop();
-    V.recStopNow = null;
+    var said = "";
+    if (V.shSTT) { if (STT.active) sttStop(); await wait(600); said = V.shText || STT.final || ""; }
+    V.recStopNow = null; V.recCancel = null; V.shSTT = false;
     if (S.cur.ep !== ep.id || S.cur.li !== li) return;
-    if (take && (played || early)) { TAKES[key] = take; V.rec = "done"; var p = prog(ep.id, li, true); p.sh = (p.sh || 0) + 1; save(); }
+    if (cancelled) { V.rec = TAKES[key] ? "done" : "idle"; V.recMsg = "녹음을 취소했어요. 이번 녹음은 저장하지 않고 횟수에도 넣지 않았어요."; }
+    else if (take && (played || early)) {
+      take.score = shadowScore(L, take, said);
+      TAKES[key] = take; V.rec = "done"; var p = prog(ep.id, li, true); p.sh = (p.sh || 0) + 1;
+      if (take.score && typeof take.score.total === "number") p.shs = Math.max(p.shs || 0, take.score.total);
+      save();
+    }
     else V.rec = TAKES[key] ? "done" : "idle";
     renderPasses(); renderStrip(); renderScript();
   }
@@ -2343,12 +2398,16 @@ var YTP = (function () {
     out.push(h("div", { class: "row" },
       chip("1. 자막 보며 따라 읽기", S.set.shadowStage === 0, function () { S.set.shadowStage = 0; save(); renderStrip(); renderPasses(); }),
       chip("2. 자막 없이 섀도잉", S.set.shadowStage === 1, function () { S.set.shadowStage = 1; save(); renderStrip(); renderPasses(); }),
-      btn("3. 더빙으로 넘어가기", function () { setStep("dub"); }, "sm")));
+      YTMODE ? btn("3. 꺼내 말하기로 넘어가기", function () { setStep("retrieve"); }, "sm") : btn("3. 더빙으로 넘어가기", function () { setStep("dub"); }, "sm")));
     out.push(h("p", { class: "muted", text: S.set.shadowStage === 0 ? "자막을 보면서 원본과 거의 동시에 소리 내서 읽어요. 어려우면 속도를 0.75배로 낮추세요. 이어폰을 쓰면 원본 소리가 녹음에 섞이지 않아요." : "자막을 가리고, 원본 소리가 나오면 반 박자 뒤에 그대로 따라 말해요." }));
     if (Env.mic === false) out.push(need(micReason()));
     out.push(h("div", { class: "row" },
       V.rec === "rec" ? btn("녹음 끝내기", shadowRecord, "rec", "stop") : btn("원본과 함께 녹음 시작", shadowRecord, "hl", "mic"),
+      V.rec === "rec" ? btn("녹음 취소", function () { if (V.recCancel) V.recCancel(); }, "", "x") : null,
       btn("녹음 없이 따라 말하기", function () { stopAll(); playCurrent(); var q = prog(ep.id, li, true); q.sh = (q.sh || 0) + 1; save(); }, "", "play")));
+    if (V.recMsg) out.push(h("p", { class: "small", text: V.recMsg }));
+    if (V.rec === "rec" && V.shSTT) out.push(h("p", { id: "shLive", class: "small", style: "font-family:var(--script)", text: V.shText || "듣는 중..." }));
+    if (take && take.score) out.push(shadowScoreBox(take.score, p));
     if (take) {
       out.push(h("div", { class: "row" }, btn("원본 듣기", function () { playLine(li); }, "sm", "play"), btn("내 목소리 듣기", function () { playTake(lineKey()); }, "sm", "play"),
         btn("번갈아 듣기", async function () { var ok = await playLine(li); if (ok) playTake(lineKey()); }, "sm", "replay")));
@@ -2361,6 +2420,41 @@ var YTP = (function () {
     }
     out.push(h("p", { class: "small muted", text: "이 대사를 섀도잉한 횟수: " + (p.sh || 0) + "번. 녹음은 저장하지 않아서 이 창을 닫으면 사라져요." }));
     return out;
+  }
+
+  // Shadowing score: word accuracy from speech recognition plus speed against the original line.
+  function shadowScore(L, take, said) {
+    var out = { acc: null, speed: null, total: null, said: said || "", words: null, ratio: null, sttOff: !sttAvailable() };
+    if (said && said.trim()) { var g = Core.gradeDictation(L.en, said); out.acc = g.score; out.words = g.words; }
+    var hz = take.pitch || [], first = -1, last = -1;
+    for (var i = 0; i < hz.length; i++) if (hz[i] > 0) { if (first < 0) first = i; last = i; }
+    var orig = (L.e - L.s) / (S.set.speed || 1);
+    if (first >= 0 && last > first && orig > 0.4) {
+      var mine = (last - first + 1) * 0.033;
+      out.ratio = mine / orig;
+      out.speed = Math.max(0, Math.round(100 - Math.abs(out.ratio - 1) * 150));
+    }
+    if (out.acc != null && out.speed != null) out.total = Math.round(out.acc * 0.7 + out.speed * 0.3);
+    else if (out.acc != null) out.total = out.acc;
+    else if (out.speed != null) out.total = out.speed;
+    return out;
+  }
+  function shadowScoreBox(sc, p) {
+    var b = h("div", { class: "box" }, h("h3", { text: "이번 섀도잉 점수" }));
+    b.appendChild(h("div", { class: "row" }, h("span", { class: "score", text: sc.total == null ? "점수 없음" : sc.total + "점" }), h("span", { class: "small muted", text: "이 대사 최고 점수: " + (p.shs || 0) + "점" })));
+    b.appendChild(h("p", { class: "small", text: sc.acc != null ? "단어 정확도 " + sc.acc + "% (70% 반영): 원래 대사의 단어 중 음성 인식이 알아들은 비율이에요." : sc.sttOff ? "단어 정확도: 이 브라우저에서는 음성 인식을 쓸 수 없어서 재지 못했어요. Chrome에서 돼요." : "단어 정확도: 음성 인식이 아무 말도 알아듣지 못했어요. 조금 더 크고 또렷하게 말해 보세요." }));
+    if (sc.speed != null) {
+      var pct = Math.round(Math.abs(sc.ratio - 1) * 100), how = pct <= 5 ? "원본과 거의 같은 길이로 말했어요" : sc.ratio < 1 ? "원본보다 " + pct + "% 짧게(빠르게) 말했어요" : "원본보다 " + pct + "% 길게(느리게) 말했어요";
+      b.appendChild(h("p", { class: "small", text: "속도 " + sc.speed + "점 (30% 반영): " + how + "." }));
+    } else b.appendChild(h("p", { class: "small", text: "속도: 내 목소리 구간을 잡지 못해서 재지 못했어요. 기능 스위치의 억양 곡선이 켜져 있어야 재요." }));
+    if (sc.words) {
+      var diff = h("div", { class: "diff" });
+      sc.words.forEach(function (w) { if (!w.skip) diff.appendChild(h("span", { class: w.ok ? "" : "x" }, w.raw, h("small", { text: w.ok ? "맞음" : "놓침" }))); });
+      b.appendChild(diff);
+    }
+    if (sc.said) b.appendChild(h("p", { class: "small muted", text: "인식된 말: " + sc.said }));
+    b.appendChild(h("p", { class: "small muted", text: "스피커로 원본을 틀면 원본 소리까지 인식돼서 점수가 실제보다 높게 나올 수 있어요. 이어폰을 쓰면 정확해요." }));
+    return b;
   }
 
   // ---------- dubbing ----------
@@ -2449,7 +2543,7 @@ var YTP = (function () {
   }
   function panelRetrieve() {
     var ep = curEp(), li = S.cur.li, L = ep.lines[li], ko = koOf(ep, li), out = [];
-    out.push(h("h2", { text: "6단계 꺼내 말하기: 뜻만 보고 영어 대사를 말로 꺼내기" }));
+    out.push(h("h2", { text: (YTMODE ? "5단계" : "6단계") + " 꺼내 말하기: 뜻만 보고 영어 대사를 말로 꺼내기" }));
     if (!feat("retrieve")) { out.push(need("꺼내 말하기가 기능 스위치에서 꺼져 있어요.")); return out; }
     if (ko) out.push(h("p", { style: "font-size:22px;font-weight:600", text: ko }));
     else {
@@ -2640,6 +2734,7 @@ var YTP = (function () {
     if (pop.idiom && pop.idiom.base.toLowerCase() !== pop.phrase.toLowerCase()) sh.appendChild(h("p", { class: "small muted", text: "기본형: " + pop.idiom.base }));
 
     var s1 = h("section", null, h("h3", { text: "1. 이 장면에서의 뜻" }));
+    if (pop.aiBusy && Env.ai && Env.ai.local) s1.appendChild(h("p", { class: "small", role: "status", text: "BrennHub Local에서 Claude가 해설을 쓰는 중이에요. 10초에서 30초쯤 걸려요." }));
     if (pop.idiom) s1.appendChild(h("p", { style: "font-size:17px", text: pop.idiom.m }));
     if (ai && ai.meaning) s1.appendChild(h("p", { style: pop.idiom ? "" : "font-size:17px", text: (pop.idiom ? "AI: " : "") + ai.meaning }));
     if (!pop.idiom && !(ai && ai.meaning)) s1.appendChild(h("p", { class: "small muted", text: pop.aiBusy ? "AI가 이 장면 기준으로 뜻을 쓰는 중..." : "내장 사전에 없는 " + (pop.b > pop.a ? "표현" : "단어") + "이에요. " + (pop.aiErr || aiOff()) }));
@@ -2661,6 +2756,7 @@ var YTP = (function () {
     var s3 = h("section", null, h("h3", { text: "3. 사용법과 뉘앙스" }));
     if (rich && rich.usage) s3.appendChild(h("p", { text: rich.usage }));
     if (ai && ai.usage) s3.appendChild(h("p", { text: rich && rich.usage ? "AI: " + ai.usage : ai.usage }));
+    if (ai && ai.similar && ai.similar.length) { s3.appendChild(h("p", { class: "small", style: "font-weight:600;margin-top:8px", text: "비슷하거나 헷갈리는 표현" })); ai.similar.forEach(function (x) { s3.appendChild(h("p", { class: "small", text: x })); }); }
     if (!(rich && rich.usage) && !(ai && ai.usage)) s3.appendChild(h("p", { class: "small muted", text: pop.aiBusy ? "AI가 쓰는 중..." : YTMODE && !Env.ai ? "사용법과 뉘앙스는 1번의 'Claude용 질문 복사'로 Claude에게 물어보면 같이 나와요." : "사용법 설명은 AI 해설이 켜져 있을 때 나와요. " + (Env.ai ? "" : aiOff()) }));
     sh.appendChild(s3);
 
@@ -2682,7 +2778,10 @@ var YTP = (function () {
     sh.appendChild(s4);
 
     var s5 = h("section", null, h("h3", { text: "5. 일반 예문" })), exs = (rich && rich.ex ? rich.ex : []).concat(ai && ai.examples ? ai.examples : []);
-    if (exs.length) exs.forEach(function (x) { s5.appendChild(h("p", { style: "font-family:var(--script)", text: x })); });
+    if (exs.length) exs.forEach(function (x) {
+      var en = String(x).replace(/\s*\([^)]*[\uAC00-\uD7A3][^)]*\)\s*$/, "");
+      s5.appendChild(h("div", { class: "row", style: "align-items:flex-start;flex-wrap:nowrap" }, h("button", { type: "button", class: "btn sm", "aria-label": "예문 듣기", onclick: function () { sayPhrase(en); } }, icon("vol")), h("p", { style: "font-family:var(--script);margin:4px 0", text: x })));
+    });
     else s5.appendChild(h("p", { class: "small muted", text: pop.aiBusy ? "AI가 쓰는 중..." : YTMODE && !Env.ai ? "예문 3개는 1번의 'Claude용 질문 복사'로 Claude에게 물어보면 같이 나와요." : "예문은 AI 해설이 켜져 있을 때 나와요." }));
     sh.appendChild(s5);
 
@@ -2763,15 +2862,16 @@ var YTP = (function () {
     var before = ep.lines.slice(Math.max(0, pop.li - 2), pop.li).map(function (x) { return x.en; }).join(" / ");
     var after = ep.lines.slice(pop.li + 1, pop.li + 3).map(function (x) { return x.en; }).join(" / ");
     var prompt = ["You are an English tutor. " + LEARNER, "Explain the expression as it is used in this TV dialogue line.",
-      'Reply with only a JSON object: {"meaning": string, "sound": string, "usage": string, "examples": [string, string]}',
+      'Reply with only a JSON object: {"meaning": string, "sound": string, "usage": string, "examples": [string, string, string, string, string], "similar": [string]}',
       "- meaning: one Korean sentence giving the meaning in THIS line (not a dictionary list).",
       "- sound: Korean, how it really sounds in fast American speech (linking, reductions), with a Hangul approximation.",
       "- usage: Korean, 1 to 2 sentences on when people use it and with what nuance or register.",
-      '- examples: 2 short natural English sentences an office worker could say, each followed by its Korean translation in parentheses.',
+      '- examples: 5 short natural English sentences using the expression in different everyday and office situations, each followed by its Korean translation in parentheses. Vary tense, subject and situation.',
+      '- similar: 0 to 3 similar or contrasting expressions, each as "expression: Korean explanation of the difference". Use [] if none.',
       "Expression: " + JSON.stringify(pop.phrase), "Line: " + JSON.stringify(L.en), "Lines before: " + JSON.stringify(before), "Lines after: " + JSON.stringify(after)].join("\n");
     Env.ai.json(prompt, { modelTier: "quick", cache: { gcTime: 86400000 } }).then(function (r) {
       r = r || {};
-      var out = { meaning: str(r.meaning), sound: str(r.sound), usage: str(r.usage), examples: Array.isArray(r.examples) ? r.examples.slice(0, 3).map(str) : [] };
+      var out = { meaning: str(r.meaning), sound: str(r.sound), usage: str(r.usage), examples: Array.isArray(r.examples) ? r.examples.slice(0, 6).map(str) : [], similar: Array.isArray(r.similar) ? r.similar.slice(0, 3).map(str) : [] };
       ep.ai.pop[k] = out; saveEp(ep); pop.ai = out; pop.aiBusy = false; if (V.popup === pop) renderPopup();
     }, function (e) { pop.aiBusy = false; pop.aiErr = aiErr(e); if (V.popup === pop) renderPopup(); renderHud(); });
   }
@@ -3585,7 +3685,8 @@ var YTP = (function () {
   var YT_NA = {
     folder: "유튜브 버전은 파일을 불러오지 않아요",
     clipexport: "유튜브는 영상과 소리 데이터를 넘겨주지 않아서 파일로 저장할 수 없어요",
-    embsub: "유튜브 버전은 영상 파일을 쓰지 않아요"
+    embsub: "유튜브 버전은 영상 파일을 쓰지 않아요",
+    dub: "유튜브 자막에는 누가 말했는지 정보가 없어서 더빙 단계는 뺐어요"
   };
   function ytState() { if (!V.yt) V.yt = { url: "", busy: false, err: null, confirm: "", started: 0 }; return V.yt; }
   function openYtAdd(ep) {
@@ -3733,7 +3834,7 @@ var YTP = (function () {
   function renderHud() {
     var hud = clear($("hud"));
     if (feat("combo")) hud.appendChild(h("span", { class: "pill", text: "콤보 " + (S.stats.combo || 0) }));
-    hud.appendChild(h("span", { class: "pill " + (Env.ai ? "on" : "off") }, h("span", { class: "dot" }), YTMODE && !Env.ai ? "AI: Claude에 복사해서 질문" : "AI 해설: " + (Env.ai ? "켜짐" : "꺼짐")));
+    hud.appendChild(h("span", { class: "pill " + (Env.ai ? "on" : "off") }, h("span", { class: "dot" }), YTMODE ? (Env.ai ? "해설: BrennHub Local" : "AI: Claude에 복사해서 질문") : "AI 해설: " + (Env.ai ? "켜짐" : "꺼짐")));
     if (feat("search")) hud.appendChild(btn("검색", function () { openModal(searchDialog); setTimeout(function () { var n = $("searchIn"); if (n) n.focus(); }, 30); }, "ghost sm", "search"));
     hud.appendChild(btn("라이브러리", function () { V.epDel = null; openModal(YTMODE ? ytLibraryDialog : libraryDialog); }, "ghost sm", "folder"));
     hud.appendChild(btn("기능 스위치", function () { openModal(settingsDialog); }, "ghost sm", "sliders"));
@@ -3781,7 +3882,7 @@ var YTP = (function () {
       else if (e.key === "ArrowLeft") { e.preventDefault(); gotoLine(S.cur.li - 1); }
       else if (e.key === "ArrowRight") { e.preventDefault(); gotoLine(S.cur.li + 1); }
       else if (e.key === "r" || e.key === "R") { stopAll(); playCurrent(); }
-      else if (/^[1-6]$/.test(e.key)) setStep(STEPS[+e.key - 1][0]);
+      else if (/^[1-6]$/.test(e.key) && STEPS[+e.key - 1]) setStep(STEPS[+e.key - 1][0]);
     });
     var depth = 0;
     window.addEventListener("dragenter", function (e) { if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], "Files") >= 0) { depth++; $("drop").hidden = false; e.preventDefault(); } });
@@ -3813,6 +3914,8 @@ var YTP = (function () {
     await loadAll();
     resetLine();
     bind();
+    if (YTMODE && !Env.ai) Env.ai = makeLocalAI();
+    if (YTMODE && S.step === "dub") S.step = "shadow";
     initEnv(function () { renderHud(); if (V.view === "study") renderPasses(); if (V.modal) renderModal(); if (V.popup && Env.ai && !V.popup.ai && !V.popup.aiBusy) aiExplain(); });
     if (!YTMODE && Store.ok) Store.get("dir").then(function (d) { if (d && d.requestPermission) { V.dirHandle = d; if (V.view === "study") renderStage(); } });
     var v = location.hash.replace("#", "");
