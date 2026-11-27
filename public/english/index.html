@@ -1687,10 +1687,31 @@ var YTP = (function () {
     if (typeof input === "string") return input;
     return (input || []).map(function (m) { return (m.role === "assistant" ? "Assistant: " : "User: ") + m.content; }).join("\n\n") + "\n\nAssistant:";
   }
+  // BrennHub Local answers one ask at a time, so the app keeps its own queue instead of getting "busy" errors.
+  // Learner-triggered asks ("hi") always go before background script scanning ("lo").
+  var LQ = { hi: [], lo: [], running: null, listeners: [] };
+  function lqNotify() { LQ.listeners.forEach(function (fn) { try { fn(); } catch (e) { /* listener error */ } }); }
+  function lqRetry(fn, left) {
+    return fn().catch(function (e) {
+      if (e && e.code === "busy" && left > 0) return wait(2500).then(function () { return lqRetry(fn, left - 1); });
+      throw e;
+    });
+  }
+  function lqPump() {
+    if (LQ.running) return;
+    var j = LQ.hi.shift() || LQ.lo.shift();
+    if (!j) { lqNotify(); return; }
+    LQ.running = j; lqNotify();
+    lqRetry(j.fn, 40).then(j.res, j.rej).then(function () { LQ.running = null; lqPump(); });
+  }
+  function lqAdd(fn, pri) { return new Promise(function (res, rej) { LQ[pri === "lo" ? "lo" : "hi"].push({ fn: fn, res: res, rej: rej, pri: pri === "lo" ? "lo" : "hi" }); lqPump(); lqNotify(); }); }
   function makeLocalAI() {
-    var ai = function (input, opts) { return localAsk(flattenInput(input), false, opts).then(function (res) { return { text: String(res.text || "") }; }); };
-    ai.json = function (prompt, opts) { return localAsk(prompt, true, opts).then(function (res) { if (res.data == null) throw { code: "invalid_json" }; return res.data; }); };
+    var ai = function (input, opts) { return lqAdd(function () { return localAsk(flattenInput(input), false, opts); }, opts && opts.priority).then(function (res) { return { text: String(res.text || "") }; }); };
+    ai.json = function (prompt, opts) { return lqAdd(function () { return localAsk(prompt, true, opts); }, opts && opts.priority).then(function (res) { if (res.data == null) throw { code: "invalid_json" }; return res.data; }); };
     ai.local = true;
+    ai.ahead = function () { return LQ.hi.length + (LQ.running ? 1 : 0); };
+    ai.bgRunning = function () { return !!(LQ.running && LQ.running.pri === "lo"); };
+    ai.onQueue = function (fn) { LQ.listeners.push(fn); };
     return ai;
   }
   function aiErr(e) {
@@ -1995,6 +2016,7 @@ var YTP = (function () {
   function openEp(id, li) {
     stopAll(); closePopup(true);
     S.cur = { ep: id, li: li || 0 }; resetLine(); V.watch = false; vid.controls = false;
+    if (YTMODE) setTimeout(function () { maybeScan(EPS[id]); }, 0);
     save(); setView("study");
   }
   function stepAllowsCont() { return S.step === "listen" || S.step === "explain"; }
@@ -2046,6 +2068,7 @@ var YTP = (function () {
     function tag(t, c) { tags.appendChild(h("span", { class: "tag" + (c ? " " + c : ""), text: t })); }
     if (hasVid) tag(ep.title);
     if (hasVid && YTMODE) tag("유튜브");
+    if (YTMODE && ep.yt && ep.scan && ep.scan.state === "running") tag("대본 훑는 중 " + ep.scan.done + " / " + ep.scan.total);
     if (!hasVid) tag("음성: 브라우저 TTS (영상 없음)");
     if (!hasVid && Env.noVoice >= 2 && !Env.tts) tag("이 환경에는 음성 엔진이 없어서 소리 없이 진행돼요", "warn");
     if (V.noAudio[ep.id]) tag("이 영상의 소리를 브라우저가 재생하지 못해요. 오디오가 AC3 같은 형식이면 AAC로 변환해야 해요.", "warn");
@@ -2302,17 +2325,27 @@ var YTP = (function () {
   function panelExplain() {
     var ep = curEp(), li = S.cur.li, L = ep.lines[li], ann = annOf(ep, L), out = [], ko = koOf(ep, li);
     out.push(h("h2", { text: "3단계 해설: 자막과 해설을 보고 이해하기" }));
-    var kb = h("div", { class: "box" }, h("h3", { text: "한국어 뜻" }));
+    var kb = h("div", { class: "box" }, h("h3", { text: "한국어 뜻" + (YTMODE && ko ? (L.ko ? " (사람 번역)" : " (AI 번역)") : "") }));
     if (ko) kb.appendChild(h("p", { text: ko }));
+    else if (YTMODE && ep.yt) {
+      var stl = scanLabel(ep) || "이 대사에는 한국어 뜻이 없어요.";
+      kb.appendChild(h("p", { class: "small muted", text: stl + (ep.scan && ep.scan.state === "running" ? ". 끝나면 여기에 나와요." : "") }));
+      if (!SCANNING[ep.id] && (!ep.scan || ep.scan.state !== "done")) kb.appendChild(h("div", null, btn(ep.scan && ep.scan.state === "error" ? "대본 훑기 다시 시도" : "대본 훑기 시작", function () { runScan(ep); }, "sm")));
+    }
     else if (!feat("aitrans")) kb.appendChild(h("p", { class: "small muted", text: "한국어 자막이 없어요. AI 문맥 번역은 기능 스위치에서 꺼져 있어요." }));
     else if (Env.ai) kb.appendChild(h("div", { class: "row" }, h("span", { class: "small muted", text: "한국어 자막이 없어요." }), btn(V.lineAI.koBusy ? "번역하는 중..." : "이 장면 AI 번역 받기", aiTranslateScene, "sm", null, { disabled: !!V.lineAI.koBusy })));
     else if (YTMODE) { kb.appendChild(h("p", { class: "small muted", text: "유튜브 스크립트에는 한국어 뜻이 없어요. 이 장면 번역은 Claude에게 물어보세요." })); kb.appendChild(askRow("Claude용 질문 복사: 이 장면 번역", ASK.translate)); }
     else kb.appendChild(h("p", { class: "small muted", text: "한국어 자막이 없어요. 한국어 SRT를 같이 넣으면 여기에 보여요. " + aiOff() }));
     if (V.lineAI.koErr) kb.appendChild(h("p", { class: "small", style: "color:var(--red)", text: V.lineAI.koErr }));
     out.push(kb);
-    var ib = h("div", { class: "box" }, h("h3", { text: "이 대사의 이디엄 (누르면 해설)" })), ir = h("div", { class: "row" });
+    var ib = h("div", { class: "box" }, h("h3", { text: YTMODE ? "이 대사의 공부할 표현 (누르면 예문 5개와 자세한 해설)" : "이 대사의 이디엄 (누르면 해설)" })), ir = h("div", { class: "row" });
     if (!feat("idiom")) ib.appendChild(h("p", { class: "small muted", text: "이디엄 자동 밑줄이 기능 스위치에서 꺼져 있어요." }));
-    else if (!ann.idioms.length) ib.appendChild(h("p", { class: "small muted", text: "내장 사전(" + Data.IDIOMS.length + "개)에 있는 이디엄은 이 대사에서 찾지 못했어요. 궁금한 부분은 위에서 드래그해 보세요." }));
+    else if (!ann.idioms.length) ib.appendChild(h("p", { class: "small muted", text: YTMODE ? (ep.scan && ep.scan.state === "done" ? "이 대사에서는 따로 공부할 표현을 찾지 못했어요. 궁금한 단어는 더블클릭, 여러 단어는 드래그해 보세요." : (scanLabel(ep) || "대본 훑기 전이에요") + ". 훑기가 끝나면 이 대사의 표현이 여기에 나와요.") : "내장 사전(" + Data.IDIOMS.length + "개)에 있는 이디엄은 이 대사에서 찾지 못했어요. 궁금한 부분은 위에서 드래그해 보세요." }));
+    else if (YTMODE) {
+      ann.idioms.forEach(function (x) {
+        ib.appendChild(h("div", { class: "row", style: "align-items:center" }, chip(x.base, false, function () { openPopupSpan(x.a, x.b); }, "idi"), h("span", { class: "small", text: x.m || "" })));
+      });
+    }
     else { ann.idioms.forEach(function (x) { ir.appendChild(chip(x.base + (x.ai ? " (AI)" : ""), false, function () { openPopupSpan(x.a, x.b); }, "idi")); }); ib.appendChild(ir); }
     out.push(ib);
     var rb = h("div", { class: "box" }, h("h3", { text: "이 대사의 연음 (누르면 해설)" })), rr = h("div", { class: "row" });
@@ -2336,7 +2369,7 @@ var YTP = (function () {
       else {
         var ar = h("div", { class: "row" });
         if (feat("joke")) ar.appendChild(btn(V.lineAI.jokeBusy ? "생각하는 중..." : "이 대사가 왜 웃긴지, 어떤 느낌인지", aiJoke, "sm", null, { disabled: !!V.lineAI.jokeBusy }));
-        if (feat("aiidiom")) ar.appendChild(btn(V.lineAI.idiBusy ? "찾는 중..." : "이 장면에서 이디엄 더 찾기", aiFindIdioms, "sm", null, { disabled: !!V.lineAI.idiBusy }));
+        if (feat("aiidiom") && !YTMODE) ar.appendChild(btn(V.lineAI.idiBusy ? "찾는 중..." : "이 장면에서 이디엄 더 찾기", aiFindIdioms, "sm", null, { disabled: !!V.lineAI.idiBusy }));
         ab.appendChild(ar);
         if (V.lineAI.joke) ab.appendChild(h("p", { text: V.lineAI.joke }));
         if (V.lineAI.idiMsg) ab.appendChild(h("p", { class: "small", text: V.lineAI.idiMsg }));
@@ -2547,7 +2580,7 @@ var YTP = (function () {
     if (!feat("retrieve")) { out.push(need("꺼내 말하기가 기능 스위치에서 꺼져 있어요.")); return out; }
     if (ko) out.push(h("p", { style: "font-size:22px;font-weight:600", text: ko }));
     else {
-      out.push(h("p", { class: "small muted", text: "한국어 자막이 없어서 첫 글자 힌트를 보여드려요." + (Env.ai && feat("aitrans") ? " 3단계 해설에서 AI 번역을 받으면 여기에 한국어 뜻이 나와요." : "") }));
+      out.push(h("p", { class: "small muted", text: "한국어 자막이 없어서 첫 글자 힌트를 보여드려요." + (YTMODE && ep.yt ? " " + (scanLabel(ep) || "") + (ep.scan && ep.scan.state === "done" ? "" : " 대본 훑기가 끝나면 여기에 한국어 뜻이 나와요.") : Env.ai && feat("aitrans") ? " 3단계 해설에서 AI 번역을 받으면 여기에 한국어 뜻이 나와요." : "") }));
       out.push(h("p", { style: "font-family:var(--script);font-weight:700;font-size:20px;letter-spacing:.04em", text: Core.firstLetters(L.en) }));
     }
     if (sttAvailable()) {
@@ -2734,7 +2767,10 @@ var YTP = (function () {
     if (pop.idiom && pop.idiom.base.toLowerCase() !== pop.phrase.toLowerCase()) sh.appendChild(h("p", { class: "small muted", text: "기본형: " + pop.idiom.base }));
 
     var s1 = h("section", null, h("h3", { text: "1. 이 장면에서의 뜻" }));
-    if (pop.aiBusy && Env.ai && Env.ai.local) s1.appendChild(h("p", { class: "small", role: "status", text: "BrennHub Local에서 Claude가 해설을 쓰는 중이에요. 10초에서 30초쯤 걸려요." }));
+    if (pop.aiBusy && Env.ai && Env.ai.local) {
+      var ahead = Env.ai.ahead(), bg = Env.ai.bgRunning();
+      s1.appendChild(h("p", { class: "small", role: "status", text: bg ? "지금 대본 훑기 한 묶음을 처리하는 중이에요. 그게 끝나면 바로 이 해설을 써요." : ahead > 1 ? "앞에 " + (ahead - 1) + "개가 끝나면 바로 이어서 써요." : "BrennHub Local에서 Claude가 해설을 쓰는 중이에요. 10초에서 30초쯤 걸려요." }));
+    }
     if (pop.idiom) s1.appendChild(h("p", { style: "font-size:17px", text: pop.idiom.m }));
     if (ai && ai.meaning) s1.appendChild(h("p", { style: pop.idiom ? "" : "font-size:17px", text: (pop.idiom ? "AI: " : "") + ai.meaning }));
     if (!pop.idiom && !(ai && ai.meaning)) s1.appendChild(h("p", { class: "small muted", text: pop.aiBusy ? "AI가 이 장면 기준으로 뜻을 쓰는 중..." : "내장 사전에 없는 " + (pop.b > pop.a ? "표현" : "단어") + "이에요. " + (pop.aiErr || aiOff()) }));
@@ -3735,12 +3771,15 @@ var YTP = (function () {
       else {
         var ep = { id: key, yt: id, title: String(res.title || ("유튜브 영상 " + id)), titleAuto: !res.title, channel: String(res.channel || ""), duration: Number(res.duration) || 0,
           lines: Core.buildLines(lines, []), src: "local", source: res.source === "auto" ? "auto" : "manual", lang: String(res.lang || ""), auto: res.source === "auto",
-          fetchedAt: String(res.fetchedAt || ""), added: old ? (old.added || Date.now()) : Date.now(), offset: old ? (old.offset || 0) : 0 };
+          fetchedAt: String(res.fetchedAt || ""), added: old ? (old.added || Date.now()) : Date.now(), offset: old ? (old.offset || 0) : 0, ai: {} };
+        var koHit = res.ko && res.ko.cues ? attachKo(ep.lines, res.ko.cues) : 0;
+        ep.koSrc = koHit ? "human" : "ai";
         EPS[key] = ep; VID[key] = { url: id, name: "YouTube" }; delete SC[key];
         if (old) { delete S.prog[key]; if (S.pos) delete S.pos[key]; }
         saveEp(ep); save();
         V.yt = null; closeModal(); openEp(key, 0);
-        toast("가져왔어요: 대사 " + ep.lines.length + "개 (" + (ep.auto ? "유튜브 자동 생성 자막" : "사람이 만든 자막") + ").", 5000);
+        toast("가져왔어요: 대사 " + ep.lines.length + "개 (" + (ep.auto ? "유튜브 자동 생성 자막" : "사람이 만든 자막") + "). " + (koHit ? "사람이 번역한 한국어 자막도 붙였어요. " : "") + "지금부터 Claude가 대본을 훑어서 " + (koHit ? "" : "한국어 뜻과 ") + "공부할 표현을 붙여요.", 7000);
+        runScan(ep);
         return;
       }
     }
@@ -3776,8 +3815,11 @@ var YTP = (function () {
     var list = h("div");
     mine.forEach(function (ep) {
       var kind = ep.src === "local" ? (ep.auto ? "유튜브 자동 생성 자막" : "사람이 만든 자막") : "붙여넣은 스크립트";
-      var row = h("div", { class: "eprow" }, h("span", { class: "ti", text: ep.title }), h("span", { class: "small muted", text: "대사 " + ep.lines.length + "개, " + kind + ", 진행률 " + epProgress(ep) + "%" }),
+      var koKind = ep.koSrc === "human" ? "한국어: 사람 번역" : ep.scan && ep.scan.state === "done" ? "한국어: AI 번역" : "한국어: 아직 없음";
+      var scanTxt = scanLabel(ep);
+      var row = h("div", { class: "eprow" }, h("span", { class: "ti", text: ep.title }), h("span", { class: "small muted", text: "대사 " + ep.lines.length + "개, " + kind + ", " + koKind + ", 진행률 " + epProgress(ep) + "%" + (scanTxt ? ". " + scanTxt : "") }),
         btn(ep.id === S.cur.ep ? "지금 학습 중" : "열기", function () { closeModal(); openEp(ep.id, (S.pos && S.pos[ep.id]) || 0); }, "sm", null, { disabled: ep.id === S.cur.ep }),
+        btn("한국어와 표현 다시 훑기", function () { refreshKo(ep); }, "sm", null, { disabled: !!SCANNING[ep.id], title: "받아쓰기 기록은 그대로 두고, 한국어 뜻과 공부할 표현만 다시 붙여요" }),
         btn("자막 다시 받기", function () { var y2 = ytState(); y2.url = "https://www.youtube.com/watch?v=" + ep.yt; y2.confirm = ""; y2.err = null; fetchFromLocal(); }, "sm", null, { disabled: y.busy }));
       row.appendChild(V.epDel === ep.id ? btn("정말 삭제", function () { delete EPS[ep.id]; delete VID[ep.id]; Store.del("ep:" + ep.id); delete S.prog[ep.id]; if (S.cur.ep === ep.id) S.cur = { ep: "DEMO", li: 0 }; V.epDel = null; save(); renderModal(); renderView(); }, "sm rec") : btn("삭제", function () { V.epDel = ep.id; renderModal(); }, "sm"));
       list.appendChild(row);
@@ -3788,6 +3830,109 @@ var YTP = (function () {
     out.push(h("h3", { text: "백업" }));
     out.push(h("div", { class: "row" }, btn("백업 내보내기 (JSON 파일)", exportBackup, ""), h("span", { class: "small muted", text: "가져올 때는 백업 JSON 파일을 이 창에 끌어다 놓으세요." })));
     return out;
+  }
+
+
+  // ---------- Korean lines and script scan (YouTube build) ----------
+  // Human Korean subtitles from BrennHub Local are attached to the English lines by time.
+  function attachKo(lines, koCues) {
+    var hit = 0;
+    if (!Array.isArray(koCues) || !koCues.length) return 0;
+    var cues = koCues.map(function (c) { return { s: Number(c.s) || 0, e: Number(c.e) || 0, t: Core.cleanCue ? String(c.text || "").replace(/\s+/g, " ").trim() : String(c.text || "").trim() }; })
+      .filter(function (c) { return c.t && c.e > c.s; });
+    lines.forEach(function (L) {
+      var a = L.s - 0.25, b = L.e + 0.25, parts = [];
+      cues.forEach(function (c) {
+        var ov = Math.min(b, c.e) - Math.max(a, c.s);
+        if (ov > 0 && ov >= (c.e - c.s) * 0.5 && parts[parts.length - 1] !== c.t) parts.push(c.t);
+      });
+      if (parts.length) { L.ko = parts.join(" "); hit++; }
+    });
+    return hit;
+  }
+  var SCAN_CHUNK = 25;
+  function scanTotal(ep) { return Math.ceil(ep.lines.length / SCAN_CHUNK); }
+  function scanLabel(ep) {
+    var sc = ep.scan;
+    if (!ep.yt) return "";
+    if (!sc) return "대본 훑기 전이에요";
+    if (sc.state === "done") return "";
+    if (sc.state === "running") return "Claude가 대본을 훑는 중이에요 (" + sc.done + " / " + sc.total + ")";
+    if (sc.state === "error") return "대본 훑기가 " + sc.done + " / " + sc.total + "에서 멈췄어요: " + (sc.err || "알 수 없는 오류");
+    return "대본 훑기를 기다리는 중이에요 (" + sc.done + " / " + sc.total + ")";
+  }
+  function scanPrompt(ep, a, b) {
+    var target = [], ctx = [];
+    for (var i = Math.max(0, a - 2); i < a; i++) ctx.push({ i: i, en: ep.lines[i].en });
+    for (var j = a; j <= b; j++) target.push({ i: j, en: ep.lines[j].en, needKo: !ep.lines[j].ko });
+    for (var k = b + 1; k <= Math.min(ep.lines.length - 1, b + 2); k++) ctx.push({ i: k, en: ep.lines[k].en });
+    return ["You are preparing study material from a video transcript for an English learner. " + LEARNER,
+      "For EVERY target line return an object with:",
+      '- "i": the line number.',
+      '- "ko": a natural spoken Korean translation of that line that fits the surrounding lines (only when needKo is true; otherwise an empty string).',
+      '- "ex": up to 4 expressions from that line worth studying: idioms, phrasal verbs, collocations, fixed conversational phrases or slang. Each "phrase" must be copied exactly from the line (2 to 6 words). "meaning_ko" is one short Korean sentence with the meaning in THIS line. Skip plain literal word combinations. Use [] if there is nothing worth studying.',
+      'Reply with only a JSON array: [{"i": number, "ko": string, "ex": [{"phrase": string, "meaning_ko": string}]}]',
+      "Video title: " + JSON.stringify(ep.title),
+      "Context lines (do not return these): " + JSON.stringify(ctx),
+      "Target lines: " + JSON.stringify(target)].join("\n");
+  }
+  function normPhrase(t) { return String(t || "").toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim(); }
+  function applyScan(ep, arr, a, b) {
+    ep.ai = ep.ai || {}; ep.ai.ko = ep.ai.ko || {}; ep.ai.idioms = ep.ai.idioms || [];
+    var got = 0;
+    (Array.isArray(arr) ? arr : []).forEach(function (r) {
+      var i = Number(r && r.i);
+      if (!(i >= a && i <= b) || !ep.lines[i]) return;
+      got++;
+      var ko = str(r.ko).trim();
+      if (ko && !ep.lines[i].ko) ep.ai.ko[i] = ko;
+      (Array.isArray(r.ex) ? r.ex : []).slice(0, 4).forEach(function (x) {
+        var ph = normPhrase(x && x.phrase), m = str(x && x.meaning_ko).trim();
+        if (!ph || !m || ph.split(" ").length < 2 || ph.length > 60) return;
+        if (normPhrase(ep.lines[i].en).indexOf(ph) < 0) return;
+        if (Core.findIdiom(ph) || ep.ai.idioms.some(function (y) { return y.phrase === ph; })) return;
+        ep.ai.idioms.push({ phrase: ph, m: m, li: i });
+      });
+    });
+    return got;
+  }
+  var SCANNING = {};
+  async function runScan(ep) {
+    if (!ep || !ep.yt || !Env.ai || SCANNING[ep.id]) return;
+    var total = scanTotal(ep);
+    ep.scan = ep.scan && ep.scan.total === total ? ep.scan : { done: 0, total: total };
+    if (ep.scan.done >= total) { ep.scan.state = "done"; saveEp(ep); return; }
+    SCANNING[ep.id] = true; ep.scan.state = "running"; ep.scan.err = ""; saveEp(ep); scanRefresh(ep);
+    try {
+      while (ep.scan.done < total && EPS[ep.id] === ep) {
+        var a = ep.scan.done * SCAN_CHUNK, b = Math.min(ep.lines.length - 1, a + SCAN_CHUNK - 1);
+        var arr = await Env.ai.json(scanPrompt(ep, a, b), { priority: "lo" });
+        if (!applyScan(ep, arr, a, b)) throw { code: "invalid_json" };
+        ep.scan.done++; saveEp(ep); scanRefresh(ep);
+      }
+      ep.scan.state = ep.scan.done >= total ? "done" : "waiting";
+    } catch (e) { ep.scan.state = "error"; ep.scan.err = aiErr(e); }
+    SCANNING[ep.id] = false; saveEp(ep); scanRefresh(ep);
+    if (ep.scan.state === "done" && S.cur.ep === ep.id) toast("대본 훑기를 끝냈어요: 한국어 뜻과 공부할 표현을 모든 대사에 붙였어요.", 5000);
+  }
+  function scanRefresh(ep) {
+    if (S.cur.ep !== ep.id) { if (V.modal === ytLibraryDialog) renderModal(); return; }
+    renderStage(); renderStrip(); if (V.view === "study") renderPasses(); renderScript();
+    if (V.modal === ytLibraryDialog) renderModal();
+  }
+  function maybeScan(ep) { if (YTMODE && ep && ep.yt && Env.ai && (!ep.scan || ep.scan.state !== "done") && !SCANNING[ep.id] && !(ep.scan && ep.scan.state === "error" && ep.scan.manual)) runScan(ep); }
+  // Re-fetch subtitles only to attach Korean, keeping lines and progress, then scan again.
+  async function refreshKo(ep) {
+    var res = null;
+    try {
+      var r = await fetch(LOCAL_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: "https://www.youtube.com/watch?v=" + ep.yt }), cache: "no-store" });
+      res = await r.json().catch(function () { return null; });
+      if (!r.ok || !res || res.ok !== true) { toast((res && res.message) || "BrennHub Local이 오류를 돌려줬어요.", 6000); return; }
+    } catch (e) { toast("BrennHub Local에 연결하지 못했어요. 바탕화면의 'BrennHub Local' 바로가기를 눌러 켜 주세요.", 6000); return; }
+    var hit = res.ko && res.ko.cues ? attachKo(ep.lines, res.ko.cues) : 0;
+    ep.koSrc = hit ? "human" : "ai"; ep.scan = null; ep.ai = ep.ai || {}; ep.ai.ko = {}; ep.ai.idioms = [];
+    saveEp(ep); toast(hit ? "사람이 번역한 한국어 자막을 대사 " + hit + "개에 붙였어요. 이어서 표현을 훑어요." : "사람이 번역한 한국어 자막이 없어서 Claude가 번역하며 훑어요.", 5000);
+    runScan(ep);
   }
 
   // ---------- feature switches ----------
@@ -3916,12 +4061,14 @@ var YTP = (function () {
     bind();
     if (YTMODE && !Env.ai) Env.ai = makeLocalAI();
     if (YTMODE && S.step === "dub") S.step = "shadow";
+    if (YTMODE && Env.ai && Env.ai.onQueue) Env.ai.onQueue(function () { if (V.popup && V.popup.aiBusy) renderPopup(); });
     initEnv(function () { renderHud(); if (V.view === "study") renderPasses(); if (V.modal) renderModal(); if (V.popup && Env.ai && !V.popup.ai && !V.popup.aiBusy) aiExplain(); });
     if (!YTMODE && Store.ok) Store.get("dir").then(function (d) { if (d && d.requestPermission) { V.dirHandle = d; if (V.view === "study") renderStage(); } });
     var v = location.hash.replace("#", "");
     V.view = VIEWS.some(function (x) { return x[0] === v; }) ? v : "study";
     renderAll();
     if (YTMODE && V.view === "study" && VID[S.cur.ep]) attachVideo(curEp());
+    if (YTMODE) maybeScan(EPS[S.cur.ep]);
     document.documentElement.setAttribute("data-ready", "1");
   }
   window.SceneLoop = { S: S, EPS: EPS, VID: VID, V: V, Env: Env, P: P, TAKES: TAKES, handleFiles: handleFiles, gotoLine: gotoLine, setStep: setStep, setView: setView, openPopupSpan: openPopupSpan, gradeDict: gradeDict, playCurrent: playCurrent };
