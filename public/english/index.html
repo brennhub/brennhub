@@ -214,6 +214,7 @@ table.t { border-collapse: collapse; width: 100%; font-size: 14px; } table.t th,
 .ytadd .err { color: #B3261E; font-weight: 600; }
 .ytadd details.help { margin-top: 6px; }
 .ytadd details.help summary { cursor: pointer; font-weight: 600; min-height: 32px; }
+.ytadd .errbox { border-left: 4px solid #B3261E; padding: 6px 12px; background: rgba(179,38,30,.06); }
 
 </style>
 </head>
@@ -236,9 +237,9 @@ table.t { border-collapse: collapse; width: 100%; font-size: 14px; } table.t th,
 <main id="viewOther" class="page" hidden></main>
 <aside id="sheet" class="sheet" aria-label="단어와 표현 해설" hidden></aside>
 <div id="modal" class="veil" hidden></div>
-<div id="drop" class="dropveil" hidden>자막 파일(SRT, VTT)이나 백업 JSON을 놓으세요</div>
+<div id="drop" class="dropveil" hidden>백업 JSON 파일을 놓으세요</div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-<input type="file" id="filePick" multiple accept=".srt,.vtt,.txt,.json" hidden>
+<input type="file" id="filePick" multiple accept=".json" hidden>
 <script>window.SL_YT = true;</script>
 <script>
 // Static data: idiom patterns, connected-speech rules, demo episode, feature list.
@@ -1226,6 +1227,41 @@ var Core = (function () {
     t = decodeEntities(String(t)).replace(/\[[^\]]*\]/g, " ").replace(/\([^)]*\)/g, " ").replace(/[♪♫]/g, " ");
     return t.replace(/\s+/g, " ").trim();
   }
+  // Merge caption fragments into sentence-sized study lines.
+  // cues: [{s, e, text, turn?}] sorted by start. autoHint true/false forces the mode, undefined detects it.
+  function mergeCues(cues, autoHint) {
+    var endP = /[.?!…]["'’”)]*$/;
+    var punct = cues.filter(function (c) { return endP.test(c.text); }).length;
+    var ratioLow = cues.length > 0 && punct / cues.length < 0.25;
+    var auto = typeof autoHint === "boolean" ? (autoHint && ratioLow) : ratioLow;
+    var out = [], acc = null;
+    function flush() { if (acc) { out.push({ s: acc.s, e: acc.e, text: acc.text, sp: "" }); acc = null; } }
+    cues.forEach(function (c) {
+      var turn = !!c.turn || /^\s*-\s/.test(c.text);
+      var text = String(c.text).replace(/^\s*(?:>>|-)\s*/, "").replace(/\s+/g, " ").trim();
+      if (!text) return;
+      if (acc) {
+        var words = (acc.text + " " + text).split(" ").length, dur = c.e - acc.s;
+        var full = auto ? (acc.text.split(" ").length >= 9 || acc.e - acc.s >= 3.5) : endP.test(acc.text);
+        if (turn || full || words > (auto ? 16 : 24) || dur > (auto ? 6.5 : 9) || c.s - acc.e > 1.5) flush();
+      }
+      if (!acc) acc = { s: c.s, e: c.e, text: text };
+      else { acc.text += " " + text; acc.e = Math.max(acc.e, c.e); }
+    });
+    flush();
+    return { cues: out, auto: auto };
+  }
+  // Turn a BrennHub Local /api/english/subtitles response into study lines.
+  function linesFromLocal(res) {
+    var raw = (res && Array.isArray(res.cues) ? res.cues : []).map(function (c) {
+      var t = String(c && c.text || ""), turn = /^\s*(?:>>|-\s)/.test(t);
+      return { s: Number(c && c.s) || 0, e: Number(c && c.e) || 0, text: cleanTranscriptText(t.replace(/>>/g, " ")).replace(/^-\s*/, ""), turn: turn };
+    }).filter(function (c) { return c.text && /[A-Za-z0-9]/.test(c.text) && c.e >= c.s; });
+    raw.sort(function (a, b) { return a.s - b.s; });
+    raw.forEach(function (c) { if (c.e - c.s < 0.3) c.e = c.s + 0.3; });
+    return mergeCues(raw, !!(res && res.source === "auto")).cues;
+  }
+
   // Parse text copied from YouTube's "Show transcript" panel, or an SRT/VTT file.
   // Returns { kind, cues: [{s, e, text}], raw, auto, dropped } with cues merged into sentence-sized lines.
   function parseTranscript(text) {
@@ -1255,26 +1291,12 @@ var Core = (function () {
       var nx = cues[i + 1], words = c.text.split(" ").length, guess = c.s + Math.max(1.2, words * 0.38);
       c.e = nx ? Math.min(Math.max(nx.s, c.s + 0.4), c.s + 10) : Math.min(guess, c.s + 10);
     });
-    var endP = /[.?!…]["'’”)]*$/;
-    var punct = cues.filter(function (c) { return endP.test(c.text); }).length;
-    var auto = cues.length > 0 && punct / cues.length < 0.25;
-    var out = [], acc = null;
-    function flush() { if (acc) { out.push({ s: acc.s, e: acc.e, text: acc.text, sp: "" }); acc = null; } }
-    cues.forEach(function (c) {
-      if (acc) {
-        var words = (acc.text + " " + c.text).split(" ").length, dur = c.e - acc.s;
-        var full = auto ? (acc.text.split(" ").length >= 9 || acc.e - acc.s >= 3.5) : endP.test(acc.text);
-        if (c.turn || full || words > (auto ? 16 : 24) || dur > (auto ? 6.5 : 9) || c.s - acc.e > 1.5) flush();
-      }
-      if (!acc) acc = { s: c.s, e: c.e, text: c.text };
-      else { acc.text += " " + c.text; acc.e = c.e; }
-    });
-    flush();
-    return { kind: "youtube", cues: out, raw: cues.length, auto: auto, dropped: dropped };
+    var m = mergeCues(cues);
+    return { kind: "youtube", cues: m.cues, raw: cues.length, auto: m.auto, dropped: dropped };
   }
 
   return {
-    ytId: ytId, parseTranscript: parseTranscript,
+    ytId: ytId, parseTranscript: parseTranscript, mergeCues: mergeCues, linesFromLocal: linesFromLocal,
     verbForms: verbForms, compilePattern: compilePattern, idioms: idioms, reducedRules: reducedRules, normWord: normWord,
     tokenize: tokenize, lineInfo: lineInfo, annotate: annotate, findIdiom: findIdiom, phraseRegex: phraseRegex,
     searchCorpus: searchCorpus, parseTime: parseTime, parseSubs: parseSubs, parseSami: parseSami, hangulRatio: hangulRatio, buildLines: buildLines,
@@ -1968,7 +1990,7 @@ var YTP = (function () {
     vid.hidden = !hasVid; note.hidden = hasVid; $("stage").classList.toggle("novid", !hasVid); $("stage").classList.toggle("big", hasVid && (!!S.set.bigStage || V.watch));
     if (!hasVid && YTMODE) {
       add(note, [h("h2", { text: ep.demo ? "유튜브 영상을 추가해 주세요" : ep.title }),
-        h("p", { text: ep.demo ? "아직 추가한 유튜브 영상이 없어요. 유튜브 링크와 그 영상의 스크립트를 붙여넣으면 바로 공부할 수 있어요. 그 전까지는 연습용 예시 대사를 브라우저 음성으로 읽어요." : "이 영상의 유튜브 연결 정보가 없어요. 라이브러리에서 다시 추가해 주세요." }),
+        h("p", { text: ep.demo ? "아직 추가한 유튜브 영상이 없어요. 유튜브 링크만 넣으면 제목과 영어 자막을 자동으로 가져와서 바로 공부할 수 있어요. 그 전까지는 연습용 예시 대사를 브라우저 음성으로 읽어요." : "이 영상의 유튜브 연결 정보가 없어요. 라이브러리에서 다시 추가해 주세요." }),
         h("div", { class: "row", style: "justify-content:center" }, btn("유튜브 영상 추가", function () { openYtAdd(); }, "hl"))]);
     } else if (!hasVid) {
       if (ep.demo) add(note, [h("h2", { text: "지금은 데모 장면이에요" }), h("p", { text: "직접 쓴 샘플 대사를 브라우저 음성으로 읽어요. 내 MP4 영상과 SRT 자막을 이 창에 끌어다 놓으면 바로 그 영상으로 바뀌어요." })]);
@@ -3558,102 +3580,110 @@ var YTP = (function () {
 
 
   // ---------- YouTube library ----------
+  // Subtitles and title come from BrennHub Local (127.0.0.1:5180) running yt-dlp on this PC.
+  var LOCAL_URL = "http://127.0.0.1:5180/api/english/subtitles";
   var YT_NA = {
     folder: "유튜브 버전은 파일을 불러오지 않아요",
     clipexport: "유튜브는 영상과 소리 데이터를 넘겨주지 않아서 파일로 저장할 수 없어요",
     embsub: "유튜브 버전은 영상 파일을 쓰지 않아요"
   };
-  function ytState() { if (!V.yt) V.yt = { url: "", tx: "", title: "", err: "", confirm: "", editing: "" }; return V.yt; }
+  function ytState() { if (!V.yt) V.yt = { url: "", busy: false, err: null, confirm: "", started: 0 }; return V.yt; }
   function openYtAdd(ep) {
     var y = ytState();
-    if (ep && ep.yt) { y.url = "https://www.youtube.com/watch?v=" + ep.yt; y.title = ep.titleAuto ? "" : ep.title; y.tx = ""; y.editing = ep.id; y.err = ""; y.confirm = ""; }
+    if (ep && ep.yt) { y.url = "https://www.youtube.com/watch?v=" + ep.yt; y.err = null; y.confirm = ""; }
     openModal(ytLibraryDialog);
-    setTimeout(function () { var n = $(ep ? "ytTx" : "ytUrl"); if (n) n.focus(); }, 30);
+    setTimeout(function () { var n = $("ytUrl"); if (n) n.focus(); }, 30);
   }
-  function ytPreviewText(tx) {
-    if (!String(tx || "").trim()) return "스크립트를 붙여넣으면 몇 개의 대사로 나뉘는지 여기에 보여드려요.";
-    var r = Core.parseTranscript(tx);
-    if (!r.cues.length) return "아직 시간과 대사를 찾지 못했어요. 시간 숫자(예: 0:03)까지 같이 복사했는지 확인해 주세요.";
-    var last = r.cues[r.cues.length - 1];
-    var how = r.kind === "youtube" ? (r.auto ? "자동 생성 자막 같아서, 몇 단어씩 끊긴 조각 " + r.raw + "개를 문장 크기로 묶었어요." : "조각 " + r.raw + "개를 문장 단위로 묶었어요.") : (r.kind === "vtt" ? "VTT 자막 파일이에요." : "SRT 자막 파일이에요.");
-    return "대사 " + r.cues.length + "개로 나눴어요 (" + fmtTime(r.cues[0].s) + "부터 " + fmtTime(last.e) + "까지). " + how + (r.dropped ? " 음악, 박수 같은 소리 표시만 있는 조각 " + r.dropped + "개는 뺐어요." : "");
+  async function localPermissionDenied() {
+    if (!navigator.permissions || !navigator.permissions.query) return false;
+    var names = ["loopback-network", "local-network-access", "local-network"];
+    for (var i = 0; i < names.length; i++) {
+      try { var st = await navigator.permissions.query({ name: names[i] }); if (st && st.state === "denied") return true; } catch (e) { /* name not supported in this browser */ }
+    }
+    return false;
   }
-  function addYt() {
+  function connectErr(denied) {
+    var steps = ["BrennHub Local이 꺼져 있을 수 있어요. 바탕화면의 'BrennHub Local' 바로가기를 눌러 켜 주세요.",
+      "Chrome이 연결을 막고 있을 수 있어요. Chrome 주소창 왼쪽의 사이트 정보 아이콘, '사이트 설정', '로컬 네트워크 액세스'를 '허용'으로 바꿔 주세요.",
+      "그다음 이 페이지를 새로 고치고 다시 '가져오기'를 누르세요."];
+    if (denied) steps.unshift("Chrome이 이 사이트의 로컬 네트워크 연결을 '차단'으로 기억하고 있는 것 같아요. 아래 3번을 먼저 확인해 주세요.");
+    return { title: "BrennHub Local에 연결하지 못했어요", steps: steps };
+  }
+  async function fetchFromLocal() {
     var y = ytState();
-    y.url = ($("ytUrl") || {}).value || y.url; y.tx = ($("ytTx") || {}).value || y.tx; y.title = (($("ytTitle") || {}).value || "").trim();
+    if (y.busy) return;
+    y.url = (($("ytUrl") || {}).value || y.url || "").trim();
     var id = Core.ytId(y.url);
-    if (!id) { y.err = "유튜브 링크에서 영상 번호를 찾지 못했어요. 유튜브 주소창의 링크를 그대로 붙여넣어 주세요."; renderModal(); return; }
-    if (!String(y.tx).trim()) { y.err = "스크립트가 비어 있어요. 아래 '스크립트 복사하는 방법'대로 복사해서 2번 칸에 붙여넣어 주세요."; renderModal(); return; }
-    var r = Core.parseTranscript(y.tx);
-    if (!r.cues.length) { y.err = "스크립트에서 시간과 대사를 찾지 못했어요. 시간 숫자(예: 0:03)까지 같이 복사해 주세요."; renderModal(); return; }
-    var allText = r.cues.map(function (c) { return c.text; }).join(" ");
-    if (Core.hangulRatio(allText) > 0.3) { y.err = "한국어 스크립트 같아요. 유튜브 스크립트 목록 위쪽의 언어를 영어로 바꾼 뒤 다시 복사해 주세요."; renderModal(); return; }
+    if (!id) { y.err = { title: "유튜브 링크에서 영상 번호를 찾지 못했어요.", steps: ["유튜브 주소창의 링크를 그대로 붙여넣어 주세요."] }; renderModal(); return; }
     var key = "yt:" + id, old = EPS[key];
-    if (old && y.confirm !== key) { y.confirm = key; y.err = "이미 추가한 영상이에요 (" + old.title + "). 스크립트를 바꾸면 대사 순서가 달라져서 이 영상의 받아쓰기 기록이 지워져요. 표현 카드는 남아요. 바꾸려면 한 번 더 누르세요."; renderModal(); return; }
-    var ep = { id: key, yt: id, title: y.title || (old && old.title) || ("유튜브 영상 " + id), titleAuto: !y.title && !(old && !old.titleAuto),
-      lines: Core.buildLines(r.cues, []), src: r.kind, auto: r.auto, added: Date.now(), offset: old ? (old.offset || 0) : 0 };
-    EPS[key] = ep; VID[key] = { url: id, name: "YouTube" }; delete SC[key];
-    if (old) { delete S.prog[key]; if (S.pos) delete S.pos[key]; }
-    saveEp(ep); save();
-    var msg = "추가했어요: 대사 " + ep.lines.length + "개." + (r.auto ? " 자동 생성 자막이라 문장 끊김이 어색할 수 있어요." : "");
-    V.yt = null; closeModal(); openEp(key, 0); toast(msg, 5000);
+    if (old && y.confirm !== key) { y.confirm = key; y.err = { title: "이미 추가한 영상이에요: " + old.title, steps: ["자막을 다시 받으면 대사 순서가 바뀔 수 있어서, 이 영상의 받아쓰기 기록이 지워져요. 표현 카드는 남아요.", "다시 받으려면 버튼을 한 번 더 누르세요."] }; renderModal(); return; }
+    y.busy = true; y.err = null; y.started = Date.now(); renderModal();
+    var tick = setInterval(function () { var n = $("ytBusy"); if (n && y.busy) n.textContent = "BrennHub Local에서 제목과 영어 자막을 받는 중이에요... " + Math.round((Date.now() - y.started) / 1000) + "초"; }, 1000);
+    var res = null, err = null;
+    try {
+      var r = await fetch(LOCAL_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: y.url }), cache: "no-store" });
+      try { res = await r.json(); } catch (e) { res = null; }
+      if (!r.ok || !res || res.ok !== true) err = { title: (res && res.message) || ("BrennHub Local이 오류를 돌려줬어요 (HTTP " + r.status + ")."), steps: res && res.code === "no_english" || res && res.code === "only_translated" ? ["이 영상은 아직 공부용으로 쓸 수 없어요. 자막이 없는 영상은 나중에 다른 방법을 붙일 예정이에요."] : res && res.code === "busy" ? ["몇 초 뒤에 다시 '가져오기'를 누르세요."] : r.status === 403 ? ["BrennHub Local이 이 페이지의 요청을 거절했어요. BrennHub Local이 최신 버전으로 다시 켜졌는지 확인해 주세요."] : [] };
+    } catch (e) {
+      err = connectErr(await localPermissionDenied());
+    }
+    clearInterval(tick); y.busy = false;
+    if (!err) {
+      var lines = Core.linesFromLocal(res);
+      if (!lines.length) err = { title: "자막은 받았는데 읽을 수 있는 대사가 없었어요.", steps: [] };
+      else {
+        var ep = { id: key, yt: id, title: String(res.title || ("유튜브 영상 " + id)), titleAuto: !res.title, channel: String(res.channel || ""), duration: Number(res.duration) || 0,
+          lines: Core.buildLines(lines, []), src: "local", source: res.source === "auto" ? "auto" : "manual", lang: String(res.lang || ""), auto: res.source === "auto",
+          fetchedAt: String(res.fetchedAt || ""), added: old ? (old.added || Date.now()) : Date.now(), offset: old ? (old.offset || 0) : 0 };
+        EPS[key] = ep; VID[key] = { url: id, name: "YouTube" }; delete SC[key];
+        if (old) { delete S.prog[key]; if (S.pos) delete S.pos[key]; }
+        saveEp(ep); save();
+        V.yt = null; closeModal(); openEp(key, 0);
+        toast("가져왔어요: 대사 " + ep.lines.length + "개 (" + (ep.auto ? "유튜브 자동 생성 자막" : "사람이 만든 자막") + ").", 5000);
+        return;
+      }
+    }
+    y.err = err; if (V.modal === ytLibraryDialog) renderModal();
   }
   async function ytDrop(files) {
     var list = Array.prototype.slice.call(files || []);
     for (var i = 0; i < list.length; i++) {
-      var f = list[i], nm = f.name || "";
-      if (/\.json$/i.test(nm)) { await importBackup(f); continue; }
-      if (/\.(srt|vtt|txt)$/i.test(nm)) {
-        var text = Core.decodeBytes(new Uint8Array(await f.arrayBuffer())), y = ytState();
-        y.tx = text; y.err = ""; y.url = ($("ytUrl") || {}).value || y.url; y.title = ($("ytTitle") || {}).value || y.title;
-        if (V.modal !== ytLibraryDialog) openModal(ytLibraryDialog); else renderModal();
-        toast(nm + " 내용을 2번 칸에 넣었어요. 유튜브 링크를 넣고 추가를 누르세요.");
-        continue;
-      }
-      toast(nm + ": 유튜브 버전은 SRT, VTT, TXT 자막 파일과 백업 JSON 파일만 받아요.", 5000);
+      var f = list[i];
+      if (/\.json$/i.test(f.name || "")) await importBackup(f);
+      else toast((f.name || "파일") + ": 유튜브 버전은 백업 JSON 파일만 받아요. 영상은 라이브러리에 유튜브 링크를 넣어 추가하세요.", 5000);
     }
   }
   function ytLibraryDialog() {
     var y = ytState(), out = [dlgHead("라이브러리")];
     var box = h("div", { class: "ytadd" });
-    box.appendChild(h("h3", { text: y.editing ? "스크립트 바꾸기: " + ((EPS[y.editing] || {}).title || "") : "유튜브 영상 추가" }));
-    box.appendChild(h("label", { class: "fl", for: "ytUrl", text: "1. 유튜브 링크" }));
-    box.appendChild(h("input", { id: "ytUrl", class: "field", type: "url", autocomplete: "off", placeholder: "https://www.youtube.com/watch?v=...", value: y.url, oninput: function (e) { y.url = e.target.value; y.confirm = ""; } }));
-    box.appendChild(h("label", { class: "fl", for: "ytTx", text: "2. 스크립트 (유튜브의 '스크립트 표시'에서 복사한 글, 또는 SRT, VTT 자막)" }));
-    var pv = h("p", { class: "small", id: "ytPv", text: ytPreviewText(y.tx) }), tmr = 0;
-    box.appendChild(h("textarea", { id: "ytTx", class: "field", rows: "8", spellcheck: "false", placeholder: "0:00\nHey, how's it going?\n0:03\nGood. I just got back from work.", value: y.tx,
-      oninput: function (e) { y.tx = e.target.value; y.confirm = ""; clearTimeout(tmr); tmr = setTimeout(function () { var n = $("ytPv"); if (n) n.textContent = ytPreviewText(y.tx); }, 200); } }));
-    box.appendChild(pv);
-    box.appendChild(h("div", { class: "row" }, btn("SRT, VTT 파일에서 불러오기", pickFiles, "sm")));
-    box.appendChild(h("label", { class: "fl", for: "ytTitle", text: "3. 제목 (비워 두면 영상을 처음 틀 때 유튜브 제목을 가져와요)" }));
-    box.appendChild(h("input", { id: "ytTitle", class: "field", type: "text", autocomplete: "off", value: y.title, oninput: function (e) { y.title = e.target.value; } }));
-    if (y.err) box.appendChild(h("p", { class: "err", role: "alert", text: y.err }));
-    box.appendChild(h("div", { class: "row" }, btn(y.confirm ? "스크립트 바꾸기 (기록 지움)" : y.editing ? "스크립트 바꾸고 공부 시작" : "추가하고 공부 시작", addYt, y.confirm ? "rec" : "hl"),
-      y.editing || y.url || y.tx ? btn("입력 지우기", function () { V.yt = null; renderModal(); }, "ghost sm") : null));
-    var help = h("details", { class: "help" }, h("summary", { text: "스크립트 복사하는 방법" }));
-    ["컴퓨터의 Chrome에서 공부할 유튜브 영상 페이지를 열어요.",
-      "영상 바로 아래 설명란에서 '더보기'를 눌러요.",
-      "펼쳐진 설명의 맨 아래에 있는 '스크립트 표시' 버튼을 눌러요. 화면 오른쪽에 시간과 대사 목록이 나와요.",
-      "목록 위쪽의 언어가 영어인지 확인해요 ('영어' 또는 '영어 (자동 생성됨)'). 한국어로 되어 있으면 영어로 바꿔요.",
-      "목록의 맨 처음 시간 숫자 바로 앞에서 마우스를 누른 채로, 맨 마지막 대사 끝까지 끌어서 선택해요. 목록이 길면 끌면서 아래로 내려가요.",
-      "Ctrl+C로 복사하고, 이 창의 2번 칸을 누른 뒤 Ctrl+V로 붙여넣어요."].forEach(function (t, i) { help.appendChild(h("p", { class: "small", text: (i + 1) + ". " + t })); });
-    help.appendChild(h("p", { class: "small muted", text: "'스크립트 표시' 버튼이 없으면 그 영상에는 자막이 없는 거예요. 자막이 없는 영상은 아직 지원하지 않아요." }));
-    box.appendChild(help);
+    box.appendChild(h("h3", { text: "유튜브 영상 추가" }));
+    box.appendChild(h("label", { class: "fl", for: "ytUrl", text: "유튜브 링크" }));
+    box.appendChild(h("input", { id: "ytUrl", class: "field", type: "url", autocomplete: "off", placeholder: "https://www.youtube.com/watch?v=...", value: y.url, disabled: y.busy,
+      oninput: function (e) { y.url = e.target.value; y.confirm = ""; }, onkeydown: function (e) { if (e.key === "Enter") { e.preventDefault(); fetchFromLocal(); } } }));
+    box.appendChild(h("div", { class: "row" }, btn(y.busy ? "가져오는 중..." : y.confirm ? "자막 다시 받기 (기록 지움)" : "가져오기", fetchFromLocal, y.confirm ? "rec" : "hl", null, { disabled: y.busy })));
+    if (y.busy) box.appendChild(h("p", { id: "ytBusy", class: "small", role: "status", text: "BrennHub Local에서 제목과 영어 자막을 받는 중이에요... 0초" }));
+    if (y.err) {
+      var eb = h("div", { class: "errbox", role: "alert" }, h("p", { class: "err", text: y.err.title }));
+      (y.err.steps || []).forEach(function (t, i) { eb.appendChild(h("p", { class: "small", text: (y.err.steps.length > 1 ? (i + 1) + ". " : "") + t })); });
+      box.appendChild(eb);
+    }
+    box.appendChild(h("p", { class: "small muted", text: "링크를 넣으면 이 컴퓨터의 BrennHub Local이 yt-dlp로 제목과 영어 자막을 받아 와요. 사람이 만든 영어 자막을 먼저 쓰고, 없으면 유튜브 자동 생성 자막을 써요. 새 영상을 추가할 때만 BrennHub Local이 켜져 있으면 돼요." }));
     out.push(box);
     out.push(h("h3", { text: "추가한 영상" }));
     var mine = allEps().filter(function (ep) { return ep.yt; }).sort(function (a, b) { return (b.added || 0) - (a.added || 0); });
     if (!mine.length) out.push(h("p", { class: "small", text: "아직 추가한 유튜브 영상이 없어요." }));
     var list = h("div");
     mine.forEach(function (ep) {
-      var row = h("div", { class: "eprow" }, h("span", { class: "ti", text: ep.title }), h("span", { class: "small muted", text: "대사 " + ep.lines.length + "개" + (ep.auto ? " (자동 생성 자막)" : "") + ", 진행률 " + epProgress(ep) + "%" }),
+      var kind = ep.src === "local" ? (ep.auto ? "유튜브 자동 생성 자막" : "사람이 만든 자막") : "붙여넣은 스크립트";
+      var row = h("div", { class: "eprow" }, h("span", { class: "ti", text: ep.title }), h("span", { class: "small muted", text: "대사 " + ep.lines.length + "개, " + kind + ", 진행률 " + epProgress(ep) + "%" }),
         btn(ep.id === S.cur.ep ? "지금 학습 중" : "열기", function () { closeModal(); openEp(ep.id, (S.pos && S.pos[ep.id]) || 0); }, "sm", null, { disabled: ep.id === S.cur.ep }),
-        btn("스크립트 바꾸기", function () { openYtAdd(ep); }, "sm"));
+        btn("자막 다시 받기", function () { var y2 = ytState(); y2.url = "https://www.youtube.com/watch?v=" + ep.yt; y2.confirm = ""; y2.err = null; fetchFromLocal(); }, "sm", null, { disabled: y.busy }));
       row.appendChild(V.epDel === ep.id ? btn("정말 삭제", function () { delete EPS[ep.id]; delete VID[ep.id]; Store.del("ep:" + ep.id); delete S.prog[ep.id]; if (S.cur.ep === ep.id) S.cur = { ep: "DEMO", li: 0 }; V.epDel = null; save(); renderModal(); renderView(); }, "sm rec") : btn("삭제", function () { V.epDel = ep.id; renderModal(); }, "sm"));
       list.appendChild(row);
     });
     out.push(list);
-    if (V.epDel) out.push(h("p", { class: "small", text: "삭제하면 이 영상의 스크립트와 받아쓰기 기록이 지워져요. 표현 카드는 남아요. 한 번 더 누르면 삭제돼요." }));
-    out.push(h("p", { class: "small", text: Store.ok ? "저장 상태: 링크, 스크립트, 학습 기록을 이 브라우저에 저장하고 있어요. 다른 컴퓨터나 다른 브라우저에서는 보이지 않아요." : "저장 상태: 이 환경에서는 브라우저 저장소가 막혀 있어요. 창을 닫으면 사라져요. 백업 내보내기를 써 주세요." }));
+    if (V.epDel) out.push(h("p", { class: "small", text: "삭제하면 이 영상의 자막과 받아쓰기 기록이 지워져요. 표현 카드는 남아요. 한 번 더 누르면 삭제돼요." }));
+    out.push(h("p", { class: "small", text: Store.ok ? "저장 상태: 링크, 자막, 학습 기록을 이 브라우저에 저장하고 있어요. 다른 컴퓨터나 다른 브라우저에서는 보이지 않아요." : "저장 상태: 이 환경에서는 브라우저 저장소가 막혀 있어요. 창을 닫으면 사라져요. 백업 내보내기를 써 주세요." }));
     out.push(h("h3", { text: "백업" }));
     out.push(h("div", { class: "row" }, btn("백업 내보내기 (JSON 파일)", exportBackup, ""), h("span", { class: "small muted", text: "가져올 때는 백업 JSON 파일을 이 창에 끌어다 놓으세요." })));
     return out;
