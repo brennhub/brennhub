@@ -3839,7 +3839,8 @@ var YTP = (function () {
     var hit = 0;
     if (!Array.isArray(koCues) || !koCues.length) return 0;
     var cues = koCues.map(function (c) { return { s: Number(c.s) || 0, e: Number(c.e) || 0, t: Core.cleanCue ? String(c.text || "").replace(/\s+/g, " ").trim() : String(c.text || "").trim() }; })
-      .filter(function (c) { return c.t && c.e > c.s; });
+      // Drop translator and reviewer credit cues such as "번역: 이름 검토: 이름".
+      .filter(function (c) { return c.t && c.e > c.s && !/^(?:번역|검토|감수|자막)\s*[:：]/.test(c.t); });
     lines.forEach(function (L) {
       var a = L.s - 0.25, b = L.e + 0.25, parts = [];
       cues.forEach(function (c) {
